@@ -1,0 +1,84 @@
+package com.jy.eletender.common.enums;
+
+/**
+ * 响应状态码枚举
+ */
+public enum ResponseCode {
+
+    // 通用状态码
+    SUCCESS(200, "操作成功"),
+    FAIL(500, "操作失败"),
+    
+    // 参数错误 400-499
+    PARAM_ERROR(400, "参数错误"),
+    UNAUTHORIZED(401, "未授权"),
+    FORBIDDEN(403, "无权限访问"),
+    NOT_FOUND(404, "资源不存在"),
+    METHOD_NOT_ALLOWED(405, "方法不允许"),
+    
+    // 用户相关 1001-1999
+    USER_NOT_FOUND(1001, "用户不存在"),
+    USER_PASSWORD_ERROR(1002, "用户名或密码错误"),
+    USER_DISABLED(1003, "用户已被禁用"),
+    USER_EXISTS(1004, "用户已存在"),
+    USER_TOKEN_EXPIRED(1005, "Token已过期"),
+    USER_TOKEN_INVALID(1006, "Token无效"),
+    
+    // 角色权限相关 2001-2999
+    ROLE_NOT_FOUND(2001, "角色不存在"),
+    ROLE_EXISTS(2002, "角色已存在"),
+    PERMISSION_DENIED(2003, "权限不足"),
+    MENU_NOT_FOUND(2004, "菜单不存在"),
+    
+    // 接入系统相关 3001-3999
+    SYSTEM_NOT_FOUND(3001, "接入系统不存在"),
+    SYSTEM_DISABLED(3002, "接入系统已禁用"),
+    SYSTEM_EXPIRED(3003, "接入系统已过期"),
+    SIGNATURE_ERROR(3004, "签名验证失败"),
+    TIMESTAMP_EXPIRED(3005, "时间戳已过期"),
+    APP_KEY_NOT_FOUND(3006, "AppKey不存在"),
+    
+    // 版本管理相关 4001-4999
+    VERSION_NOT_FOUND(4001, "版本不存在"),
+    VERSION_EXISTS(4002, "版本已存在"),
+    VERSION_STATUS_ERROR(4003, "版本状态错误"),
+    PLUGIN_NOT_FOUND(4004, "插件不存在"),
+    
+    // 文件相关 5001-5999
+    FILE_NOT_FOUND(5001, "文件不存在"),
+    FILE_UPLOAD_ERROR(5002, "文件上传失败"),
+    FILE_TYPE_NOT_ALLOWED(5003, "文件类型不允许"),
+    FILE_SIZE_EXCEEDED(5004, "文件大小超出限制"),
+    FILE_SHA256_ERROR(5005, "文件SHA-256校验失败"),
+
+    // 加解密相关 7001-7999
+    BID_DOCUMENT_PUSH_PARAM_ERROR(7001, "投标文件预存参数错误"),
+    BID_DOCUMENT_NOT_FOUND(7002, "投标文件不存在"),
+    BID_DOCUMENT_SHA256_MISMATCH(7003, "投标文件SHA-256不匹配"),
+    BID_DECRYPT_REQUEST_NOT_FOUND(7004, "解密请求不存在"),
+    BID_DECRYPT_REQUEST_STATUS_INVALID(7005, "解密请求状态非法"),
+    BID_DECRYPT_ARTIFACT_NOT_FOUND(7006, "解密工件不存在"),
+    BID_DECRYPT_ARTIFACT_EXECUTE_FAILED(7007, "解密工件执行失败"),
+    BID_DECRYPT_ARTIFACT_TIMEOUT(7008, "解密工件执行超时"),
+    BID_DECRYPT_CALLBACK_FAILED(7009, "解密回调失败"),
+    BID_DECRYPT_NATIVE_ERROR(7010, "原生解密调用失败"),
+    BID_DECRYPT_PARSE_ERROR(7011, "解密结果解析失败"),
+    BID_DECRYPT_DUPLICATE_REQUEST(7012, "重复解密请求"),
+    BID_DECRYPT_INTERNAL_ERROR(7013, "解密系统内部错误");
+
+    private final int code;
+    private final String message;
+
+    ResponseCode(int code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}

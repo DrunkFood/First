@@ -1,0 +1,18 @@
+{
+  "baseInfo" : {
+    "tenderName" : "native对拍标段",
+    "tenderId" : "T-20260331-01",
+    "projectName" : "native对拍项目",
+    "projectId" : "P-20260331-01"
+  },
+  "versionInfo" : {
+    "formatVersion" : "2.0.0"
+  },
+  "originSha256" : "48ab6b8b2b687a0502b3b0dc0a1a4aa9b3c61280d78eeb9d8424a2b06c8f4c99",
+  "encryptedSha256" : "6febeb7b6f15f6891b7f7ffc7d1e7049d2b429a1ac8bc2c581bb83b28162d38e",
+  "hashKeyList" : [ {
+    "order" : 1,
+    "caId" : "stub-ca-001",
+    "hashKeyE" : "for-platform-decrypt-only"
+  } ]
+}

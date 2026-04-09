@@ -1,0 +1,183 @@
+package com.jy.eletender.crypto.cli;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eletender.crypto.native_bridge.ICryptoNative;
+import com.jy.eletender.crypto.native_bridge.JniCryptoNative;
+import com.jy.eletender.crypto.native_bridge.UnpackResult;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+public final class NativeVectorExporter {
+
+    public static final String SAMPLE_PASSWORD = "BidderPwd@2026!";
+    public static final String FORMAT_VERSION = "2.0.0";
+    public static final String PRIVATE_KEY = """
+            -----BEGIN PRIVATE KEY-----
+            MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCcXlbzrBT7yc+7
+            a2Vrtf/HCs0DO5vGSUFHW7M8CW1hDcYcWBFPJaPgGW/NgdzU1brm7nad0IvB7tvE
+            72/1VFxmhUTu+rWirzyZ7+PRe/jJrnN9RwrhyeK3FdAkIEt/f1NF8CIakYkWkBdk
+            8fZ5XCaI2JSwd5ZugUr7f0r5tii0IkA/YFtia6Ih4/0oJLwd5JarK7G2+GASU/Pr
+            4PKdowRuTcm2hSUkKUVk0TUOQzDrxb4aq6Aozbuj77qUXtFwnlqDxSoPE8rblx9k
+            xiMJokw5Qs1GP3X6LkmrEiTeDyUAkhtpySkpJdBPYRIrPi7TKmJ3ls7WSit7AWZi
+            CbOyaW4HAgMBAAECggEAEklQEYgGyNlK2Kf7FjO/A+0bQ5ewJGoDCdAgr6ffPucy
+            9glF4O54cdKCX3332tCx3k7LLV0q8uo25kV6tNiBmSBYYDrj4fDB/V3vU7C+oVYB
+            kzLV2XOCzBbEyWzDbNdxisTF4Dsz1SEoXeQ+sZDuwA3VTvvKlQVmxO7tJYhsIys4
+            DMSbY7gc+sdjGUrHdEZbl3nfWUkn0rqrQE2NmdsISLkcoLpL6s1lSZd5TrW9Bwe+
+            +6rhY9r4fT+BwIpL7Yx8cFz127uR2quCTlwHI/LJmoKcw10P9KpVI+n27u+yhGUd
+            8Z0gTlFTpbnmaOyT1HOqE7fitG/VJbwhIJ4QXM51IQKBgQDSr8RAvJz+wqrwwZC/
+            js3xO/bTKbep4Q4Xqa3McETDBtM6b8pRA/sb+QrSxew3erBqotZkG5bHx1J6GvRc
+            vyNTZ6ckaf3E1y7+jIQSHA33KHHFcjhtL0wCsHshYo7bUaKpR+mrpIP0GMFl281x
+            RhCiu7JwQVHxvz362bF7jj07IQKBgQC9/90fLIYSIbYqgFAfLEY7a9+BNxYK1PjE
+            zj1Ofbwn0K60mmCCgnvRo/RLBHLAYyrv06ByME7t7l+L/r00jK4HG/tBDL8f8i3l
+            3zvJWRHx8LcifsB+tK8fareyetcAYQ8nzJVvS9PQee7hwQ7yb9+0w+d+wRCZylQf
+            eosJLTPsJwKBgHUSiGo0pMSH5bcMyGM5dkSjPn+OQembDlqlxdbBV+RLaZqiPfkQ
+            zjt4AsSmiKE3gspum9Va40k2ACWrzreu2nFhOqZoY0Q7EnkOGeF6R2RczAOcebBq
+            RMGF0ZX2j01dqpaISFdBfrVoACeaoSlddqcGx5vLID7GNymqSA5RNsMhAoGARE8b
+            JrwRL6+jGMCtDagTUAXGg2RUrmxHTCqB7BhUb1Qdm5ztGb7j2UlC6T2eLAD7TOIf
+            Cy7HEc/j1ictyxjQ8Ilk2cxFYqzlR4HsssUtKHjMvsAnYOaBF6B8jtSPO/mpQzvQ
+            dgUjEA7mjY+lWhBSs2DDd9TdrQ0LFY4vMotn4X0CgYAURn1Kbhu21I+A/gv4VGaG
+            BKut8g3Cp9AIQJcNvl4wVIlbKlcxxpBGqSJS5xdjIwzmpGjhAEosCutuFTr+idGK
+            jKepjvuoocWKreeskTupT/lbLT3uMibIoyLRgG+oH4ZLaImouhpt9hfKCnLQFRlr
+            VF0ppiv5CPXM/YJU3uZJ4Q==
+            -----END PRIVATE KEY-----
+            """;
+    public static final String PUBLIC_KEY = """
+            -----BEGIN PUBLIC KEY-----
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnF5W86wU+8nPu2tla7X/
+            xwrNAzubxklBR1uzPAltYQ3GHFgRTyWj4BlvzYHc1NW65u52ndCLwe7bxO9v9VRc
+            ZoVE7vq1oq88me/j0Xv4ya5zfUcK4cnitxXQJCBLf39TRfAiGpGJFpAXZPH2eVwm
+            iNiUsHeWboFK+39K+bYotCJAP2BbYmuiIeP9KCS8HeSWqyuxtvhgElPz6+DynaME
+            bk3JtoUlJClFZNE1DkMw68W+GqugKM27o++6lF7RcJ5ag8UqDxPK25cfZMYjCaJM
+            OULNRj91+i5JqxIk3g8lAJIbackpKSXQT2ESKz4u0ypid5bO1korewFmYgmzsmlu
+            BwIDAQAB
+            -----END PUBLIC KEY-----
+            """;
+
+    private final ICryptoNative cryptoNative;
+    private final ObjectMapper objectMapper;
+
+    public NativeVectorExporter() {
+        this(new JniCryptoNative(), new ObjectMapper());
+    }
+
+    NativeVectorExporter(ICryptoNative cryptoNative, ObjectMapper objectMapper) {
+        this.cryptoNative = cryptoNative;
+        this.objectMapper = objectMapper;
+    }
+
+    public ExportResult export(Path outputDir) throws Exception {
+        Files.createDirectories(outputDir);
+
+        Map<String, Object> plain = new LinkedHashMap<>();
+        plain.put("projectId", "P-20260331-01");
+        plain.put("tenderId", "T-20260331-01");
+        plain.put("bidRecordId", "BR-20260331-01");
+        plain.put("bidderName", "测试投标人");
+        plain.put("amount", 123456.78);
+        plain.put("items", List.of("报价函", "资格审查", "技术响应"));
+        byte[] plainBytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(plain);
+
+        String bidderPwdHex = sha256Hex(SAMPLE_PASSWORD.getBytes(StandardCharsets.UTF_8));
+        byte[] bidderKeyBytes = HexFormat.of().parseHex(bidderPwdHex);
+        String bidderPwdBase64 = Base64.getEncoder().encodeToString(bidderKeyBytes);
+
+        List<byte[]> encryptedSegments = cryptoNative.encryptSegments(plainBytes, bidderKeyBytes, 2 * 1024 * 1024);
+        String encryptedContent = encryptedSegments.stream()
+                .map(segment -> Base64.getEncoder().encodeToString(segment))
+                .reduce((left, right) -> left + "|||" + right)
+                .orElse("");
+
+        Map<String, Object> projectInfo = new LinkedHashMap<>();
+        projectInfo.put("baseInfo", Map.of(
+                "projectId", "P-20260331-01",
+                "projectName", "native对拍项目",
+                "tenderId", "T-20260331-01",
+                "tenderName", "native对拍标段"
+        ));
+        projectInfo.put("versionInfo", Map.of("formatVersion", FORMAT_VERSION));
+        projectInfo.put("originSha256", sha256Hex(plainBytes));
+        projectInfo.put("encryptedSha256", sha256Hex(encryptedContent.getBytes(StandardCharsets.UTF_8)));
+        projectInfo.put("hashKeyList", List.of(Map.of(
+                "order", 1,
+                "caId", "stub-ca-001",
+                "hashKeyE", "for-platform-decrypt-only"
+        )));
+        byte[] projectInfoPlainBytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(projectInfo);
+        byte[] projectInfoCipherBytes = cryptoNative.rsaEncrypt(projectInfoPlainBytes, PUBLIC_KEY);
+
+        byte[] packedFileBytes = cryptoNative.packFile(encryptedSegments, projectInfoCipherBytes, FORMAT_VERSION);
+        UnpackResult unpackResult = cryptoNative.unpackFile(packedFileBytes);
+        byte[] decryptedPlainBytes = cryptoNative.decryptSegments(unpackResult.getEncryptedSegments(), bidderKeyBytes);
+        byte[] decryptedProjectInfoBytes = cryptoNative.rsaDecrypt(unpackResult.getEncryptedProjectInfoRsa(), PRIVATE_KEY);
+
+        writeString(outputDir.resolve("README.md"), """
+                # native-vectors
+
+                该目录用于 Electron / Node 与 Java / JNI 对拍。
+
+                说明：
+                - `sample.HzctTbs` 为样例加密文件
+                - `sample-bid-document.json` 为原始明文
+                - `sample-project-info-rsa-plain.json` 为 RSA 加密前明文
+                - `public-key.pem` / `private-key.pem` 为测试专用密钥
+                - `manifest.json` 记录固定密码、SHA256、文件名与校验说明
+                - RSA/PKCS1 加密是随机的，因此未来重新导出时 `sample.HzctTbs` 字节不要求完全相同，但必须可被本仓库 Java 实现解开且业务字段一致
+                """);
+        writeString(outputDir.resolve("sample-bid-document.json"), new String(plainBytes, StandardCharsets.UTF_8));
+        writeString(outputDir.resolve("sample-project-info-rsa-plain.json"), new String(projectInfoPlainBytes, StandardCharsets.UTF_8));
+        writeString(outputDir.resolve("public-key.pem"), PUBLIC_KEY);
+        writeString(outputDir.resolve("private-key.pem"), PRIVATE_KEY);
+        Files.write(outputDir.resolve("sample.HzctTbs"), packedFileBytes);
+
+        Map<String, Object> manifest = new LinkedHashMap<>();
+        manifest.put("formatVersion", FORMAT_VERSION);
+        manifest.put("passwordInput", SAMPLE_PASSWORD);
+        manifest.put("bidderPwdHex", bidderPwdHex);
+        manifest.put("bidderPwdBase64", bidderPwdBase64);
+        manifest.put("plainFile", "sample-bid-document.json");
+        manifest.put("projectInfoPlainFile", "sample-project-info-rsa-plain.json");
+        manifest.put("encryptedFile", "sample.HzctTbs");
+        manifest.put("publicKeyFile", "public-key.pem");
+        manifest.put("privateKeyFile", "private-key.pem");
+        manifest.put("plainSha256", sha256Hex(plainBytes));
+        manifest.put("projectInfoPlainSha256", sha256Hex(projectInfoPlainBytes));
+        manifest.put("encryptedFileSha256", sha256Hex(packedFileBytes));
+        manifest.put("segmentCount", encryptedSegments.size());
+        manifest.put("rsaPkcs1Note", "RSA/ECB/PKCS1Padding encryption is probabilistic; ciphertext bytes may vary between exports.");
+        manifest.put("validation", List.of(
+                "Electron encrypt output must be decryptable by Java/JNI with the same password-derived key",
+                "Electron unpack/decrypt must recover sample-bid-document.json exactly",
+                "Electron rsaDecrypt(projectInfoRSA, privateKey.pem) must recover sample-project-info-rsa-plain.json exactly"
+        ));
+        writeString(outputDir.resolve("manifest.json"), objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(manifest));
+
+        return new ExportResult(outputDir, plainBytes, packedFileBytes, projectInfoPlainBytes, decryptedPlainBytes, decryptedProjectInfoBytes);
+    }
+
+    private void writeString(Path path, String content) throws Exception {
+        Files.writeString(path, content, StandardCharsets.UTF_8);
+    }
+
+    private String sha256Hex(byte[] data) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return HexFormat.of().formatHex(digest.digest(data));
+    }
+
+    public record ExportResult(
+            Path outputDir,
+            byte[] plainBytes,
+            byte[] packedFileBytes,
+            byte[] projectInfoPlainBytes,
+            byte[] decryptedPlainBytes,
+            byte[] decryptedProjectInfoBytes
+    ) {
+    }
+}

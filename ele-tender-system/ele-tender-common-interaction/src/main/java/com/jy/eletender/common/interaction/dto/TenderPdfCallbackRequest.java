@@ -1,0 +1,29 @@
+package com.jy.eletender.common.interaction.dto;
+
+import lombok.Data;
+
+import java.io.Serializable;
+
+/**
+ * 招标文件PDF回传请求
+ */
+@Data
+public class TenderPdfCallbackRequest implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 业务类型，取值参见 {@link com.jy.eletender.common.interaction.enums.InteractionBizType#getCode()}。
+     */
+    private Integer bizType;
+
+    private String bizId;
+
+    private String projectId;
+
+    private String tenderId;
+
+    private Long fileId;
+
+    private String fileName;
+}

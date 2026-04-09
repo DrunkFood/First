@@ -1,0 +1,70 @@
+server:
+  port: ${SERVER_PORT:8083}
+  servlet:
+    encoding:
+      enabled: true
+      charset: UTF-8
+      force: true
+      force-request: true
+      force-response: true
+
+spring:
+  application:
+    name: ele-tender-crypto
+  config:
+    import: optional:file:${user.home}/.ele-tender/ele-tender-crypto-local.yml
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/ele_tender?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:${SPRING_REDIS_HOST:127.0.0.1}}
+      port: ${SPRING_DATA_REDIS_PORT:${SPRING_REDIS_PORT:6379}}
+      database: ${SPRING_DATA_REDIS_DATABASE:${SPRING_REDIS_DATABASE:5}}
+      password: ${SPRING_DATA_REDIS_PASSWORD:${SPRING_REDIS_PASSWORD:}}
+      timeout: 5s
+
+jwt:
+  secret: ${APP_JWT_SECRET:}
+  expiration: ${APP_JWT_EXPIRATION:7200}
+  external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  pattern:
+    level: "%5p [traceId:%X{traceId:-}]"
+  level:
+    com.jy.eletender: debug
+
+crypto:
+  bid-document-path: ${CRYPTO_BID_DOCUMENT_PATH:/data/ele-tender/crypto/bid-documents}
+  decrypt-file-path: ${CRYPTO_DECRYPT_FILE_PATH:/data/ele-tender/crypto/decrypted}
+  temp-file-path: ${CRYPTO_TEMP_FILE_PATH:/data/ele-tender/crypto/temp}
+  organized-file-path: ${CRYPTO_ORGANIZED_FILE_PATH:/data/ele-tender/crypto/organized}
+  segment-size: ${CRYPTO_SEGMENT_SIZE:2097152}
+  rsa-private-key: ${CRYPTO_RSA_PRIVATE_KEY:}
+  bidder-pwd-fingerprint-secret: ${CRYPTO_BIDDER_PWD_FINGERPRINT_SECRET:}
+  consumer-threads: ${CRYPTO_CONSUMER_THREADS:4}
+  task-timeout-seconds: ${CRYPTO_TASK_TIMEOUT_SECONDS:1800}
+  timeout-scan-interval-seconds: ${CRYPTO_TIMEOUT_SCAN_INTERVAL:300}
+  max-retry-count: ${CRYPTO_MAX_RETRY_COUNT:3}
+  callback-max-retry-count: ${CRYPTO_CALLBACK_MAX_RETRY_COUNT:3}
+  file-service-base-url: ${CRYPTO_FILE_SERVICE_BASE_URL:http://localhost:8081}
+  file-info-path: ${CRYPTO_FILE_INFO_PATH:/api/file/info/{fileId}}
+  file-download-path: ${CRYPTO_FILE_DOWNLOAD_PATH:/api/file/download/{fileId}}
+  password-cache-seconds: ${CRYPTO_PASSWORD_CACHE_SECONDS:3600}
+  stream-poll-batch-size: ${CRYPTO_STREAM_POLL_BATCH_SIZE:20}
+  stream-poll-block-millis: ${CRYPTO_STREAM_POLL_BLOCK_MILLIS:1000}
+  stream-poll-interval-ms: ${CRYPTO_STREAM_POLL_INTERVAL_MS:1000}
+  stream:
+    key: ${CRYPTO_STREAM_KEY:bdc:decrypt:tasks}
+    group: ${CRYPTO_STREAM_GROUP:bdc-decrypt-group}
+    max-len: ${CRYPTO_STREAM_MAX_LEN:10000}
+    consumer-name: ${CRYPTO_STREAM_CONSUMER:crypto-consumer}

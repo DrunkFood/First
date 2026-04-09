@@ -1,0 +1,2 @@
+com.jy.eletender.common.logging.LoggingAutoConfiguration
+com.jy.eletender.common.web.WebEncodingAutoConfiguration

@@ -1,0 +1,40 @@
+{
+  "description": "bidderPwdStr 切段/拼接测试向量，C++ 和 Java 共用",
+  "bidderPwdBase64": "SfHrOh8qoWJHlh0rVeRm2czmgltfVD75GvEGZmrKj+8=",
+  "vectors": [
+    {
+      "description": "1 layer, no split",
+      "encryptOrder": 1,
+      "expectedSegmentsBase64": [
+        "SfHrOh8qoWJHlh0rVeRm2czmgltfVD75GvEGZmrKj+8="
+      ]
+    },
+    {
+      "description": "2 layers, even split 16+16",
+      "encryptOrder": 2,
+      "expectedSegmentsBase64": [
+        "SfHrOh8qoWJHlh0rVeRm2Q==",
+        "zOaCW19UPvka8QZmasqP7w=="
+      ]
+    },
+    {
+      "description": "3 layers, remainder on last 10+10+12",
+      "encryptOrder": 3,
+      "expectedSegmentsBase64": [
+        "SfHrOh8qoWJHlg==",
+        "HStV5GbZzOaCWw==",
+        "X1Q++RrxBmZqyo/v"
+      ]
+    },
+    {
+      "description": "4 layers, even split 8+8+8+8",
+      "encryptOrder": 4,
+      "expectedSegmentsBase64": [
+        "SfHrOh8qoWI=",
+        "R5YdK1XkZtk=",
+        "zOaCW19UPvk=",
+        "GvEGZmrKj+8="
+      ]
+    }
+  ]
+}

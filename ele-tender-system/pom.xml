@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.jy.eletender</groupId>
+    <artifactId>ele-tender-system</artifactId>
+    <version>1.1.2-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>EleTender System</name>
+    <description>EleTender Configuration Management System</description>
+
+    <modules>
+        <module>ele-tender-common</module>
+        <module>ele-tender-common-interaction</module>
+        <module>ele-tender-file</module>
+        <module>ele-tender-support</module>
+        <module>ele-tender-interaction</module>
+        <module>ele-tender-tender-document</module>
+        <module>ele-tender-crypto</module>
+        <module>ele-tender-dev-tools</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <deploy.release.repo.id>zbd-purchase-releases</deploy.release.repo.id>
+        <deploy.release.repo.url>http://10.11.20.50:15051/repository/zbd-purchase-releases/</deploy.release.repo.url>
+        <deploy.snapshot.repo.id>zbd-purchase-snapshots</deploy.snapshot.repo.id>
+        <deploy.snapshot.repo.url>http://10.11.20.50:15051/repository/zbd-purchase-snapshots/</deploy.snapshot.repo.url>
+        
+        <!-- Spring Boot 3.2.x for JDK 21 -->
+        <spring-boot.version>3.2.2</spring-boot.version>
+        
+        <!-- MyBatis Plus -->
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        
+        <!-- JWT -->
+        <jjwt.version>0.12.5</jjwt.version>
+        
+        <!-- Hutool -->
+        <hutool.version>5.8.25</hutool.version>
+        
+        <!-- MySQL -->
+        <mysql.version>8.4.0</mysql.version>
+        
+        <!-- Lombok -->
+        <lombok.version>1.18.30</lombok.version>
+        
+        <!-- Swagger/OpenAPI -->
+        <springdoc.version>2.3.0</springdoc.version>
+
+        <!-- Interaction modules -->
+        <interaction.version>1.1.3-SNAPSHOT</interaction.version>
+        
+        <!-- Commons -->
+        <commons-lang3.version>3.14.0</commons-lang3.version>
+        <commons-io.version>2.15.1</commons-io.version>
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>${deploy.release.repo.id}</id>
+            <url>${deploy.release.repo.url}</url>
+        </repository>
+        <snapshotRepository>
+            <id>${deploy.snapshot.repo.id}</id>
+            <url>${deploy.snapshot.repo.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot Dependencies -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- 项目内部模块 -->
+            <dependency>
+                <groupId>com.jy.eletender</groupId>
+                <artifactId>ele-tender-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jy.eletender</groupId>
+                <artifactId>ele-tender-common-interaction</artifactId>
+                <version>${interaction.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jy.eletender</groupId>
+                <artifactId>ele-tender-interaction-core</artifactId>
+                <version>${interaction.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jy.eletender</groupId>
+                <artifactId>ele-tender-interaction-autoconfigure</artifactId>
+                <version>${interaction.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jy.eletender</groupId>
+                <artifactId>ele-tender-interaction-spring-boot-starter</artifactId>
+                <version>${interaction.version}</version>
+            </dependency>
+
+            <!-- MyBatis Plus for Spring Boot 3 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- MySQL Driver -->
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+
+            <!-- JWT (JJWT 0.12.x API) -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- Hutool -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI (Swagger replacement for Spring Boot 3) -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- Commons -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <parameters>true</parameters>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
