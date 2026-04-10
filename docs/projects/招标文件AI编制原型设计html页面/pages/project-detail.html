@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招标文件生成系统 - 项目详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --brand-color: #336CFF;
+            --auxiliary-color: #31E3FD;
+            --embellishment-color: #FF8D3B;
+            --bg-primary: #0F1419;
+            --bg-secondary: #1A1F26;
+            --bg-tertiary: #242B33;
+            --bg-elevated: #2D353D;
+            --text-primary: #F0F2F5;
+            --text-secondary: #B9BBBE;
+            --text-tertiary: #8B8E93;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.12);
+            --hover-state: rgba(51, 108, 255, 0.12);
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --card-bg: rgba(26, 31, 38, 0.95);
+            --input-bg: rgba(15, 20, 25, 0.6);
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root {
+                --brand-color: #336CFF;
+                --auxiliary-color: #00B8D4;
+                --embellishment-color: #FF9800;
+                --bg-primary: #FFFFFF;
+                --bg-secondary: #F8F9FA;
+                --bg-tertiary: #F1F3F4;
+                --bg-elevated: #FFFFFF;
+                --text-primary: #1F2937;
+                --text-secondary: #4B5563;
+                --text-tertiary: #6B7280;
+                --border-light: rgba(0, 0, 0, 0.08);
+                --border-medium: rgba(0, 0, 0, 0.12);
+                --hover-state: rgba(51, 108, 255, 0.06);
+                --shadow-color: rgba(0, 0, 0, 0.08);
+                --card-bg: rgba(255, 255, 255, 0.98);
+                --input-bg: rgba(243, 244, 246, 0.8);
+            }
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 220px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-light);
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand-color);
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .nav-item {
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-left-color: var(--brand-color);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 220px;
+            padding: 0;
+        }
+        
+        .top-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-light);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb a:hover {
+            color: var(--brand-color);
+        }
+        
+        .breadcrumb span {
+            margin: 0 8px;
+            color: var(--text-tertiary);
+        }
+        
+        .breadcrumb .current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .message-icon {
+            position: relative;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+        
+        .message-icon:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .message-badge {
+            background: var(--danger-color);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            line-height: 1;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+        
+        .user-info:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-color), var(--auxiliary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .content-area {
+            padding: 24px 40px;
+            max-width: 1600px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--brand-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2855d9;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-medium);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--brand-color);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #D97706;
+        }
+        
+        .btn-danger {
+            background: transparent;
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .project-info-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .project-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .project-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .project-status.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+        }
+        
+        .project-status.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+        }
+        
+        .project-status.info {
+            background: rgba(51, 108, 255, 0.15);
+            color: var(--brand-color);
+        }
+        
+        .project-meta {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .meta-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        .meta-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .tabs-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .tab {
+            padding: 14px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            background: transparent;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+        
+        .tab:hover {
+            color: var(--brand-color);
+        }
+        
+        .tab.active {
+            color: var(--brand-color);
+            border-bottom-color: var(--brand-color);
+            background: var(--card-bg);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 24px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--brand-color);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .info-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .info-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .document-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-light);
+            margin-bottom: 12px;
+        }
+        
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .document-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .document-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        .document-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .progress-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+            border-left: 2px solid var(--border-light);
+            padding-left: 20px;
+            margin-left: -30px;
+        }
+        
+        .timeline-item:last-child {
+            border-left: 2px solid transparent;
+            padding-bottom: 0;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: -7px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-medium);
+        }
+        
+        .timeline-item.completed .timeline-dot {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .timeline-item.active .timeline-dot {
+            background: var(--brand-color);
+            border-color: var(--brand-color);
+        }
+        
+        .timeline-content {
+            padding-bottom: 8px;
+        }
+        
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .timeline-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .timeline-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+        
+        .publish-section {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid var(--success-color);
+            margin-top: 24px;
+        }
+        
+        .publish-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .publish-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--success-color);
+        }
+        
+        .publish-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        
+        .publish-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(51, 108, 255, 0.3);
+            z-index: 1000;
+            transition: all 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            background: #2855d9;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            max-width: 900px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .version-info {
+            margin-bottom: 20px;
+        }
+        
+        .version-info-row {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        
+        .version-info-label {
+            width: 100px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .version-info-value {
+            flex: 1;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .version-content {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .version-content-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        
+        .version-content-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        
+        .compare-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .compare-panel {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .compare-panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--brand-color);
+        }
+        
+        .compare-item {
+            margin-bottom: 16px;
+        }
+        
+        .compare-item-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        
+        .compare-item-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            padding: 8px 12px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+        }
+        
+        .compare-item-value.highlight {
+            background: rgba(51, 108, 255, 0.1);
+            border-left: 3px solid var(--brand-color);
+        }
+        
+        .compare-item-value.added {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--success-color);
+        }
+        
+        .compare-item-value.removed {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--danger-color);
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        .preview-toolbar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .preview-toolbar-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .preview-toolbar-btn:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-color: var(--brand-color);
+        }
+        
+        .preview-toolbar-btn.active {
+            background: var(--brand-color);
+            color: white;
+            border-color: var(--brand-color);
+        }
+        
+        .document-preview {
+            background: white;
+            color: #1a1a1a;
+            padding: 60px 80px;
+            min-height: 400px;
+            font-family: 'SimSun', '宋体', serif;
+            line-height: 2;
+        }
+        
+        .preview-chapter {
+            margin-bottom: 32px;
+        }
+        
+        .preview-chapter-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #333;
+        }
+        
+        .preview-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 20px 0 12px 0;
+        }
+        
+        .preview-paragraph {
+            text-indent: 2em;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .preview-list {
+            margin-left: 2em;
+            margin-bottom: 12px;
+        }
+        
+        .preview-list-item {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        
+        .preview-table th,
+        .preview-table td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+        
+        .preview-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        
+        .zoom-level {
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-width: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">切换主题</button>
+    
+    <div class="layout">
+        <div class="sidebar">
+            <div class="sidebar-title">招标文件生成系统</div>
+            <div class="nav-item" onclick="window.location.href='business-requirement-list.html'">编制业务需求</div>
+            <div class="nav-item active" onclick="window.location.href='project-list.html'">项目管理</div>
+            <div class="nav-item" onclick="window.location.href='template-list.html'">模板管理</div>
+            <div class="nav-item" onclick="window.location.href='policy-file-list.html'">政策文件管理</div>
+            <div class="nav-item" onclick="window.location.href='statistics.html'">统计分析</div>
+            <div class="nav-item" onclick="window.location.href='message-center.html'">消息中心</div>
+            <div class="nav-item" onclick="window.location.href='system-settings.html'">系统设置</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="breadcrumb">
+                    <a href="project-list.html">首页</a>
+                    <span>/</span>
+                    <span class="current">项目详情</span>
+                </div>
+                <div class="header-actions">
+                    <div class="message-icon" onclick="window.location.href='message-center.html'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="message-badge">3</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar">张</div>
+                        <span>张专员</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="page-header">
+                    <h1 class="page-title">项目详情</h1>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-secondary" onclick="window.location.href='project-list.html'">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            返回列表
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="project-info-card">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">某市政道路改造工程招标项目</div>
+                            <span class="project-status success">检测通过</span>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-secondary" onclick="editProject()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                                编辑项目
+                            </button>
+                        </div>
+                    </div>
+                    <div class="project-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">项目编号</div>
+                            <div class="meta-value">ZB-2024-001</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">项目类别</div>
+                            <div class="meta-value">政府采购</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">项目类型</div>
+                            <div class="meta-value">市政工程</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">项目预算</div>
+                            <div class="meta-value">500万元</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">评审类型</div>
+                            <div class="meta-value">人工评审</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">创建时间</div>
+                            <div class="meta-value">2024-01-10 09:30</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">创建人</div>
+                            <div class="meta-value">张专员</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">所属部门</div>
+                            <div class="meta-value">招标采购部</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('basic')">基本信息</button>
+                        <button class="tab" onclick="switchTab('document')">文档信息</button>
+                        <button class="tab" onclick="switchTab('progress')">项目进度</button>
+                        <button class="tab" onclick="switchTab('version')">版本管理</button>
+                    </div>
+                    
+                    <div id="basic" class="tab-content active">
+                        <div class="section-title">项目基本信息</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">项目名称</div>
+                                <div class="info-value">某市政道路改造工程招标项目</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">项目编号</div>
+                                <div class="info-value">ZB-2024-001</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">项目类别</div>
+                                <div class="info-value">政府采购</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">项目类型</div>
+                                <div class="info-value">市政工程</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">项目预算</div>
+                                <div class="info-value">500万元</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">评审类型</div>
+                                <div class="info-value">人工评审</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">项目描述</div>
+                                <div class="info-value">本项目为某市政道路改造工程，主要包括道路拓宽、排水系统改造、绿化带建设等内容。项目总投资约500万元，计划工期6个月。</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">使用模板</div>
+                                <div class="info-value">市政工程招标文件模板 v2.0</div>
+                            </div>
+                        </div>
+                        
+                        <div class="publish-section">
+                            <div class="publish-header">
+                                <div class="publish-title">✓ 文档已通过检测，可以发布</div>
+                            </div>
+                            <div class="publish-info">
+                                文档已通过所有检测项，符合发布要求。发布后文档将公开，投标人可查看和下载招标文件。
+                            </div>
+                            <div class="publish-actions">
+                                <button class="btn btn-success" onclick="publishDocument()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    回传至交易系统
+                                </button>
+                                <button class="btn btn-secondary" onclick="previewDocument()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    预览文档
+                                </button>
+                                <button class="btn btn-secondary" onclick="exportDocument()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    导出文档
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="document" class="tab-content">
+                        <div class="section-title">文档信息</div>
+                        <div class="document-card">
+                            <div class="document-header">
+                                <div>
+                                    <div class="document-title">某市政道路改造工程招标文件.docx</div>
+                                    <div class="document-meta">
+                                        <span>大小：2.3 MB</span>
+                                        <span>页数：48页</span>
+                                        <span>版本：v1.0_final</span>
+                                    </div>
+                                </div>
+                                <div class="document-actions">
+                                    <button class="btn btn-secondary" onclick="previewDocument()">预览</button>
+                                    <button class="btn btn-secondary" onclick="exportDocument()">导出</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="document-card" style="margin-top: 20px;">
+                            <div class="document-header">
+                                <div>
+                                    <div class="document-title">引入的招标文件初稿</div>
+                                    <div class="document-meta">
+                                        <span>来源：编制业务需求模块</span>
+                                        <span>名称：XX市政道路改造工程业务需求（初稿）.docx</span>
+                                        <span>引入时间：2026-03-10 09:15:00</span>
+                                    </div>
+                                </div>
+                                <div class="document-actions">
+                                    <button class="btn btn-secondary" onclick="previewDraft()">预览初稿</button>
+                                    <button class="btn btn-secondary" onclick="downloadDraft()">下载初稿</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section-title">文档结构</div>
+                        <div style="padding: 16px; background: var(--bg-tertiary); border-radius: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
+                            第一章 招标公告<br>
+                            第二章 投标人须知<br>
+                            第三章 评标办法<br>
+                            第四章 合同条款及格式<br>
+                            第五章 工程量清单<br>
+                            第六章 图纸及技术要求<br>
+                            第七章 投标文件格式
+                        </div>
+                    </div>
+                    
+                    <div id="progress" class="tab-content">
+                        <div class="section-title">项目进度</div>
+                        <div class="progress-timeline">
+                            <div class="timeline-item completed">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">项目创建</div>
+                                    <div class="timeline-desc">创建项目并填写基础信息</div>
+                                    <div class="timeline-time">2024-01-10 09:30</div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item completed">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">基础信息输入</div>
+                                    <div class="timeline-desc">完成项目基础信息和模板选择</div>
+                                    <div class="timeline-time">2024-01-10 10:15</div>
+                                </div>
+                            </div>
+                            
+
+                            
+                            <div class="timeline-item completed">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">招标（采购）需求</div>
+                                    <div class="timeline-desc">AI生成并确认详细需求内容</div>
+                                    <div class="timeline-time">2024-01-10 14:30</div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item completed">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">评审项设置</div>
+                                    <div class="timeline-desc">设置并确认评审项（人工评审）</div>
+                                    <div class="timeline-time">2024-01-10 15:00</div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item completed">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">文档集成</div>
+                                    <div class="timeline-desc">生成完整招标文件</div>
+                                    <div class="timeline-time">2024-01-10 15:30</div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item completed">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">智能检测</div>
+                                    <div class="timeline-desc">执行公平竞争检测、合规性检查、错别字检查</div>
+                                    <div class="timeline-time">2024-01-10 16:00</div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item active">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">检测通过</div>
+                                    <div class="timeline-desc">文档通过所有检测项，等待发布</div>
+                                    <div class="timeline-time">2024-01-10 16:30</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="version" class="tab-content">
+                        <div class="section-title">版本历史</div>
+                        <div class="document-card">
+                            <div class="document-header">
+                                <div>
+                                    <div class="document-title">v1.0_final</div>
+                                    <div class="document-meta">
+                                        <span>当前版本</span>
+                                        <span>2024-01-10 16:30</span>
+                                    </div>
+                                </div>
+                                <div class="document-actions">
+                                    <button class="btn btn-secondary" onclick="viewVersion('v1.0_final')">查看</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="document-card">
+                            <div class="document-header">
+                                <div>
+                                    <div class="document-title">v1.0</div>
+                                    <div class="document-meta">
+                                        <span>初始版本</span>
+                                        <span>2024-01-10 15:30</span>
+                                    </div>
+                                </div>
+                                <div class="document-actions">
+                                    <button class="btn btn-secondary" onclick="viewVersion('v1.0')">查看</button>
+                                    <button class="btn btn-secondary" onclick="compareVersions()">对比</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">版本详情 - <span id="viewVersionTitle">v1.0</span></div>
+                <button class="modal-close" onclick="closeViewModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="version-info">
+                    <div class="version-info-row">
+                        <div class="version-info-label">版本号：</div>
+                        <div class="version-info-value" id="viewVersionNumber">v1.0</div>
+                    </div>
+                    <div class="version-info-row">
+                        <div class="version-info-label">创建时间：</div>
+                        <div class="version-info-value" id="viewVersionTime">2024-01-10 15:30</div>
+                    </div>
+                    <div class="version-info-row">
+                        <div class="version-info-label">创建人：</div>
+                        <div class="version-info-value" id="viewVersionAuthor">张专员</div>
+                    </div>
+                    <div class="version-info-row">
+                        <div class="version-info-label">版本说明：</div>
+                        <div class="version-info-value" id="viewVersionDesc">初始版本</div>
+                    </div>
+                </div>
+                
+                <div class="version-content">
+                    <div class="version-content-title">文档内容概要</div>
+                    <div class="version-content-text" id="viewVersionContent">第一章 招标公告
+本项目为某市政道路改造工程招标项目，现公开招标。
+
+第二章 投标人须知
+1. 投标人资格要求
+2. 投标文件编制要求
+3. 投标截止时间
+
+第三章 交易需求
+工程概况、技术要求、质量标准等
+
+第四章 评审办法
+综合评分法，总分100分
+
+第五章 合同主要条款
+合同双方权利义务、付款方式等</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeViewModal()">关闭</button>
+                <button class="btn btn-primary" onclick="downloadVersion()">下载此版本</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="compareModal">
+        <div class="modal" style="max-width: 1100px;">
+            <div class="modal-header">
+                <div class="modal-title">版本对比</div>
+                <button class="modal-close" onclick="closeCompareModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="compare-container">
+                    <div class="compare-panel">
+                        <div class="compare-panel-title">v1.0 (初始版本)</div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">项目名称</div>
+                            <div class="compare-item-value">某市政道路改造工程招标项目</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">项目预算</div>
+                            <div class="compare-item-value">500万元</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">评审类型</div>
+                            <div class="compare-item-value">人工评审</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">资格要求</div>
+                            <div class="compare-item-value">具备市政工程施工总承包三级及以上资质</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">技术要求</div>
+                            <div class="compare-item-value removed">道路宽度20米，双向四车道</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">工期要求</div>
+                            <div class="compare-item-value">6个月</div>
+                        </div>
+                    </div>
+                    
+                    <div class="compare-panel">
+                        <div class="compare-panel-title">v1.0_final (当前版本)</div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">项目名称</div>
+                            <div class="compare-item-value">某市政道路改造工程招标项目</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">项目预算</div>
+                            <div class="compare-item-value highlight">520万元</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">评审类型</div>
+                            <div class="compare-item-value">人工评审</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">资格要求</div>
+                            <div class="compare-item-value added">具备市政工程施工总承包二级及以上资质，具有类似项目业绩</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">技术要求</div>
+                            <div class="compare-item-value added">道路宽度24米，双向六车道，增设绿化带</div>
+                        </div>
+                        <div class="compare-item">
+                            <div class="compare-item-label">工期要求</div>
+                            <div class="compare-item-value">8个月</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">变更说明</div>
+                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
+                        <div style="margin-bottom: 8px;">
+                            <span style="color: var(--success-color);">● 新增：</span>
+                            资格要求提升为二级资质，增加类似项目业绩要求
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <span style="color: var(--brand-color);">● 修改：</span>
+                            项目预算从500万调整为520万；道路宽度从20米增至24米，车道从四车道增至六车道
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <span style="color: var(--danger-color);">● 删除：</span>
+                            无删除项
+                        </div>
+                        <div>
+                            <span style="color: var(--warning-color);">● 影响：</span>
+                            工期从6个月延长至8个月
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCompareModal()">关闭</button>
+                <button class="btn btn-primary" onclick="exportCompare()">导出对比报告</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal" style="max-width: 1200px; height: 90vh;">
+            <div class="modal-header">
+                <div class="modal-title">文档预览 - 某市政道路改造工程招标项目</div>
+                <button class="modal-close" onclick="closePreviewModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="preview-toolbar">
+                <button class="preview-toolbar-btn active" onclick="switchPreviewPage(1)">封面</button>
+                <button class="preview-toolbar-btn" onclick="switchPreviewPage(2)">招标公告</button>
+                <button class="preview-toolbar-btn" onclick="switchPreviewPage(3)">投标人须知</button>
+                <button class="preview-toolbar-btn" onclick="switchPreviewPage(4)">交易需求</button>
+                <button class="preview-toolbar-btn" onclick="switchPreviewPage(5)">评审办法</button>
+                <button class="preview-toolbar-btn" onclick="switchPreviewPage(6)">合同条款</button>
+                <div class="zoom-controls">
+                    <button class="preview-toolbar-btn" onclick="zoomOut()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                    </button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="preview-toolbar-btn" onclick="zoomIn()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 0; overflow-y: auto; background: #e0e0e0;">
+                <div id="previewContent" style="transform-origin: top center; transition: transform 0.3s;">
+                    <div class="document-preview" id="previewPage1">
+                        <div style="text-align: center; padding: 100px 0;">
+                            <h1 style="font-size: 32px; font-weight: bold; margin-bottom: 40px;">某市政道路改造工程</h1>
+                            <h1 style="font-size: 32px; font-weight: bold; margin-bottom: 80px;">招标文件</h1>
+                            <div style="font-size: 18px; margin-bottom: 20px;">项目编号：ZB-2024-001</div>
+                            <div style="font-size: 18px; margin-bottom: 20px;">招标人：某市住房和城乡建设局</div>
+                            <div style="font-size: 18px; margin-bottom: 20px;">招标代理机构：某市公共资源交易中心</div>
+                            <div style="font-size: 18px; margin-top: 80px;">2024年1月</div>
+                        </div>
+                    </div>
+                    
+                    <div class="document-preview" id="previewPage2" style="display: none;">
+                        <div class="preview-chapter">
+                            <div class="preview-chapter-title">第一章 招标公告</div>
+                            
+                            <div class="preview-section-title">一、招标条件</div>
+                            <div class="preview-paragraph">本招标项目某市政道路改造工程已由某市发展和改革委员会以某发改投资〔2024〕XX号批准建设，项目业主为某市住房和城乡建设局，建设资金来自财政资金，项目出资比例为100%，招标人为某市住房和城乡建设局。项目已具备招标条件，现对该项目的施工进行公开招标。</div>
+                            
+                            <div class="preview-section-title">二、项目概况与招标范围</div>
+                            <div class="preview-paragraph">1. 项目名称：某市政道路改造工程</div>
+                            <div class="preview-paragraph">2. 建设地点：某市城区</div>
+                            <div class="preview-paragraph">3. 建设规模：道路全长约5公里，宽度24米，双向六车道</div>
+                            <div class="preview-paragraph">4. 计划工期：240日历天</div>
+                            <div class="preview-paragraph">5. 招标范围：施工图范围内的道路工程、排水工程、绿化工程等</div>
+                            <div class="preview-paragraph">6. 工程质量要求：合格</div>
+                            
+                            <div class="preview-section-title">三、投标人资格要求</div>
+                            <div class="preview-paragraph">1. 本次招标要求投标人须具备市政公用工程施工总承包二级及以上资质，并在人员、设备、资金等方面具有相应的施工能力。</div>
+                            <div class="preview-paragraph">2. 投标人拟派项目经理须具备市政公用工程专业二级注册建造师执业资格，具备有效的安全生产考核合格证书，且未担任其他在施建设工程项目的项目经理。</div>
+                            <div class="preview-paragraph">3. 本次招标不接受联合体投标。</div>
+                            
+                            <div class="preview-section-title">四、招标文件的获取</div>
+                            <div class="preview-paragraph">1. 招标文件获取时间：2024年1月15日至2024年1月22日（法定公休日、法定节假日除外）。</div>
+                            <div class="preview-paragraph">2. 招标文件获取方式：登录某市公共资源交易中心网站下载。</div>
+                            
+                            <div class="preview-section-title">五、投标文件的递交</div>
+                            <div class="preview-paragraph">1. 投标文件递交的截止时间（投标截止时间，下同）为2024年2月5日9时00分。</div>
+                            <div class="preview-paragraph">2. 递交地点：某市公共资源交易中心开标室。</div>
+                            <div class="preview-paragraph">3. 逾期送达的或者未送达指定地点的投标文件，招标人不予受理。</div>
+                        </div>
+                    </div>
+                    
+                    <div class="document-preview" id="previewPage3" style="display: none;">
+                        <div class="preview-chapter">
+                            <div class="preview-chapter-title">第二章 投标人须知</div>
+                            
+                            <div class="preview-section-title">一、总则</div>
+                            <div class="preview-paragraph">1.1 本次招标的项目名称为某市政道路改造工程，招标人为某市住房和城乡建设局。</div>
+                            <div class="preview-paragraph">1.2 本项目资金来源为财政资金，出资比例100%。</div>
+                            <div class="preview-paragraph">1.3 本项目采用公开招标方式，资格检测方式为资格后审。</div>
+                            
+                            <div class="preview-section-title">二、招标范围及工期</div>
+                            <div class="preview-paragraph">2.1 招标范围：施工图范围内的道路工程、排水工程、绿化工程等。</div>
+                            <div class="preview-paragraph">2.2 计划工期：240日历天。</div>
+                            
+                            <div class="preview-section-title">三、投标人资格要求</div>
+                            <div class="preview-paragraph">3.1 投标人须具备市政公用工程施工总承包二级及以上资质。</div>
+                            <div class="preview-paragraph">3.2 投标人拟派项目经理须具备市政公用工程专业二级注册建造师执业资格。</div>
+                            <div class="preview-paragraph">3.3 投标人须具备有效的安全生产许可证。</div>
+                            
+                            <div class="preview-section-title">四、投标费用</div>
+                            <div class="preview-paragraph">投标人应承担其参加投标所发生的一切费用，不论投标结果如何，招标人均不承担。</div>
+                        </div>
+                    </div>
+                    
+                    <div class="document-preview" id="previewPage4" style="display: none;">
+                        <div class="preview-chapter">
+                            <div class="preview-chapter-title">第三章 交易需求</div>
+                            
+                            <div class="preview-section-title">一、工程概况</div>
+                            <div class="preview-paragraph">本项目为某市政道路改造工程，位于某市城区，道路全长约5公里。主要建设内容包括道路拓宽改造、排水系统升级、绿化带建设等。</div>
+                            
+                            <div class="preview-section-title">二、技术要求</div>
+                            <div class="preview-list">
+                                <div class="preview-list-item">1. 道路宽度：24米，双向六车道</div>
+                                <div class="preview-list-item">2. 路面结构：沥青混凝土路面</div>
+                                <div class="preview-list-item">3. 排水系统：雨污分流，管径DN300-DN1500</div>
+                                <div class="preview-list-item">4. 绿化带：两侧各3米宽绿化带</div>
+                            </div>
+                            
+                            <div class="preview-section-title">三、质量标准</div>
+                            <div class="preview-paragraph">工程质量应符合国家现行工程施工质量验收规范标准，达到合格标准。</div>
+                            
+                            <div class="preview-section-title">四、安全文明施工要求</div>
+                            <div class="preview-paragraph">投标人应制定详细的安全文明施工方案，确保施工安全，减少对周边环境和居民的影响。</div>
+                        </div>
+                    </div>
+                    
+                    <div class="document-preview" id="previewPage5" style="display: none;">
+                        <div class="preview-chapter">
+                            <div class="preview-chapter-title">第四章 评审办法</div>
+                            
+                            <div class="preview-section-title">一、评审方法</div>
+                            <div class="preview-paragraph">本项目采用综合评分法进行评审，总分100分。</div>
+                            
+                            <div class="preview-section-title">二、评分标准</div>
+                            <table class="preview-table">
+                                <thead>
+                                    <tr>
+                                        <th>评审项目</th>
+                                        <th>分值</th>
+                                        <th>评审内容</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>资信评审</td>
+                                        <td>30分</td>
+                                        <td>企业资质、业绩、信誉等</td>
+                                    </tr>
+                                    <tr>
+                                        <td>技术评审</td>
+                                        <td>40分</td>
+                                        <td>施工方案、技术措施、质量保证措施等</td>
+                                    </tr>
+                                    <tr>
+                                        <td>商务评审</td>
+                                        <td>30分</td>
+                                        <td>投标报价</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="preview-section-title">三、中标条件</div>
+                            <div class="preview-paragraph">综合得分最高者为中标候选人。</div>
+                        </div>
+                    </div>
+                    
+                    <div class="document-preview" id="previewPage6" style="display: none;">
+                        <div class="preview-chapter">
+                            <div class="preview-chapter-title">第五章 合同主要条款</div>
+                            
+                            <div class="preview-section-title">一、合同价款</div>
+                            <div class="preview-paragraph">合同价款采用固定单价合同方式确定。</div>
+                            
+                            <div class="preview-section-title">二、付款方式</div>
+                            <div class="preview-list">
+                                <div class="preview-list-item">1. 预付款：合同价的10%</div>
+                                <div class="preview-list-item">2. 进度款：按月支付已完成工程量的70%</div>
+                                <div class="preview-list-item">3. 竣工结算：工程竣工验收合格后支付至结算价的95%</div>
+                                <div class="preview-list-item">4. 质保金：结算价的5%，质保期满后无息返还</div>
+                            </div>
+                            
+                            <div class="preview-section-title">三、工期要求</div>
+                            <div class="preview-paragraph">计划工期240日历天，实际开工日期以开工令为准。</div>
+                            
+                            <div class="preview-section-title">四、质量要求</div>
+                            <div class="preview-paragraph">工程质量应符合国家现行工程施工质量验收规范标准，达到合格标准。</div>
+                            
+                            <div class="preview-section-title">五、保修责任</div>
+                            <div class="preview-paragraph">工程保修期为2年，自工程竣工验收合格之日起计算。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="printPreview()">打印</button>
+                <button class="btn btn-secondary" onclick="closePreviewModal()">关闭</button>
+                <button class="btn btn-primary" onclick="downloadPreview()">下载文档</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        function editProject() {
+            window.location.href = 'project-edit.html';
+        }
+        
+        function publishDocument() {
+            if (confirm('发布后将公开文档，是否继续？')) {
+                alert('文档发布成功！');
+            }
+        }
+        
+        function previewDocument() {
+            document.getElementById('previewModal').classList.add('active');
+        }
+        
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+        
+        let currentZoom = 100;
+        
+        function switchPreviewPage(pageNum) {
+            document.querySelectorAll('.preview-toolbar-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            for (let i = 1; i <= 6; i++) {
+                const page = document.getElementById('previewPage' + i);
+                if (page) {
+                    page.style.display = i === pageNum ? 'block' : 'none';
+                }
+            }
+        }
+        
+        function zoomIn() {
+            if (currentZoom < 150) {
+                currentZoom += 10;
+                updateZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (currentZoom > 50) {
+                currentZoom -= 10;
+                updateZoom();
+            }
+        }
+        
+        function updateZoom() {
+            document.getElementById('zoomLevel').textContent = currentZoom + '%';
+            document.getElementById('previewContent').style.transform = 'scale(' + (currentZoom / 100) + ')';
+        }
+        
+        function printPreview() {
+            window.print();
+        }
+        
+        function downloadPreview() {
+            alert('正在生成并下载Word文档...');
+        }
+        
+        function exportDocument() {
+            alert('导出文档为Word格式');
+        }
+        
+        function previewDraft() {
+            alert('预览招标文件初稿功能');
+        }
+        
+        function downloadDraft() {
+            alert('下载招标文件初稿功能');
+        }
+        
+        function viewVersion(version) {
+            const versionData = {
+                'v1.0_final': {
+                    number: 'v1.0_final',
+                    time: '2024-01-10 16:30',
+                    author: '张专员',
+                    desc: '当前版本 - 检测通过版本',
+                    content: '第一章 招标公告\n本项目为某市政道路改造工程招标项目，现公开招标。\n\n第二章 投标人须知\n1. 投标人资格要求\n2. 投标文件编制要求\n3. 投标截止时间\n\n第三章 交易需求\n工程概况、技术要求、质量标准等\n\n第四章 评审办法\n综合评分法，总分100分\n资信评审30分、技术评审40分、商务评审30分\n\n第五章 合同主要条款\n合同双方权利义务、付款方式等\n\n变更说明：\n- 项目预算调整为520万元\n- 资格要求提升为二级资质\n- 技术要求增加绿化带建设'
+                },
+                'v1.0': {
+                    number: 'v1.0',
+                    time: '2024-01-10 15:30',
+                    author: '张专员',
+                    desc: '初始版本',
+                    content: '第一章 招标公告\n本项目为某市政道路改造工程招标项目，现公开招标。\n\n第二章 投标人须知\n1. 投标人资格要求\n2. 投标文件编制要求\n3. 投标截止时间\n\n第三章 交易需求\n工程概况、技术要求、质量标准等\n\n第四章 评审办法\n综合评分法，总分100分\n\n第五章 合同主要条款\n合同双方权利义务、付款方式等'
+                }
+            };
+            
+            const data = versionData[version] || versionData['v1.0'];
+            
+            document.getElementById('viewVersionTitle').textContent = data.number;
+            document.getElementById('viewVersionNumber').textContent = data.number;
+            document.getElementById('viewVersionTime').textContent = data.time;
+            document.getElementById('viewVersionAuthor').textContent = data.author;
+            document.getElementById('viewVersionDesc').textContent = data.desc;
+            document.getElementById('viewVersionContent').textContent = data.content;
+            
+            document.getElementById('viewModal').classList.add('active');
+        }
+        
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('active');
+        }
+        
+        function downloadVersion() {
+            const version = document.getElementById('viewVersionNumber').textContent;
+            alert('正在下载版本 ' + version + ' 的文档...');
+        }
+        
+        function compareVersions() {
+            document.getElementById('compareModal').classList.add('active');
+        }
+        
+        function closeCompareModal() {
+            document.getElementById('compareModal').classList.remove('active');
+        }
+        
+        function exportCompare() {
+            alert('正在导出版本对比报告...');
+        }
+        
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.style.getPropertyValue('--bg-primary');
+            
+            if (currentTheme === '#FFFFFF') {
+                body.style.setProperty('--bg-primary', '#0F1419');
+                body.style.setProperty('--bg-secondary', '#1A1F26');
+                body.style.setProperty('--bg-tertiary', '#242B33');
+                body.style.setProperty('--text-primary', '#F0F2F5');
+                body.style.setProperty('--text-secondary', '#B9BBBE');
+            } else {
+                body.style.setProperty('--bg-primary', '#FFFFFF');
+                body.style.setProperty('--bg-secondary', '#F8F9FA');
+                body.style.setProperty('--bg-tertiary', '#F1F3F4');
+                body.style.setProperty('--text-primary', '#1F2937');
+                body.style.setProperty('--text-secondary', '#4B5563');
+            }
+        }
+        
+        document.getElementById('viewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeViewModal();
+            }
+        });
+        
+        document.getElementById('compareModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCompareModal();
+            }
+        });
+        
+        document.getElementById('previewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePreviewModal();
+            }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeViewModal();
+                closeCompareModal();
+                closePreviewModal();
+            }
+        });
+    </script>
+</body>
+</html>
