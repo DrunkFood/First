@@ -1,10 +1,10 @@
-# CLAUDE.md - 招标文件AI编制工具
+# CLAUDE.md
 
 本文件定义在本仓库内工作的 Agent 协作规范。除非用户明确要求，否则优先遵循本文档。
 
 ## 项目概览
 
-EleTender 电子招标平台，前端 SPA + 后端 Spring Boot 微服务。
+招标文件AI编制工具平台，前端 SPA + 后端 Spring Boot 微服务。
 
 **技术基线**: JDK 21 · Spring Boot 3.2.2 · MyBatis-Plus 3.5.5 · MySQL 8.4.0
 

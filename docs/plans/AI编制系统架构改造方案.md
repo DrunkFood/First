@@ -36,6 +36,25 @@
 
 ## 二、模块复用评估
 
+**前端**: `ele-ai-tender-frout/` — 前端 (Vue3 + TS + Pinia)
+
+| 模块 | 端口 | 职责 | 详细文档 |
+|------|------|------|----------|
+| `ele-ai-tender-support-frontend` | — | 电子标系统支撑中心前端 |
+| `ele-ai-tender-frontend` | — | AI编制服务前端 |
+
+**后端架构**: `ele-ai-tender-system/` — Maven 多模块
+
+| 模块 | 端口 | 职责 | 详细文档 |
+|------|------|------|----------|
+| `ele-ai-tender-common` | — | 公共实体、工具类、异常、统一响应 |
+| `ele-ai-tender-interaction` | — | 业务系统接入 Starter（JDK8兼容） |
+| `ele-ai-tender-common-interaction` | — | 交互协议 DTO/SPI/路径常量（JDK8兼容） |
+| `ele-ai-tender-support` | 8080 | 认证、用户、角色、菜单、版本、外部系统、模板管理、知识库管理、统计分析、AI服务配置、操作日志、消息中心 |
+| `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除 |
+| `ele-ai-tender-core` | 8082 | AI编制服务核心业务模块（业务需求编制、项目管理、文档生成、评审项管理） |
+| `ele-ai-tender-ai` | 8083 | AI服务模块（合并AI、知识库、智能检测） |
+
 ### 2.1 高度复用（直接可用，无需改造）
 
 | 模块 | 复用内容 | 应用点 |
