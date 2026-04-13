@@ -1,5 +1,12 @@
 server:
   port: ${SERVER_PORT:8083}
+  servlet:
+    encoding:
+      enabled: true
+      charset: UTF-8
+      force: true
+      force-request: true
+      force-response: true
 
 spring:
   application:
@@ -49,8 +56,11 @@ milvus:
 jwt:
   secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
   expiration: 7200
+  external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
 
 logging:
+  pattern:
+    level: "%5p [traceId:%X{traceId:-}]"
   level:
     com.jy.eleaitender.ai: debug
     org.springframework.ai: info
