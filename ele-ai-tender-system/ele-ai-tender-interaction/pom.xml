@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.jy.eleaitender</groupId>
+        <artifactId>ele-ai-tender-system</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>ele-ai-tender-interaction</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Ele AI Tender Interaction</name>
+    <description>Interaction starter aggregation module (JDK8 compatible)</description>
+
+    <properties>
+        <interaction.java.version>8</interaction.java.version>
+        <interaction.spring-boot.version>2.7.18</interaction.spring-boot.version>
+        <interaction.common.version>${project.version}</interaction.common.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Override parent BOM: use Spring Boot 2.7.18 for JDK8 compatibility -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${interaction.spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.jy.eleaitender</groupId>
+                <artifactId>ele-ai-tender-common-interaction</artifactId>
+                <version>${interaction.common.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>ele-ai-tender-interaction-core</module>
+        <module>ele-ai-tender-interaction-autoconfigure</module>
+        <module>ele-ai-tender-interaction-spring-boot-starter</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <release>${interaction.java.version}</release>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
