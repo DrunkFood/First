@@ -67,6 +67,25 @@ const staticRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/version/plugins.vue'),
         meta: { title: '插件管理', icon: 'Coordinate' },
       },
+      // AI编制支撑管理
+      {
+        path: 'template',
+        name: 'TemplateManagement',
+        component: () => import('@/views/template/TemplateList.vue'),
+        meta: { title: '模板管理', icon: 'Document' },
+      },
+      {
+        path: 'knowledge',
+        name: 'KnowledgeManagement',
+        component: () => import('@/views/knowledge/KnowledgeList.vue'),
+        meta: { title: '知识库管理', icon: 'Collection' },
+      },
+      {
+        path: 'model-config',
+        name: 'ModelConfigManagement',
+        component: () => import('@/views/model-config/ModelConfigList.vue'),
+        meta: { title: 'AI模型配置', icon: 'Setting' },
+      },
     ],
   },
   {
