@@ -73,7 +73,7 @@
 
         <!-- Spring AI -->
         <dependency>
-            <groupId>org.springframework.ai</groupId>
+            <groupId>group.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
             <version>${spring-ai.version}</version>
         </dependency>

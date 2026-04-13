@@ -1,0 +1,56 @@
+package com.jy.eleaitender.core.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.jy.eleaitender.common.entity.base.BaseEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.math.BigDecimal;
+
+/**
+ * 业务需求实体
+ * 对应表: ai_requirement
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("ai_requirement")
+@Schema(description = "业务需求")
+public class AiRequirement extends BaseEntity {
+
+    @Schema(description = "需求名称")
+    private String requirementName;
+
+    @Schema(description = "项目类别")
+    private String projectCategory;
+
+    @Schema(description = "项目类型")
+    private String projectType;
+
+    @Schema(description = "预算价(万元)")
+    private BigDecimal budget;
+
+    @Schema(description = "需求描述")
+    private String requirementDescription;
+
+    @Schema(description = "匹配模式")
+    private String matchMode;
+
+    @Schema(description = "匹配的历史文件ID")
+    private Long matchedFileId;
+
+    @Schema(description = "匹配度百分比")
+    private BigDecimal matchedSimilarity;
+
+    @Schema(description = "上传的文件ID")
+    private Long uploadedFileId;
+
+    @Schema(description = "关联的项目ID")
+    private Long projectId;
+
+    @Schema(description = "业务需求内容")
+    private String content;
+
+    @Schema(description = "状态")
+    private String status;
+}

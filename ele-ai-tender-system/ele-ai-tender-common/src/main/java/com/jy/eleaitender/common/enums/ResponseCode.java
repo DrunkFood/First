@@ -64,7 +64,51 @@ public enum ResponseCode {
     BID_DECRYPT_NATIVE_ERROR(7010, "原生解密调用失败"),
     BID_DECRYPT_PARSE_ERROR(7011, "解密结果解析失败"),
     BID_DECRYPT_DUPLICATE_REQUEST(7012, "重复解密请求"),
-    BID_DECRYPT_INTERNAL_ERROR(7013, "解密系统内部错误");
+    BID_DECRYPT_INTERNAL_ERROR(7013, "解密系统内部错误"),
+
+    // AI编制系统相关 8001-8999
+    // 项目相关 8001-8009
+    PROJECT_NOT_FOUND(8001, "项目不存在"),
+    PROJECT_EXISTS(8002, "项目已存在"),
+    PROJECT_STATUS_ERROR(8003, "项目状态错误"),
+    PROJECT_CODE_GENERATE_ERROR(8004, "项目编号生成失败"),
+
+    // 需求相关 8011-8019
+    REQUIREMENT_NOT_FOUND(8011, "需求不存在"),
+    REQUIREMENT_STATUS_ERROR(8012, "需求状态错误"),
+    REQUIREMENT_MATCH_ERROR(8013, "需求模板匹配失败"),
+
+    // 模板相关 8021-8029
+    TEMPLATE_NOT_FOUND(8021, "模板不存在"),
+    TEMPLATE_EXISTS(8022, "模板已存在"),
+    TEMPLATE_SET_DEFAULT_ERROR(8023, "设置默认模板失败"),
+    TEMPLATE_STATUS_ERROR(8024, "模板状态错误"),
+
+    // 评审项相关 8031-8039
+    REVIEW_ITEM_NOT_FOUND(8031, "评审项不存在"),
+    REVIEW_ITEM_TREE_ERROR(8032, "评审项树构建失败"),
+    REVIEW_ITEM_CASCADE_DELETE_ERROR(8033, "评审项级联删除失败"),
+
+    // 版本相关 8041-8049
+    VERSION_SNAPSHOT_ERROR(8041, "版本快照创建失败"),
+    VERSION_COMPARE_ERROR(8042, "版本对比失败"),
+
+    // 知识库相关 8051-8059
+    KNOWLEDGE_NOT_FOUND(8051, "知识文档不存在"),
+    KNOWLEDGE_UPLOAD_ERROR(8052, "知识文档上传失败"),
+    KNOWLEDGE_PARSE_ERROR(8053, "知识文档解析失败"),
+    KNOWLEDGE_VECTOR_ERROR(8054, "知识文档向量化失败"),
+
+    // 检测相关 8061-8069
+    DETECTION_NOT_FOUND(8061, "检测记录不存在"),
+    DETECTION_STATUS_ERROR(8062, "检测状态错误"),
+    DETECTION_START_ERROR(8063, "启动检测失败"),
+    DETECTION_CONFIRM_ERROR(8064, "确认检测结果失败"),
+
+    // 模型配置相关 8071-8079
+    MODEL_CONFIG_NOT_FOUND(8071, "模型配置不存在"),
+    MODEL_CONFIG_ENCRYPT_ERROR(8072, "模型密钥加密失败"),
+    MODEL_CONFIG_ACTIVE_ERROR(8073, "激活模型配置失败");
 
     private final int code;
     private final String message;
