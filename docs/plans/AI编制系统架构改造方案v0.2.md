@@ -93,7 +93,7 @@
 ele-ai-tender-system/
 ├── pom.xml                          # 父POM，管理依赖版本
 │
-├── ele-ai-tender-common/            # 公共模块（JDK8兼容）
+├── ele-ai-tender-common/            # 公共模块（JDK17+，依赖Spring Boot 3）
 │   ├── pom.xml
 │   └── src/main/java/
 │       └── com/jy/eleaitender/common/
@@ -156,7 +156,8 @@ ele-ai-tender-system/
 │       └── com/jy/eleaitender/support/
 │           ├── SupportApplication.java
 │           ├── controller/
-│           │   ├── AuthController.java          # 认证
+│           │   ├── AuthController.java          # 认证（账密登录+手机号验证码登录）
+│           │   ├── SmsController.java           # 短信验证码
 │           │   ├── UserController.java          # 用户管理
 │           │   ├── RoleController.java          # 角色管理
 │           │   ├── MenuController.java          # 菜单管理
@@ -457,29 +458,36 @@ ele-ai-tender-frontend/
 
 #### Vite代理配置（ele-ai-tender-frontend）
 
+与现有 `ele-tender-support-frontend` 的代理风格保持一致，使用 `/xxx-api` 前缀：
+
 ```typescript
 // vite.config.ts
 export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // 代理到core模块 (8082)
-      '/api/core': {
+      // 代理到core模块 (8082) — 业务接口
+      '/core-api': {
         target: 'http://localhost:8082',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/core/, '/api/v1')
+        rewrite: (path) => path.replace(/^\/core-api/, '/api')
       },
-      // 代理到ai模块 (8083)
-      '/api/ai': {
+      // 代理到ai模块 (8083) — AI接口
+      '/ai-api': {
         target: 'http://localhost:8083',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/ai/, '/api/v1')
+        rewrite: (path) => path.replace(/^\/ai-api/, '/api')
       },
-      // 代理到file模块 (8081)
-      '/api/file': {
+      // 代理到file模块 (8081) — 文件接口
+      '/file-api': {
         target: 'http://localhost:8081',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/file/, '/api/v1')
+      },
+      // 代理到support模块 (8080) — 认证/用户接口
+      '/support-api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/support-api/, '/api')
       }
     }
   }
@@ -488,23 +496,24 @@ export default defineConfig({
 
 #### Vite代理配置（ele-ai-tender-support-frontend）
 
+与现有 `ele-tender-support-frontend` 的代理风格保持一致：
+
 ```typescript
 // vite.config.ts
 export default defineConfig({
   server: {
     port: 5174,
     proxy: {
-      // 代理到file模块 (8081) — 必须在 /api 之前，否则会被 /api 先匹配
-      '/api/file': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/file/, '/api/v1')
-      },
-      // 代理到support模块 (8080)
-      '/api': {
+      // 代理到support模块 (8080) — 业务接口
+      '/support-api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api/v1')
+        rewrite: (path) => path.replace(/^\/support-api/, '/api')
+      },
+      // 代理到file模块 (8081) — 文件接口
+      '/file-api': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
       }
     }
   }
@@ -527,8 +536,9 @@ CREATE TABLE ai_project (
     service_sub_type VARCHAR(50) COMMENT '服务子类型:PROPERTY/IT_SERVICE/CONSULTING/MAINTENANCE',
     budget DECIMAL(15,2) COMMENT '预算金额(万元)',
     review_type VARCHAR(20) COMMENT '评审类型:MANUAL/INTELLIGENT',
-    status VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态:DRAFT/IN_PROGRESS/PENDING_DETECTION/DETECTING/DETECTION_PASSED/DETECTION_FAILED/PUBLISHED/ARCHIVED/CANCELLED',
+    status VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态:DRAFT/IN_PROGRESS/PENDING_DETECTION/DETECTING/DETECTION_PASSED/DETECTION_FAILED/DETECTION_SKIPPED/PUBLISHED/ARCHIVED/CANCELLED',
     template_id BIGINT COMMENT '使用的模板ID',
+    requirement_id BIGINT COMMENT '关联的业务需求ID',
     requirement_source VARCHAR(20) COMMENT '需求来源:REFERENCE/AI_GENERATED',
     requirement_content TEXT COMMENT '招标需求内容',
     creator_id BIGINT COMMENT '创建人ID',
@@ -567,6 +577,7 @@ CREATE TABLE ai_requirement (
     matched_file_id BIGINT COMMENT '匹配的历史文件ID',
     matched_similarity DECIMAL(5,2) COMMENT '匹配度百分比',
     uploaded_file_id BIGINT COMMENT '上传的文件ID',
+    project_id BIGINT COMMENT '关联的项目ID',
     content TEXT COMMENT '业务需求内容',
     status VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态',
     creator_id BIGINT COMMENT '创建人ID',
@@ -677,6 +688,48 @@ CREATE TABLE ai_model_config (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型配置表';
 ```
 
+#### 消息中心相关
+```sql
+-- 消息表
+CREATE TABLE ai_message (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '接收用户ID',
+    title VARCHAR(200) NOT NULL COMMENT '消息标题',
+    content TEXT COMMENT '消息内容',
+    message_type VARCHAR(20) NOT NULL COMMENT '消息类型:SYSTEM/AUDIT/DETECTION/WARNING',
+    biz_id BIGINT COMMENT '关联业务ID(项目ID等)',
+    biz_type VARCHAR(20) COMMENT '关联业务类型:PROJECT/REQUIREMENT/DETECTION',
+    is_read TINYINT(1) DEFAULT 0 COMMENT '是否已读',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    INDEX idx_type (message_type),
+    INDEX idx_read (is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息表';
+```
+
+#### 操作日志相关
+```sql
+-- 操作日志表
+CREATE TABLE ai_access_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT COMMENT '操作用户ID',
+    username VARCHAR(50) COMMENT '用户名',
+    operation VARCHAR(200) NOT NULL COMMENT '操作描述',
+    module VARCHAR(50) COMMENT '模块:PROJECT/REQUIREMENT/TEMPLATE/DETECTION/KNOWLEDGE/AI_CONFIG',
+    method VARCHAR(10) COMMENT 'HTTP方法',
+    url VARCHAR(500) COMMENT '请求URL',
+    ip VARCHAR(50) COMMENT 'IP地址',
+    params TEXT COMMENT '请求参数',
+    result TEXT COMMENT '返回结果',
+    status TINYINT(1) DEFAULT 1 COMMENT '操作状态:1成功/0失败',
+    duration BIGINT COMMENT '耗时(毫秒)',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    INDEX idx_module (module),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';
+```
+
 ### 3.2 Redis数据结构
 
 ```
@@ -750,6 +803,7 @@ POST   /api/v1/ai/chat                     # 对话式AI助手
 
 ```
 POST   /api/v1/detection/start             # 启动检测
+POST   /api/v1/detection/skip              # 跳过检测（用户自主选择跳过）
 GET    /api/v1/detection/{id}/status       # 查询检测状态
 GET    /api/v1/detection/{id}/result       # 获取检测结果
 POST   /api/v1/detection/{id}/confirm      # 确认检测结果
@@ -765,7 +819,17 @@ POST   /api/v1/knowledge/retrieve          # 检索知识(向量检索)
 POST   /api/v1/knowledge/vectorize         # 手动触发向量化
 ```
 
-### 4.7 评审项接口
+### 4.7 政策文件管理接口
+
+```
+POST   /api/v1/policy-documents            # 上传政策文件
+GET    /api/v1/policy-documents            # 查询政策文件列表
+GET    /api/v1/policy-documents/{id}       # 获取政策文件详情
+DELETE /api/v1/policy-documents/{id}       # 删除政策文件
+POST   /api/v1/policy-documents/{id}/parse # 触发文件解析
+```
+
+### 4.8 评审项接口
 
 ```
 POST   /api/v1/review-items                # 创建评审项
@@ -815,10 +879,21 @@ GET    /api/v1/review-items/{projectId}/export  # 导出评审项JSON
 | 交互层SPI | 回调机制 | AI生成回调、知识库查询接口 |
 
 #### 服务调用（通过HTTP API）
-- **core模块调用support模块**: 用户认证、权限校验
+- **core模块调用support模块**: 用户认证（Token验证）、权限校验
 - **core模块调用file模块**: 文件上传/下载
 - **ai模块调用file模块**: 知识库文件管理
 - **core模块调用ai模块**: AI生成、文本优化、智能检测
+
+#### 用户认证方案
+AI系统**自建用户表**（独立数据库db=6），不跨库直连现有系统用户表。认证流程：
+1. 用户登录 → support模块验证 → 返回JWT Token
+2. core/ai模块收到请求 → 调用support模块的Token验证接口 → 获取用户信息
+3. 管理端和用户端权限通过support模块的RBAC体系独立管理
+
+#### 文档生成职责边界
+- **core模块（业务编排）**: 负责"何时生成"——组装参数、调用ai模块、管理文档记录、版本快照
+- **ai模块（生成能力）**: 负责"如何生成"——Markdown→Word实际转换、模板渲染、格式处理
+- 调用链路: `core DocumentService` → HTTP调用 → `ai WordGenerator`
 
 ### 5.3 数据隔离策略
 
@@ -827,7 +902,7 @@ GET    /api/v1/review-items/{projectId}/export  # 导出评审项JSON
 | MySQL | db=5 | db=6 | 独立数据库，避免数据污染 |
 | Redis | db=5 | db=6 | 独立缓存空间 |
 | 文件存储 | /data/ele-tender/files | /data/ele-ai-tender/files | 独立存储路径 |
-| 用户体系 | 复用 | 复用 | 共享ele-tender-support用户表 |
+| 用户体系 | 独立 | 独立 | AI系统自建用户表，通过HTTP API调用support模块验证Token（不跨库直连） |
 
 ### 5.4 交互协议扩展
 
@@ -1081,7 +1156,7 @@ public class StreamResponseService {
         <mysql.version>8.4.0</mysql.version>
         
         <!-- AI相关依赖 -->
-        <spring-ai.version>0.8.1</spring-ai.version>
+        <spring-ai.version>1.0.0</spring-ai.version>
         <milvus-sdk.version>2.3.3</milvus-sdk.version>
         <tika.version>2.9.0</tika.version>
         <poi-tl.version>1.12.0</poi-tl.version>
@@ -1214,7 +1289,7 @@ file:
 ### 模块设计原则
 
 #### 后端模块
-- **ele-ai-tender-common**: 公共实体、工具类、异常体系（JDK8兼容）
+- **ele-ai-tender-common**: 公共实体、工具类、异常体系（JDK17+，依赖Spring Boot 3/MyBatis-Plus 3）
 - **ele-ai-tender-common-interaction**: 交互协议DTO/SPI（JDK8兼容，供第三方系统接入）
 - **ele-ai-tender-interaction**: 业务系统接入Starter聚合模块（含core/autoconfigure/spring-boot-starter三个子模块，JDK8兼容）
 - **ele-ai-tender-support** (8080): 支撑中心（认证、权限、模板配置、知识库配置、统计等）
@@ -1233,7 +1308,7 @@ file:
 4. **AI策略**: 混合模型架构（生成本地化 + 优化云端化）
 5. **数据库**: 独立MySQL实例（db=6），独立Redis（db=6）
 6. **模块粒度**: 参考EleTender现有架构，分为支撑、文件、核心业务、AI服务四层；高度复用现有代码，无Maven依赖耦合
-7. **JDK兼容**: common和interaction模块JDK8兼容，供外部系统使用
+7. **JDK兼容**: common模块JDK17+（依赖Spring Boot 3）；common-interaction和interaction三子模块JDK8兼容，供外部系统使用
 
 ### 风险控制
 1. **技术风险**: 向量检索和Markdown转Word需技术预研（1周POC）
