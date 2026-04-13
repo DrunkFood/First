@@ -29,7 +29,11 @@ public class MenuServiceImpl implements IMenuService {
         if (loginUser == null || loginUser.getUserId() == null) {
             return new ArrayList<>();
         }
-        
+        if (loginUser.getRoles().contains("1")) {
+            // 超级管理员角色可以看到全部菜单
+            return getMenuTree();
+        }
+
         List<SysMenu> menus = menuMapper.selectMenusByUserId(loginUser.getUserId());
         return buildMenuTree(menus);
     }
@@ -85,7 +89,7 @@ public class MenuServiceImpl implements IMenuService {
 
         // 获取根菜单（parentId = 0）
         List<SysMenu> rootMenus = menuMap.getOrDefault(0L, new ArrayList<>());
-        
+
         // 递归设置子菜单
         for (SysMenu rootMenu : rootMenus) {
             setChildren(rootMenu, menuMap);
@@ -113,7 +117,7 @@ public class MenuServiceImpl implements IMenuService {
             int orderB = b.getSortOrder() != null ? b.getSortOrder() : 0;
             return orderA - orderB;
         });
-        
+
         for (SysMenu child : children) {
             setChildren(child, menuMap);
         }

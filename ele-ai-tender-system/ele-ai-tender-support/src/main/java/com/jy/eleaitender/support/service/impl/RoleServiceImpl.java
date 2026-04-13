@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.support.SysRole;
 import com.jy.eleaitender.common.entity.support.SysRoleMenu;
+import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.support.mapper.SysRoleMapper;
 import com.jy.eleaitender.support.mapper.SysRoleMenuMapper;
 import com.jy.eleaitender.support.service.IRoleService;
@@ -71,11 +72,17 @@ public class RoleServiceImpl implements IRoleService {
 
     @Override
     public void updateRole(SysRole role) {
+        if (role.getId() == 1L) {
+            throw new BusinessException("超级管理员角色不能修改");
+        }
         roleMapper.updateById(role);
     }
 
     @Override
     public void deleteRole(Long id) {
+        if (id == 1L) {
+            throw new BusinessException("超级管理员角色不能修改");
+        }
         roleMapper.deleteById(id);
     }
 
