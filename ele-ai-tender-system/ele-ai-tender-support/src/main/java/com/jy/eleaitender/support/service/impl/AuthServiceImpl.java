@@ -10,6 +10,7 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.util.JwtUtil;
 import com.jy.eleaitender.common.util.PasswordUtil;
 import com.jy.eleaitender.common.util.SignatureUtil;
+import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
@@ -19,6 +20,7 @@ import com.jy.eleaitender.support.mapper.SysUserMapper;
 import com.jy.eleaitender.common.security.LoginUser;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.support.service.IAuthService;
+import com.jy.eleaitender.support.service.ISmsService;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueCommand;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueResult;
 import com.jy.eleaitender.support.model.external.ExternalUserInfoView;
@@ -49,6 +51,9 @@ public class AuthServiceImpl implements IAuthService {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private ISmsService smsService;
 
     @Value("${jwt.expiration:7200}")
     private long tokenExpireSeconds;
@@ -127,6 +132,66 @@ public class AuthServiceImpl implements IAuthService {
         response.setUserInfo(userInfo);
 
         log.info("用户[{}]登录成功", user.getUsername());
+        return response;
+    }
+
+    @Override
+    public UserLoginResponse phoneLogin(PhoneLoginRequest request) {
+        // 验证短信验证码
+        boolean valid = smsService.verifyCode(request.getPhone(), request.getCode());
+        if (!valid) {
+            throw new BusinessException("验证码错误或已过期");
+        }
+
+        // 查询用户（通过手机号）
+        SysUser user = userMapper.selectByPhone(request.getPhone());
+        if (user == null) {
+            throw new BusinessException("该手机号未注册");
+        }
+
+        // 检查用户状态
+        if (user.getStatus() != 1) {
+            throw new AuthException(ResponseCode.USER_DISABLED);
+        }
+
+        // 生成Token
+        long tokenExpireSeconds = resolveTokenExpireSeconds();
+        String token = JwtUtil.generateToken(user.getId(), user.getUsername(), tokenExpireSeconds * 1000);
+
+        // 存储Token到Redis
+        String redisKey = RedisKeyConstant.TOKEN_PREFIX + user.getId();
+        redisTemplate.opsForValue().set(redisKey, token, 
+                tokenExpireSeconds, TimeUnit.SECONDS);
+
+        // 加载用户权限并缓存
+        List<String> permissions = userMapper.selectPermissionsByUserId(user.getId());
+        String permissionKey = RedisKeyConstant.USER_PERMISSIONS_PREFIX + user.getId();
+        redisTemplate.delete(permissionKey);
+        if (permissions != null && !permissions.isEmpty()) {
+            redisTemplate.opsForSet().add(permissionKey, permissions.toArray(new String[0]));
+            redisTemplate.expire(permissionKey, RedisKeyConstant.PERMISSION_CACHE_EXPIRE_SECONDS, TimeUnit.SECONDS);
+        }
+
+        // 更新最后登录时间
+        user.setLastLoginTime(new Date());
+        userMapper.updateById(user);
+
+        // 构建响应
+        UserLoginResponse response = new UserLoginResponse();
+        response.setToken(token);
+        response.setExpireIn(tokenExpireSeconds);
+        response.setPermissions(permissions);
+
+        UserLoginResponse.UserInfo userInfo = new UserLoginResponse.UserInfo();
+        userInfo.setUserId(user.getId());
+        userInfo.setUsername(user.getUsername());
+        userInfo.setRealName(user.getRealName());
+        userInfo.setEmail(user.getEmail());
+        userInfo.setPhone(user.getPhone());
+        userInfo.setRoles(userMapper.selectRoleCodesByUserId(user.getId()));
+        response.setUserInfo(userInfo);
+
+        log.info("用户[{}]通过手机验证码登录成功", user.getUsername());
         return response;
     }
 

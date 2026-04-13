@@ -1,6 +1,8 @@
 package com.jy.eleaitender.support.controller;
 
 import com.jy.eleaitender.common.response.Result;
+import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
+import com.jy.eleaitender.common.dto.request.SendSmsCodeRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.common.entity.support.SysMenu;
@@ -8,6 +10,7 @@ import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.support.service.IAuthService;
 import com.jy.eleaitender.support.service.IMenuService;
+import com.jy.eleaitender.support.service.ISmsService;
 import com.jy.eleaitender.support.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,10 +38,27 @@ public class AuthController {
     @Autowired
     private IUserService userService;
 
+    @Autowired
+    private ISmsService smsService;
+
     @PostMapping("/login")
     @Operation(summary = "用户登录")
     public Result<UserLoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
         UserLoginResponse response = authService.login(request);
+        return Result.success(response);
+    }
+
+    @PostMapping("/send-sms-code")
+    @Operation(summary = "发送手机验证码")
+    public Result<String> sendSmsCode(@Valid @RequestBody SendSmsCodeRequest request) {
+        String code = smsService.sendSmsCode(request.getPhone());
+        return Result.success(code); // 仅测试用，实际不返回验证码
+    }
+
+    @PostMapping("/phone-login")
+    @Operation(summary = "手机验证码登录")
+    public Result<UserLoginResponse> phoneLogin(@Valid @RequestBody PhoneLoginRequest request) {
+        UserLoginResponse response = authService.phoneLogin(request);
         return Result.success(response);
     }
 

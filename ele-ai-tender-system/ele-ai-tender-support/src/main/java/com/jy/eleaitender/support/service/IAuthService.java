@@ -1,5 +1,6 @@
 package com.jy.eleaitender.support.service;
 
+import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueCommand;
@@ -18,6 +19,14 @@ public interface IAuthService {
      * @return 登录响应
      */
     UserLoginResponse login(UserLoginRequest request);
+
+    /**
+     * 手机验证码登录
+     *
+     * @param request 手机验证码登录请求
+     * @return 登录响应
+     */
+    UserLoginResponse phoneLogin(PhoneLoginRequest request);
 
     /**
      * 用户登出

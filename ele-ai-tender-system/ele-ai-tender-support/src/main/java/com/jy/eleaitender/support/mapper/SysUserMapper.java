@@ -22,6 +22,12 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     SysUser selectByUsername(@Param("username") String username);
 
     /**
+     * 根据手机号查询用户
+     */
+    @Select("SELECT * FROM sup_user WHERE phone = #{phone} AND is_delete = 0")
+    SysUser selectByPhone(@Param("phone") String phone);
+
+    /**
      * 根据用户ID查询角色编码列表
      */
     @Select("SELECT r.role_code FROM sup_role r " +

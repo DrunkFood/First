@@ -1,12 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { isLoggedIn } from '@/utils/auth'
+import Login from '@/views/auth/Login.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
+import { useUserStore } from '@/store/user'
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    meta: { title: '登录', guest: true },
+  },
+  {
     path: '/',
     component: MainLayout,
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -65,12 +73,30 @@ const router = createRouter({
   routes,
 })
 
+// 路由守卫
 router.beforeEach((to, _from, next) => {
-  if (to.path !== '/login' && !isLoggedIn()) {
-    next('/login')
-  } else {
-    next()
+  const userStore = useUserStore()
+  const token = userStore.token || localStorage.getItem('token')
+
+  // 设置页面标题
+  document.title = to.meta.title ? `${to.meta.title} - AI招标文件编制` : 'AI招标文件编制'
+
+  // 如果访问登录页且已登录，重定向到首页
+  if (to.meta.guest && token) {
+    next('/')
+    return
   }
+
+  // 如果路由需要认证但未登录，重定向到登录页
+  if (to.meta.requiresAuth && !token) {
+    next({
+      path: '/login',
+      query: { redirect: to.fullPath },
+    })
+    return
+  }
+
+  next()
 })
 
 export default router
