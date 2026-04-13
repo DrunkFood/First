@@ -29,7 +29,7 @@ public class MenuServiceImpl implements IMenuService {
         if (loginUser == null || loginUser.getUserId() == null) {
             return new ArrayList<>();
         }
-        if (loginUser.getRoles().contains("1")) {
+        if (loginUser.getUserId() == 1L) {
             // 超级管理员角色可以看到全部菜单
             return getMenuTree();
         }
