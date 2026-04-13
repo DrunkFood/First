@@ -47,8 +47,6 @@
 - `.zip`
 - `.tar.gz`
 - `.pdf`
-- `.HzctZbs`（默认招标文件后缀，可按接入系统配置）
-- `.HzctTbs`（默认投标文件后缀，可按接入系统配置）
 
 > 若接入系统配置了自定义后缀，需在 `file.storage.allowed-types` 中手动添加对应后缀。
 

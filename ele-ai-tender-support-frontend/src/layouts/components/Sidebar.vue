@@ -3,7 +3,7 @@
     <div class="brand">
       <div class="brand-mark">ET</div>
       <div v-if="!isCollapse" class="brand-text">
-        <div class="brand-name">EleTender</div>
+        <div class="brand-name">EleAITender</div>
         <div class="brand-desc">Support Console</div>
       </div>
     </div>

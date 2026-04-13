@@ -119,7 +119,7 @@ function isPathAuthorized(path: string, allowedPaths: Set<string>) {
 // 路由守卫
 router.beforeEach(async (to, _from, next) => {
   // 设置页面标题
-  document.title = `${to.meta.title || ''} - EleTender支撑中心`
+  document.title = `${to.meta.title || ''} - EleAITender支撑中心`
   
   const userStore = useUserStore()
   const requiresAuth = to.meta.requiresAuth !== false

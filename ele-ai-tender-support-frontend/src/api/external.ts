@@ -12,8 +12,6 @@ export interface CreateExternalSystemParams {
   systemUrl?: string
   expireTime?: string
   description?: string
-  tenderDocumentSuffix?: string
-  bidDocumentSuffix?: string
 }
 
 export interface UpdateExternalSystemParams {
@@ -23,8 +21,6 @@ export interface UpdateExternalSystemParams {
   expireTime?: string
   description?: string
   status?: number
-  tenderDocumentSuffix?: string
-  bidDocumentSuffix?: string
 }
 
 interface BackendExternalSystem {
@@ -35,8 +31,6 @@ interface BackendExternalSystem {
   appSecret?: string
   expireTime?: string
   description?: string
-  tenderDocumentSuffix?: string
-  bidDocumentSuffix?: string
   status: number
   createTime?: string
   modifyTime?: string
@@ -51,8 +45,6 @@ const mapExternalSystem = (item: BackendExternalSystem): ExternalSystem => ({
   appSecret: item.appSecret,
   expireTime: item.expireTime,
   description: item.description,
-  tenderDocumentSuffix: item.tenderDocumentSuffix,
-  bidDocumentSuffix: item.bidDocumentSuffix,
   status: item.status,
   createTime: item.createTime,
   updateTime: item.modifyTime,
@@ -92,8 +84,6 @@ export const externalSystemApi = {
       systemUrl: params.systemUrl,
       expireTime: params.expireTime,
       description: params.description,
-      tenderDocumentSuffix: params.tenderDocumentSuffix,
-      bidDocumentSuffix: params.bidDocumentSuffix,
     })
   },
   
@@ -105,8 +95,6 @@ export const externalSystemApi = {
       expireTime: params.expireTime,
       description: params.description,
       status: params.status,
-      tenderDocumentSuffix: params.tenderDocumentSuffix,
-      bidDocumentSuffix: params.bidDocumentSuffix,
     })
   },
   

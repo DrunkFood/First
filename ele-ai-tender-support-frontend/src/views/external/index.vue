@@ -115,12 +115,6 @@
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入描述" />
         </el-form-item>
-        <el-form-item label="招标文件后缀" prop="tenderDocumentSuffix">
-          <el-input v-model="form.tenderDocumentSuffix" placeholder=".HzctZbs" />
-        </el-form-item>
-        <el-form-item label="投标文件后缀" prop="bidDocumentSuffix">
-          <el-input v-model="form.bidDocumentSuffix" placeholder=".HzctTbs" />
-        </el-form-item>
         <el-form-item v-if="form.id" label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio :value="1">正常</el-radio>
@@ -189,8 +183,6 @@ const form = reactive({
   systemUrl: '',
   expireTime: '',
   description: '',
-  tenderDocumentSuffix: '',
-  bidDocumentSuffix: '',
   status: 1,
 })
 
@@ -286,8 +278,6 @@ const handleAdd = () => {
   form.systemUrl = ''
   form.expireTime = ''
   form.description = ''
-  form.tenderDocumentSuffix = ''
-  form.bidDocumentSuffix = ''
   form.status = 1
   dialogVisible.value = true
 }
@@ -298,8 +288,6 @@ const handleEdit = (row: ExternalSystem) => {
   form.systemUrl = row.systemUrl || ''
   form.expireTime = row.expireTime || ''
   form.description = row.description || ''
-  form.tenderDocumentSuffix = row.tenderDocumentSuffix || ''
-  form.bidDocumentSuffix = row.bidDocumentSuffix || ''
   form.status = row.status
   dialogVisible.value = true
 }
@@ -320,8 +308,6 @@ const handleSubmit = async () => {
           expireTime: form.expireTime || undefined,
           description: form.description,
           status: form.status,
-          tenderDocumentSuffix: form.tenderDocumentSuffix || undefined,
-          bidDocumentSuffix: form.bidDocumentSuffix || undefined,
         }
         await externalSystemApi.update(params)
         ElMessage.success('更新成功')
@@ -331,8 +317,6 @@ const handleSubmit = async () => {
           systemUrl: form.systemUrl || undefined,
           expireTime: form.expireTime || undefined,
           description: form.description,
-          tenderDocumentSuffix: form.tenderDocumentSuffix || undefined,
-          bidDocumentSuffix: form.bidDocumentSuffix || undefined,
         }
         await externalSystemApi.create(params)
         ElMessage.success('创建成功')

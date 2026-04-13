@@ -141,8 +141,6 @@ CREATE TABLE `sup_access_system` (
     `expire_time` DATETIME DEFAULT NULL COMMENT '有效期截止时间',
     `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态: 0-禁用, 1-启用',
     `description` VARCHAR(500) DEFAULT NULL COMMENT '系统描述',
-    `tender_document_suffix` VARCHAR(32) DEFAULT NULL COMMENT '招标文件后缀(如.HzctZbs)',
-    `bid_document_suffix` VARCHAR(32) DEFAULT NULL COMMENT '投标文件后缀(如.HzctTbs)',
     `create_time` DATETIME NOT NULL COMMENT '创建时间',
     `create_id` BIGINT NOT NULL DEFAULT 0 COMMENT '创建人ID',
     `create_name` VARCHAR(50) NOT NULL DEFAULT '' COMMENT '创建人名称',

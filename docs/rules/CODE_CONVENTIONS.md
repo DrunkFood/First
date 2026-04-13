@@ -14,28 +14,29 @@
 
 | 模块 | 前缀 | 示例 |
 |------|------|------|
-| 支撑中心 | `sup_` | `sup_user`、`sup_access_log` |
+| 支撑中心 | `sup_` | `sup_user`、`sup_access_log`、`sup_message` |
 | 文件服务 | `file_` | `file_info` |
 | 招标文件编制 | `td_` | `td_tender_document`、`td_project_lock` |
 | 投标文件加解密 | `bdc_` | `bdc_bid_document`、`bdc_decrypt_artifact` |
+| AI招标文件编制 | `ai_` | `ai_project`、`ai_requirement`、`ai_template` |
 
 - 新模块表前缀需先在 `PROJECT_SPEC_FINAL.md` 中登记
 
-### 1.2 基础字段（BaseEntity）
+### 1.2 基础字段(BaseEntity)
 
 所有业务实体类必须继承 `BaseEntity`，由 `MetaObjectHandlerImpl` 自动填充：
 
 | Java 字段 | 数据库列 | 类型 | 填充时机 | 说明 |
 |-----------|----------|------|----------|------|
-| `id` | `id` | `BIGINT` | 手动/自增 | 主键，`IdType.AUTO`（自增） |
+| `id` | `id` | `BIGINT` | 手动/自增 | 主键，`IdType.AUTO`(自增) |
 | `createTime` | `create_time` | `DATETIME` | INSERT | 创建时间 |
-| `createId` | `create_id` | `BIGINT` | INSERT | 创建人 ID（未登录时填 0） |
-| `createName` | `create_name` | `VARCHAR` | INSERT | 创建人姓名（未登录时填 `system`） |
+| `createId` | `create_id` | `BIGINT` | INSERT | 创建人 ID(未登录时填 0) |
+| `createName` | `create_name` | `VARCHAR` | INSERT | 创建人姓名(未登录时填 `system`) |
 | `modifyTime` | `modify_time` | `DATETIME` | INSERT + UPDATE | 最后修改时间 |
 | `modifyId` | `modify_id` | `BIGINT` | INSERT + UPDATE | 最后修改人 ID |
 | `modifyName` | `modify_name` | `VARCHAR` | INSERT + UPDATE | 最后修改人姓名 |
-| `ver` | `ver` | `INT` | INSERT（初始为 1） | 乐观锁版本号，`@Version` |
-| `isDelete` | `is_delete` | `TINYINT` | INSERT（初始为 0） | 逻辑删除，`@TableLogic`；0=未删除，1=已删除 |
+| `ver` | `ver` | `INT` | INSERT(初始为 1) | 乐观锁版本号，`@Version` |
+| `isDelete` | `is_delete` | `TINYINT` | INSERT(初始为 0) | 逻辑删除，`@TableLogic`;0=未删除,1=已删除 |
 
 ```java
 // 实体示例
@@ -63,6 +64,22 @@ public class SomeEntity extends BaseEntity {
 ### 1.5 初始化 SQL
 
 - 每个模块的建表 DDL 放在 `src/main/resources/db/init.sql`
+
+### 1.6 数据库隔离策略
+
+AI 编制系统(ele-ai-tender)采用独立数据库和缓存：
+
+| 资源 | 现有系统 | AI 系统 | 说明 |
+|------|---------|--------|------|
+| MySQL | db=5 | db=6 | 独立数据库，避免数据污染 |
+| Redis | db=5 | db=6 | 独立缓存空间 |
+| 文件存储 | `/data/ele-tender/files` | `/data/ele-ai-tender/files` | 独立存储路径 |
+| 用户体系 | 独立 | 结构复用 | AI 系统复用 `sup_user` 等表结构，在 db=6 中建相同结构的表 |
+
+**复用原则**：
+- support/file 模块表结构必须与现有系统完全一致，直接复制建表 SQL
+- AI 新增业务表使用 `ai_` 前缀，继承 BaseEntity 规范
+- 两个系统用户数据相互独立，但表结构完全一致，后续可按需打通
 
 ---
 
@@ -147,6 +164,7 @@ Result<Page<UserVO>> result = Result.success(page);
 | 5001–5999 | 文件服务相关 |
 | 6001–6999 | 招标文件编制相关 |
 | 7001–7999 | 投标文件加解密相关 |
+| 8001–8999 | AI 编制系统相关 |
 
 新增业务错误码在 `ele-tender-common` 的 `ResponseCode` 枚举中登记，并注释归属范围。
 
@@ -400,5 +418,6 @@ SignatureUtil.verify(data, signature, secret)
 |-------------|----------|----------|
 | `/support-api/*` | support :8080 | `/support-api/` → `/api/` |
 | `/file-api/*` | file :8081 | 无重写 |
-| `/file-esign-api/*` | file :8081（Esign） | 无重写 |
-| `/crypto-api/*` | crypto :8083 | `/crypto-api/` → `/api/crypto/` |
+| `/core-api/*` | ai-tender-core :8082 | `/core-api/` → `/api/` |
+| `/ai-api/*` | ai-tender-ai :8083 | `/ai-api/` → `/api/` |
+| `/support-api/*`(AI系统) | ai-tender-support :8080 | `/support-api/` → `/api/` |

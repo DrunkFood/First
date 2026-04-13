@@ -118,8 +118,6 @@ export interface ExternalSystem {
   appSecret?: string
   expireTime?: string
   description?: string
-  tenderDocumentSuffix?: string
-  bidDocumentSuffix?: string
   status: number
   createTime?: string
   updateTime?: string

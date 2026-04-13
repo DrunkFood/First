@@ -52,7 +52,7 @@
           <span>系统信息</span>
         </template>
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="系统名称">EleTender 支撑中心管理系统</el-descriptions-item>
+          <el-descriptions-item label="系统名称">EleAITender 支撑中心管理系统</el-descriptions-item>
           <el-descriptions-item label="系统版本">v1.0.0</el-descriptions-item>
           <el-descriptions-item label="后端服务">Spring Boot 3.2</el-descriptions-item>
           <el-descriptions-item label="前端框架">Vue 3 + Element Plus</el-descriptions-item>

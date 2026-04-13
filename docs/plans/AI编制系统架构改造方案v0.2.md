@@ -126,7 +126,7 @@ ele-ai-tender-system/
 │               └── InteractionPaths.java
 │
 ├── ele-ai-tender-interaction/       # 业务系统接入Starter聚合模块（JDK8兼容）
-│   ├── pom.xml
+│   ├── pom.xml                      # 聚合POM，含Spring Boot 2.7.18 BOM覆盖
 │   ├── ele-ai-tender-interaction-core/           # 核心实现
 │   │   ├── pom.xml
 │   │   └── src/main/java/
@@ -163,15 +163,29 @@ ele-ai-tender-system/
 │           │   ├── MenuController.java          # 菜单管理
 │           │   ├── VersionController.java       # 版本管理
 │           │   ├── ExternalSystemController.java # 外部系统
+│           │   ├── CryptoAdminController.java   # 加密管理
+│           │   ├── LoginLogController.java      # 登录日志
+│           │   ├── AccessLogController.java     # 操作日志
 │           │   ├── TemplateConfigController.java # 模板管理
 │           │   ├── KnowledgeConfigController.java # 知识库管理
 │           │   ├── StatisticsController.java    # 统计分析
 │           │   ├── AiConfigController.java      # AI服务配置
-│           │   ├── AccessLogController.java     # 操作日志
 │           │   └── MessageController.java       # 消息中心
 │           ├── service/
 │           ├── mapper/
-│           └── entity/
+│           ├── entity/
+│           ├── config/
+│           │   ├── MyBatisPlusConfig.java
+│           │   ├── JwtRuntimeConfig.java
+│           │   ├── WebConfig.java
+│           │   ├── SwaggerConfig.java
+│           │   ├── AccessLogMenuInitializer.java
+│           │   └── CryptoAdminProperties.java
+│           ├── security/
+│           │   └── annotation/
+│           ├── aspect/
+│           ├── handler/
+│           └── converter/
 │
 ├── ele-ai-tender-file/              # 文件服务模块 :8081
 │   ├── pom.xml
@@ -185,7 +199,15 @@ ele-ai-tender-system/
 │           │   └── impl/
 │           │       └── FileServiceImpl.java
 │           ├── config/
-│           │   └── FileStorageConfig.java
+│           │   ├── FileStorageConfig.java
+│           │   ├── AllowedTypesResolver.java
+│           │   ├── JwtRuntimeConfig.java
+│           │   ├── MyBatisPlusConfig.java
+│           │   ├── SwaggerConfig.java
+│           │   └── WebConfig.java
+│           ├── security/
+│           │   └── annotation/
+│           ├── handler/
 │           └── utils/
 │               └── FileUtil.java
 │
@@ -461,35 +483,67 @@ ele-ai-tender-frontend/
 与现有 `ele-tender-support-frontend` 的代理风格保持一致，使用 `/xxx-api` 前缀：
 
 ```typescript
-// vite.config.ts
-export default defineConfig({
-  server: {
-    port: 5173,
-    proxy: {
-      // 代理到core模块 (8082) — 业务接口
-      '/core-api': {
-        target: 'http://localhost:8082',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/core-api/, '/api')
+// vite.config.ts (ele-ai-tender-frontend)
+import { defineConfig, loadEnv } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { resolve } from 'path'
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd())
+  const isProd = mode === 'production'
+
+  return {
+    base: isProd ? '/ele-ai-tender/' : '/',
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src'),
       },
-      // 代理到ai模块 (8083) — AI接口
-      '/ai-api': {
-        target: 'http://localhost:8083',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ai-api/, '/api')
+    },
+    server: {
+      port: 5173,
+      host: true,
+      proxy: {
+        // 代理到core模块 (8082) — 业务接口
+        '/core-api': {
+          target: env.VITE_CORE_API_URL || 'http://localhost:8082',
+          changeOrigin: true,
+          rewrite: (path) => {
+            if (path.startsWith('/core-api/v3/api-docs') || path.startsWith('/core-api/swagger-ui')) {
+              return path.replace(/^\/core-api/, '')
+            }
+            return path.replace(/^\/core-api/, '/api')
+          },
+        },
+        // 代理到ai模块 (8083) — AI接口
+        '/ai-api': {
+          target: env.VITE_AI_API_URL || 'http://localhost:8083',
+          changeOrigin: true,
+          rewrite: (path) => {
+            if (path.startsWith('/ai-api/v3/api-docs') || path.startsWith('/ai-api/swagger-ui')) {
+              return path.replace(/^\/ai-api/, '')
+            }
+            return path.replace(/^\/ai-api/, '/api')
+          },
+        },
+        // 代理到file模块 (8081) — 文件接口
+        '/file-api': {
+          target: env.VITE_FILE_API_URL || 'http://localhost:8081',
+          changeOrigin: true,
+        },
+        // 代理到support模块 (8080) — 认证/用户接口
+        '/support-api': {
+          target: env.VITE_SUPPORT_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+          rewrite: (path) => {
+            if (path.startsWith('/support-api/v3/api-docs') || path.startsWith('/support-api/swagger-ui')) {
+              return path.replace(/^\/support-api/, '')
+            }
+            return path.replace(/^\/support-api/, '/api')
+          },
+        },
       },
-      // 代理到file模块 (8081) — 文件接口
-      '/file-api': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-      },
-      // 代理到support模块 (8080) — 认证/用户接口
-      '/support-api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/support-api/, '/api')
-      }
-    }
+    },
   }
 })
 ```
@@ -499,34 +553,84 @@ export default defineConfig({
 与现有 `ele-tender-support-frontend` 的代理风格保持一致：
 
 ```typescript
-// vite.config.ts
-export default defineConfig({
-  server: {
-    port: 5174,
-    proxy: {
-      // 代理到support模块 (8080) — 业务接口
-      '/support-api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/support-api/, '/api')
+// vite.config.ts (ele-ai-tender-support-frontend)
+import { defineConfig, loadEnv } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { resolve } from 'path'
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd())
+  const isProd = mode === 'production'
+
+  return {
+    base: isProd ? '/ele-ai-tender-support/' : '/',
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src'),
       },
-      // 代理到file模块 (8081) — 文件接口
-      '/file-api': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-      }
-    }
+    },
+    server: {
+      port: 5174,
+      host: true,
+      proxy: {
+        '/support-api': {
+          target: env.VITE_API_BASE_URL || 'http://localhost:8080',
+          changeOrigin: true,
+          rewrite: (path) => {
+            // Swagger/OpenAPI路径不做/api前缀替换
+            if (path.startsWith('/support-api/v3/api-docs') || path.startsWith('/support-api/swagger-ui')) {
+              return path.replace(/^\/support-api/, '')
+            }
+            return path.replace(/^\/support-api/, '/api')
+          },
+        },
+        '/file-api': {
+          target: env.VITE_FILE_API_URL || 'http://localhost:8081',
+          changeOrigin: true,
+        },
+      },
+    },
   }
 })
 ```
 
 ## 三、数据库设计
 
-### 3.1 核心数据表
+### 3.1 数据库设计原则
+
+- **support/file模块表结构**：与现有 `ele-tender-system` 完全一致，直接复用 `sup_*` 和 `file_info` 表，不重新设计
+- **AI业务新增表**：采用 `ai_` 前缀，继承现有 `BaseEntity` 基类（含 id/createTime/createId/createName/modifyTime/modifyId/modifyName/ver/isDelete），字段命名与现有系统保持一致
+- **消息表**：AI系统新增功能，采用 `sup_message` 前缀（归支撑模块管理）
+
+### 3.2 复用的现有表结构（support模块 :8080）
+
+以下表与现有 `ele-tender-support` 完全一致，直接复制建表SQL：
+
+| 表名 | 说明 | 对应实体 |
+|------|------|----------|
+| `sup_user` | 系统用户 | SysUser |
+| `sup_role` | 系统角色 | SysRole |
+| `sup_menu` | 系统菜单 | SysMenu |
+| `sup_user_role` | 用户角色关联 | SysUserRole |
+| `sup_role_menu` | 角色菜单关联 | SysRoleMenu |
+| `sup_access_log` | 访问日志 | SysAccessLog |
+| `sup_operation_log` | 操作日志 | SysOperationLog |
+| `sup_access_system` | 接入系统 | SysAccessSystem |
+| `sup_main_version` | 主系统版本 | SysMainVersion |
+| `sup_plugin_version` | 插件版本 | SysPluginVersion |
+
+### 3.3 复用的现有表结构（file模块 :8081）
+
+| 表名 | 说明 | 对应实体 |
+|------|------|----------|
+| `file_info` | 文件信息 | FileInfo |
+
+### 3.4 AI编制系统新增表
 
 #### 项目管理相关
 ```sql
--- 项目表
+-- AI编制项目表
 CREATE TABLE ai_project (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     project_code VARCHAR(50) NOT NULL UNIQUE COMMENT '项目编号',
@@ -541,26 +645,38 @@ CREATE TABLE ai_project (
     requirement_id BIGINT COMMENT '关联的业务需求ID',
     requirement_source VARCHAR(20) COMMENT '需求来源:REFERENCE/AI_GENERATED',
     requirement_content TEXT COMMENT '招标需求内容',
-    creator_id BIGINT COMMENT '创建人ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at DATETIME COMMENT '删除时间(软删除)',
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_status (status),
     INDEX idx_category (project_category),
-    INDEX idx_creator (creator_id)
+    INDEX idx_create_id (create_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI编制项目表';
 
--- 项目版本表
+-- AI编制项目版本表
 CREATE TABLE ai_project_version (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     project_id BIGINT NOT NULL COMMENT '项目ID',
     version_no INT NOT NULL COMMENT '版本号',
     content_snapshot JSON COMMENT '内容快照',
     change_description VARCHAR(500) COMMENT '变更说明',
-    creator_id BIGINT COMMENT '创建人ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_project_version (project_id, version_no)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目版本表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI编制项目版本表';
 ```
 
 #### 业务需求相关
@@ -580,17 +696,23 @@ CREATE TABLE ai_requirement (
     project_id BIGINT COMMENT '关联的项目ID',
     content TEXT COMMENT '业务需求内容',
     status VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态',
-    creator_id BIGINT COMMENT '创建人ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_status (status),
-    INDEX idx_creator (creator_id)
+    INDEX idx_create_id (create_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='业务需求表';
 ```
 
 #### 模板管理相关
 ```sql
--- 模板表
+-- 招标文件模板表
 CREATE TABLE ai_template (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     template_code VARCHAR(50) NOT NULL UNIQUE COMMENT '模板编码',
@@ -602,9 +724,15 @@ CREATE TABLE ai_template (
     version_no INT DEFAULT 1 COMMENT '版本号',
     is_default TINYINT(1) DEFAULT 0 COMMENT '是否默认模板',
     status VARCHAR(20) DEFAULT 'ENABLED' COMMENT '状态:ENABLED/DISABLED',
-    creator_id BIGINT COMMENT '创建人ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_category_type (project_category, project_type),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='招标文件模板表';
@@ -623,9 +751,15 @@ CREATE TABLE ai_knowledge_document (
     vector_collection VARCHAR(100) COMMENT '向量集合名称',
     vector_ids JSON COMMENT '向量ID列表',
     status VARCHAR(20) DEFAULT 'ACTIVE' COMMENT '状态:ACTIVE/ARCHIVED',
-    creator_id BIGINT COMMENT '创建人ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_category (doc_category),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识库文档表';
@@ -640,11 +774,18 @@ CREATE TABLE ai_detection_record (
     detection_type VARCHAR(50) COMMENT '检测类型:FAIRNESS/COMPLIANCE/TYPO/SENSITIVE_WORD',
     content_snapshot TEXT COMMENT '检测内容快照',
     result JSON COMMENT '检测结果',
-    status VARCHAR(20) DEFAULT 'PENDING' COMMENT '状态:PENDING/RUNNING/PASSED/FAILED',
+    status VARCHAR(20) DEFAULT 'PENDING' COMMENT '状态:PENDING/RUNNING/PASSED/FAILED/SKIPPED',
     started_at DATETIME COMMENT '开始时间',
     completed_at DATETIME COMMENT '完成时间',
-    creator_id BIGINT COMMENT '创建人ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_project (project_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='检测记录表';
@@ -661,9 +802,15 @@ CREATE TABLE ai_review_item (
     item_name VARCHAR(200) NOT NULL COMMENT '评审项名称',
     item_content TEXT COMMENT '评审项内容',
     sort_order INT DEFAULT 0 COMMENT '排序',
-    creator_id BIGINT COMMENT '创建人ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_project (project_id),
     INDEX idx_parent (parent_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评审项表';
@@ -683,15 +830,22 @@ CREATE TABLE ai_model_config (
     is_active TINYINT(1) DEFAULT 1 COMMENT '是否启用',
     token_usage BIGINT DEFAULT 0 COMMENT 'Token使用量',
     cost DECIMAL(10,2) DEFAULT 0.00 COMMENT '累计费用',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型配置表';
 ```
 
-#### 消息中心相关
+#### 消息中心相关（support模块新增）
 ```sql
 -- 消息表
-CREATE TABLE ai_message (
+CREATE TABLE sup_message (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT NOT NULL COMMENT '接收用户ID',
     title VARCHAR(200) NOT NULL COMMENT '消息标题',
@@ -700,37 +854,22 @@ CREATE TABLE ai_message (
     biz_id BIGINT COMMENT '关联业务ID(项目ID等)',
     biz_type VARCHAR(20) COMMENT '关联业务类型:PROJECT/REQUIREMENT/DETECTION',
     is_read TINYINT(1) DEFAULT 0 COMMENT '是否已读',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- BaseEntity 标准字段
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_id BIGINT COMMENT '创建人ID',
+    create_name VARCHAR(50) COMMENT '创建人名称',
+    modify_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    modify_id BIGINT COMMENT '修改人ID',
+    modify_name VARCHAR(50) COMMENT '修改人名称',
+    ver INT DEFAULT 0 COMMENT '乐观锁版本号',
+    is_delete INT DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     INDEX idx_user (user_id),
     INDEX idx_type (message_type),
     INDEX idx_read (is_read)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息表';
 ```
 
-#### 操作日志相关
-```sql
--- 操作日志表
-CREATE TABLE ai_access_log (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT COMMENT '操作用户ID',
-    username VARCHAR(50) COMMENT '用户名',
-    operation VARCHAR(200) NOT NULL COMMENT '操作描述',
-    module VARCHAR(50) COMMENT '模块:PROJECT/REQUIREMENT/TEMPLATE/DETECTION/KNOWLEDGE/AI_CONFIG',
-    method VARCHAR(10) COMMENT 'HTTP方法',
-    url VARCHAR(500) COMMENT '请求URL',
-    ip VARCHAR(50) COMMENT 'IP地址',
-    params TEXT COMMENT '请求参数',
-    result TEXT COMMENT '返回结果',
-    status TINYINT(1) DEFAULT 1 COMMENT '操作状态:1成功/0失败',
-    duration BIGINT COMMENT '耗时(毫秒)',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_user (user_id),
-    INDEX idx_module (module),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';
-```
-
-### 3.2 Redis数据结构
+### 3.5 Redis数据结构
 
 ```
 # AI任务队列
@@ -885,10 +1024,11 @@ GET    /api/v1/review-items/{projectId}/export  # 导出评审项JSON
 - **core模块调用ai模块**: AI生成、文本优化、智能检测
 
 #### 用户认证方案
-AI系统**自建用户表**（独立数据库db=6），不跨库直连现有系统用户表。认证流程：
+AI系统**复用现有sup_user等表结构**（在独立数据库db=6中建相同结构的表），认证流程与现有系统完全一致：
 1. 用户登录 → support模块验证 → 返回JWT Token
 2. core/ai模块收到请求 → 调用support模块的Token验证接口 → 获取用户信息
 3. 管理端和用户端权限通过support模块的RBAC体系独立管理
+4. 两个系统的用户数据相互独立（db=5 vs db=6），但表结构完全一致，后续可按需打通
 
 #### 文档生成职责边界
 - **core模块（业务编排）**: 负责"何时生成"——组装参数、调用ai模块、管理文档记录、版本快照
@@ -902,7 +1042,7 @@ AI系统**自建用户表**（独立数据库db=6），不跨库直连现有系�
 | MySQL | db=5 | db=6 | 独立数据库，避免数据污染 |
 | Redis | db=5 | db=6 | 独立缓存空间 |
 | 文件存储 | /data/ele-tender/files | /data/ele-ai-tender/files | 独立存储路径 |
-| 用户体系 | 独立 | 独立 | AI系统自建用户表，通过HTTP API调用support模块验证Token（不跨库直连） |
+| 用户体系 | 独立 | 复用 | AI系统复用现有sup_user等表结构，独立数据库(db=6)中存储 |
 
 ### 5.4 交互协议扩展
 
@@ -1151,10 +1291,34 @@ public class StreamResponseService {
 
     <properties>
         <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Spring Boot 3.2.x for JDK 21 -->
         <spring-boot.version>3.2.2</spring-boot.version>
+
+        <!-- MyBatis Plus -->
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
+
+        <!-- JWT -->
+        <jjwt.version>0.12.5</jjwt.version>
+
+        <!-- Hutool -->
+        <hutool.version>5.8.25</hutool.version>
+
+        <!-- MySQL -->
         <mysql.version>8.4.0</mysql.version>
-        
+
+        <!-- Lombok -->
+        <lombok.version>1.18.30</lombok.version>
+
+        <!-- Swagger/OpenAPI -->
+        <springdoc.version>2.3.0</springdoc.version>
+
+        <!-- Commons -->
+        <commons-lang3.version>3.14.0</commons-lang3.version>
+        <commons-io.version>2.15.1</commons-io.version>
+
         <!-- AI相关依赖 -->
         <spring-ai.version>1.0.0</spring-ai.version>
         <milvus-sdk.version>2.3.3</milvus-sdk.version>
@@ -1220,58 +1384,428 @@ public class StreamResponseService {
                 <artifactId>ele-ai-tender-ai</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- MyBatis Plus for Spring Boot 3 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- MySQL Driver -->
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+
+            <!-- JWT (JJWT 0.12.x API) -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- Hutool -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- Commons -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <parameters>true</parameters>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>
 ```
 
-### 11.2 核心配置文件
+### 11.2 interaction聚合POM关键配置
+
+interaction聚合模块需要覆盖父POM的Spring Boot版本，使用Spring Boot 2.7.18以确保JDK8兼容：
+
+```xml
+<!-- ele-ai-tender-interaction/pom.xml -->
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.jy.eleaitender</groupId>
+        <artifactId>ele-ai-tender-system</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>ele-ai-tender-interaction</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Ele AI Tender Interaction</name>
+
+    <properties>
+        <interaction.java.version>8</interaction.java.version>
+        <interaction.spring-boot.version>2.7.18</interaction.spring-boot.version>
+        <interaction.common.version>${project.version}</interaction.common.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 覆盖父POM，使用Spring Boot 2.7.18 BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${interaction.spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.jy.eleaitender</groupId>
+                <artifactId>ele-ai-tender-common-interaction</artifactId>
+                <version>${interaction.common.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>ele-ai-tender-interaction-core</module>
+        <module>ele-ai-tender-interaction-autoconfigure</module>
+        <module>ele-ai-tender-interaction-spring-boot-starter</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <release>${interaction.java.version}</release>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
+```
+
+### 11.3 核心配置文件
+
+#### support模块配置
 
 ```yaml
-# application.yml
+# ele-ai-tender-support/src/main/resources/application.yml
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    encoding:
+      enabled: true
+      charset: UTF-8
+      force: true
+
 spring:
   application:
-    name: ele-ai-tender
-  
+    name: ele-ai-tender-support
+  config:
+    import: optional:file:${user.home}/.ele-ai-tender/ele-ai-tender-support-local.yml
   datasource:
-    url: jdbc:mysql://localhost:3306/ele_ai_tender?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: ${DB_PASSWORD}
-    
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/ele_ai_tender?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
   data:
     redis:
-      host: localhost
-      port: 6379
-      database: 6
-      password: ${REDIS_PASSWORD}
+      host: ${SPRING_DATA_REDIS_HOST:127.0.0.1}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      database: ${SPRING_DATA_REDIS_DATABASE:6}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      timeout: 5s
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.jy.eleaitender.support.entity
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix: sup_
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+
+# JWT配置
+jwt:
+  secret: ${APP_JWT_SECRET:}
+  expiration: 7200
+  external-expiration: 604800
+
+swagger:
+  enabled: true
+
+logging:
+  level:
+    com.jy.eleaitender: debug
+```
+
+#### file模块配置
+
+```yaml
+# ele-ai-tender-file/src/main/resources/application.yml
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    encoding:
+      enabled: true
+      charset: UTF-8
+      force: true
+
+spring:
+  application:
+    name: ele-ai-tender-file
+  config:
+    import: optional:file:${user.home}/.ele-ai-tender/ele-ai-tender-file-local.yml
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/ele_ai_tender?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:127.0.0.1}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      database: ${SPRING_DATA_REDIS_DATABASE:6}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+jwt:
+  secret: ${APP_JWT_SECRET:}
+  expiration: ${APP_JWT_EXPIRATION:7200}
+  external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.jy.eleaitender.file.entity
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix: file_
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 文件存储配置
+file:
+  storage:
+    base-path: ${FILE_STORAGE_BASE_PATH:/data/ele-ai-tender/files}
+    allowed-types: .doc,.docx,.pdf,.txt,.md,.jar,.war,.zip,.tar.gz
+    max-size: 500
+
+swagger:
+  enabled: true
+
+logging:
+  level:
+    com.jy.eleaitender: debug
+```
+
+#### core模块配置
+
+```yaml
+# ele-ai-tender-core/src/main/resources/application.yml
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: ele-ai-tender-core
+  config:
+    import: optional:file:${user.home}/.ele-ai-tender/ele-ai-tender-core-local.yml
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/ele_ai_tender?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:127.0.0.1}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      database: ${SPRING_DATA_REDIS_DATABASE:6}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+jwt:
+  secret: ${APP_JWT_SECRET:}
+  expiration: ${APP_JWT_EXPIRATION:7200}
+
+# AI服务地址
+ai:
+  service:
+    endpoint: http://localhost:8083
+
+# 文件服务地址
+file:
+  service:
+    endpoint: http://localhost:8081
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.jy.eleaitender.core.entity
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix: ai_
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+
+swagger:
+  enabled: true
+
+logging:
+  level:
+    com.jy.eleaitender: debug
+```
+
+#### ai模块配置
+
+```yaml
+# ele-ai-tender-ai/src/main/resources/application.yml
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  application:
+    name: ele-ai-tender-ai
+  config:
+    import: optional:file:${user.home}/.ele-ai-tender/ele-ai-tender-ai-local.yml
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/ele_ai_tender?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:127.0.0.1}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      database: ${SPRING_DATA_REDIS_DATABASE:6}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+jwt:
+  secret: ${APP_JWT_SECRET:}
+  expiration: ${APP_JWT_EXPIRATION:7200}
 
 # AI模型配置
 ai:
   models:
     local:
       endpoint: http://localhost:8000/v1
-      api-key: ${LOCAL_MODEL_KEY}
+      api-key: ${LOCAL_MODEL_KEY:}
     cloud:
       provider: deepseek
       endpoint: https://api.deepseek.com/v1
-      api-key: ${DEEPSEEK_API_KEY}
-  
-  # Token配额
+      api-key: ${DEEPSEEK_API_KEY:}
   token:
     daily-limit: 100000
     warning-threshold: 80000
 
 # Milvus配置
 milvus:
-  host: localhost
-  port: 19530
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
   collection: ai_tender_knowledge
 
-# 文件服务配置
+# 文件服务地址
 file:
   service:
     endpoint: http://localhost:8081
-    base-path: /data/ele-ai-tender/files
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.jy.eleaitender.ai.entity
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix: ai_
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+
+swagger:
+  enabled: true
+
+logging:
+  level:
+    com.jy.eleaitender: debug
 ```
 
 ## 十二、总结

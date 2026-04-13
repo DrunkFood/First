@@ -63,32 +63,27 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SysAccessSystem createSystem(SysAccessSystem system) {
-        validateSuffixes(system);
         // 生成 AppKey 和 AppSecret
         system.setAppKey(generateAppKey());
         system.setAppSecret(generateAppSecret());
         system.setStatus(1);
         accessSystemMapper.insert(system);
-        registerAfterCommitSuffixRefresh();
         return system;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateSystem(SysAccessSystem system) {
-        validateSuffixes(system);
         // 不更新密钥
         system.setAppKey(null);
         system.setAppSecret(null);
         accessSystemMapper.updateById(system);
-        registerAfterCommitSuffixRefresh();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteSystem(Long id) {
         accessSystemMapper.deleteById(id);
-        registerAfterCommitSuffixRefresh();
     }
 
     @Override
@@ -107,67 +102,6 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
         system.setId(id);
         system.setStatus(status);
         accessSystemMapper.updateById(system);
-    }
-
-    private void validateSuffixes(SysAccessSystem system) {
-        FileConstants.validateDocumentSuffix(system.getTenderDocumentSuffix());
-        FileConstants.validateDocumentSuffix(system.getBidDocumentSuffix());
-    }
-
-    private void registerAfterCommitSuffixRefresh() {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            safeRefreshRegisteredSuffixes();
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        safeRefreshRegisteredSuffixes();
-                    }
-                });
-    }
-
-    private void safeRefreshRegisteredSuffixes() {
-        try {
-            refreshRegisteredSuffixes();
-        } catch (Exception e) {
-            log.error("DB 已提交但 Redis 后缀刷新失败，将在下次操作时自愈", e);
-        }
-    }
-
-    private void refreshRegisteredSuffixes() {
-        LambdaQueryWrapper<SysAccessSystem> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysAccessSystem::getIsDelete, 0);
-        wrapper.and(w -> w.isNotNull(SysAccessSystem::getTenderDocumentSuffix)
-                .or()
-                .isNotNull(SysAccessSystem::getBidDocumentSuffix));
-        List<SysAccessSystem> systems = accessSystemMapper.selectList(wrapper);
-
-        Set<String> suffixes = new LinkedHashSet<>();
-        for (SysAccessSystem sys : systems) {
-            if (StringUtils.hasText(sys.getTenderDocumentSuffix())) {
-                suffixes.add(sys.getTenderDocumentSuffix());
-            }
-            if (StringUtils.hasText(sys.getBidDocumentSuffix())) {
-                suffixes.add(sys.getBidDocumentSuffix());
-            }
-        }
-
-        String key = RedisKeyConstant.REGISTERED_SUFFIXES;
-        if (suffixes.isEmpty()) {
-            redisTemplate.delete(key);
-        } else {
-            String tmpKey = key + ":tmp:" + UUID.randomUUID();
-            try {
-                redisTemplate.opsForSet().add(tmpKey, suffixes.toArray(String[]::new));
-                redisTemplate.rename(tmpKey, key);
-            } catch (Exception e) {
-                redisTemplate.delete(tmpKey);
-                throw e;
-            }
-        }
-        log.info("已刷新注册后缀到 Redis: {}", suffixes);
     }
 
     private String generateAppKey() {

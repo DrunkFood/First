@@ -5,8 +5,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
+/**
+ * AI编制系统核心业务模块启动类
+ */
 @SpringBootApplication
-@MapperScan("com.jy.eleaitender.core.mapper")
+@MapperScan({"com.jy.eleaitender.core.mapper", "com.jy.eleaitender.common.mapper"})
 @ComponentScan(basePackages = {"com.jy.eleaitender.core", "com.jy.eleaitender.common"})
 public class CoreApplication {
     public static void main(String[] args) {

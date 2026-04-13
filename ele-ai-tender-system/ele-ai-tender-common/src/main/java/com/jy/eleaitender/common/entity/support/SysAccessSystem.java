@@ -43,10 +43,4 @@ public class SysAccessSystem extends BaseEntity {
 
     @Schema(description = "系统描述")
     private String description;
-
-    @Schema(description = "招标文件后缀")
-    private String tenderDocumentSuffix;
-
-    @Schema(description = "投标文件后缀")
-    private String bidDocumentSuffix;
 }

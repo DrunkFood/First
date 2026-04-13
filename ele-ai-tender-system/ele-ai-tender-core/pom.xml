@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>Ele AI Tender Core</name>
-    <description>Core business module - projects, requirements, documents</description>
+    <description>AI编制系统核心业务模块</description>
 
     <dependencies>
         <dependency>
