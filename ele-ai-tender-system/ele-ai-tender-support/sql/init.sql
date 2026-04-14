@@ -332,7 +332,7 @@ INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `men
 (32, '编辑插件', 'plugin-version:update', 2, NULL, 'plugin-version:update', 2, 1, NOW(), NOW()),
 (32, '删除插件', 'plugin-version:delete', 2, NULL, 'plugin-version:delete', 3, 1, NOW(), NOW()),
 (32, '发布插件', 'plugin-version:publish', 2, NULL, 'plugin-version:publish', 4, 1, NOW(), NOW()),
-(32, '下线插件', 'plugin-version:offline', 2, NULL, 'plugin-version:offline', 5, 1, NOW(), NOW()),
+(32, '下线插件', 'plugin-version:offline', 2, NULL, 'plugin-version:offline', 5, 1, NOW(), NOW());
 
 -- 给管理员角色分配所有菜单权限
 INSERT INTO `sup_role_menu` (`role_id`, `menu_id`, `create_time`, `modify_time`)

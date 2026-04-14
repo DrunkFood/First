@@ -30,7 +30,7 @@
 
 - Java：JDK 21（`ele-ai-tender-interaction` / `ele-ai-tender-common-interaction` 对外 API 保持 JDK 8 兼容）
 - Spring Boot：3.2.2
-- Spring AI：0.8.1
+- Spring AI：1.1.0
 - MyBatis-Plus：3.5.5
 - MySQL：8.4.0
 - Redis：会话存储、AI任务缓存、Token 限流

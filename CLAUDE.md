@@ -8,7 +8,7 @@
 
 **技术基线**: JDK 21 · Spring Boot 3.2.2 · MyBatis-Plus 3.5.5 · MySQL 8.4.0
 
-**AI技术栈**: Spring AI 0.8.1 · Milvus 2.3.3 · Apache Tika 2.9.0 · poi-tl 1.12.0 · flexmark-java 0.64.0
+**AI技术栈**: Spring AI 1.1.0 · Milvus 2.3.3 · Apache Tika 2.9.0 · poi-tl 1.12.0 · flexmark-java 0.64.0
 
 **前端**: 双前端项目架构
 - `ele-ai-tender-support-frontend/` — 支撑中心管理后台 (端口 5174) — Vue 3 + TypeScript + Vite + Element Plus + Pinia
