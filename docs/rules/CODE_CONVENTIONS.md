@@ -63,7 +63,7 @@ public class SomeEntity extends BaseEntity {
 
 ### 1.5 初始化 SQL
 
-- 每个模块的建表 DDL 放在 `src/main/resources/db/init.sql`
+- 每个模块的建表 DDL 放在 `sql/init.sql`
 
 ### 1.6 数据库隔离策略
 

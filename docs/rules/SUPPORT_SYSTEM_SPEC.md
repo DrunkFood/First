@@ -14,7 +14,6 @@
 - `/api/external-systems/*`
 - `/api/external/*`
 - `/api/access-logs`
-- `/api/crypto/manage/*`
 
 ## 3. 当前关键表
 
@@ -60,4 +59,3 @@ JWT 约束、字符集约束与通用安全规范见 [PROJECT_SPEC_FINAL.md](PRO
 
 - [CODE_CONVENTIONS.md](CODE_CONVENTIONS.md) — 通用编码规范（命名、分层、异常处理、安全）
 - [PROJECT_SPEC_FINAL.md](PROJECT_SPEC_FINAL.md) — 全局模块边界与 JWT 约束
-- [ELE_TENDER_CRYPTO_SPEC.md](ELE_TENDER_CRYPTO_SPEC.md) — crypto 管理接口所对应的业务模块规范

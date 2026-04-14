@@ -1,4 +1,4 @@
-# EleTender 项目规范
+# AI编制系统项目规范
 
 ## 1. 定位
 
@@ -16,90 +16,88 @@
 
 | 模块 | 类型 | 端口 | 详细规范 |
 |------|------|------|----------|
-| `ele-tender-support-frontend` | 前端 | 3000（开发） | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
-| `ele-tender-common` | 公共库 | — | — |
-| `ele-tender-common-interaction` | 协议库 | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
-| `ele-tender-support` | 后端服务 | 8080 | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
-| `ele-tender-file` | 后端服务 | 8081 | [FILE_SERVICE_SPEC.md](FILE_SERVICE_SPEC.md) |
-| `ele-tender-tender-document` | 后端服务 | 8082 | [TENDER_DOCUMENT_PROJECT_SPEC.md](TENDER_DOCUMENT_PROJECT_SPEC.md) |
-| `ele-tender-crypto` | 后端服务 | 8083 | [ELE_TENDER_CRYPTO_SPEC.md](ELE_TENDER_CRYPTO_SPEC.md) |
-| `ele-tender-interaction` | Starter | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
+| `ele-ai-tender-support-frontend` | 前端 | 5174（开发） | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
+| `ele-ai-tender-frontend` | 前端 | 5173（开发） | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
+| `ele-ai-tender-common` | 公共库 | — | — |
+| `ele-ai-tender-common-interaction` | 协议库 | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
+| `ele-ai-tender-support` | 后端服务 | 8080 | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
+| `ele-ai-tender-file` | 后端服务 | 8081 | [FILE_SERVICE_SPEC.md](FILE_SERVICE_SPEC.md) |
+| `ele-ai-tender-core` | 后端服务 | 8082 | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
+| `ele-ai-tender-ai` | 后端服务 | 8083 | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
+| `ele-ai-tender-interaction` | Starter | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
 
 ## 3. 技术基线
 
-- Java：JDK 21（`ele-tender-interaction` / `ele-tender-common-interaction` 对外 API 保持 JDK 8 兼容）
+- Java：JDK 21（`ele-ai-tender-interaction` / `ele-ai-tender-common-interaction` 对外 API 保持 JDK 8 兼容）
 - Spring Boot：3.2.2
+- Spring AI：0.8.1
 - MyBatis-Plus：3.5.5
 - MySQL：8.4.0
-- Redis：会话存储、口令缓存、Stream 任务队列
+- Redis：会话存储、AI任务缓存、Token 限流
+- Milvus：2.3.3（向量数据库）
 - 前端：Vue 3 + TypeScript + Vite + Pinia + Vue Router
 
 ## 4. 模块边界
 
-- 非交互公共类型 → `ele-tender-common`
-- 交互协议 DTO、SPI、路径常量 → `ele-tender-common-interaction`（单源，禁止复制）
+- 非交互公共类型 → `ele-ai-tender-common`
+- 交互协议 DTO、SPI、路径常量 → `ele-ai-tender-common-interaction`（单源，禁止复制）
 - controller / facade 边界通过 mapper 显式转换，service 层不直接透传协议 DTO
 - 协议 DTO 不放 `jakarta/javax.validation` 注解
+- core模块负责业务编排，ai模块负责AI能力提供，通过HTTP调用通信
 
 ## 5. 表前缀
 
-| 模块 | 前缀 |
-|------|------|
-| 支撑中心 | `sup_*` |
-| 文件服务 | `file_*` |
-| 招标文件编制 | `td_*` |
-| 投标文件加解密 | `bdc_*` |
+| 模块 | 前缀 | 说明 |
+|------|------|------|
+| 支撑中心 | `sup_*` | 用户、角色、菜单、日志等 |
+| 文件服务 | `file_*` | 文件信息 |
+| AI编制系统 | `ai_*` | 项目、需求、模板、知识库、检测记录、评审项、模型配置 |
 
 ## 6. 关键接口清单
 
 ### 支撑中心（`/api`）
 - `/auth/*`、`/users/*`、`/roles/*`、`/menus/*`
-- `/versions/*`、`/external-systems/*`、`/external/*`
-- `/access-logs`、`/crypto/manage/*`
+- `/templates/*`、`/knowledge/*`、`/statistics/*`
+- `/ai-config/*`、`/access-logs`、`/messages/*`
 
 ### 文件服务（`/api/file`）
-- `POST /upload`、`POST /esign/upload`
-- `GET /download/{fileId}`、`GET /info/{fileId}`、`DELETE /delete/{fileId}`
+- `POST /upload`、`GET /download/{fileId}`
+- `GET /info/{fileId}`、`DELETE /delete/{fileId}`
 
-### 招标文件编制（`/api/tender-documents`）
-- `/entry`、`/overview`、`/recompile`
-- `/basic-info`、`/purchase-file`、`/purchase-file/signed`
-- `/bid-record`、`/evaluation-rules`、`/evaluation-rules/score-type`
-- `/check-items`、`/complete-and-next`
-- `/generate`、`/generate/records`、`/generate/callback`
+### AI编制核心（`/api/v1`）
+- `/projects/*` — 项目管理
+- `/requirements/*` — 业务需求
+- `/review-items/*` — 评审项
+- `/templates/*` — 模板管理
 
-### 加解密服务（`/api/crypto`）
-- `POST /bid-document/push`
-- `POST /bid-decrypt/submit`
-- `GET /bid-decrypt/status/{recordId}`
+### AI服务（`/api/v1`）
+- `/ai/*` — AI助手、文本优化、生成
+- `/detection/*` — 智能检测
+- `/knowledge/*` — 知识库检索
 
-### 交互固定路径（`/api/eleTender/interaction`）
+### 交互固定路径（`/api/eleAiTender/interaction`）
 - `/identity/current`
 - `/projects/basic-info`
-- `/bid-record-schemes/query`
-- `/ca-keys/query`
-- `/callbacks/tender-pdf`
-- `/callbacks/tender-package`
-- `/callbacks/bid-document-result`
-- `/callbacks/bid-decrypt-result`
+- `/callbacks/document-export`
+- `/callbacks/detection-result`
 
 ## 7. 安全与 JWT
 
 - 认证采用 JWT + Redis 双校验
-- `ele-tender-support` 负责 external token 签发
+- `ele-ai-tender-support` 负责 external token 签发
 - 四个后端服务共享同一套 JWT 密钥与过期策略
 - 所有使用 `JwtAuthenticationFilter` 的服务启动时必须执行 `JwtUtil.configure(...)`
 - 外部系统签名统一使用 `HMAC-SHA256`
 - 安全配置缺失时必须抛异常，禁止静默降级
 
-详见 [CODE_CONVENTIONS.md — 安全规范](CODE_CONVENTIONS.md#5-安全规范)
+详见 [CODE_CONVENTIONS.md — 安全规范](CODE_CONVENTIONS.md#5-安全规范)。
 
 ## 8. 日志约束
 
 - 全系统统一透传 `X-Trace-Id`，MDC 键为 `traceId`
 - HTTP 入站日志优先落库到 `sup_access_log`
-- 新增链路时尽量记录 `bizType`、`bizId`、`projectId`、`tenderId`、`fileId`
-- 禁止记录完整 token、签名 secret 和文件二进制内容
+- 新增链路时尽量记录 `bizType`、`bizId`、`projectId`、`fileId`
+- 禁止记录完整 token、签名 secret、文件二进制内容和 AI 原始响应
 
 ## 9. 前后端联调
 
@@ -107,8 +105,8 @@
 |-------------|------|
 | `/support-api/*` | support :8080（rewrite → `/api/*`） |
 | `/file-api/*` | file :8081 |
-| `/file-esign-api/*` | file :8081（Esign 上传） |
-| `/crypto-api/*` | crypto :8083（rewrite → `/api/crypto/*`） |
+| `/core-api/*` | core :8082（rewrite → `/api/*`） |
+| `/ai-api/*` | ai :8083（rewrite → `/api/*`） |
 
 修改接口路径、参数位置或代理规则时，必须同步前端 API 文件和相关文档。
 
