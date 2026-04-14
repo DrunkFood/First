@@ -56,4 +56,9 @@ public class RedisKeyConstant {
      * 已注册的自定义文件后缀集合（Set 类型）
      */
     public static final String REGISTERED_SUFFIXES = "file:registered-suffixes";
+
+    /**
+     * 系统参数缓存前缀
+     */
+    public static final String SYS_PARAM_PREFIX = "sys:param:";
 }

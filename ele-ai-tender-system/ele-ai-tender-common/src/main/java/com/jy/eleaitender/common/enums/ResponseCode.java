@@ -108,7 +108,19 @@ public enum ResponseCode {
     // 模型配置相关 8071-8079
     MODEL_CONFIG_NOT_FOUND(8071, "模型配置不存在"),
     MODEL_CONFIG_ENCRYPT_ERROR(8072, "模型密钥加密失败"),
-    MODEL_CONFIG_ACTIVE_ERROR(8073, "激活模型配置失败");
+    MODEL_CONFIG_ACTIVE_ERROR(8073, "激活模型配置失败"),
+
+    // 系统参数相关 9001-9009
+    SYS_PARAM_NOT_FOUND(9001, "系统参数不存在"),
+
+    // 政策文件相关 9011-9019
+    POLICY_FILE_NOT_FOUND(9011, "政策文件不存在"),
+
+    // 消息相关 9021-9029
+    MESSAGE_NOT_FOUND(9021, "消息不存在"),
+
+    // 模型路由相关 9031-9039
+    MODEL_ROUTE_NOT_FOUND(9031, "路由规则不存在");
 
     private final int code;
     private final String message;

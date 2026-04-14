@@ -1,6 +1,7 @@
 package com.jy.eleaitender.support.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.logging.OperationLog;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.entity.support.SysRole;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
@@ -53,6 +54,7 @@ public class RoleController {
     @PostMapping
     @RequireLogin
     @Operation(summary = "创建角色")
+    @OperationLog("创建角色")
     public Result<SysRole> create(@RequestBody SysRole role) {
         return Result.success(roleService.createRole(role));
     }
@@ -60,6 +62,7 @@ public class RoleController {
     @PutMapping("/{id}")
     @RequireLogin
     @Operation(summary = "更新角色")
+    @OperationLog("更新角色")
     public Result<Void> update(@PathVariable Long id, @RequestBody SysRole role) {
         role.setId(id);
         roleService.updateRole(role);
@@ -69,6 +72,7 @@ public class RoleController {
     @DeleteMapping("/{id}")
     @RequireLogin
     @Operation(summary = "删除角色")
+    @OperationLog("删除角色")
     public Result<Void> delete(@PathVariable Long id) {
         roleService.deleteRole(id);
         return Result.success();
@@ -84,6 +88,7 @@ public class RoleController {
     @PutMapping("/{id}/menus")
     @RequireLogin
     @Operation(summary = "分配角色菜单权限")
+    @OperationLog("分配角色权限")
     public Result<Void> assignMenus(@PathVariable Long id, @RequestBody Map<String, List<Long>> params) {
         List<Long> menuIds = params.get("menuIds");
         roleService.assignMenus(id, menuIds);

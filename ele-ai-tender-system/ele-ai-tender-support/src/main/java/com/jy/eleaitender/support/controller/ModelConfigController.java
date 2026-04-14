@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.logging.OperationLog;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.support.service.IModelConfigService;
@@ -39,6 +40,7 @@ public class ModelConfigController {
     @PostMapping
     @Operation(summary = "创建模型配置")
     @RequireLogin
+    @OperationLog("创建模型配置")
     public Result<AiModelConfig> create(@RequestBody AiModelConfig config) {
         return Result.success(modelConfigService.create(config));
     }
@@ -46,6 +48,7 @@ public class ModelConfigController {
     @PutMapping("/{id}")
     @Operation(summary = "更新模型配置")
     @RequireLogin
+    @OperationLog("更新模型配置")
     public Result<Void> update(@PathVariable Long id, @RequestBody AiModelConfig config) {
         config.setId(id);
         modelConfigService.update(config);
@@ -55,6 +58,7 @@ public class ModelConfigController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除模型配置")
     @RequireLogin
+    @OperationLog("删除模型配置")
     public Result<Void> delete(@PathVariable Long id) {
         modelConfigService.deleteById(id);
         return Result.success();
@@ -63,8 +67,10 @@ public class ModelConfigController {
     @PutMapping("/{id}/active")
     @Operation(summary = "激活/停用模型配置")
     @RequireLogin
+    @OperationLog("变更模型配置状态")
     public Result<Void> setActive(@PathVariable Long id, @RequestParam Integer isActive) {
         modelConfigService.setActive(id, isActive);
         return Result.success();
     }
 }
+

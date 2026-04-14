@@ -1,6 +1,7 @@
 package com.jy.eleaitender.support.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.logging.OperationLog;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
@@ -45,6 +46,7 @@ public class UserController {
     @PostMapping
     @RequireLogin
     @Operation(summary = "创建用户")
+    @OperationLog("创建用户")
     public Result<SysUser> create(@RequestBody SysUser user) {
         return Result.success(userService.createUser(user));
     }
@@ -52,6 +54,7 @@ public class UserController {
     @PutMapping("/{id}")
     @RequireLogin
     @Operation(summary = "更新用户")
+    @OperationLog("更新用户")
     public Result<Void> update(@PathVariable Long id, @RequestBody SysUser user) {
         user.setId(id);
         userService.updateUser(user);
@@ -61,6 +64,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @RequireLogin
     @Operation(summary = "删除用户")
+    @OperationLog("删除用户")
     public Result<Void> delete(@PathVariable Long id) {
         userService.deleteUser(id);
         return Result.success();
@@ -69,6 +73,7 @@ public class UserController {
     @PostMapping("/{id}/reset-password")
     @RequireLogin
     @Operation(summary = "重置密码")
+    @OperationLog("重置用户密码")
     public Result<Void> resetPassword(
             @PathVariable Long id,
             @RequestParam(required = false) String newPassword,
@@ -83,6 +88,7 @@ public class UserController {
     @PutMapping("/{id}/status")
     @RequireLogin
     @Operation(summary = "启用/禁用用户")
+    @OperationLog("变更用户状态")
     public Result<Void> changeStatus(
             @PathVariable Long id,
             @RequestParam(required = false) Integer status,

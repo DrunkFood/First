@@ -86,6 +86,43 @@ const staticRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/model-config/ModelConfigList.vue'),
         meta: { title: 'AI模型配置', icon: 'Setting' },
       },
+      // Phase1 新增页面
+      {
+        path: 'system/config',
+        name: 'SysParamManagement',
+        component: () => import('@/views/system/sys-param/index.vue'),
+        meta: { title: '系统参数', icon: 'Setting' },
+      },
+      {
+        path: 'system/operation-log',
+        name: 'OperationLogManagement',
+        component: () => import('@/views/system/operation-log/index.vue'),
+        meta: { title: '操作日志', icon: 'Notebook' },
+      },
+      {
+        path: 'policy-file',
+        name: 'PolicyFileManagement',
+        component: () => import('@/views/policy-file/index.vue'),
+        meta: { title: '政策文件', icon: 'FolderOpened' },
+      },
+      {
+        path: 'message',
+        name: 'MessageCenter',
+        component: () => import('@/views/message/index.vue'),
+        meta: { title: '消息中心', icon: 'Bell' },
+      },
+      {
+        path: 'statistics',
+        name: 'StatisticsOverview',
+        component: () => import('@/views/statistics/index.vue'),
+        meta: { title: '统计分析', icon: 'DataAnalysis' },
+      },
+      {
+        path: 'model-route',
+        name: 'ModelRouteManagement',
+        component: () => import('@/views/model-route/index.vue'),
+        meta: { title: '模型路由', icon: 'Share' },
+      },
     ],
   },
   {

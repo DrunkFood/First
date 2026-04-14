@@ -1,5 +1,6 @@
 package com.jy.eleaitender.support.controller;
 
+import com.jy.eleaitender.common.logging.OperationLog;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.entity.support.SysMenu;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
@@ -52,6 +53,7 @@ public class MenuController {
     @PostMapping
     @RequireLogin
     @Operation(summary = "创建菜单")
+    @OperationLog("创建菜单")
     public Result<SysMenu> create(@RequestBody SysMenu menu) {
         return Result.success(menuService.createMenu(menu));
     }
@@ -59,6 +61,7 @@ public class MenuController {
     @PutMapping("/{id}")
     @RequireLogin
     @Operation(summary = "更新菜单")
+    @OperationLog("更新菜单")
     public Result<Void> update(@PathVariable Long id, @RequestBody SysMenu menu) {
         menu.setId(id);
         menuService.updateMenu(menu);
@@ -68,6 +71,7 @@ public class MenuController {
     @DeleteMapping("/{id}")
     @RequireLogin
     @Operation(summary = "删除菜单")
+    @OperationLog("删除菜单")
     public Result<Void> delete(@PathVariable Long id) {
         menuService.deleteMenu(id);
         return Result.success();
