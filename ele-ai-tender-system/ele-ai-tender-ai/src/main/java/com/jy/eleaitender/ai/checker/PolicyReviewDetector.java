@@ -1,0 +1,31 @@
+package com.jy.eleaitender.ai.checker;
+
+import com.jy.eleaitender.ai.prompt.PromptBuilder;
+import com.jy.eleaitender.ai.prompt.PromptTemplates;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+
+/**
+ * 政策审查检测器
+ * 对照政策文件检查招标文件的合规性
+ */
+@Component
+public class PolicyReviewDetector extends BaseDetector {
+
+    @Override
+    protected String getDetectionType() {
+        return "POLICY_REVIEW";
+    }
+
+    @Override
+    protected String getSystemPrompt() {
+        return PromptTemplates.DETECTION_POLICY_REVIEW;
+    }
+
+    @Override
+    protected String buildUserPrompt(String content, Map<String, Object> params) {
+        String policyContent = params != null ? (String) params.get("policyContent") : null;
+        return PromptBuilder.buildPolicyReview(content, policyContent);
+    }
+}

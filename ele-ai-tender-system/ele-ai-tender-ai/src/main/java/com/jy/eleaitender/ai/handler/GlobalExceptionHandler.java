@@ -1,6 +1,7 @@
 package com.jy.eleaitender.ai.handler;
 
 import com.jy.eleaitender.common.enums.ResponseCode;
+import com.jy.eleaitender.common.exception.AiUnavailableException;
 import com.jy.eleaitender.common.exception.AuthException;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.response.Result;
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
     public Result<?> handleAuthException(AuthException e) {
         log.error("认证异常: {}", e.getMessage());
         return Result.fail(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(AiUnavailableException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<?> handleAiUnavailableException(AiUnavailableException e) {
+        log.error("AI服务不可用: {}", e.getMessage());
+        return Result.fail(e.getCode(), "AI服务暂时不可用: " + e.getMessage());
     }
 
     @ExceptionHandler(BusinessException.class)

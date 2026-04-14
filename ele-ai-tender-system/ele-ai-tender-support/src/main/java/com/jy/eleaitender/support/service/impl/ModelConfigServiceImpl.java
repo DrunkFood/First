@@ -8,6 +8,7 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.support.mapper.ModelConfigMapper;
 import com.jy.eleaitender.support.service.IModelConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -15,8 +16,13 @@ import org.springframework.util.StringUtils;
 @Service
 public class ModelConfigServiceImpl implements IModelConfigService {
 
+    private static final String CONFIG_REFRESH_CHANNEL = "ai:config:refresh";
+
     @Autowired
     private ModelConfigMapper modelConfigMapper;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Override
     public Page<AiModelConfig> getPage(Integer pageNum, Integer pageSize, String modelType, String usageScenario) {
@@ -50,6 +56,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
             config.setTokenUsage(0L);
         }
         modelConfigMapper.insert(config);
+        publishConfigRefresh();
         return config;
     }
 
@@ -57,12 +64,14 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     @Transactional
     public void update(AiModelConfig config) {
         modelConfigMapper.updateById(config);
+        publishConfigRefresh();
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
         modelConfigMapper.deleteById(id);
+        publishConfigRefresh();
     }
 
     @Override
@@ -74,5 +83,17 @@ public class ModelConfigServiceImpl implements IModelConfigService {
         }
         config.setIsActive(isActive);
         modelConfigMapper.updateById(config);
+        publishConfigRefresh();
+    }
+
+    /**
+     * 发布模型配置刷新通知到Redis Pub/Sub
+     */
+    private void publishConfigRefresh() {
+        try {
+            redisTemplate.convertAndSend(CONFIG_REFRESH_CHANNEL, "model_config_updated");
+        } catch (Exception e) {
+            // 通知失败不影响主流程，缓存会自然过期
+        }
     }
 }
