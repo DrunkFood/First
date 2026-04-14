@@ -1,10 +1,13 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.entity.AiReviewItem;
 import com.jy.eleaitender.core.mapper.AiReviewItemMapper;
+import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IReviewItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +26,9 @@ public class ReviewItemServiceImpl implements IReviewItemService {
 
     @Autowired
     private AiReviewItemMapper reviewItemMapper;
+
+    @Autowired
+    private IAiTaskService aiTaskService;
 
     @Override
     public List<AiReviewItem> getTreeByProjectId(Long projectId) {
@@ -121,6 +128,46 @@ public class ReviewItemServiceImpl implements IReviewItemService {
             for (AiReviewItem child : children) {
                 buildChildren(child, allItems);
             }
+        }
+    }
+
+    @Override
+    @Transactional
+    public AiTask submitGenerate(Long projectId, Map<String, Object> params) {
+        params.put("projectId", projectId);
+        return aiTaskService.createTask(AiTaskType.REVIEW_ITEM_GENERATE,
+                projectId, projectId, "PROJECT", params, null);
+    }
+
+    @Override
+    @Transactional
+    public void batchCreate(List<AiReviewItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (AiReviewItem item : items) {
+            if (item.getSortOrder() == null) {
+                item.setSortOrder(0);
+            }
+            reviewItemMapper.insert(item);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void batchUpdate(List<AiReviewItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (AiReviewItem item : items) {
+            if (item.getId() == null) {
+                throw new BusinessException(ResponseCode.REVIEW_ITEM_NOT_FOUND);
+            }
+            AiReviewItem existing = reviewItemMapper.selectById(item.getId());
+            if (existing == null) {
+                throw new BusinessException(ResponseCode.REVIEW_ITEM_NOT_FOUND);
+            }
+            reviewItemMapper.updateById(item);
         }
     }
 }

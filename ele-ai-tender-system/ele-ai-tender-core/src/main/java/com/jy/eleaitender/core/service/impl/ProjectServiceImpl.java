@@ -2,11 +2,15 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.enums.ProjectPhase;
+import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.core.entity.AiProject;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.service.IProjectService;
+import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,11 +62,26 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Transactional
     public AiProject create(AiProject project) {
-        // 生成项目编号
-        project.setProjectCode(generateProjectCode());
+        // 校验项目编号唯一性（如果用户提供了编号）
+        if (StringUtils.hasText(project.getProjectCode())) {
+            validateProjectCodeUnique(project.getProjectCode(), null);
+        } else {
+            project.setProjectCode(generateProjectCode());
+        }
+        // 校验项目名称唯一性
+        if (StringUtils.hasText(project.getProjectName())) {
+            validateProjectNameUnique(project.getProjectName(), null);
+        }
         // 初始化状态为草稿
         if (!StringUtils.hasText(project.getStatus())) {
-            project.setStatus("DRAFT");
+            project.setStatus(ProjectStatus.DRAFT.getCode());
+        }
+        // 初始化阶段和进度
+        if (project.getCurrentPhase() == null) {
+            project.setCurrentPhase(ProjectPhase.BASIC_INFO.getCode());
+        }
+        if (project.getProgress() == null) {
+            project.setProgress(0);
         }
         projectMapper.insert(project);
         return project;
@@ -94,5 +113,87 @@ public class ProjectServiceImpl implements IProjectService {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         int randomDigits = ThreadLocalRandom.current().nextInt(100000, 999999);
         return "AI-" + timestamp + "-" + randomDigits;
+    }
+
+    @Override
+    public ProjectPhaseVO getPhase(Long projectId) {
+        AiProject project = getById(projectId);
+        ProjectPhaseVO vo = new ProjectPhaseVO();
+        vo.setProjectId(projectId);
+        vo.setCurrentPhase(project.getCurrentPhase());
+        vo.setProgress(project.getProgress());
+        vo.setStatus(project.getStatus());
+        try {
+            ProjectPhase phase = ProjectPhase.fromCode(project.getCurrentPhase());
+            vo.setCurrentPhaseName(phase.getLabel());
+        } catch (Exception e) {
+            vo.setCurrentPhaseName("未知");
+        }
+        try {
+            ProjectStatus status = ProjectStatus.fromCode(project.getStatus());
+            vo.setStatusName(status.getLabel());
+        } catch (Exception e) {
+            vo.setStatusName(project.getStatus());
+        }
+        return vo;
+    }
+
+    @Override
+    @Transactional
+    public void advancePhase(Long projectId, Integer targetPhase) {
+        AiProject project = getById(projectId);
+        ProjectPhase target = ProjectPhase.fromCode(targetPhase);
+        project.setCurrentPhase(target.getCode());
+        project.setProgress(target.getProgressPercent());
+        projectMapper.updateById(project);
+    }
+
+    @Override
+    @Transactional
+    public void changeStatus(Long projectId, String targetStatus) {
+        AiProject project = getById(projectId);
+        ProjectStatus target = ProjectStatus.fromCode(targetStatus);
+        ProjectStateMachine.transition(project, target);
+        projectMapper.updateById(project);
+    }
+
+    @Override
+    @Transactional
+    public void cancelProject(Long projectId) {
+        changeStatus(projectId, ProjectStatus.CANCELLED.getCode());
+    }
+
+    @Override
+    @Transactional
+    public void publishProject(Long projectId) {
+        changeStatus(projectId, ProjectStatus.PUBLISHED.getCode());
+    }
+
+    @Override
+    @Transactional
+    public void archiveProject(Long projectId) {
+        changeStatus(projectId, ProjectStatus.ARCHIVED.getCode());
+    }
+
+    private void validateProjectCodeUnique(String projectCode, Long excludeId) {
+        LambdaQueryWrapper<AiProject> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AiProject::getProjectCode, projectCode);
+        if (excludeId != null) {
+            wrapper.ne(AiProject::getId, excludeId);
+        }
+        if (projectMapper.selectCount(wrapper) > 0) {
+            throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目编号已存在: " + projectCode);
+        }
+    }
+
+    private void validateProjectNameUnique(String projectName, Long excludeId) {
+        LambdaQueryWrapper<AiProject> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AiProject::getProjectName, projectName);
+        if (excludeId != null) {
+            wrapper.ne(AiProject::getId, excludeId);
+        }
+        if (projectMapper.selectCount(wrapper) > 0) {
+            throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目名称已存在: " + projectName);
+        }
     }
 }

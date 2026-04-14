@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 业务需求实体
@@ -26,6 +27,9 @@ public class AiRequirement extends BaseEntity {
 
     @Schema(description = "项目类型")
     private String projectType;
+
+    @Schema(description = "服务子分类")
+    private String serviceSubType;
 
     @Schema(description = "预算价(万元)")
     private BigDecimal budget;
@@ -51,6 +55,15 @@ public class AiRequirement extends BaseEntity {
     @Schema(description = "业务需求内容")
     private String content;
 
-    @Schema(description = "状态")
+    @Schema(description = "自动保存内容(未提交的草稿)")
+    private String autoSaveContent;
+
+    @Schema(description = "自动保存时间")
+    private Date autoSaveTime;
+
+    @Schema(description = "状态: IN_PROGRESS/COMPLETED")
     private String status;
+
+    @Schema(description = "完成进度(百分比 0-100)")
+    private Integer progress;
 }

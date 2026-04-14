@@ -116,11 +116,21 @@ public enum ResponseCode {
     // 政策文件相关 9011-9019
     POLICY_FILE_NOT_FOUND(9011, "政策文件不存在"),
 
+    // AI任务相关 8081-8099
+    TASK_NOT_FOUND(8081, "AI任务不存在"),
+    TASK_STATUS_ERROR(8082, "AI任务状态错误"),
+    TASK_NOT_RETRYABLE(8083, "AI任务不可重试"),
+    TASK_ALREADY_PROCESSING(8084, "AI任务正在处理中"),
+
     // 消息相关 9021-9029
     MESSAGE_NOT_FOUND(9021, "消息不存在"),
 
     // 模型路由相关 9031-9039
-    MODEL_ROUTE_NOT_FOUND(9031, "路由规则不存在");
+    MODEL_ROUTE_NOT_FOUND(9031, "路由规则不存在"),
+
+    // 文档集成相关 9041-9049
+    DOCUMENT_INTEGRATE_ERROR(9041, "文档集成失败"),
+    DOCUMENT_EXPORT_ERROR(9042, "文档导出失败");
 
     private final int code;
     private final String message;

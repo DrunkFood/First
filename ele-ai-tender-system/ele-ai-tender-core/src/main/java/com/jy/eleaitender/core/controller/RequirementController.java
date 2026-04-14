@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.entity.AiRequirement;
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * 业务需求控制器
@@ -71,5 +74,42 @@ public class RequirementController {
             @RequestParam Long matchedFileId,
             @RequestParam(defaultValue = "MANUAL_SELECT") String matchMode) {
         return Result.success(requirementService.matchTemplate(id, matchedFileId, matchMode));
+    }
+
+    @PostMapping("/{id}/generate")
+    @RequireLogin
+    @Operation(summary = "提交AI生成需求任务")
+    public Result<AiTask> generate(@PathVariable Long id, @RequestBody Map<String, Object> params) {
+        return Result.success(requirementService.submitGenerate(id, params));
+    }
+
+    @PostMapping("/{id}/auto-save")
+    @RequireLogin
+    @Operation(summary = "自动保存草稿")
+    public Result<Void> autoSave(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        requirementService.autoSave(id, body.get("content"));
+        return Result.success();
+    }
+
+    @GetMapping("/{id}/auto-save")
+    @RequireLogin
+    @Operation(summary = "获取自动保存内容")
+    public Result<String> getAutoSave(@PathVariable Long id) {
+        return Result.success(requirementService.getAutoSaveContent(id));
+    }
+
+    @DeleteMapping("/{id}/auto-save")
+    @RequireLogin
+    @Operation(summary = "清除自动保存内容")
+    public Result<Void> clearAutoSave(@PathVariable Long id) {
+        requirementService.clearAutoSave(id);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/detect")
+    @RequireLogin
+    @Operation(summary = "提交需求检测（敏感词+错别字）")
+    public Result<Map<String, Long>> detect(@PathVariable Long id) {
+        return Result.success(requirementService.submitDetection(id));
     }
 }

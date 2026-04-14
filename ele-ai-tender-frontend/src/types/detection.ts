@@ -1,0 +1,45 @@
+/** 检测类型 */
+export type DetectionType = 'SENSITIVE_WORD' | 'TYPO' | 'POLICY_REVIEW' | 'FORMAT_CHECK'
+
+/** 检测项进度 */
+export interface DetectionItemProgress {
+  detectionType: DetectionType
+  typeName: string
+  taskStatus: string
+  issueCount: number
+  score?: number
+}
+
+/** 检测进度 */
+export interface DetectionProgressVO {
+  projectId: number
+  overallStatus: string
+  items: DetectionItemProgress[]
+}
+
+/** 检测问题项 */
+export interface DetectionIssueVO {
+  recordId: number
+  detectionType: DetectionType
+  typeName: string
+  description: string
+  location: string
+  suggestion: string
+  severity: 'HIGH' | 'MEDIUM' | 'LOW'
+  handleStatus: number
+}
+
+/** 检测报告 */
+export interface DetectionReportVO {
+  projectId: number
+  projectName: string
+  overallStatus: string
+  totalIssueCount: number
+  totalScore?: number
+  issues: DetectionIssueVO[]
+}
+
+/** 检测提交请求 */
+export interface DetectionSubmitRequest {
+  policyFileIds?: number[]
+}

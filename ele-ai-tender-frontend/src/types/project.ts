@@ -8,10 +8,18 @@ export interface ProjectInfo {
   budget?: number
   reviewType?: string
   status: string
+  currentPhase?: number
+  progress?: number
   templateId?: number
   requirementId?: number
   requirementSource?: string
   requirementContent?: string
+  generatedFileId?: number
+  projectDescription?: string
+  tenderUnit?: string
+  projectLocation?: string
+  contactPerson?: string
+  contactPhone?: string
   createTime: string
   createName: string
 }

@@ -3,6 +3,7 @@ package com.jy.eleaitender.core.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
+import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.core.entity.AiProject;
 import com.jy.eleaitender.core.entity.AiProjectVersion;
 import com.jy.eleaitender.core.service.IProjectService;
@@ -81,7 +82,54 @@ public class ProjectController {
     @RequireLogin
     @Operation(summary = "导出项目招标文件")
     public Result<Void> export(@PathVariable Long id) {
-        // TODO: 实现导出Word文档逻辑
+        // TODO: 实现导出Word文档逻辑（T07实现）
+        return Result.success();
+    }
+
+    @GetMapping("/{id}/phase")
+    @RequireLogin
+    @Operation(summary = "获取项目当前阶段信息")
+    public Result<ProjectPhaseVO> getPhase(@PathVariable Long id) {
+        return Result.success(projectService.getPhase(id));
+    }
+
+    @PutMapping("/{id}/phase")
+    @RequireLogin
+    @Operation(summary = "手动推进阶段")
+    public Result<Void> advancePhase(@PathVariable Long id, @RequestParam Integer targetPhase) {
+        projectService.advancePhase(id, targetPhase);
+        return Result.success();
+    }
+
+    @PutMapping("/{id}/status")
+    @RequireLogin
+    @Operation(summary = "变更项目状态")
+    public Result<Void> changeStatus(@PathVariable Long id, @RequestParam String targetStatus) {
+        projectService.changeStatus(id, targetStatus);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/cancel")
+    @RequireLogin
+    @Operation(summary = "取消项目")
+    public Result<Void> cancel(@PathVariable Long id) {
+        projectService.cancelProject(id);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/publish")
+    @RequireLogin
+    @Operation(summary = "发布项目")
+    public Result<Void> publish(@PathVariable Long id) {
+        projectService.publishProject(id);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/archive")
+    @RequireLogin
+    @Operation(summary = "归档项目")
+    public Result<Void> archive(@PathVariable Long id) {
+        projectService.archiveProject(id);
         return Result.success();
     }
 }

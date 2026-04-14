@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.controller;
 
+import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.entity.AiReviewItem;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 评审项控制器
@@ -49,6 +51,30 @@ public class ReviewItemController {
     @Operation(summary = "删除评审项")
     public Result<Void> deleteById(@PathVariable Long id) {
         reviewItemService.deleteById(id);
+        return Result.success();
+    }
+
+    @PostMapping("/{projectId}/generate")
+    @RequireLogin
+    @Operation(summary = "提交AI生成评审项")
+    public Result<AiTask> submitGenerate(@PathVariable Long projectId,
+                                         @RequestBody Map<String, Object> params) {
+        return Result.success(reviewItemService.submitGenerate(projectId, params));
+    }
+
+    @PostMapping("/batch")
+    @RequireLogin
+    @Operation(summary = "批量创建评审项")
+    public Result<Void> batchCreate(@RequestBody List<AiReviewItem> items) {
+        reviewItemService.batchCreate(items);
+        return Result.success();
+    }
+
+    @PutMapping("/batch")
+    @RequireLogin
+    @Operation(summary = "批量更新评审项")
+    public Result<Void> batchUpdate(@RequestBody List<AiReviewItem> items) {
+        reviewItemService.batchUpdate(items);
         return Result.success();
     }
 }

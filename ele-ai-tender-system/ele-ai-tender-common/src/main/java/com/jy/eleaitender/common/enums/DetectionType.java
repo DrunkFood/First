@@ -10,10 +10,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum DetectionType {
 
-    FAIRNESS("FAIRNESS", "公平性"),
-    COMPLIANCE("COMPLIANCE", "合规性"),
-    TYPO("TYPO", "错别字"),
-    SENSITIVE_WORD("SENSITIVE_WORD", "敏感词");
+    SENSITIVE_WORD("SENSITIVE_WORD", "敏感词检测"),
+    TYPO("TYPO", "错别字检测"),
+    POLICY_REVIEW("POLICY_REVIEW", "政策文件审查"),
+    FORMAT_CHECK("FORMAT_CHECK", "格式规范检测");
 
     private final String code;
     private final String label;

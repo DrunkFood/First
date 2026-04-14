@@ -1,0 +1,43 @@
+package com.jy.eleaitender.core.service;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.entity.ai.AiPolicyFile;
+import com.jy.eleaitender.core.dto.response.PolicyFileVO;
+
+import java.util.List;
+
+/**
+ * 政策文件服务接口（Core模块 - 用户政策文件）
+ */
+public interface IPolicyFileService {
+
+    /**
+     * 分页查询当前用户的政策文件
+     */
+    Page<AiPolicyFile> getPage(Integer pageNum, Integer pageSize, String fileCategory, String applicableCategory);
+
+    /**
+     * 获取详情
+     */
+    AiPolicyFile getById(Long id);
+
+    /**
+     * 上传政策文件
+     */
+    AiPolicyFile create(AiPolicyFile policyFile);
+
+    /**
+     * 删除政策文件
+     */
+    void deleteById(Long id);
+
+    /**
+     * 启用/禁用
+     */
+    void setStatus(Long id, Integer status);
+
+    /**
+     * 获取全部可用政策文件（系统级+用户级合并，供检测选择用）
+     */
+    List<PolicyFileVO> getAllAvailable(String applicableCategory);
+}

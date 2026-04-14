@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.core.entity.AiProject;
 
 import java.util.List;
@@ -39,4 +40,34 @@ public interface IProjectService {
      * 生成项目编号
      */
     String generateProjectCode();
+
+    /**
+     * 获取项目阶段进度
+     */
+    ProjectPhaseVO getPhase(Long projectId);
+
+    /**
+     * 推进项目阶段
+     */
+    void advancePhase(Long projectId, Integer targetPhase);
+
+    /**
+     * 变更项目状态
+     */
+    void changeStatus(Long projectId, String targetStatus);
+
+    /**
+     * 取消项目
+     */
+    void cancelProject(Long projectId);
+
+    /**
+     * 发布项目
+     */
+    void publishProject(Long projectId);
+
+    /**
+     * 归档项目
+     */
+    void archiveProject(Long projectId);
 }

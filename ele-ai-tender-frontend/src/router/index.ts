@@ -63,6 +63,24 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/review/ReviewEditor.vue'),
         meta: { title: '评审项管理' },
       },
+      {
+        path: 'project/:id/wizard',
+        name: 'ProjectWizard',
+        component: () => import('@/views/project/ProjectWizard.vue'),
+        meta: { title: '项目编制' },
+      },
+      {
+        path: 'policy-file',
+        name: 'PolicyFileList',
+        component: () => import('@/views/policy/PolicyFileList.vue'),
+        meta: { title: '政策文件管理' },
+      },
+      {
+        path: 'message',
+        name: 'MessageCenter',
+        component: () => import('@/views/message/MessageCenter.vue'),
+        meta: { title: '消息中心' },
+      },
     ],
   },
 ]

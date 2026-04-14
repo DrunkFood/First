@@ -1,0 +1,47 @@
+package com.jy.eleaitender.common.enums;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+/**
+ * AI任务类型枚举
+ */
+@Getter
+@AllArgsConstructor
+public enum AiTaskType {
+
+    REQUIREMENT_GENERATE("REQUIREMENT_GENERATE", "需求生成"),
+    REVIEW_ITEM_GENERATE("REVIEW_ITEM_GENERATE", "评审项生成"),
+    DETECTION_SENSITIVE_WORD("DETECTION_SENSITIVE_WORD", "敏感词检测"),
+    DETECTION_TYPO("DETECTION_TYPO", "错别字检测"),
+    DETECTION_POLICY_REVIEW("DETECTION_POLICY_REVIEW", "政策文件审查"),
+    DETECTION_FORMAT_CHECK("DETECTION_FORMAT_CHECK", "格式规范检测"),
+    TEXT_OPTIMIZE("TEXT_OPTIMIZE", "文本优化");
+
+    private final String code;
+    private final String label;
+
+    public static AiTaskType fromCode(String code) {
+        for (AiTaskType type : values()) {
+            if (type.code.equals(code)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("未知的AI任务类型: " + code);
+    }
+
+    /**
+     * 是否为检测类型
+     */
+    public boolean isDetection() {
+        return this == DETECTION_SENSITIVE_WORD || this == DETECTION_TYPO
+                || this == DETECTION_POLICY_REVIEW || this == DETECTION_FORMAT_CHECK;
+    }
+
+    /**
+     * 是否为业务需求检测类型（仅敏感词+错别字）
+     */
+    public boolean isRequirementDetection() {
+        return this == DETECTION_SENSITIVE_WORD || this == DETECTION_TYPO;
+    }
+}
