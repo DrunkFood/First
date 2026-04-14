@@ -41,9 +41,9 @@ mybatis-plus:
 
 # JWT配置
 jwt:
-  secret: ${APP_JWT_SECRET:}
-  expiration: 7200
-  external-expiration: 604800
+  secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
+  expiration: ${APP_JWT_EXPIRATION:7200}
+  external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
 
 swagger:
   enabled: true

@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招标文件生成系统 - 评审项设置</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --brand-color: #336CFF;
+            --auxiliary-color: #31E3FD;
+            --embellishment-color: #FF8D3B;
+            --bg-primary: #0F1419;
+            --bg-secondary: #1A1F26;
+            --bg-tertiary: #242B33;
+            --bg-elevated: #2D353D;
+            --text-primary: #F0F2F5;
+            --text-secondary: #B9BBBE;
+            --text-tertiary: #8B8E93;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.12);
+            --hover-state: rgba(51, 108, 255, 0.12);
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --card-bg: rgba(26, 31, 38, 0.95);
+            --input-bg: rgba(15, 20, 25, 0.6);
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root {
+                --brand-color: #336CFF;
+                --auxiliary-color: #00B8D4;
+                --embellishment-color: #FF9800;
+                --bg-primary: #FFFFFF;
+                --bg-secondary: #F8F9FA;
+                --bg-tertiary: #F1F3F4;
+                --bg-elevated: #FFFFFF;
+                --text-primary: #1F2937;
+                --text-secondary: #4B5563;
+                --text-tertiary: #6B7280;
+                --border-light: rgba(0, 0, 0, 0.08);
+                --border-medium: rgba(0, 0, 0, 0.12);
+                --hover-state: rgba(51, 108, 255, 0.06);
+                --shadow-color: rgba(0, 0, 0, 0.08);
+                --card-bg: rgba(255, 255, 255, 0.98);
+                --input-bg: rgba(243, 244, 246, 0.8);
+            }
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 220px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-light);
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand-color);
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .nav-item {
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-left-color: var(--brand-color);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 220px;
+            padding: 0;
+        }
+        
+        .top-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-light);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb a:hover {
+            color: var(--brand-color);
+        }
+        
+        .breadcrumb span {
+            margin: 0 8px;
+            color: var(--text-tertiary);
+        }
+        
+        .breadcrumb .current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .message-icon {
+            position: relative;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+        
+        .message-icon:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .message-badge {
+            background: var(--danger-color);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            line-height: 1;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+        
+        .user-info:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-color), var(--auxiliary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .content-area {
+            padding: 24px 40px;
+            max-width: 1600px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .progress-indicator {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: var(--border-light);
+            z-index: 0;
+        }
+        
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+        
+        .step-item.active .step-circle {
+            background: var(--brand-color);
+            border-color: var(--brand-color);
+            color: white;
+        }
+        
+        .step-item.completed .step-circle {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 120px;
+        }
+        
+        .step-item.active .step-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .step-item.completed .step-label {
+            color: var(--success-color);
+        }
+        
+        .main-layout {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .left-panel {
+            width: 240px;
+            flex-shrink: 0;
+        }
+        
+        .right-panel {
+            flex: 1;
+        }
+        
+        .step-nav {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .step-nav-title {
+            padding: 16px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .step-nav-item {
+            padding: 14px 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-nav-item:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .step-nav-item.active {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-left-color: var(--brand-color);
+            font-weight: 500;
+        }
+        
+        .step-nav-item .step-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .step-nav-item.active .step-icon {
+            background: var(--brand-color);
+            color: white;
+        }
+        
+        .step-nav-item.completed .step-icon {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .form-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .form-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .form-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-section {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--brand-color);
+        }
+        
+        .tabs-container {
+            margin-bottom: 24px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-light);
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            background: transparent;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+        
+        .tab:hover {
+            color: var(--brand-color);
+        }
+        
+        .tab.active {
+            color: var(--brand-color);
+            border-bottom-color: var(--brand-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .score-summary {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+        
+        .score-item {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .score-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .score-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .score-value.warning {
+            color: var(--warning-color);
+        }
+        
+        .score-value.success {
+            color: var(--success-color);
+        }
+        
+        .score-value.info {
+            color: var(--brand-color);
+        }
+        
+        .table-container {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table thead {
+            background: var(--bg-tertiary);
+        }
+        
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--hover-state);
+        }
+        
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .table-input {
+            width: 100%;
+            padding: 6px 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .table-input:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            background: var(--bg-elevated);
+        }
+        
+        .table-textarea {
+            width: 100%;
+            padding: 6px 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+            transition: all 0.2s;
+        }
+        
+        .table-textarea:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            background: var(--bg-elevated);
+        }
+        
+        .table-number {
+            width: 80px;
+            padding: 6px 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .table-number:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            background: var(--bg-elevated);
+        }
+        
+        .status-select {
+            width: 100%;
+            padding: 6px 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .status-select:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            background: var(--bg-elevated);
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--brand-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2855d9;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--border-medium);
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #e6950a;
+        }
+        
+        .btn-danger {
+            background: transparent;
+            color: var(--danger-color);
+            padding: 6px;
+        }
+        
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .btn-danger svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .add-row-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px dashed var(--border-light);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        
+        .add-row-btn:hover {
+            background: var(--hover-state);
+            border-color: var(--brand-color);
+            color: var(--brand-color);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 24px;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .form-actions-left {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .form-actions-right {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(51, 108, 255, 0.3);
+            z-index: 1000;
+            transition: all 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            background: #2855d9;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .badge-pass {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+        }
+        
+        .badge-fail {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+        }
+        
+        /* AI助手悬浮框样式 */
+        .ai-sidebar {
+            position: fixed;
+            right: 20px;
+            top: 100px;
+            width: 320px;
+            height: 600px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        
+        .ai-sidebar.collapsed {
+            transform: translateX(calc(100% - 40px));
+        }
+        
+        .ai-toggle-btn {
+            position: absolute;
+            left: -40px;
+            top: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 8px 0 0 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-toggle-btn:hover {
+            background: #2855d9;
+        }
+        
+        .ai-toggle-btn.collapsed {
+            border-radius: 8px;
+        }
+        
+        .ai-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .ai-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            margin-bottom: 8px;
+        }
+        
+        .ai-warning {
+            font-size: 11px;
+            color: var(--warning-color);
+            background: rgba(245, 158, 11, 0.1);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
+        .ai-chat {
+            flex: 1;
+            padding: 16px 20px;
+            overflow-y: auto;
+        }
+        
+        .ai-message {
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            max-width: 85%;
+        }
+        
+        .user-message {
+            background: var(--brand-color);
+            color: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            margin-left: auto;
+            max-width: 85%;
+        }
+        
+        .ai-input-area {
+            border-top: 1px solid var(--border-light);
+            padding: 16px 20px;
+            background: var(--bg-tertiary);
+        }
+        
+        .ai-options {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .ai-option-btn {
+            padding: 6px 12px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .ai-option-btn:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-color: var(--brand-color);
+        }
+        
+        .ai-input-container {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .ai-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        
+        .ai-input:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            box-shadow: 0 0 0 2px rgba(51, 108, 255, 0.1);
+        }
+        
+        .ai-send-btn {
+            padding: 8px 16px;
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .ai-send-btn:hover {
+            background: #2855d9;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">切换主题</button>
+    
+    <div class="layout">
+        <div class="sidebar">
+            <div class="sidebar-title">招标文件生成系统</div>
+            <div class="nav-item" onclick="window.location.href='business-requirement-list.html'">编制业务需求</div>
+            <div class="nav-item active" onclick="window.location.href='project-list.html'">项目管理</div>
+            <div class="nav-item" onclick="window.location.href='template-list.html'">模板管理</div>
+            <div class="nav-item" onclick="window.location.href='policy-file-list.html'">政策文件管理</div>
+            <div class="nav-item" onclick="window.location.href='statistics.html'">统计分析</div>
+            <div class="nav-item" onclick="window.location.href='message-center.html'">消息中心</div>
+            <div class="nav-item" onclick="window.location.href='system-settings.html'">系统设置</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="breadcrumb">
+                    <a href="project-list.html">首页</a>
+                    <span>/</span>
+                    <a href="project-detail.html">项目详情</a>
+                    <span>/</span>
+                    <span class="current">文件编制</span>
+                </div>
+                <div class="header-actions">
+                    <div class="message-icon" onclick="window.location.href='message-center.html'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="message-badge">3</span>
+                    </div>
+                    <div class="user-info" onclick="openUserSettings()">
+                        <div class="user-avatar">1</div>
+                        <span>135****2345</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9h6v6H6zm6-6h6v6h-6z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="page-header">
+                    <h1 class="page-title">文件编制 - 评审项设置</h1>
+                    <button class="btn btn-secondary" onclick="window.location.href='project-list.html'">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        返回列表
+                    </button>
+                </div>
+                
+                <div class="progress-indicator">
+                    <div class="progress-steps">
+                        <div class="step-item completed">
+                            <div class="step-circle">1</div>
+                            <div class="step-label">基础信息录入</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">详细需求生成</div>
+                        </div>
+                        <div class="step-item active">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">评审项设置</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">文档集成</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="main-layout">
+                    <div class="left-panel">
+                        <div class="step-nav">
+                            <div class="step-nav-title">文件编制流程</div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-init.html'">
+                                <span class="step-icon">✓</span>
+                                <span>基础信息录入</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-requirement.html'">
+                                <span class="step-icon">✓</span>
+                                <span>详细需求生成</span>
+                            </div>
+                            <div class="step-nav-item active">
+                                <span class="step-icon">3</span>
+                                <span>评审项设置</span>
+                            </div>
+                            <div class="step-nav-item">
+                                <span class="step-icon">4</span>
+                                <span>文档集成</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="right-panel">
+                        <div class="form-container">
+                            <div class="form-header">
+                                <h3 class="form-title">评审项设置</h3>
+                            </div>
+                            
+                            <div class="form-section">
+                                <div class="score-summary">
+                                    <div class="score-item">
+                                        <div class="score-label">符合性审查</div>
+                                        <div class="score-value info" id="complianceScore">通过/不通过</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score-label">资信评审</div>
+                                        <div class="score-value" id="creditScore">30分</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score-label">技术评审</div>
+                                        <div class="score-value" id="technicalScore">40分</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score-label">商务评审</div>
+                                        <div class="score-value" id="businessScore">30分</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score-label">三项合计总分</div>
+                                        <div class="score-value success" id="totalScore">100分</div>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 6px; font-size: 13px; color: var(--text-secondary);">
+                                    <strong style="color: var(--brand-color);">评分说明：</strong>资信评审、技术评审、商务评审三项合计总分必须为100分。允许其中一项或两项为0分。
+                                </div>
+                                
+                                <div style="margin-bottom: 16px; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; font-size: 13px; color: var(--text-secondary); border: 1px solid rgba(245, 158, 11, 0.2);">
+                                    <strong style="color: var(--warning-color);">评分建议：</strong>建议货物类项目商务分30-60，资信10-25分；建议服务类项目商务分10-30，资信10-25分。
+                                </div>
+                                
+                                <div class="tabs-container">
+                                    <div class="tabs">
+                                        <button class="tab active" onclick="switchTab('compliance')">符合性审查</button>
+                                        <button class="tab" onclick="switchTab('credit')">资信评审</button>
+                                        <button class="tab" onclick="switchTab('technical')">技术评审</button>
+                                        <button class="tab" onclick="switchTab('business')">商务评审</button>
+                                    </div>
+                                    
+                                    <div id="compliance" class="tab-content active">
+                                        <div class="table-container">
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 5%">序号</th>
+                                                        <th style="width: 75%">评审标准</th>
+                                                        <th style="width: 5%">操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>1</td>
+                                                        <td><textarea class="table-textarea">提供营业执照复印件并加盖公章</textarea></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>2</td>
+                                                        <td><textarea class="table-textarea">提供资质证书复印件并加盖公章</textarea></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>3</td>
+                                                        <td><textarea class="table-textarea">提供安全生产许可证复印件并加盖公章</textarea></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>4</td>
+                                                        <td><textarea class="table-textarea">提供近三年财务审计报告</textarea></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <button class="add-row-btn" onclick="addRow('compliance')">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            添加评审项
+                                        </button>
+
+                                    </div>
+                                    
+                                    <div id="credit" class="tab-content">
+                                        <div class="table-container">
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 5%">序号</th>
+                                                        <th style="width: 40%">评审标准</th>
+                                                        <th style="width: 15%">主观/客观</th>
+                                                        <th style="width: 10%">分值</th>
+                                                        <th style="width: 5%">操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>1</td>
+                                                        <td><textarea class="table-textarea" onchange="updateScore()">每个有效业绩得5分，最高20分</textarea></td>
+                                                        <td>
+                                                            <select class="status-select">
+                                                                <option value="objective">客观</option>
+                                                                <option value="subjective">主观</option>
+                                                            </select>
+                                                        </td>
+                                                        <td><input type="number" class="table-number" value="20" min="0" max="100" onchange="updateScore()"></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>2</td>
+                                                        <td><textarea class="table-textarea" onchange="updateScore()">注册建造师证书，类似项目经验</textarea></td>
+                                                        <td>
+                                                            <select class="status-select">
+                                                                <option value="objective">客观</option>
+                                                                <option value="subjective">主观</option>
+                                                            </select>
+                                                        </td>
+                                                        <td><input type="number" class="table-number" value="10" min="0" max="100" onchange="updateScore()"></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <button class="add-row-btn" onclick="addRow('credit')">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            添加评审项
+                                        </button>
+
+                                    </div>
+                                    
+                                    <div id="technical" class="tab-content">
+                                        <div class="table-container">
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 5%">序号</th>
+                                                        <th style="width: 40%">评审标准</th>
+                                                        <th style="width: 15%">主观/客观</th>
+                                                        <th style="width: 10%">分值</th>
+                                                        <th style="width: 5%">操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>1</td>
+                                                        <td><textarea class="table-textarea" onchange="updateScore()">方案完整、技术先进、措施得力</textarea></td>
+                                                        <td>
+                                                            <select class="status-select">
+                                                                <option value="objective">客观</option>
+                                                                <option value="subjective" selected>主观</option>
+                                                            </select>
+                                                        </td>
+                                                        <td><input type="number" class="table-number" value="25" min="0" max="100" onchange="updateScore()"></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>2</td>
+                                                        <td><textarea class="table-textarea" onchange="updateScore()">措施具体、责任明确</textarea></td>
+                                                        <td>
+                                                            <select class="status-select">
+                                                                <option value="objective">客观</option>
+                                                                <option value="subjective" selected>主观</option>
+                                                            </select>
+                                                        </td>
+                                                        <td><input type="number" class="table-number" value="15" min="0" max="100" onchange="updateScore()"></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <button class="add-row-btn" onclick="addRow('technical')">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            添加评审项
+                                        </button>
+
+                                    </div>
+                                    
+                                    <div id="business" class="tab-content">
+                                        <div class="table-container">
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 5%">序号</th>
+                                                        <th style="width: 60%">评审标准</th>
+                                                        <th style="width: 10%">分值</th>
+                                                        <th style="width: 5%">操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>1</td>
+                                                        <td><textarea class="table-textarea" onchange="updateScore()">采用综合评估法，报价得分按公式计算</textarea></td>
+                                                        <td><input type="number" class="table-number" value="30" min="0" max="100" onchange="updateScore()"></td>
+                                                        <td>
+                                                            <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <div class="form-actions-left">
+                                    <button class="btn btn-secondary" onclick="window.location.href='project-requirement.html'">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                                            <polyline points="12 19 5 12 12 5"></polyline>
+                                        </svg>
+                                        上一步
+                                    </button>
+                                    <button class="btn btn-warning" onclick="regenerateReview()">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                        </svg>
+                                        重新生成
+                                    </button>
+                                </div>
+                                <div class="form-actions-right">
+                                    <button class="btn btn-primary" onclick="confirmReview()">
+                                        确认评审项
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            <polyline points="12 5 19 12 12 19"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI助手 -->
+    <div class="ai-sidebar" id="aiSidebar">
+        <button class="ai-toggle-btn" id="aiToggleBtn" onclick="toggleAISidebar()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="15" y1="18" x2="9" y2="12"></line>
+                <line x1="9" y1="18" x2="15" y2="12"></line>
+            </svg>
+        </button>
+        <div class="ai-header">
+            <h3>AI助手</h3>
+            <div class="ai-warning">AI助手接入互联网，若有涉密信息请勿发送</div>
+        </div>
+        <div class="ai-chat" id="aiChat">
+            <div class="ai-message">
+                <p>您好！我是您的AI助手，可以帮助您设置评审项。</p>
+                <p>请选择或输入需要修改的内容，我会为您提供修改建议。</p>
+            </div>
+        </div>
+        <div class="ai-input-area">
+            <div class="ai-options">
+                <button class="ai-option-btn" onclick="selectContent('addReviewItem')">添加评审项</button>
+                <button class="ai-option-btn" onclick="selectContent('optimizeScore')">优化评分标准</button>
+                <button class="ai-option-btn" onclick="selectContent('checkScore')">检查评分总和</button>
+            </div>
+            <div class="ai-input-container">
+                <input type="text" class="ai-input" id="aiInput" placeholder="请输入您的修改需求...">
+                <button class="ai-send-btn" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        function updateScore() {
+            const creditTotal = calculateScore('credit');
+            const technicalTotal = calculateScore('technical');
+            const businessTotal = calculateScore('business');
+            const totalScore = creditTotal + technicalTotal + businessTotal;
+            
+            document.getElementById('creditScore').textContent = creditTotal + '分';
+            document.getElementById('technicalScore').textContent = technicalTotal + '分';
+            document.getElementById('businessScore').textContent = businessTotal + '分';
+            document.getElementById('totalScore').textContent = totalScore + '分';
+            
+            const totalEl = document.getElementById('totalScore');
+            totalEl.className = 'score-value ' + (totalScore === 100 ? 'success' : 'warning');
+        }
+        
+        function calculateScore(tabId) {
+            const tab = document.getElementById(tabId);
+            if (!tab) return 0;
+            
+            const inputs = tab.querySelectorAll('.table-number');
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseInt(input.value) || 0;
+            });
+            return total;
+        }
+        
+        function addRow(tabId) {
+            const tab = document.getElementById(tabId);
+            const tbody = tab.querySelector('tbody');
+            const rowCount = tbody.querySelectorAll('tr').length;
+            
+            const newRow = document.createElement('tr');
+            
+            if (tabId === 'compliance') {
+                newRow.innerHTML = `
+                    <td>${rowCount + 1}</td>
+                    <td><textarea class="table-textarea" placeholder="请输入评审标准"></textarea></td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+            } else if (tabId === 'credit' || tabId === 'technical') {
+                newRow.innerHTML = `
+                    <td>${rowCount + 1}</td>
+                    <td><textarea class="table-textarea" placeholder="请输入评审标准" onchange="updateScore()"></textarea></td>
+                    <td>
+                        <select class="status-select">
+                            <option value="objective">客观</option>
+                            <option value="subjective">主观</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="table-number" value="0" min="0" max="100" onchange="updateScore()"></td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteRow(this)" title="删除">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+            }
+            
+            tbody.appendChild(newRow);
+            updateScore();
+        }
+        
+        function deleteRow(button) {
+            if (confirm('确定要删除该评审项吗？')) {
+                const row = button.closest('tr');
+                const tbody = row.parentNode;
+                row.remove();
+                
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((row, index) => {
+                    row.querySelector('td:first-child').textContent = index + 1;
+                });
+                
+                updateScore();
+            }
+        }
+        
+        function regenerateReview() {
+            if (confirm('重新生成将覆盖当前所有评审项，是否继续？')) {
+                alert('正在重新生成评审项...');
+            }
+        }
+        
+        function confirmReview() {
+            const creditTotal = calculateScore('credit');
+            const technicalTotal = calculateScore('technical');
+            const businessTotal = calculateScore('business');
+            const totalScore = creditTotal + technicalTotal + businessTotal;
+            
+            if (totalScore !== 100) {
+                alert('资信评审、技术评审、商务评审三项合计总分必须为100分才能确认！\n当前：\n资信评审：' + creditTotal + '分\n技术评审：' + technicalTotal + '分\n商务评审：' + businessTotal + '分\n合计：' + totalScore + '分');
+                return;
+            }
+            
+            alert('评审项确认成功！即将跳转到文档集成页');
+            window.location.href = 'project-integration.html';
+        }
+        
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.style.getPropertyValue('--bg-primary');
+            
+            if (currentTheme === '#FFFFFF') {
+                body.style.setProperty('--bg-primary', '#0F1419');
+                body.style.setProperty('--bg-secondary', '#1A1F26');
+                body.style.setProperty('--bg-tertiary', '#242B33');
+                body.style.setProperty('--text-primary', '#F0F2F5');
+                body.style.setProperty('--text-secondary', '#B9BBBE');
+            } else {
+                body.style.setProperty('--bg-primary', '#FFFFFF');
+                body.style.setProperty('--bg-secondary', '#F8F9FA');
+                body.style.setProperty('--bg-tertiary', '#F1F3F4');
+                body.style.setProperty('--text-primary', '#1F2937');
+                body.style.setProperty('--text-secondary', '#4B5563');
+            }
+        }
+        
+        // AI助手功能
+        let selectedText = '';
+        
+        function toggleAISidebar() {
+            const aiSidebar = document.getElementById('aiSidebar');
+            const aiToggleBtn = document.getElementById('aiToggleBtn');
+            
+            if (aiSidebar.classList.contains('collapsed')) {
+                aiSidebar.classList.remove('collapsed');
+                aiToggleBtn.classList.remove('collapsed');
+            } else {
+                aiSidebar.classList.add('collapsed');
+                aiToggleBtn.classList.add('collapsed');
+            }
+        }
+        
+        function selectContent(type) {
+            selectedText = type;
+            showAIMessage(`已选择${type === 'addReviewItem' ? '添加评审项' : type === 'optimizeScore' ? '优化评分标准' : '检查评分总和'}，请输入您的具体需求。`);
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('aiInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                // 显示用户消息
+                const aiChat = document.getElementById('aiChat');
+                aiChat.innerHTML += `
+                    <div class="user-message">
+                        <p>${message}</p>
+                    </div>
+                `;
+                
+                // 清空输入框
+                input.value = '';
+                
+                // 滚动到底部
+                aiChat.scrollTop = aiChat.scrollHeight;
+                
+                // 模拟AI响应
+                setTimeout(() => {
+                    let response = '';
+                    
+                    if (selectedText === 'addReviewItem') {
+                        response = "我可以帮您添加评审项。请告诉我您需要添加的评审项名称、内容、标准和分值，我会为您提供建议。";
+                    } else if (selectedText === 'optimizeScore') {
+                        response = "优化评分标准需要考虑多方面因素，包括评分的合理性、公平性和可操作性。请告诉我您具体想优化哪方面的评分标准，我会为您提供专业建议。";
+                    } else if (selectedText === 'checkScore') {
+                        response = "我可以帮您检查评分总和是否为100分。请确保资信评审、技术评审和商务评审的分值总和为100分，这样才能保证评审的公平性。";
+                    } else {
+                        response = "感谢您的反馈，我会根据您的需求为您提供专业的修改建议。请具体说明您需要修改的内容，以便我能够更好地帮助您。";
+                    }
+                    
+                    showAIMessage(response);
+                }, 1000);
+            }
+        }
+        
+        function showAIMessage(text) {
+            const aiChat = document.getElementById('aiChat');
+            aiChat.innerHTML += `
+                <div class="ai-message">
+                    <p>${text}</p>
+                </div>
+            `;
+            aiChat.scrollTop = aiChat.scrollHeight;
+        }
+        
+        updateScore();
+    </script>
+</body>
+</html>

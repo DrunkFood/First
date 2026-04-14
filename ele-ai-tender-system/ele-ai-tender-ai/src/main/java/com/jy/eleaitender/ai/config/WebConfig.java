@@ -26,7 +26,7 @@ public class WebConfig {
     public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(JwtAuthenticationFilter jwtAuthenticationFilter) {
         FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(jwtAuthenticationFilter);
-        registration.addUrlPatterns("/api/tender-documents/*");
+        registration.addUrlPatterns("/api/*");
         registration.setOrder(1);
         return registration;
     }

@@ -233,7 +233,7 @@ const handleSendCode = async () => {
     sendingCode.value = true
     try {
       const code = await authApi.sendSmsCode({ phone: phoneForm.phone })
-      ElMessage.success(`验证码已发送：${code.data}（仅测试用）`)
+      ElMessage.success(`验证码已发送：${code}（仅测试用）`)
 
       // 开始倒计时
       countdown.value = 60

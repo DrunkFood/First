@@ -18,7 +18,7 @@ public class WebConfig {
         return new JwtAuthenticationFilter(
                 redisTemplate,
                 List.of(),
-                Set.of(CommonConstant.TOKEN_TYPE_EXTERNAL)
+                Set.of(CommonConstant.TOKEN_TYPE_EXTERNAL, CommonConstant.TOKEN_TYPE_INTERNAL)
         );
     }
 
@@ -26,7 +26,7 @@ public class WebConfig {
     public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(JwtAuthenticationFilter jwtAuthenticationFilter) {
         FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(jwtAuthenticationFilter);
-        registration.addUrlPatterns("/api/tender-documents/*");
+        registration.addUrlPatterns("/api/*");
         registration.setOrder(1);
         return registration;
     }

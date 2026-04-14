@@ -285,7 +285,6 @@ INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `men
 -- 一级菜单
 (0, '系统管理', 'system', 1, '/system', NULL, 1, 1, NOW(), NOW()),
 (0, '版本管理', 'version', 1, '/version', NULL, 2, 1, NOW(), NOW()),
-(0, 'AI编制', 'ai-tender', 1, '/ai-tender', NULL, 3, 1, NOW(), NOW()),
 
 -- 用户管理
 (1, '用户管理', 'user', 1, '/system/user', 'user:view', 1, 1, NOW(), NOW()),
@@ -334,18 +333,6 @@ INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `men
 (32, '删除插件', 'plugin-version:delete', 2, NULL, 'plugin-version:delete', 3, 1, NOW(), NOW()),
 (32, '发布插件', 'plugin-version:publish', 2, NULL, 'plugin-version:publish', 4, 1, NOW(), NOW()),
 (32, '下线插件', 'plugin-version:offline', 2, NULL, 'plugin-version:offline', 5, 1, NOW(), NOW()),
-
--- AI编制菜单（新增）
-(3, '项目管理', 'ai-project', 1, '/ai-tender/project', 'ai-project:view', 1, 1, NOW(), NOW()),
-(38, '创建项目', 'ai-project:create', 2, NULL, 'ai-project:create', 1, 1, NOW(), NOW()),
-(38, '编辑项目', 'ai-project:update', 2, NULL, 'ai-project:update', 2, 1, NOW(), NOW()),
-(38, '删除项目', 'ai-project:delete', 2, NULL, 'ai-project:delete', 3, 1, NOW(), NOW()),
-
-(3, '招标文件编制', 'ai-document', 1, '/ai-tender/document', 'ai-document:view', 2, 1, NOW(), NOW()),
-(42, '创建招标文件', 'ai-document:create', 2, NULL, 'ai-document:create', 1, 1, NOW(), NOW()),
-(42, 'AI生成', 'ai-document:generate', 2, NULL, 'ai-document:generate', 2, 1, NOW(), NOW()),
-(42, '编辑招标文件', 'ai-document:update', 2, NULL, 'ai-document:update', 3, 1, NOW(), NOW()),
-(42, '导出招标文件', 'ai-document:export', 2, NULL, 'ai-document:export', 4, 1, NOW(), NOW());
 
 -- 给管理员角色分配所有菜单权限
 INSERT INTO `sup_role_menu` (`role_id`, `menu_id`, `create_time`, `modify_time`)

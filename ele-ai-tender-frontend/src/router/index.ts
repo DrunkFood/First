@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import Login from '@/views/auth/Login.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
-import { useUserStore } from '@/store/user'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -75,8 +74,8 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, _from, next) => {
-  const userStore = useUserStore()
-  const token = userStore.token || localStorage.getItem('token')
+  // 直接从 localStorage 读取 token，避免 Pinia 时序问题
+  const token = localStorage.getItem('token')
 
   // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - AI招标文件编制` : 'AI招标文件编制'

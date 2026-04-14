@@ -49,6 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             filterChain.doFilter(request, response);
         } finally {
+            // 请求处理完成后清空上下文
             SecurityContextHolder.clear();
         }
     }

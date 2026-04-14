@@ -13,24 +13,26 @@ export const useUserStore = defineStore('user', () => {
 
   async function login(username: string, password: string) {
     const res = await authApi.login({ username, password })
-    token.value = res.data.token
-    userInfo.value = res.data.userInfo
-    permissions.value = res.data.permissions || []
+    // request 拦截器已返回 data，res 就是 LoginResult
+    token.value = res.token
+    userInfo.value = res.userInfo
+    permissions.value = res.permissions || []
 
-    localStorage.setItem('token', res.data.token)
-    localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo))
+    localStorage.setItem('token', res.token)
+    localStorage.setItem('userInfo', JSON.stringify(res.userInfo))
 
     return res
   }
 
   async function phoneLogin(phone: string, code: string) {
     const res = await authApi.phoneLogin({ phone, code })
-    token.value = res.data.token
-    userInfo.value = res.data.userInfo
-    permissions.value = res.data.permissions || []
+    // request 拦截器已返回 data，res 就是 LoginResult
+    token.value = res.token
+    userInfo.value = res.userInfo
+    permissions.value = res.permissions || []
 
-    localStorage.setItem('token', res.data.token)
-    localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo))
+    localStorage.setItem('token', res.token)
+    localStorage.setItem('userInfo', JSON.stringify(res.userInfo))
 
     return res
   }
@@ -48,8 +50,9 @@ export const useUserStore = defineStore('user', () => {
 
     try {
       const res = await authApi.getUserInfo()
-      userInfo.value = res.data
-      localStorage.setItem('userInfo', JSON.stringify(res.data))
+      // request 拦截器已返回 data，res 就是 UserInfo
+      userInfo.value = res
+      localStorage.setItem('userInfo', JSON.stringify(res))
     } catch (error) {
       console.error('获取用户信息失败:', error)
     }
