@@ -3,7 +3,7 @@
     <property name="project.name" value="ele-ai-tender-support"/>
     <property name="project.pattern" value="%d{YYYY-MM-dd HH:mm:ss.SSS} %-5level --- [%thread] %logger{36} - %msg%n"/>
     <property name="log" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] --- %logger{36} - %msg%n"/>
-    <property name="log.path" value="log"/>
+    <property name="log.path" value="logs"/>
     <property name="file.Size" value="10MB"/>
     <property name="file.totalSize" value="300MB"/>
     <!-- 彩色日志格式 -->
