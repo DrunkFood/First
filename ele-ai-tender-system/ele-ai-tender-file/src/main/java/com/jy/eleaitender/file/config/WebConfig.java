@@ -22,17 +22,15 @@ public class WebConfig {
         return new RequestParamJwtAuthenticationFilter(
                 redisTemplate,
                 List.of(),
-                Set.of(CommonConstant.TOKEN_TYPE_EXTERNAL),
-                "token"
-        );
+                Set.of(CommonConstant.TOKEN_TYPE_EXTERNAL, CommonConstant.TOKEN_TYPE_INTERNAL);
     }
 
     @Bean
-    public FilterRegistrationBean<JwtAuthenticationFilter> esignJwtFilterRegistration(
-            JwtAuthenticationFilter esignJwtAuthenticationFilter) {
+    public FilterRegistrationBean<JwtAuthenticationFilter> fileJwtFilterRegistration(
+            JwtAuthenticationFilter fileJwtAuthenticationFilter) {
         FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(esignJwtAuthenticationFilter);
-        registration.addUrlPatterns("/api/file/esign/*");
+        registration.setFilter(fileJwtAuthenticationFilter);
+        registration.addUrlPatterns("/api/file/*");
         registration.setOrder(1);
         return registration;
     }

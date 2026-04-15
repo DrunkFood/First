@@ -3,6 +3,7 @@ package com.jy.eleaitender.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.entity.core.AiProjectVersion;
 import com.jy.eleaitender.core.mapper.AiProjectVersionMapper;
+import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,8 +21,13 @@ public class ProjectVersionServiceImpl implements IProjectVersionService {
     @Autowired
     private AiProjectVersionMapper projectVersionMapper;
 
+    @Autowired
+    private IProjectService projectService;
+
     @Override
     public List<AiProjectVersion> getByProjectId(Long projectId) {
+        // 校验项目归属
+        projectService.getById(projectId);
         LambdaQueryWrapper<AiProjectVersion> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AiProjectVersion::getProjectId, projectId);
         wrapper.orderByDesc(AiProjectVersion::getVersionNo);
@@ -31,6 +37,8 @@ public class ProjectVersionServiceImpl implements IProjectVersionService {
     @Override
     @Transactional
     public AiProjectVersion createVersion(Long projectId, String contentSnapshot, String changeDescription) {
+        // 校验项目归属
+        projectService.getById(projectId);
         // 查询当前最大版本号
         LambdaQueryWrapper<AiProjectVersion> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AiProjectVersion::getProjectId, projectId);

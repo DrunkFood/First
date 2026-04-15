@@ -1,8 +1,10 @@
 package com.jy.eleaitender.file.controller;
 
+import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.FileException;
 import com.jy.eleaitender.common.response.Result;
+import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.file.service.IFileStorageService;
@@ -36,6 +38,7 @@ public class FileController {
     private IFileStorageService fileStorageService;
 
     @PostMapping("/upload")
+    @RequireLogin
     @Operation(summary = "上传文件")
     public Result<FileUploadResponse> upload(
             @Parameter(description = "文件", required = true) @RequestParam("file") MultipartFile file,
@@ -45,6 +48,7 @@ public class FileController {
     }
 
     @GetMapping("/download/{fileId}")
+    @RequireLogin
     @Operation(summary = "下载文件")
     public ResponseEntity<Resource> download(
             @Parameter(description = "文件ID", required = true) @PathVariable("fileId") Long fileId) {
@@ -52,6 +56,8 @@ public class FileController {
         if (fileInfo == null) {
             throw new FileException(ResponseCode.FILE_NOT_FOUND);
         }
+        // 校验文件归属
+        DataScopeHelper.checkOwnership(fileInfo.getCreateId());
 
         String filePath = fileStorageService.getFilePath(fileId);
         File file = new File(filePath);
@@ -66,12 +72,13 @@ public class FileController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION, 
+                .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + encodedFileName + "\"")
                 .body(resource);
     }
 
     @GetMapping("/info/{fileId}")
+    @RequireLogin
     @Operation(summary = "获取文件信息")
     public Result<FileInfo> info(
             @Parameter(description = "文件ID", required = true) @PathVariable("fileId") Long fileId) {
@@ -79,13 +86,21 @@ public class FileController {
         if (fileInfo == null) {
             return Result.fail(ResponseCode.FILE_NOT_FOUND);
         }
+        // 校验文件归属
+        DataScopeHelper.checkOwnership(fileInfo.getCreateId());
         return Result.success(fileInfo);
     }
 
     @DeleteMapping("/delete/{fileId}")
+    @RequireLogin
     @Operation(summary = "删除文件")
     public Result<Boolean> delete(
             @Parameter(description = "文件ID", required = true) @PathVariable("fileId") Long fileId) {
+        FileInfo fileInfo = fileStorageService.getById(fileId);
+        if (fileInfo != null) {
+            // 校验文件归属
+            DataScopeHelper.checkOwnership(fileInfo.getCreateId());
+        }
         boolean result = fileStorageService.delete(fileId);
         return Result.success(result);
     }

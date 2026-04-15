@@ -1,6 +1,7 @@
 package com.jy.eleaitender.ai.mapper;
 
 import com.jy.eleaitender.ai.dto.response.MatchResultVO;
+import com.jy.eleaitender.common.datascope.DataScope;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -17,7 +18,9 @@ public interface AiRequirementMatchMapper {
 
     /**
      * 按项目类型和类别查询历史需求（用于匹配评分）
+     * 跳过数据隔离：需求匹配需要跨用户查询历史数据
      */
+    @DataScope(skip = true)
     @Select("""
             <script>
             SELECT r.id AS requirementId,

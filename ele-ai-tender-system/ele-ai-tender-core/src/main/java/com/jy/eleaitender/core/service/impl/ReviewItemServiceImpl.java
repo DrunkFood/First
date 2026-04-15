@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -8,6 +9,7 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.entity.core.AiReviewItem;
 import com.jy.eleaitender.core.mapper.AiReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
+import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IReviewItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,8 +32,13 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     @Autowired
     private IAiTaskService aiTaskService;
 
+    @Autowired
+    private IProjectService projectService;
+
     @Override
     public List<AiReviewItem> getTreeByProjectId(Long projectId) {
+        // 校验项目归属
+        projectService.getById(projectId);
         // 加载该项目下所有评审项
         List<AiReviewItem> allItems = reviewItemMapper.selectByProjectId(projectId);
         if (allItems.isEmpty()) {
@@ -45,6 +52,8 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     @Override
     @Transactional
     public AiReviewItem create(AiReviewItem reviewItem) {
+        // 校验项目归属
+        projectService.getById(reviewItem.getProjectId());
         // 默认排序号
         if (reviewItem.getSortOrder() == null) {
             reviewItem.setSortOrder(0);
@@ -60,6 +69,8 @@ public class ReviewItemServiceImpl implements IReviewItemService {
         if (existing == null) {
             throw new BusinessException(ResponseCode.REVIEW_ITEM_NOT_FOUND);
         }
+        // 校验项目归属
+        projectService.getById(existing.getProjectId());
         reviewItem.setId(id);
         reviewItemMapper.updateById(reviewItem);
     }
@@ -71,6 +82,8 @@ public class ReviewItemServiceImpl implements IReviewItemService {
         if (item == null) {
             throw new BusinessException(ResponseCode.REVIEW_ITEM_NOT_FOUND);
         }
+        // 校验项目归属
+        projectService.getById(item.getProjectId());
 
         // 级联删除所有子项
         deleteChildren(id);
@@ -134,6 +147,8 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     @Override
     @Transactional
     public AiTask submitGenerate(Long projectId, Map<String, Object> params) {
+        // 校验项目归属
+        projectService.getById(projectId);
         params.put("projectId", projectId);
         return aiTaskService.createTask(AiTaskType.REVIEW_ITEM_GENERATE,
                 projectId, projectId, "PROJECT", params, null);
@@ -144,6 +159,11 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     public void batchCreate(List<AiReviewItem> items) {
         if (items == null || items.isEmpty()) {
             return;
+        }
+        // 校验项目归属（取第一个的 projectId）
+        Long projectId = items.get(0).getProjectId();
+        if (projectId != null) {
+            projectService.getById(projectId);
         }
         for (AiReviewItem item : items) {
             if (item.getSortOrder() == null) {
@@ -167,6 +187,8 @@ public class ReviewItemServiceImpl implements IReviewItemService {
             if (existing == null) {
                 throw new BusinessException(ResponseCode.REVIEW_ITEM_NOT_FOUND);
             }
+            // 校验项目归属
+            projectService.getById(existing.getProjectId());
             reviewItemMapper.updateById(item);
         }
     }

@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.core.AiPolicyFile;
 import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -52,6 +53,8 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
         if (file == null) {
             throw new BusinessException(ResponseCode.POLICY_FILE_NOT_FOUND);
         }
+        // 校验归属（此表用 user_id 隔离）
+        DataScopeHelper.checkOwnership(file.getUserId());
         return file;
     }
 
@@ -80,7 +83,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     @Override
     @Transactional
     public void setStatus(Long id, Integer status) {
-        AiPolicyFile file = getById(id);
+        AiPolicyFile file = getById(id); // 内部已做归属校验
         file.setStatus(status);
         aiPolicyFileMapper.updateById(file);
     }

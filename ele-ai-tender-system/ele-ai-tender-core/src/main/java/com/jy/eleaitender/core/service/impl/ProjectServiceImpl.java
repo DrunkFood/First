@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.enums.ProjectPhase;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -56,6 +57,7 @@ public class ProjectServiceImpl implements IProjectService {
         if (project == null) {
             throw new BusinessException(ResponseCode.PROJECT_NOT_FOUND);
         }
+        DataScopeHelper.checkOwnership(project.getCreateId());
         return project;
     }
 
@@ -90,7 +92,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Transactional
     public void update(Long id, AiProject project) {
-        AiProject existing = getById(id);
+        AiProject existing = getById(id); // 内部已做归属校验
         project.setId(id);
         // 不允许修改项目编号
         project.setProjectCode(existing.getProjectCode());
@@ -104,6 +106,10 @@ public class ProjectServiceImpl implements IProjectService {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "请选择要删除的项目");
         }
         for (Long id : ids) {
+            AiProject project = projectMapper.selectById(id);
+            if (project != null) {
+                DataScopeHelper.checkOwnership(project.getCreateId());
+            }
             projectMapper.deleteById(id);
         }
     }
@@ -117,7 +123,7 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     public ProjectPhaseVO getPhase(Long projectId) {
-        AiProject project = getById(projectId);
+        AiProject project = getById(projectId); // 内部已做归属校验
         ProjectPhaseVO vo = new ProjectPhaseVO();
         vo.setProjectId(projectId);
         vo.setCurrentPhase(project.getCurrentPhase());
@@ -141,7 +147,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Transactional
     public void advancePhase(Long projectId, Integer targetPhase) {
-        AiProject project = getById(projectId);
+        AiProject project = getById(projectId); // 内部已做归属校验
         ProjectPhase target = ProjectPhase.fromCode(targetPhase);
         project.setCurrentPhase(target.getCode());
         project.setProgress(target.getProgressPercent());
@@ -151,7 +157,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Transactional
     public void changeStatus(Long projectId, String targetStatus) {
-        AiProject project = getById(projectId);
+        AiProject project = getById(projectId); // 内部已做归属校验
         ProjectStatus target = ProjectStatus.fromCode(targetStatus);
         ProjectStateMachine.transition(project, target);
         projectMapper.updateById(project);

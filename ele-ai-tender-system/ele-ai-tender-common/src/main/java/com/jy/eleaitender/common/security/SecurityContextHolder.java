@@ -30,6 +30,11 @@ public class SecurityContextHolder {
         return user != null ? user.getRealName() : null;
     }
 
+    public static boolean isAdmin() {
+        LoginUser user = getLoginUser();
+        return user != null && user.getRoles() != null && user.getRoles().contains("ADMIN");
+    }
+
     public static void clear() {
         CONTEXT.remove();
     }

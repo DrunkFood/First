@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -57,6 +58,7 @@ public class RequirementServiceImpl implements IRequirementService {
         if (requirement == null) {
             throw new BusinessException(ResponseCode.REQUIREMENT_NOT_FOUND);
         }
+        DataScopeHelper.checkOwnership(requirement.getCreateId());
         return requirement;
     }
 
@@ -76,7 +78,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public void update(Long id, AiRequirement requirement) {
-        getById(id);
+        getById(id); // 内部已做归属校验
         requirement.setId(id);
         // 正式保存后清除自动保存内容
         requirement.setAutoSaveContent(null);
@@ -87,7 +89,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public void deleteById(Long id) {
-        AiRequirement requirement = getById(id);
+        AiRequirement requirement = getById(id); // 内部已做归属校验
         requirementMapper.deleteById(id);
     }
 

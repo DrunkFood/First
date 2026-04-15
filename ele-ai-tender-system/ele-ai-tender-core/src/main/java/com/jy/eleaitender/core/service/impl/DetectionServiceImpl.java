@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
@@ -203,6 +204,8 @@ public class DetectionServiceImpl implements IDetectionService {
         if (record == null) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
+        // 校验项目归属
+        getProjectOrThrow(record.getProjectId());
         // 标记为已接受（在result JSON中更新handleStatus）
         // 简化实现：直接更新状态
         log.info("接受检测建议，记录ID: {}", recordId);
@@ -215,12 +218,15 @@ public class DetectionServiceImpl implements IDetectionService {
         if (record == null) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
+        // 校验项目归属
+        getProjectOrThrow(record.getProjectId());
         log.info("拒绝检测建议，记录ID: {}", recordId);
     }
 
     @Override
     @Transactional
     public void acceptAll(Long projectId) {
+        getProjectOrThrow(projectId); // 校验项目归属
         List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
         for (AiDetectionRecord record : records) {
             log.info("批量接受检测建议，记录ID: {}", record.getId());
@@ -295,6 +301,7 @@ public class DetectionServiceImpl implements IDetectionService {
         if (project == null) {
             throw new BusinessException(ResponseCode.PROJECT_NOT_FOUND);
         }
+        DataScopeHelper.checkOwnership(project.getCreateId());
         return project;
     }
 

@@ -33,7 +33,8 @@ public enum ResponseCode {
     ROLE_NOT_FOUND(2001, "角色不存在"),
     ROLE_EXISTS(2002, "角色已存在"),
     PERMISSION_DENIED(2003, "权限不足"),
-    MENU_NOT_FOUND(2004, "菜单不存在"),
+    DATA_ACCESS_DENIED(2004, "无权访问该数据"),
+    MENU_NOT_FOUND(2005, "菜单不存在"),
     
     // 接入系统相关 3001-3999
     SYSTEM_NOT_FOUND(3001, "接入系统不存在"),
