@@ -123,8 +123,8 @@ onMounted(loadProject)
 <style scoped>
 .project-wizard {
   padding: 20px;
-  background: #fff;
-  border-radius: 8px;
+  background: var(--app-bg-elevated);
+  border-radius: var(--app-radius-sm);
 }
 
 .wizard-steps {

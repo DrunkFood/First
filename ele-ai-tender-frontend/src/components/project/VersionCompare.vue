@@ -195,15 +195,15 @@ function handleSelectChange() {
   border-radius: 3px;
 }
 .legend-add::before {
-  background: #e1f3d8;
-  border: 1px solid #67c23a;
+  background: var(--app-color-success-light);
+  border: 1px solid var(--app-color-success);
 }
 .legend-modify::before {
-  background: #faecd8;
-  border: 1px solid #e6a23c;
+  background: var(--app-color-warning-light);
+  border: 1px solid var(--app-color-warning);
 }
 .legend-delete::before {
-  background: #fde2e2;
-  border: 1px solid #f56c6c;
+  background: var(--app-color-danger-light);
+  border: 1px solid var(--app-color-danger);
 }
 </style>

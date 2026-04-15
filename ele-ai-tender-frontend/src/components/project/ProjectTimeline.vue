@@ -11,7 +11,7 @@
       >
         <el-card shadow="hover" :class="{ clickable: true }" @click="$emit('click', index)">
           <div class="node-content">
-            <el-icon v-if="getNodeStatus(index).completed" color="#67c23a"><CircleCheck /></el-icon>
+            <el-icon v-if="getNodeStatus(index).completed" :style="{ color: 'var(--app-color-success)' }"><CircleCheck /></el-icon>
             <span>{{ node.title }}</span>
           </div>
         </el-card>

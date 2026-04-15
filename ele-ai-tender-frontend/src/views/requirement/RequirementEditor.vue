@@ -316,7 +316,8 @@ async function checkAutoSaveDraft(id: number) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f5f7fa;
+  background: var(--app-bg-secondary);
+  transition: var(--app-transition-base);
 }
 
 /* ---- 顶部工具栏 ---- */
@@ -325,8 +326,8 @@ async function checkAutoSaveDraft(id: number) {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--app-bg-elevated);
+  border-bottom: 1px solid var(--app-border-medium);
   flex-shrink: 0;
 }
 
@@ -339,7 +340,7 @@ async function checkAutoSaveDraft(id: number) {
 .toolbar-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--app-text-primary);
 }
 
 .toolbar-right {
@@ -382,8 +383,8 @@ async function checkAutoSaveDraft(id: number) {
 .editor-chat {
   width: 400px;
   flex-shrink: 0;
-  border-left: 1px solid #e4e7ed;
-  background: #fff;
+  border-left: 1px solid var(--app-border-medium);
+  background: var(--app-bg-elevated);
   overflow: hidden;
 }
 
@@ -405,26 +406,26 @@ async function checkAutoSaveDraft(id: number) {
   align-items: center;
   justify-content: space-between;
   padding: 4px 16px;
-  background: #fff;
-  border-top: 1px solid #e4e7ed;
+  background: var(--app-bg-elevated);
+  border-top: 1px solid var(--app-border-medium);
   font-size: 12px;
-  color: #909399;
+  color: var(--app-text-tertiary);
   flex-shrink: 0;
 }
 
 .status-saved {
-  color: #67c23a;
+  color: var(--app-color-success);
 }
 
 .status-saving {
-  color: #e6a23c;
+  color: var(--app-color-warning);
 }
 
 .status-error {
-  color: #f56c6c;
+  color: var(--app-color-danger);
 }
 
 .status-idle {
-  color: #c0c4cc;
+  color: var(--app-text-tertiary);
 }
 </style>

@@ -114,9 +114,9 @@ function handlePrint() {
   max-width: 900px;
   margin: 0 auto;
   padding: 24px;
-  background: #fff;
+  background: var(--app-bg-primary);
   line-height: 1.8;
-  color: #333;
+  color: var(--app-text-primary);
 }
 .preview-content :deep(table) {
   border-collapse: collapse;
@@ -125,7 +125,7 @@ function handlePrint() {
 }
 .preview-content :deep(td),
 .preview-content :deep(th) {
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--app-border-medium);
   padding: 8px 12px;
 }
 .preview-content :deep(h1),

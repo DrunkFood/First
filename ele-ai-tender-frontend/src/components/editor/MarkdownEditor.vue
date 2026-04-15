@@ -2,7 +2,7 @@
   <div class="markdown-editor">
     <MdEditor
       v-model="modelValue"
-      :theme="'light'"
+      :theme="themeStore.mode"
       :preview="true"
       :toolbarsExclude="['github']"
       @onChange="handleChange"
@@ -13,8 +13,10 @@
 <script setup lang="ts">
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
+import { useThemeStore } from '@/store/theme'
 
 const modelValue = defineModel<string>({ default: '' })
+const themeStore = useThemeStore()
 
 const handleChange = (val: string) => {
   modelValue.value = val

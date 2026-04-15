@@ -192,6 +192,6 @@ async function handleSubmit() {
 
 .ai-switch-label {
   font-size: 14px;
-  color: #606266;
+  color: var(--app-text-secondary);
 }
 </style>

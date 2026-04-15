@@ -273,7 +273,7 @@ onMounted(async () => {
   border: 1px solid var(--el-border-color);
   border-radius: 4px;
   min-height: 400px;
-  background: #fff;
+  background: var(--app-bg-elevated);
 }
 
 .save-btn {

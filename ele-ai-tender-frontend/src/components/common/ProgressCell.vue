@@ -13,10 +13,11 @@ const props = defineProps<{
 }>()
 
 const color = computed(() => {
-  if (props.percentage >= 100) return '#67c23a'
-  if (props.percentage >= 60) return '#409eff'
-  if (props.percentage >= 30) return '#e6a23c'
-  return '#f56c6c'
+  const style = getComputedStyle(document.documentElement)
+  if (props.percentage >= 100) return style.getPropertyValue('--app-color-success').trim()
+  if (props.percentage >= 60) return style.getPropertyValue('--app-brand-color').trim()
+  if (props.percentage >= 30) return style.getPropertyValue('--app-color-warning').trim()
+  return style.getPropertyValue('--app-color-danger').trim()
 })
 </script>
 
@@ -31,7 +32,7 @@ const color = computed(() => {
 }
 .progress-text {
   font-size: 12px;
-  color: #606266;
+  color: var(--app-text-secondary);
   min-width: 36px;
   text-align: right;
 }

@@ -169,7 +169,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--app-bg-elevated);
 }
 
 .chat-header {
@@ -177,14 +177,14 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--app-border-medium);
   flex-shrink: 0;
 }
 
 .chat-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--app-text-primary);
 }
 
 .chat-alert {
@@ -213,19 +213,19 @@ onBeforeUnmount(() => {
 
 .message-bubble {
   max-width: 75%;
-  border-radius: 8px;
+  border-radius: var(--app-radius-sm);
   padding: 10px 14px;
   word-break: break-word;
 }
 
 .message-user .message-bubble {
-  background: #409eff;
+  background: var(--app-brand-color);
   color: #fff;
 }
 
 .message-assistant .message-bubble {
-  background: #f4f4f5;
-  color: #303133;
+  background: var(--app-bg-tertiary);
+  color: var(--app-text-primary);
 }
 
 .message-content {
@@ -241,19 +241,19 @@ onBeforeUnmount(() => {
 }
 
 .message-assistant .message-actions :deep(.el-button) {
-  color: #909399;
+  color: var(--app-text-tertiary);
   padding: 2px 4px;
 }
 
 .message-assistant .message-actions :deep(.el-button:hover) {
-  color: #409eff;
+  color: var(--app-brand-color);
 }
 
 .chat-input {
   display: flex;
   gap: 8px;
   padding: 12px 16px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--app-border-medium);
   flex-shrink: 0;
 }
 </style>

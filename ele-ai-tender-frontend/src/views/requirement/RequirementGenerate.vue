@@ -229,7 +229,8 @@ function handleAiMessage(msg: string) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f5f7fa;
+  background: var(--app-bg-secondary);
+  transition: var(--app-transition-base);
 }
 
 /* ---- 顶部工具栏 ---- */
@@ -238,8 +239,8 @@ function handleAiMessage(msg: string) {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--app-bg-elevated);
+  border-bottom: 1px solid var(--app-border-medium);
   flex-shrink: 0;
 }
 
@@ -252,7 +253,7 @@ function handleAiMessage(msg: string) {
 .toolbar-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--app-text-primary);
 }
 
 .toolbar-right {
@@ -289,9 +290,9 @@ function handleAiMessage(msg: string) {
 .content-area {
   flex: 1;
   overflow: auto;
-  background: #fff;
+  background: var(--app-bg-elevated);
   border-radius: 4px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--app-border-medium);
 }
 
 .content-preview {
@@ -307,8 +308,8 @@ function handleAiMessage(msg: string) {
 .gen-chat {
   width: 400px;
   flex-shrink: 0;
-  border-left: 1px solid #e4e7ed;
-  background: #fff;
+  border-left: 1px solid var(--app-border-medium);
+  background: var(--app-bg-elevated);
   overflow: hidden;
 }
 
@@ -331,7 +332,7 @@ function handleAiMessage(msg: string) {
   bottom: 24px;
   width: 48px;
   height: 48px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--app-shadow-md);
   z-index: 100;
 }
 
