@@ -1,4 +1,4 @@
-package com.jy.eleaitender.support.config;
+package com.jy.eleaitender.ai.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -16,8 +16,8 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("EleAITender 支撑中心 API")
-                        .description("支撑中心服务接口文档")
+                        .title("EleAITender AI功能 API")
+                        .description("AI功能服务接口文档")
                         .version("1.0.0")
                         .contact(new Contact().name("EleAITender")));
     }

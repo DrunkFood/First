@@ -16,9 +16,9 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("EleTender 文件服务 API")
+                        .title("EleAITender 文件服务 API")
                         .description("文件上传下载服务接口文档")
                         .version("1.0.0")
-                        .contact(new Contact().name("EleTender")));
+                        .contact(new Contact().name("EleAITender")));
     }
 }
