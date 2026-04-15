@@ -3,11 +3,14 @@ package com.jy.eleaitender.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
+import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.core.dto.response.MatchFileVO;
+import com.jy.eleaitender.core.mapper.AiKnowledgeDocumentMapper;
 import com.jy.eleaitender.core.mapper.AiRequirementMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IRequirementService;
@@ -16,9 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 业务需求服务实现
@@ -28,6 +30,9 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Autowired
     private AiRequirementMapper requirementMapper;
+
+    @Autowired
+    private AiKnowledgeDocumentMapper knowledgeDocumentMapper;
 
     @Autowired
     private IAiTaskService aiTaskService;
@@ -159,5 +164,79 @@ public class RequirementServiceImpl implements IRequirementService {
         taskIds.put("TYPO", typoTask.getId());
 
         return taskIds;
+    }
+
+    @Override
+    public List<MatchFileVO> getMatchFiles(Long requirementId, String keyword) {
+        // 获取当前需求的项目类型信息，用于匹配
+        String projectType = null;
+        if (requirementId != null) {
+            AiRequirement requirement = requirementMapper.selectById(requirementId);
+            if (requirement != null) {
+                projectType = requirement.getProjectType();
+            }
+        }
+
+        final String matchProjectType = projectType;
+        final String matchKeyword = keyword;
+
+        // 查询知识库文档
+        LambdaQueryWrapper<AiKnowledgeDocument> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AiKnowledgeDocument::getIsDelete, 0);
+        wrapper.eq(AiKnowledgeDocument::getStatus, "ACTIVE");
+
+        // 按文档类别（项目类型）筛选
+        if (StringUtils.hasText(matchProjectType)) {
+            wrapper.eq(AiKnowledgeDocument::getDocCategory, matchProjectType);
+        }
+        // 按关键词模糊搜索
+        if (StringUtils.hasText(matchKeyword)) {
+            wrapper.like(AiKnowledgeDocument::getDocName, matchKeyword);
+        }
+        wrapper.orderByDesc(AiKnowledgeDocument::getCreateTime);
+        wrapper.last("LIMIT 20");
+
+        List<AiKnowledgeDocument> documents = knowledgeDocumentMapper.selectList(wrapper);
+
+        // 转换为 MatchFileVO
+        return documents.stream().map(doc -> {
+            MatchFileVO vo = new MatchFileVO();
+            vo.setId(doc.getId());
+            vo.setFileName(doc.getDocName());
+            vo.setFileType(doc.getFileType());
+            vo.setUploadTime(doc.getCreateTime());
+            // 匹配度：按项目类型匹配则基础分80，关键词匹配再加分
+            int percent = calculateMatchPercent(doc, matchProjectType, matchKeyword);
+            vo.setMatchPercent(percent);
+            vo.setMatchDesc(buildMatchDesc(doc, matchProjectType, matchKeyword));
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
+    private int calculateMatchPercent(AiKnowledgeDocument doc, String projectType, String keyword) {
+        int percent = 50; // 基础匹配分
+        if (StringUtils.hasText(projectType) && projectType.equals(doc.getDocCategory())) {
+            percent += 30;
+        }
+        if (StringUtils.hasText(keyword) && StringUtils.hasText(doc.getDocName())
+                && doc.getDocName().contains(keyword)) {
+            percent += 15;
+        }
+        return Math.min(percent, 100);
+    }
+
+    private String buildMatchDesc(AiKnowledgeDocument doc, String projectType, String keyword) {
+        List<String> parts = new ArrayList<>();
+        if (StringUtils.hasText(projectType) && projectType.equals(doc.getDocCategory())) {
+            parts.add("项目类型匹配");
+        }
+        if (StringUtils.hasText(keyword) && StringUtils.hasText(doc.getDocName())
+                && doc.getDocName().contains(keyword)) {
+            parts.add("关键词匹配");
+        }
+        if (parts.isEmpty()) {
+            parts.add("同类型文档");
+        }
+        return String.join("、", parts);
     }
 }

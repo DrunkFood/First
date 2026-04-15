@@ -5,12 +5,14 @@ import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.core.dto.response.MatchFileVO;
 import com.jy.eleaitender.core.service.IRequirementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,6 +36,15 @@ public class RequirementController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long projectId) {
         return Result.success(requirementService.getPage(pageNum, pageSize, requirementName, status, projectId));
+    }
+
+    @GetMapping("/match-files")
+    @RequireLogin
+    @Operation(summary = "获取匹配文件列表")
+    public Result<List<MatchFileVO>> getMatchFiles(
+            @RequestParam(required = false) Long requirementId,
+            @RequestParam(required = false) String keyword) {
+        return Result.success(requirementService.getMatchFiles(requirementId, keyword));
     }
 
     @GetMapping("/{id}")

@@ -3,7 +3,9 @@ package com.jy.eleaitender.core.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.core.dto.response.MatchFileVO;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,4 +67,9 @@ public interface IRequirementService {
      * 提交需求检测（敏感词+错别字，2项）
      */
     Map<String, Long> submitDetection(Long requirementId);
+
+    /**
+     * 获取匹配文件列表
+     */
+    List<MatchFileVO> getMatchFiles(Long requirementId, String keyword);
 }
