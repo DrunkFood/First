@@ -1,0 +1,1610 @@
+openapi: 3.0.1
+info: {}
+paths:
+  /api/access-logs:
+    summary: 分页查询访问日志
+    description: /api/access-logs
+    get:
+      summary: 分页查询访问日志
+      description: /api/access-logs
+      parameters:
+      - name: pageNum
+        in: query
+        description: ""
+        schema:
+          type: number
+      - name: pageSize
+        in: query
+        description: ""
+        schema:
+          type: number
+      - name: traceId
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: serviceName
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: statusCode
+        in: query
+        description: ""
+        schema:
+          type: number
+      - name: bizType
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: bizId
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: projectId
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: tenderId
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: startTime
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: endTime
+        in: query
+        description: ""
+        schema:
+          type: string
+  /api/auth/public-key:
+    summary: 获取RSA公钥（用于密码加密传输）
+    description: /api/auth/public-key
+    get:
+      summary: 获取RSA公钥（用于密码加密传输）
+      description: /api/auth/public-key
+      parameters: []
+  /api/auth/login:
+    summary: 用户登录
+    description: /api/auth/login
+    post:
+      summary: 用户登录
+      description: /api/auth/login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                username:
+                  type: string
+                  description: ""
+                  example: ""
+                password:
+                  type: string
+                  description: ""
+                  example: ""
+                keyId:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/auth/send-sms-code:
+    summary: 发送手机验证码
+    description: /api/auth/send-sms-code
+    post:
+      summary: 发送手机验证码
+      description: /api/auth/send-sms-code
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                phone:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/auth/phone-login:
+    summary: 手机验证码登录
+    description: /api/auth/phone-login
+    post:
+      summary: 手机验证码登录
+      description: /api/auth/phone-login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                phone:
+                  type: string
+                  description: ""
+                  example: ""
+                code:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/auth/logout:
+    summary: 用户登出
+    description: /api/auth/logout
+    post:
+      summary: 用户登出
+      description: /api/auth/logout
+      parameters: []
+  /api/auth/userinfo:
+    summary: 获取当前用户信息
+    description: /api/auth/userinfo
+    get:
+      summary: 获取当前用户信息
+      description: /api/auth/userinfo
+      parameters: []
+  /api/auth/info:
+    summary: 获取当前用户信息（别名）
+    description: /api/auth/info
+    get:
+      summary: 获取当前用户信息（别名）
+      description: /api/auth/info
+      parameters: []
+  /api/auth/menus:
+    summary: 获取当前用户菜单
+    description: /api/auth/menus
+    get:
+      summary: 获取当前用户菜单
+      description: /api/auth/menus
+      parameters: []
+  /api/auth/change-password:
+    summary: 修改当前用户密码
+    description: /api/auth/change-password
+    post:
+      summary: 修改当前用户密码
+      description: /api/auth/change-password
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+  /api/external/token:
+    summary: 外部系统用户换取Token
+    description: /api/external/token
+    post:
+      summary: 外部系统用户换取Token
+      description: /api/external/token
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                userName:
+                  type: string
+                  description: ""
+                  example: ""
+                userId:
+                  type: string
+                  description: ""
+                  example: ""
+                enterpriseName:
+                  type: string
+                  description: ""
+                  example: ""
+                enterpriseId:
+                  type: string
+                  description: ""
+                  example: ""
+                enterpriseCode:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/external/verify:
+    summary: 验证外部系统签名
+    description: /api/external/verify
+    get:
+      summary: 验证外部系统签名
+      description: /api/external/verify
+      parameters: []
+  /api/external/userinfo:
+    summary: 获取当前外部用户信息
+    description: /api/external/userinfo
+    get:
+      summary: 获取当前外部用户信息
+      description: /api/external/userinfo
+      parameters: []
+  /api/external-systems:
+    summary: 创建接入系统
+    description: /api/external-systems
+    post:
+      summary: 创建接入系统
+      description: /api/external-systems
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                systemName:
+                  type: string
+                  description: ""
+                  example: ""
+                systemUrl:
+                  type: string
+                  description: ""
+                  example: ""
+                appKey:
+                  type: string
+                  description: ""
+                  example: ""
+                appSecret:
+                  type: string
+                  description: ""
+                  example: ""
+                expireTime:
+                  type: string
+                  description: ""
+                  example: 2026-04-15 11:31:33
+                status:
+                  type: string
+                  description: ""
+                  example: "4365"
+                description:
+                  type: string
+                  description: ""
+                  example: ""
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "21470"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:33
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "23357"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:33
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "20484"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "12793"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "22683"
+  /api/external-systems/{id}:
+    summary: 删除接入系统
+    description: "/api/external-systems/{id}"
+    delete:
+      summary: 删除接入系统
+      description: "/api/external-systems/{id}"
+      parameters: []
+  /api/external-systems/{id}/regenerate-secret:
+    summary: 重新生成密钥
+    description: "/api/external-systems/{id}/regenerate-secret"
+    post:
+      summary: 重新生成密钥
+      description: "/api/external-systems/{id}/regenerate-secret"
+      parameters: []
+  /api/external-systems/{id}/status:
+    summary: 启用/禁用接入系统
+    description: "/api/external-systems/{id}/status"
+    put:
+      summary: 启用/禁用接入系统
+      description: "/api/external-systems/{id}/status"
+      parameters:
+      - name: status
+        in: query
+        description: ""
+        schema:
+          type: number
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+  /api/v1/knowledge-configs:
+    summary: 上传知识文档
+    description: /api/v1/knowledge-configs
+    post:
+      summary: 上传知识文档
+      description: /api/v1/knowledge-configs
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                docName:
+                  type: string
+                  description: ""
+                  example: ""
+                docCategory:
+                  type: string
+                  description: ""
+                  example: ""
+                fileId:
+                  type: string
+                  description: ""
+                  example: "17630"
+                fileType:
+                  type: string
+                  description: ""
+                  example: ""
+                content:
+                  type: string
+                  description: ""
+                  example: ""
+                vectorCollection:
+                  type: string
+                  description: ""
+                  example: ""
+                vectorIds:
+                  type: string
+                  description: ""
+                  example: ""
+                status:
+                  type: string
+                  description: ""
+                  example: ""
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "25060"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:33
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "28604"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:33
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "10476"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "28116"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "8900"
+  /api/v1/knowledge-configs/{id}:
+    summary: 删除知识文档
+    description: "/api/v1/knowledge-configs/{id}"
+    delete:
+      summary: 删除知识文档
+      description: "/api/v1/knowledge-configs/{id}"
+      parameters: []
+  /api/menus/tree:
+    summary: 获取菜单树
+    description: /api/menus/tree
+    get:
+      summary: 获取菜单树
+      description: /api/menus/tree
+      parameters: []
+  /api/menus:
+    summary: 创建菜单
+    description: /api/menus
+    post:
+      summary: 创建菜单
+      description: /api/menus
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                parentId:
+                  type: string
+                  description: ""
+                  example: "15146"
+                menuName:
+                  type: string
+                  description: ""
+                  example: ""
+                menuCode:
+                  type: string
+                  description: ""
+                  example: ""
+                menuType:
+                  type: string
+                  description: ""
+                  example: "1706"
+                menuUrl:
+                  type: string
+                  description: ""
+                  example: ""
+                permission:
+                  type: string
+                  description: ""
+                  example: ""
+                icon:
+                  type: string
+                  description: ""
+                  example: ""
+                sortOrder:
+                  type: string
+                  description: ""
+                  example: "17576"
+                status:
+                  type: string
+                  description: ""
+                  example: "12802"
+                children:
+                  type: array
+                  description: ""
+                  items:
+                    type: object
+                    properties:
+                      parentId:
+                        type: string
+                        description: ""
+                        example: "7987"
+                      menuName:
+                        type: string
+                        description: ""
+                        example: ""
+                      menuCode:
+                        type: string
+                        description: ""
+                        example: ""
+                      menuType:
+                        type: string
+                        description: ""
+                        example: "19252"
+                      menuUrl:
+                        type: string
+                        description: ""
+                        example: ""
+                      permission:
+                        type: string
+                        description: ""
+                        example: ""
+                      icon:
+                        type: string
+                        description: ""
+                        example: ""
+                      sortOrder:
+                        type: string
+                        description: ""
+                        example: "1893"
+                      status:
+                        type: string
+                        description: ""
+                        example: "29257"
+                      children:
+                        type: array
+                        description: ""
+                        items:
+                          type: object
+                      id:
+                        type: string
+                        description: '主键ID '
+                        example: "7043"
+                      createTime:
+                        type: string
+                        description: '创建时间 '
+                        example: 2026-04-15 11:31:33
+                      createId:
+                        type: string
+                        description: '创建人ID '
+                        example: "10908"
+                      createName:
+                        type: string
+                        description: '创建人名称 '
+                        example: ""
+                      modifyTime:
+                        type: string
+                        description: '修改时间 '
+                        example: 2026-04-15 11:31:33
+                      modifyId:
+                        type: string
+                        description: '修改人ID '
+                        example: "28492"
+                      modifyName:
+                        type: string
+                        description: '修改人名称 '
+                        example: ""
+                      ver:
+                        type: string
+                        description: '乐观锁版本号 '
+                        example: "27717"
+                      isDelete:
+                        type: string
+                        description: '逻辑删除标识 0-未删除 1-已删除 '
+                        example: "27813"
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "26747"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:33
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "32734"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:33
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "15180"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "21208"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "3523"
+  /api/menus/{id}:
+    summary: 删除菜单
+    description: "/api/menus/{id}"
+    delete:
+      summary: 删除菜单
+      description: "/api/menus/{id}"
+      parameters: []
+  /api/v1/messages:
+    summary: 分页查询我的消息
+    description: /api/v1/messages
+    get:
+      summary: 分页查询我的消息
+      description: /api/v1/messages
+      parameters:
+      - name: pageNum
+        in: query
+        description: ""
+        schema:
+          type: number
+      - name: pageSize
+        in: query
+        description: ""
+        schema:
+          type: number
+      - name: messageType
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: isRead
+        in: query
+        description: ""
+        schema:
+          type: number
+  /api/v1/messages/unread-count:
+    summary: 获取未读消息数量
+    description: /api/v1/messages/unread-count
+    get:
+      summary: 获取未读消息数量
+      description: /api/v1/messages/unread-count
+      parameters: []
+  /api/v1/messages/{id}/read:
+    summary: 标记消息已读
+    description: "/api/v1/messages/{id}/read"
+    put:
+      summary: 标记消息已读
+      description: "/api/v1/messages/{id}/read"
+      parameters: []
+  /api/v1/messages/read-all:
+    summary: 全部标记已读
+    description: /api/v1/messages/read-all
+    put:
+      summary: 全部标记已读
+      description: /api/v1/messages/read-all
+      parameters: []
+  /api/v1/messages/{id}:
+    summary: 删除消息
+    description: "/api/v1/messages/{id}"
+    delete:
+      summary: 删除消息
+      description: "/api/v1/messages/{id}"
+      parameters: []
+  /api/v1/model-configs:
+    summary: 创建模型配置
+    description: /api/v1/model-configs
+    post:
+      summary: 创建模型配置
+      description: /api/v1/model-configs
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                modelName:
+                  type: string
+                  description: ""
+                  example: ""
+                modelType:
+                  type: string
+                  description: ""
+                  example: ""
+                apiEndpoint:
+                  type: string
+                  description: ""
+                  example: ""
+                apiKey:
+                  type: string
+                  description: ""
+                  example: ""
+                modelParams:
+                  type: string
+                  description: ""
+                  example: ""
+                usageScenario:
+                  type: string
+                  description: ""
+                  example: ""
+                isActive:
+                  type: string
+                  description: ""
+                  example: "6878"
+                tokenUsage:
+                  type: string
+                  description: ""
+                  example: "17977"
+                cost:
+                  type: string
+                  description: ""
+                  example: "22211"
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "5116"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:33
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "8934"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:33
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "20413"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "23775"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "24554"
+  /api/v1/model-configs/{id}:
+    summary: 删除模型配置
+    description: "/api/v1/model-configs/{id}"
+    delete:
+      summary: 删除模型配置
+      description: "/api/v1/model-configs/{id}"
+      parameters: []
+  /api/v1/model-configs/{id}/active:
+    summary: 激活/停用模型配置
+    description: "/api/v1/model-configs/{id}/active"
+    put:
+      summary: 激活/停用模型配置
+      description: "/api/v1/model-configs/{id}/active"
+      parameters: []
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: number
+                  description: ""
+  /api/v1/model-routes:
+    summary: 创建路由规则
+    description: /api/v1/model-routes
+    post:
+      summary: 创建路由规则
+      description: /api/v1/model-routes
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                usageScenario:
+                  type: string
+                  description: ""
+                  example: ""
+                primaryModelId:
+                  type: string
+                  description: ""
+                  example: "10635"
+                fallbackModelId:
+                  type: string
+                  description: ""
+                  example: "4041"
+                priority:
+                  type: string
+                  description: ""
+                  example: "29783"
+                isActive:
+                  type: string
+                  description: ""
+                  example: "4480"
+                description:
+                  type: string
+                  description: ""
+                  example: ""
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "4969"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:33
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "664"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:33
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "15150"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "15295"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "6098"
+  /api/v1/model-routes/active:
+    summary: 获取指定场景的生效路由规则
+    description: /api/v1/model-routes/active
+    get:
+      summary: 获取指定场景的生效路由规则
+      description: /api/v1/model-routes/active
+      parameters:
+      - name: usageScenario
+        in: query
+        description: ""
+        schema:
+          type: string
+  /api/v1/model-routes/{id}:
+    summary: 删除路由规则
+    description: "/api/v1/model-routes/{id}"
+    delete:
+      summary: 删除路由规则
+      description: "/api/v1/model-routes/{id}"
+      parameters: []
+  /api/v1/model-routes/{id}/active:
+    summary: 启用/停用路由规则
+    description: "/api/v1/model-routes/{id}/active"
+    put:
+      summary: 启用/停用路由规则
+      description: "/api/v1/model-routes/{id}/active"
+      parameters: []
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: number
+                  description: ""
+  /api/v1/operation-logs:
+    summary: 分页查询操作日志
+    description: /api/v1/operation-logs
+    get:
+      summary: 分页查询操作日志
+      description: /api/v1/operation-logs
+      parameters:
+      - name: pageNum
+        in: query
+        description: ""
+        schema:
+          type: number
+      - name: pageSize
+        in: query
+        description: ""
+        schema:
+          type: number
+      - name: userName
+        in: query
+        description: ""
+        schema:
+          type: string
+      - name: operation
+        in: query
+        description: ""
+        schema:
+          type: string
+  /api/v1/policy-files:
+    summary: 创建政策文件记录
+    description: /api/v1/policy-files
+    post:
+      summary: 创建政策文件记录
+      description: /api/v1/policy-files
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                fileName:
+                  type: string
+                  description: ""
+                  example: ""
+                fileCategory:
+                  type: string
+                  description: ""
+                  example: ""
+                applicableCategory:
+                  type: string
+                  description: ""
+                  example: ""
+                fileId:
+                  type: string
+                  description: ""
+                  example: "9129"
+                fileSize:
+                  type: string
+                  description: ""
+                  example: "12270"
+                fileType:
+                  type: string
+                  description: ""
+                  example: ""
+                description:
+                  type: string
+                  description: ""
+                  example: ""
+                status:
+                  type: string
+                  description: ""
+                  example: "9620"
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "6739"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:33
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "5756"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:33
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "1455"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "23067"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "1493"
+  /api/v1/policy-files/{id}:
+    summary: 删除政策文件
+    description: "/api/v1/policy-files/{id}"
+    delete:
+      summary: 删除政策文件
+      description: "/api/v1/policy-files/{id}"
+      parameters: []
+  /api/v1/policy-files/{id}/status:
+    summary: 启用/禁用政策文件
+    description: "/api/v1/policy-files/{id}/status"
+    put:
+      summary: 启用/禁用政策文件
+      description: "/api/v1/policy-files/{id}/status"
+      parameters: []
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: number
+                  description: ""
+  /api/roles:
+    summary: 创建角色
+    description: /api/roles
+    post:
+      summary: 创建角色
+      description: /api/roles
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                roleCode:
+                  type: string
+                  description: ""
+                  example: ""
+                roleName:
+                  type: string
+                  description: ""
+                  example: ""
+                description:
+                  type: string
+                  description: ""
+                  example: ""
+                status:
+                  type: string
+                  description: ""
+                  example: "30289"
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "9428"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:33
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "17263"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:33
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "32758"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "1364"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "29887"
+  /api/roles/all:
+    summary: 获取所有角色
+    description: /api/roles/all
+    get:
+      summary: 获取所有角色
+      description: /api/roles/all
+      parameters: []
+  /api/roles/{id}:
+    summary: 删除角色
+    description: "/api/roles/{id}"
+    delete:
+      summary: 删除角色
+      description: "/api/roles/{id}"
+      parameters: []
+  /api/roles/{id}/menus:
+    summary: 分配角色菜单权限
+    description: "/api/roles/{id}/menus"
+    put:
+      summary: 分配角色菜单权限
+      description: "/api/roles/{id}/menus"
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+  /api/v1/statistics/overview:
+    summary: 获取统计概览数据
+    description: /api/v1/statistics/overview
+    get:
+      summary: 获取统计概览数据
+      description: /api/v1/statistics/overview
+      parameters: []
+  /api/v1/sys-params:
+    summary: 批量更新系统参数
+    description: /api/v1/sys-params
+    put:
+      summary: 批量更新系统参数
+      description: /api/v1/sys-params
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+  /api/v1/sys-params/value:
+    summary: 根据key获取参数值
+    description: /api/v1/sys-params/value
+    get:
+      summary: 根据key获取参数值
+      description: /api/v1/sys-params/value
+      parameters:
+      - name: paramKey
+        in: query
+        description: ""
+        schema:
+          type: string
+  /api/v1/sys-params/{paramKey}:
+    summary: 更新单个系统参数
+    description: "/api/v1/sys-params/{paramKey}"
+    put:
+      summary: 更新单个系统参数
+      description: "/api/v1/sys-params/{paramKey}"
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+  /api/v1/template-configs:
+    summary: 创建模板
+    description: /api/v1/template-configs
+    post:
+      summary: 创建模板
+      description: /api/v1/template-configs
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                templateCode:
+                  type: string
+                  description: ""
+                  example: ""
+                templateName:
+                  type: string
+                  description: ""
+                  example: ""
+                projectCategory:
+                  type: string
+                  description: ""
+                  example: ""
+                projectType:
+                  type: string
+                  description: ""
+                  example: ""
+                content:
+                  type: string
+                  description: ""
+                  example: ""
+                structureDefinition:
+                  type: string
+                  description: ""
+                  example: ""
+                versionNo:
+                  type: string
+                  description: ""
+                  example: "12815"
+                isDefault:
+                  type: string
+                  description: ""
+                  example: "3483"
+                status:
+                  type: string
+                  description: ""
+                  example: ""
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "15437"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:34
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "13776"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:34
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "27808"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "24208"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "3698"
+  /api/v1/template-configs/{id}:
+    summary: 删除模板
+    description: "/api/v1/template-configs/{id}"
+    delete:
+      summary: 删除模板
+      description: "/api/v1/template-configs/{id}"
+      parameters: []
+  /api/v1/template-configs/{id}/set-default:
+    summary: 设为默认模板
+    description: "/api/v1/template-configs/{id}/set-default"
+    post:
+      summary: 设为默认模板
+      description: "/api/v1/template-configs/{id}/set-default"
+      parameters: []
+  /api/users:
+    summary: 创建用户
+    description: /api/users
+    post:
+      summary: 创建用户
+      description: /api/users
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                username:
+                  type: string
+                  description: ""
+                  example: ""
+                password:
+                  type: string
+                  description: ""
+                  example: ""
+                realName:
+                  type: string
+                  description: ""
+                  example: ""
+                email:
+                  type: string
+                  description: ""
+                  example: ""
+                phone:
+                  type: string
+                  description: ""
+                  example: ""
+                status:
+                  type: string
+                  description: ""
+                  example: "18560"
+                lastLoginTime:
+                  type: string
+                  description: ""
+                  example: 2026-04-15 11:31:34
+                roleIds:
+                  type: array
+                  description: ""
+                  items:
+                    type: string
+                    description: ""
+                    example: "10660"
+                roles:
+                  type: array
+                  description: ""
+                  items:
+                    type: object
+                    properties:
+                      roleCode:
+                        type: string
+                        description: ""
+                        example: ""
+                      roleName:
+                        type: string
+                        description: ""
+                        example: ""
+                      description:
+                        type: string
+                        description: ""
+                        example: ""
+                      status:
+                        type: string
+                        description: ""
+                        example: "606"
+                      id:
+                        type: string
+                        description: '主键ID '
+                        example: "6387"
+                      createTime:
+                        type: string
+                        description: '创建时间 '
+                        example: 2026-04-15 11:31:34
+                      createId:
+                        type: string
+                        description: '创建人ID '
+                        example: "20739"
+                      createName:
+                        type: string
+                        description: '创建人名称 '
+                        example: ""
+                      modifyTime:
+                        type: string
+                        description: '修改时间 '
+                        example: 2026-04-15 11:31:34
+                      modifyId:
+                        type: string
+                        description: '修改人ID '
+                        example: "10973"
+                      modifyName:
+                        type: string
+                        description: '修改人名称 '
+                        example: ""
+                      ver:
+                        type: string
+                        description: '乐观锁版本号 '
+                        example: "23114"
+                      isDelete:
+                        type: string
+                        description: '逻辑删除标识 0-未删除 1-已删除 '
+                        example: "23628"
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "24080"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:34
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "18959"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:34
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "16883"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "15949"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "16142"
+  /api/users/{id}:
+    summary: 删除用户
+    description: "/api/users/{id}"
+    delete:
+      summary: 删除用户
+      description: "/api/users/{id}"
+      parameters: []
+  /api/users/{id}/reset-password:
+    summary: 重置密码
+    description: "/api/users/{id}/reset-password"
+    post:
+      summary: 重置密码
+      description: "/api/users/{id}/reset-password"
+      parameters:
+      - name: newPassword
+        in: query
+        description: ""
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+  /api/users/{id}/status:
+    summary: 启用/禁用用户
+    description: "/api/users/{id}/status"
+    put:
+      summary: 启用/禁用用户
+      description: "/api/users/{id}/status"
+      parameters:
+      - name: status
+        in: query
+        description: ""
+        schema:
+          type: number
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+  /api/versions:
+    summary: 创建版本
+    description: /api/versions
+    post:
+      summary: 创建版本
+      description: /api/versions
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                systemName:
+                  type: string
+                  description: ""
+                  example: ""
+                versionNumber:
+                  type: string
+                  description: ""
+                  example: ""
+                fileId:
+                  type: string
+                  description: ""
+                  example: "24036"
+                releaseNotes:
+                  type: string
+                  description: ""
+                  example: ""
+                status:
+                  type: string
+                  description: ""
+                  example: "17340"
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "1981"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:34
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "5104"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:34
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "19421"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "15582"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "29724"
+  /api/versions/{id}:
+    summary: 删除版本
+    description: "/api/versions/{id}"
+    delete:
+      summary: 删除版本
+      description: "/api/versions/{id}"
+      parameters: []
+  /api/versions/{id}/publish:
+    summary: 发布版本
+    description: "/api/versions/{id}/publish"
+    post:
+      summary: 发布版本
+      description: "/api/versions/{id}/publish"
+      parameters: []
+  /api/versions/{id}/deprecate:
+    summary: 废弃版本
+    description: "/api/versions/{id}/deprecate"
+    post:
+      summary: 废弃版本
+      description: "/api/versions/{id}/deprecate"
+      parameters: []
+  /api/versions/{versionId}/plugins:
+    summary: 创建插件
+    description: "/api/versions/{versionId}/plugins"
+    post:
+      summary: 创建插件
+      description: "/api/versions/{versionId}/plugins"
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                pluginName:
+                  type: string
+                  description: ""
+                  example: ""
+                versionNumber:
+                  type: string
+                  description: ""
+                  example: ""
+                compatibleMainVersion:
+                  type: string
+                  description: ""
+                  example: ""
+                fileId:
+                  type: string
+                  description: ""
+                  example: "3189"
+                releaseNotes:
+                  type: string
+                  description: ""
+                  example: ""
+                status:
+                  type: string
+                  description: ""
+                  example: "22517"
+                id:
+                  type: string
+                  description: '主键ID '
+                  example: "15674"
+                createTime:
+                  type: string
+                  description: '创建时间 '
+                  example: 2026-04-15 11:31:34
+                createId:
+                  type: string
+                  description: '创建人ID '
+                  example: "11968"
+                createName:
+                  type: string
+                  description: '创建人名称 '
+                  example: ""
+                modifyTime:
+                  type: string
+                  description: '修改时间 '
+                  example: 2026-04-15 11:31:34
+                modifyId:
+                  type: string
+                  description: '修改人ID '
+                  example: "7096"
+                modifyName:
+                  type: string
+                  description: '修改人名称 '
+                  example: ""
+                ver:
+                  type: string
+                  description: '乐观锁版本号 '
+                  example: "22832"
+                isDelete:
+                  type: string
+                  description: '逻辑删除标识 0-未删除 1-已删除 '
+                  example: "32185"
+  /api/versions/plugins/{id}:
+    summary: 删除插件
+    description: "/api/versions/plugins/{id}"
+    delete:
+      summary: 删除插件
+      description: "/api/versions/plugins/{id}"
+      parameters: []

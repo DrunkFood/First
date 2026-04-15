@@ -1,0 +1,254 @@
+openapi: 3.0.1
+info: {}
+paths:
+  /api/v1/ai/chat:
+    summary: AI对话（SSE流式响应）
+    description: /api/v1/ai/chat
+    post:
+      summary: AI对话（SSE流式响应）
+      description: /api/v1/ai/chat
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                message:
+                  type: string
+                  description: ""
+                  example: ""
+                projectId:
+                  type: string
+                  description: ""
+                  example: "11999"
+                context:
+                  type: string
+                  description: ""
+                  example: ""
+                history:
+                  type: array
+                  description: ""
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        description: ""
+                        example: ""
+                      content:
+                        type: string
+                        description: ""
+                        example: ""
+  /api/v1/ai/optimize:
+    summary: 文本优化（SSE流式响应）
+    description: /api/v1/ai/optimize
+    post:
+      summary: 文本优化（SSE流式响应）
+      description: /api/v1/ai/optimize
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                content:
+                  type: string
+                  description: ""
+                  example: ""
+                requirement:
+                  type: string
+                  description: ""
+                  example: ""
+                projectId:
+                  type: string
+                  description: ""
+                  example: "14565"
+  /api/v1/ai/suggest:
+    summary: 获取AI建议（同步响应）
+    description: /api/v1/ai/suggest
+    post:
+      summary: 获取AI建议（同步响应）
+      description: /api/v1/ai/suggest
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                message:
+                  type: string
+                  description: ""
+                  example: ""
+                projectId:
+                  type: string
+                  description: ""
+                  example: "18187"
+                context:
+                  type: string
+                  description: ""
+                  example: ""
+                history:
+                  type: array
+                  description: ""
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        description: ""
+                        example: ""
+                      content:
+                        type: string
+                        description: ""
+                        example: ""
+  /api/v1/detection/start:
+    summary: 启动检测
+    description: /api/v1/detection/start
+    post:
+      summary: 启动检测
+      description: /api/v1/detection/start
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                projectId:
+                  type: string
+                  description: ""
+                  example: "11633"
+                detectionType:
+                  type: string
+                  description: ""
+                  example: ""
+                contentSnapshot:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/v1/detection/{id}/result:
+    summary: 获取检测结果
+    description: "/api/v1/detection/{id}/result"
+    get:
+      summary: 获取检测结果
+      description: "/api/v1/detection/{id}/result"
+      parameters: []
+  /api/v1/detection/{id}/confirm:
+    summary: 确认检测结果
+    description: "/api/v1/detection/{id}/confirm"
+    post:
+      summary: 确认检测结果
+      description: "/api/v1/detection/{id}/confirm"
+      parameters: []
+  /api/v1/ai/match/auto:
+    summary: 自动匹配历史需求
+    description: /api/v1/ai/match/auto
+    post:
+      summary: 自动匹配历史需求
+      description: /api/v1/ai/match/auto
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                projectType:
+                  type: string
+                  description: ""
+                  example: ""
+                projectCategory:
+                  type: string
+                  description: ""
+                  example: ""
+                budget:
+                  type: string
+                  description: ""
+                  example: "22873"
+                description:
+                  type: string
+                  description: ""
+                  example: ""
+                projectName:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/v1/ai/match/manual:
+    summary: 手动选择匹配（返回候选列表）
+    description: /api/v1/ai/match/manual
+    post:
+      summary: 手动选择匹配（返回候选列表）
+      description: /api/v1/ai/match/manual
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                projectType:
+                  type: string
+                  description: ""
+                  example: ""
+                projectCategory:
+                  type: string
+                  description: ""
+                  example: ""
+                budget:
+                  type: string
+                  description: ""
+                  example: "21166"
+                description:
+                  type: string
+                  description: ""
+                  example: ""
+                projectName:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/v1/knowledge/documents:
+    summary: 上传知识文档
+    description: /api/v1/knowledge/documents
+    post:
+      summary: 上传知识文档
+      description: /api/v1/knowledge/documents
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: ""
+              properties:
+                docName:
+                  type: string
+                  description: ""
+                  example: ""
+                docCategory:
+                  type: string
+                  description: ""
+                  example: ""
+                fileId:
+                  type: string
+                  description: ""
+                  example: "3394"
+                fileType:
+                  type: string
+                  description: ""
+                  example: ""
+  /api/v1/knowledge/documents/{id}:
+    summary: 删除知识文档
+    description: "/api/v1/knowledge/documents/{id}"
+    delete:
+      summary: 删除知识文档
+      description: "/api/v1/knowledge/documents/{id}"
+      parameters: []
