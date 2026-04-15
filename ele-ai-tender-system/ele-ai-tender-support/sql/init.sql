@@ -564,6 +564,27 @@ INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `men
 (56, '使用模板', 'ai-template:use', 2, NULL, 'ai-template:use', NULL, 1, 1, NOW(), NOW()),
 (56, '预览模板', 'ai-template:preview', 2, NULL, 'ai-template:preview', NULL, 2, 1, NOW(), NOW());
 
+INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `menu_url`, `permission`, `icon`, `sort_order`, `status`, `create_time`, `modify_time`) VALUES
+-- ========== 新增一级菜单 ==========
+(0, 'AI模型配置', 'model-config', 1, '/model-config', 'model-config:view', NULL, 7, 1, NOW(), NOW()),   -- id=83
+(0, '模板管理', 'template-config', 1, '/template', 'template-config:view', NULL, 8, 1, NOW(), NOW()),   -- id=84
+(0, '知识库管理', 'knowledge-config', 1, '/knowledge', 'knowledge-config:view', NULL, 9, 1, NOW(), NOW()), -- id=85
+
+-- ========== AI模型配置子菜单 (parent=83) ==========
+(83, '创建配置', 'model-config:create', 2, NULL, 'model-config:create', NULL, 1, 1, NOW(), NOW()),
+(83, '编辑配置', 'model-config:update', 2, NULL, 'model-config:update', NULL, 2, 1, NOW(), NOW()),
+(83, '删除配置', 'model-config:delete', 2, NULL, 'model-config:delete', NULL, 3, 1, NOW(), NOW()),
+
+-- ========== 模板管理子菜单 (parent=84) ==========
+(84, '创建模板', 'template-config:create', 2, NULL, 'template-config:create', NULL, 1, 1, NOW(), NOW()),
+(84, '编辑模板', 'template-config:update', 2, NULL, 'template-config:update', NULL, 2, 1, NOW(), NOW()),
+(84, '删除模板', 'template-config:delete', 2, NULL, 'template-config:delete', NULL, 3, 1, NOW(), NOW()),
+
+-- ========== 知识库管理子菜单 (parent=85) ==========
+(85, '创建知识库', 'knowledge-config:create', 2, NULL, 'knowledge-config:create', NULL, 1, 1, NOW(), NOW()),
+(85, '编辑知识库', 'knowledge-config:update', 2, NULL, 'knowledge-config:update', NULL, 2, 1, NOW(), NOW()),
+(85, '删除知识库', 'knowledge-config:delete', 2, NULL, 'knowledge-config:delete', NULL, 3, 1, NOW(), NOW());
+
 
 -- =====================================================
 -- 第四部分: 角色权限分配
