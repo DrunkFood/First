@@ -31,4 +31,6 @@ public class AiModelConfig extends BaseEntity {
     private Long tokenUsage;
     @Schema(description = "累计费用")
     private BigDecimal cost;
+    @Schema(description = "备注")
+    private String remark;
 }
