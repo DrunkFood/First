@@ -1,9 +1,7 @@
 package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
 import com.jy.eleaitender.common.entity.support.SupMessage;
-import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.entity.support.SysOperationLog;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.support.mapper.*;

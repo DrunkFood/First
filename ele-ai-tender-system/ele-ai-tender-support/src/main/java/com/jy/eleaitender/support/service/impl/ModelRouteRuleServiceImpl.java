@@ -2,7 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.AiModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
@@ -19,7 +19,6 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**

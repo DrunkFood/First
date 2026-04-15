@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.mapper.AiModelConfigReadMapper;
 import com.jy.eleaitender.ai.mapper.ModelRouteRuleReadMapper;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.AiModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 

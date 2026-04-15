@@ -2,7 +2,7 @@ package com.jy.eleaitender.ai.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.AiModelConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;

@@ -562,9 +562,8 @@ INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `men
 (55, '文本优化', 'ai-assistant:optimize', 2, NULL, 'ai-assistant:optimize', NULL, 2, 1, NOW(), NOW()),
 -- 模板
 (56, '使用模板', 'ai-template:use', 2, NULL, 'ai-template:use', NULL, 1, 1, NOW(), NOW()),
-(56, '预览模板', 'ai-template:preview', 2, NULL, 'ai-template:preview', NULL, 2, 1, NOW(), NOW());
+(56, '预览模板', 'ai-template:preview', 2, NULL, 'ai-template:preview', NULL, 2, 1, NOW(), NOW()),
 
-INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `menu_url`, `permission`, `icon`, `sort_order`, `status`, `create_time`, `modify_time`) VALUES
 -- ========== 新增一级菜单 ==========
 (0, 'AI模型配置', 'model-config', 1, '/model-config', 'model-config:view', NULL, 7, 1, NOW(), NOW()),   -- id=83
 (0, '模板管理', 'template-config', 1, '/template', 'template-config:view', NULL, 8, 1, NOW(), NOW()),   -- id=84

@@ -1,7 +1,7 @@
 package com.jy.eleaitender.ai.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.AiModelConfig;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

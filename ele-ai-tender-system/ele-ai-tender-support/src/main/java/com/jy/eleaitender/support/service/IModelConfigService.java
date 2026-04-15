@@ -1,7 +1,7 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.AiModelConfig;
 
 public interface IModelConfigService {
     Page<AiModelConfig> getPage(Integer pageNum, Integer pageSize, String modelType, String usageScenario);
