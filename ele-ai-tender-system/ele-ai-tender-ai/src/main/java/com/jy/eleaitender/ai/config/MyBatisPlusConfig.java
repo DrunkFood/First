@@ -15,7 +15,6 @@ public class MyBatisPlusConfig {
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         // 数据隔离拦截器（必须在分页拦截器之前）
-        interceptor.addInnerInterceptor(new DataScopeInnerInterceptor());
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
         return interceptor;

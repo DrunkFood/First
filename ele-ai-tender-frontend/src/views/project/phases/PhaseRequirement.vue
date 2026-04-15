@@ -124,7 +124,7 @@ import { Loading, CircleCheck, Document } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
-import { useTaskPolling } from '@/composables/useTaskPolling'
+import { useActiveTask } from '@/composables/useActiveTask'
 import { useAutoSave } from '@/composables/useAutoSave'
 import AiTaskStatus from '@/components/AiTaskStatus.vue'
 import AiUnavailableAlert from '@/components/AiUnavailableAlert.vue'
@@ -137,8 +137,6 @@ const emit = defineEmits<{ next: []; prev: [] }>()
 
 const content = ref('')
 const requirementId = ref(0)
-const taskId = ref<number | null>(null)
-const isGenerating = ref(false)
 const isOptimizing = ref(false)
 const aiFeedbackType = ref<'like' | 'dislike' | null>(null)
 
@@ -146,7 +144,11 @@ const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
 let closeOptimizeSSE: (() => void) | null = null
 
-const { task, retry: retryTask, skip: skipTask } = useTaskPolling(taskId)
+const { isActive: isGenerating, activeTask: task, setActive, retry: retryTask, skip: skipTask } = useActiveTask(
+  'REQUIREMENT_GENERATE',
+  requirementId,
+  'REQUIREMENT',
+)
 
 const { isSaving, lastSaveTime, startAutoSave, recoverDraft } = useAutoSave(
   requirementId,
@@ -177,15 +179,17 @@ const loadData = async () => {
 }
 
 const handleGenerate = async () => {
-  if (!requirementId.value) return
-  isGenerating.value = true
+  if (!requirementId.value || isGenerating.value) return
   try {
     const res = await requirementApi.generate(requirementId.value, {})
-    taskId.value = res.id
-  } catch {
+    setActive(res.id)
+  } catch (e: any) {
+    // 8084 = 任务正在处理中，可能是重复提交
+    if (e?.code === 8084) {
+      ElMessage.warning('AI生成任务正在处理中，请稍候')
+      return
+    }
     ElMessage.error('提交AI生成失败')
-  } finally {
-    isGenerating.value = false
   }
 }
 

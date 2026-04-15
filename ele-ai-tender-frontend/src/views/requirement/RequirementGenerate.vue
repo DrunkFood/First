@@ -23,7 +23,9 @@
         <div class="progress-section">
           <div class="progress-header">
             <span class="progress-title">生成进度</span>
-            <el-tag v-if="generating" type="" size="small" class="is-pulse">生成中</el-tag>
+            <el-tag v-if="generating" type="" size="small" class="is-pulse">
+              {{ isActive ? '任务排队中' : '生成中' }}
+            </el-tag>
             <el-tag v-else-if="content" type="success" size="small">已完成</el-tag>
             <el-tag v-else type="info" size="small">未开始</el-tag>
           </div>
@@ -85,7 +87,15 @@
                 AI生成
               </el-button>
               <el-button
-                v-if="generating"
+                v-if="isActive && !content"
+                type="warning"
+                loading
+                disabled
+              >
+                AI生成中...
+              </el-button>
+              <el-button
+                v-if="sseGenerating"
                 type="danger"
                 @click="stopGenerate"
               >
@@ -188,7 +198,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, ChatDotRound, Close, Document } from '@element-plus/icons-vue'
@@ -196,6 +206,7 @@ import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
 import { requirementApi } from '@/api/requirement'
 import { createSSEConnection } from '@/api/ai'
+import { useActiveTask } from '@/composables/useActiveTask'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -219,12 +230,23 @@ const tags = ref<Array<{ text: string; type: '' | 'success' | 'warning' | 'info'
 // ---- 状态 ----
 const saving = ref(false)
 const exporting = ref(false)
-const generating = ref(false)
 const editMode = ref(false)
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
 const feedbackType = ref<'like' | 'dislike' | null>(null)
 const progressPercent = ref(0)
+
+// ---- 活跃任务检测 ----
+const { isActive, activeTask, checkActiveTask } = useActiveTask(
+  'REQUIREMENT_GENERATE',
+  requirementId,
+  'REQUIREMENT',
+)
+
+// generating = SSE生成中 或 异步任务活跃中
+const generating = computed(() => isActive.value || sseGenerating.value)
+
+const sseGenerating = ref(false)
 
 // ---- SSE ----
 let closeGenerateSSE: (() => void) | null = null
@@ -247,6 +269,12 @@ onMounted(async () => {
 
     if (content.value) {
       progressPercent.value = 100
+    }
+
+    // 检查是否有活跃的AI生成任务
+    await checkActiveTask()
+    if (isActive.value && !content.value) {
+      progressPercent.value = activeTask.value?.status === 'PROCESSING' ? 65 : 10
     }
 
     // 加载参考文件
@@ -287,10 +315,17 @@ function generateTags(data: RequirementInfo) {
 }
 
 // ---- AI生成 ----
-function handleGenerate() {
+async function handleGenerate() {
   if (generating.value) return
 
-  generating.value = true
+  // 先检查是否有活跃任务
+  await checkActiveTask()
+  if (isActive.value) {
+    ElMessage.warning('AI生成任务正在处理中，请稍候')
+    return
+  }
+
+  sseGenerating.value = true
   editMode.value = false
   content.value = ''
   progressPercent.value = 0
@@ -311,14 +346,14 @@ function handleGenerate() {
     () => {
       clearInterval(progressTimer)
       ElMessage.error('AI生成失败，请稍后重试')
-      generating.value = false
+      sseGenerating.value = false
       closeGenerateSSE = null
     },
     () => {
       clearInterval(progressTimer)
       progressPercent.value = 100
       ElMessage.success('AI生成完成')
-      generating.value = false
+      sseGenerating.value = false
       closeGenerateSSE = null
     },
   )
@@ -326,7 +361,7 @@ function handleGenerate() {
 
 function stopGenerate() {
   closeGenerateSSE?.()
-  generating.value = false
+  sseGenerating.value = false
   closeGenerateSSE = null
 }
 

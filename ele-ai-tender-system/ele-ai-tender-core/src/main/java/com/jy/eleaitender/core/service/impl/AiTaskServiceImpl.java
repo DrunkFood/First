@@ -36,6 +36,12 @@ public class AiTaskServiceImpl implements IAiTaskService {
     @Transactional
     public AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
                              Map<String, Object> requestParams, String fileIds) {
+        // 防重复提交：同一业务同一类型不能有活跃任务
+        AiTask activeTask = aiTaskMapper.selectActiveTask(type.getCode(), bizId, bizType);
+        if (activeTask != null) {
+            throw new BusinessException(ResponseCode.TASK_ALREADY_PROCESSING);
+        }
+
         AiTask task = new AiTask();
         task.setTaskType(type.getCode());
         task.setProjectId(projectId);
@@ -127,6 +133,18 @@ public class AiTaskServiceImpl implements IAiTaskService {
             log.warn("标记{}个超时AI任务为AI_UNAVAILABLE", count);
         }
         return count;
+    }
+
+    @Override
+    public AiTaskVO getActiveTask(String taskType, Long bizId, String bizType) {
+        AiTask task = aiTaskMapper.selectActiveTask(taskType, bizId, bizType);
+        return task != null ? toVO(task) : null;
+    }
+
+    @Override
+    public List<AiTaskVO> getActiveTasksByProject(Long projectId) {
+        List<AiTask> tasks = aiTaskMapper.selectActiveTasksByProject(projectId);
+        return tasks.stream().map(this::toVO).collect(Collectors.toList());
     }
 
     private AiTaskVO toVO(AiTask task) {

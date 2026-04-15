@@ -45,4 +45,23 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
             "WHERE status = 'PENDING' AND is_delete = 0 " +
             "AND TIMESTAMPDIFF(MINUTE, create_time, NOW()) > timeout_minutes")
     int markTimeoutTasks();
+
+    /**
+     * 查询业务实体的活跃任务（PENDING/PROCESSING），用于防重复提交
+     */
+    @DataScope(skip = true)
+    @Select("SELECT * FROM ai_task WHERE task_type = #{taskType} AND biz_id = #{bizId} " +
+            "AND biz_type = #{bizType} AND status IN ('PENDING','PROCESSING') AND is_delete = 0 " +
+            "LIMIT 1")
+    AiTask selectActiveTask(@Param("taskType") String taskType,
+                             @Param("bizId") Long bizId,
+                             @Param("bizType") String bizType);
+
+    /**
+     * 查询项目的活跃任务列表（PENDING/PROCESSING），用于前端状态联动
+     */
+    @DataScope(skip = true)
+    @Select("SELECT * FROM ai_task WHERE project_id = #{projectId} " +
+            "AND status IN ('PENDING','PROCESSING') AND is_delete = 0")
+    List<AiTask> selectActiveTasksByProject(@Param("projectId") Long projectId);
 }

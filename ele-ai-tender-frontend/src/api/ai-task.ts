@@ -21,4 +21,16 @@ export const aiTaskApi = {
   skip(taskId: number) {
     return request.post(`/core-api/v1/ai-tasks/${taskId}/skip`)
   },
+
+  /** 查询业务实体的活跃任务（PENDING/PROCESSING） */
+  getActiveTask(taskType: string, bizId: number, bizType: string) {
+    return request.get<any, AiTaskVO | null>('/core-api/v1/ai-tasks/active', {
+      params: { taskType, bizId, bizType },
+    })
+  },
+
+  /** 查询项目的活跃任务列表 */
+  getActiveTasksByProject(projectId: number) {
+    return request.get<any, AiTaskVO[]>(`/core-api/v1/ai-tasks/project/${projectId}/active`)
+  },
 }

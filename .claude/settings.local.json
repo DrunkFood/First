@@ -26,7 +26,8 @@
       "Bash(curl -sv http://localhost:8082/api/v1/requirements -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T')",
       "Bash(curl -s -X POST http://localhost:8082/api/v1/requirements -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T' -H 'Content-Type: application/json' -d '{\"requirementName\":\"联调测试需求\",\"projectCategory\":\"LIMITED_BELOW\",\"projectType\":\"GOODS\",\"budget\":50.00,\"requirementDescription\":\"联调测试\",\"matchMode\":\"AUTO_MATCH\",\"status\":\"IN_PROGRESS\",\"progress\":0}')",
       "Bash(curl -s http://localhost:8082/api/v1/projects -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T')",
-      "Bash(mkdir -p D:/tmp)"
+      "Bash(mkdir -p D:/tmp)",
+      "Read(//d/tmp/**)"
     ]
   }
 }

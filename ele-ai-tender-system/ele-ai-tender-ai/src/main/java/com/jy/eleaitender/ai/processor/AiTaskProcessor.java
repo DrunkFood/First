@@ -44,6 +44,7 @@ public class AiTaskProcessor {
     @Scheduled(fixedDelay = 5000)
     public void processPendingTasks() {
         List<AiTask> tasks = aiTaskMapper.selectPendingTasks(10);
+        log.info("待处理AI任务: {}", tasks.size());
         for (AiTask task : tasks) {
             // CAS更新状态为PROCESSING，防止并发
             int updated = aiTaskMapper.casUpdateStatus(task.getId(), "PENDING", "PROCESSING");

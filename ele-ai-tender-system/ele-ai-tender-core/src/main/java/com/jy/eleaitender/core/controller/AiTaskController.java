@@ -51,4 +51,21 @@ public class AiTaskController {
         aiTaskService.skipTask(id);
         return Result.success();
     }
+
+    @GetMapping("/active")
+    @RequireLogin
+    @Operation(summary = "查询业务实体的活跃AI任务")
+    public Result<AiTaskVO> getActiveTask(
+            @RequestParam String taskType,
+            @RequestParam Long bizId,
+            @RequestParam String bizType) {
+        return Result.success(aiTaskService.getActiveTask(taskType, bizId, bizType));
+    }
+
+    @GetMapping("/project/{projectId}/active")
+    @RequireLogin
+    @Operation(summary = "查询项目的活跃AI任务列表")
+    public Result<List<AiTaskVO>> getActiveTasksByProject(@PathVariable Long projectId) {
+        return Result.success(aiTaskService.getActiveTasksByProject(projectId));
+    }
 }

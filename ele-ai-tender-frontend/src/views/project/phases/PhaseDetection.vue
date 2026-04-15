@@ -27,8 +27,8 @@
       <div class="submit-actions">
         <el-button
           type="primary"
-          :loading="isSubmitting"
-          :disabled="!selectedDetectionTypes.length"
+          :loading="isSubmitting || hasActiveDetection"
+          :disabled="!selectedDetectionTypes.length || hasActiveDetection"
           @click="handleSubmit"
         >
           提交检测
@@ -63,6 +63,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { detectionApi } from '@/api/detection'
+import { aiTaskApi } from '@/api/ai-task'
 import { projectApi } from '@/api/project'
 import AiUnavailableAlert from '@/components/AiUnavailableAlert.vue'
 import PolicyFileSelect from '@/components/detection/PolicyFileSelect.vue'
@@ -77,6 +78,7 @@ const submitted = ref(false)
 const isSubmitting = ref(false)
 const showReport = ref(false)
 const hasUnavailable = ref(false)
+const hasActiveDetection = ref(false)
 const selectedPolicyFileIds = ref<number[]>([])
 const selectedDetectionTypes = ref<DetectionType[]>([
   'FAIRNESS',
@@ -97,6 +99,14 @@ const loadProject = async () => {
       showReport.value = true
     }
   }
+
+  // 检查是否有活跃检测任务
+  try {
+    const activeTasks = await aiTaskApi.getActiveTasksByProject(props.projectId)
+    hasActiveDetection.value = activeTasks && activeTasks.length > 0
+  } catch {
+    hasActiveDetection.value = false
+  }
 }
 
 const handleSubmit = async () => {
@@ -110,9 +120,15 @@ const handleSubmit = async () => {
       policyFileIds: selectedPolicyFileIds.value,
     })
     submitted.value = true
+    hasActiveDetection.value = true
     ElMessage.success('检测已提交')
-  } catch {
-    ElMessage.error('提交检测失败')
+  } catch (e: any) {
+    if (e?.code === 8084) {
+      ElMessage.warning('检测任务正在处理中，请稍候')
+      hasActiveDetection.value = true
+    } else {
+      ElMessage.error('提交检测失败')
+    }
   } finally {
     isSubmitting.value = false
   }

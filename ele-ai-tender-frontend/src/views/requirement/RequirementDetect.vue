@@ -163,7 +163,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Loading, RefreshRight, CircleCheck } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { aiTaskApi } from '@/api/ai-task'
-import type { AiTaskStatus } from '@/types/ai-task'
+import type { AiTaskVO, AiTaskStatus } from '@/types/ai-task'
 import type { DetectionType, DetectionIssueVO } from '@/types/detection'
 
 interface DetectCard {
@@ -241,12 +241,61 @@ onMounted(async () => {
     return
   }
 
-  await startDetection()
+  // 先检查是否有活跃检测任务，有则恢复轮询
+  await restoreActiveDetection()
 })
 
 onBeforeUnmount(() => {
   stopPolling()
 })
+
+// ---- 恢复活跃检测任务 ----
+async function restoreActiveDetection() {
+  try {
+    // 检查两种检测类型的活跃任务
+    const [sensitiveTask, typoTask] = await Promise.all([
+      aiTaskApi.getActiveTask('DETECTION_SENSITIVE_WORD', requirementId.value, 'REQUIREMENT'),
+      aiTaskApi.getActiveTask('DETECTION_TYPO', requirementId.value, 'REQUIREMENT'),
+    ])
+
+    let hasActive = false
+    for (const card of detectCards.value) {
+      const activeTask: AiTaskVO | null =
+        card.type === 'SENSITIVE_WORD' ? sensitiveTask :
+        card.type === 'TYPO' ? typoTask : null
+
+      if (activeTask && activeTask.id) {
+        card.taskId = activeTask.id
+        card.status = activeTask.status
+        // 根据状态设置进度
+        if (activeTask.status === 'COMPLETED') {
+          card.completed = true
+          card.percentage = 100
+          parseTaskResult(card, activeTask.result)
+        } else if (activeTask.status === 'FAILED' || activeTask.status === 'AI_UNAVAILABLE') {
+          card.failed = true
+          card.percentage = 100
+        } else if (activeTask.status === 'PROCESSING') {
+          card.percentage = 60
+          hasActive = true
+        } else if (activeTask.status === 'PENDING') {
+          card.percentage = 10
+          hasActive = true
+        }
+      }
+    }
+
+    if (hasActive || allCompleted.value) {
+      startPolling()
+    } else if (!allCompleted.value) {
+      // 没有活跃任务且未全部完成，需要新提交
+      await startDetection()
+    }
+  } catch {
+    // 查询失败则走正常提交流程
+    await startDetection()
+  }
+}
 
 // ---- 提交检测 ----
 async function startDetection() {
@@ -266,9 +315,15 @@ async function startDetection() {
     }
 
     startPolling()
-  } catch {
+  } catch (e: any) {
     submitting.value = false
-    ElMessage.error('提交检测失败')
+    if (e?.code === 8084) {
+      // 检测任务正在处理中，尝试恢复
+      ElMessage.warning('检测任务正在处理中，正在恢复进度...')
+      await restoreActiveDetection()
+    } else {
+      ElMessage.error('提交检测失败')
+    }
   }
 }
 
@@ -288,6 +343,10 @@ async function handleReDetect() {
     issues.value = []
 
     await startDetection()
+  } catch (e: any) {
+    if (e?.code === 8084) {
+      ElMessage.warning('检测任务正在处理中，请稍候')
+    }
   } finally {
     reDetecting.value = false
   }

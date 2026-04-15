@@ -42,4 +42,14 @@ public interface IAiTaskService {
      * 标记超时任务为AI_UNAVAILABLE（定时任务调用）
      */
     int markTimeoutTasks();
+
+    /**
+     * 查询业务实体的活跃任务（PENDING/PROCESSING），用于防重复提交和前端状态联动
+     */
+    AiTaskVO getActiveTask(String taskType, Long bizId, String bizType);
+
+    /**
+     * 查询项目的活跃任务（按项目维度，PENDING/PROCESSING）
+     */
+    List<AiTaskVO> getActiveTasksByProject(Long projectId);
 }
