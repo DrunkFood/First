@@ -200,36 +200,51 @@ public class DetectionServiceImpl implements IDetectionService {
 
     @Override
     @Transactional
-    public void acceptIssue(Long recordId) {
+    public void acceptIssue(Long recordId, Integer issueIndex) {
         AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
-        // 校验项目归属
         getProjectOrThrow(record.getProjectId());
-        // 标记为已接受（在result JSON中更新handleStatus）
-        // 简化实现：直接更新状态
-        log.info("接受检测建议，记录ID: {}", recordId);
+
+        String updatedJson = DetectionResultParser.updateIssueHandleStatus(
+                record.getResult(), issueIndex, 1); // 1=已接受
+        if (updatedJson != null) {
+            record.setResult(updatedJson);
+            detectionRecordMapper.updateById(record);
+        }
+        log.info("接受检测建议，记录ID: {}, 问题索引: {}", recordId, issueIndex);
     }
 
     @Override
     @Transactional
-    public void rejectIssue(Long recordId) {
+    public void rejectIssue(Long recordId, Integer issueIndex) {
         AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
-        // 校验项目归属
         getProjectOrThrow(record.getProjectId());
-        log.info("拒绝检测建议，记录ID: {}", recordId);
+
+        String updatedJson = DetectionResultParser.updateIssueHandleStatus(
+                record.getResult(), issueIndex, 2); // 2=已拒绝
+        if (updatedJson != null) {
+            record.setResult(updatedJson);
+            detectionRecordMapper.updateById(record);
+        }
+        log.info("拒绝检测建议，记录ID: {}, 问题索引: {}", recordId, issueIndex);
     }
 
     @Override
     @Transactional
     public void acceptAll(Long projectId) {
-        getProjectOrThrow(projectId); // 校验项目归属
+        getProjectOrThrow(projectId);
         List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
         for (AiDetectionRecord record : records) {
+            String updatedJson = DetectionResultParser.acceptAllIssues(record.getResult());
+            if (updatedJson != null) {
+                record.setResult(updatedJson);
+                detectionRecordMapper.updateById(record);
+            }
             log.info("批量接受检测建议，记录ID: {}", record.getId());
         }
     }

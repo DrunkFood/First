@@ -56,8 +56,8 @@
             <span class="suggestion-label">建议：</span>{{ issue.suggestion }}
           </div>
           <div v-if="issue.handleStatus !== 1 && issue.handleStatus !== 2" class="issue-actions">
-            <el-button size="small" type="primary" @click="$emit('accept', issue.recordId)">接受建议</el-button>
-            <el-button size="small" @click="$emit('reject', issue.recordId)">拒绝建议</el-button>
+            <el-button size="small" type="primary" @click="$emit('accept', issue.recordId, issue.issueIndex)">接受建议</el-button>
+            <el-button size="small" @click="$emit('reject', issue.recordId, issue.issueIndex)">拒绝建议</el-button>
           </div>
           <div v-else class="issue-status">
             <el-tag :type="issue.handleStatus === 1 ? 'success' : 'info'" size="small">
@@ -85,7 +85,7 @@ import { detectionApi } from '@/api/detection'
 import type { DetectionReportVO, DetectionIssueVO } from '@/types/detection'
 
 const props = defineProps<{ projectId: number }>()
-defineEmits<{ accept: [recordId: number]; reject: [recordId: number]; 'accept-all': [] }>()
+defineEmits<{ accept: [recordId: number, issueIndex: number]; reject: [recordId: number, issueIndex: number]; 'accept-all': [] }>()
 
 const report = ref<DetectionReportVO | null>(null)
 

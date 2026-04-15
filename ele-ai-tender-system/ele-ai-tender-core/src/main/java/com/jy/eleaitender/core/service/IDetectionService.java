@@ -29,12 +29,12 @@ public interface IDetectionService {
     /**
      * 接受检测建议
      */
-    void acceptIssue(Long recordId);
+    void acceptIssue(Long recordId, Integer issueIndex);
 
     /**
      * 拒绝检测建议
      */
-    void rejectIssue(Long recordId);
+    void rejectIssue(Long recordId, Integer issueIndex);
 
     /**
      * 一键接受所有建议

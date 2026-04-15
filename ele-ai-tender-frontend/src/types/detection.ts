@@ -27,6 +27,7 @@ export interface DetectionIssueVO {
   suggestion: string
   severity: 'HIGH' | 'MEDIUM' | 'LOW'
   handleStatus: number
+  issueIndex: number
 }
 
 /** 检测报告 */

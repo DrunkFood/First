@@ -49,16 +49,18 @@ public class DetectionController {
     @PostMapping("/{recordId}/accept")
     @RequireLogin
     @Operation(summary = "接受检测建议")
-    public Result<Void> acceptIssue(@PathVariable Long recordId) {
-        detectionService.acceptIssue(recordId);
+    public Result<Void> acceptIssue(@PathVariable Long recordId,
+                                     @RequestParam Integer issueIndex) {
+        detectionService.acceptIssue(recordId, issueIndex);
         return Result.success();
     }
 
     @PostMapping("/{recordId}/reject")
     @RequireLogin
     @Operation(summary = "拒绝检测建议")
-    public Result<Void> rejectIssue(@PathVariable Long recordId) {
-        detectionService.rejectIssue(recordId);
+    public Result<Void> rejectIssue(@PathVariable Long recordId,
+                                     @RequestParam Integer issueIndex) {
+        detectionService.rejectIssue(recordId, issueIndex);
         return Result.success();
     }
 

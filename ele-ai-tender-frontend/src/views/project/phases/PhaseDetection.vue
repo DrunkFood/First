@@ -129,13 +129,13 @@ const handleSkip = async () => {
   submitted.value = true
 }
 
-const handleAcceptIssue = async (recordId: number) => {
-  await detectionApi.accept(recordId)
+const handleAcceptIssue = async (recordId: number, issueIndex: number) => {
+  await detectionApi.accept(recordId, issueIndex)
   ElMessage.success('已接受建议')
 }
 
-const handleRejectIssue = async (recordId: number) => {
-  await detectionApi.reject(recordId)
+const handleRejectIssue = async (recordId: number, issueIndex: number) => {
+  await detectionApi.reject(recordId, issueIndex)
   ElMessage.success('已拒绝建议')
 }
 

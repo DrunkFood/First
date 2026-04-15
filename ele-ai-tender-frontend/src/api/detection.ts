@@ -18,13 +18,13 @@ export const detectionApi = {
   },
 
   /** 接受检测建议 */
-  accept(recordId: number) {
-    return request.post(`/core-api/v1/detection/${recordId}/accept`)
+  accept(recordId: number, issueIndex: number) {
+    return request.post(`/core-api/v1/detection/${recordId}/accept`, null, { params: { issueIndex } })
   },
 
   /** 拒绝检测建议 */
-  reject(recordId: number) {
-    return request.post(`/core-api/v1/detection/${recordId}/reject`)
+  reject(recordId: number, issueIndex: number) {
+    return request.post(`/core-api/v1/detection/${recordId}/reject`, null, { params: { issueIndex } })
   },
 
   /** 一键接受所有建议 */
