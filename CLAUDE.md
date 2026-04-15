@@ -11,7 +11,7 @@
 **AI技术栈**: Spring AI 1.1.0 · Milvus 2.3.3 · Apache Tika 2.9.0 · poi-tl 1.12.0 · flexmark-java 0.64.0
 
 **前端**: 双前端项目架构
-- `ele-ai-tender-support-frontend/` — 支撑中心管理后台 (端口 5174) — Vue 3 + TypeScript + Vite + Element Plus + Pinia
+- `ele-ai-tender-support-frontend/` — 支撑中心管理后台 (端口 3060) — Vue 3 + TypeScript + Vite + Element Plus + Pinia
 - `ele-ai-tender-frontend/` — AI编制业务前端 (端口 5173) — Vue 3 + TypeScript + Vite + Element Plus + Pinia + md-editor-v3 + docx-preview + diff2html
 
 **后端**: `ele-ai-tender-system/` — Maven 多模块，7个模块
@@ -49,37 +49,44 @@
 
 ## 启动命令
 
+**前置条件**: JDK 21（项目基于 Spring Boot 3.2.2，不兼容 JDK 8/11）
+
 ```bash
-# 前端 - 支撑中心管理后台（端口 5174）
+# 后端 - 首次启动需先安装依赖模块（在 ele-ai-tender-system/ 目录下执行）
+mvn install -Dmaven.test.skip=true                      # 首次或依赖变更后执行
+
+# 后端 - 启动各服务（在各子模块目录下执行）
+cd ele-ai-tender-system/ele-ai-tender-support && mvn spring-boot:run    # 支撑中心 :8080
+cd ele-ai-tender-system/ele-ai-tender-file    && mvn spring-boot:run    # 文件服务 :8081
+cd ele-ai-tender-system/ele-ai-tender-core    && mvn spring-boot:run    # 核心业务 :8082
+cd ele-ai-tender-system/ele-ai-tender-ai      && mvn spring-boot:run    # AI服务   :8083
+
+# 前端 - 支撑中心管理后台（端口 3060）
 cd ele-ai-tender-support-frontend && npm run dev
 
 # 前端 - AI编制业务前端（端口 5173）
 cd ele-ai-tender-frontend && npm run dev
 
-# 后端（在 ele-ai-tender-system/ 目录下执行）
-mvn clean test                                          # 运行所有测试
-mvn -pl ele-ai-tender-support -am spring-boot:run       # 支撑中心 :8080
-mvn -pl ele-ai-tender-file -am spring-boot:run          # 文件服务 :8081
-mvn -pl ele-ai-tender-core -am spring-boot:run          # 核心业务 :8082
-mvn -pl ele-ai-tender-ai -am spring-boot:run            # AI服务   :8083
+# 后端 - 打包（在 ele-ai-tender-system/ 目录下执行）
 mvn -pl ele-ai-tender-support -am package               # 打包单模块
 ```
 
-> 使用 `-pl` 时必须加 `-am`，确保依赖模块先构建。
+> **注意**: 后端启动必须在**子模块目录**下执行 `mvn spring-boot:run`，不能在父POM目录用 `-pl` 启动（会因父POM无main类而报错）。首次启动前须先 `mvn install` 安装公共模块到本地仓库。
 
 **提交前检查**: 前端 `npm run build`；后端 `mvn clean test`
 
 ## 请求链路
 
 ```
-浏览器 → 支撑中心前端 (5174)
-  /api/*           → rewrite(/api/v1/*) → 支撑中心 :8080  → MySQL(db=6) + Redis(db=6)
-  /api/file/*      → rewrite(/api/v1/*) → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
+浏览器 → 支撑中心前端 (3060)
+  /support-api/*   → rewrite(/api/*)    → 支撑中心 :8080  → MySQL(db=6) + Redis(db=6)
+  /file-api/*      → 直接转发            → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
 
 浏览器 → AI编制前端 (5173)
-  /api/core/*      → rewrite(/api/v1/*) → 核心业务 :8082  → MySQL(db=6) + Redis(db=6)
-  /api/ai/*        → rewrite(/api/v1/*) → AI服务   :8083  → MySQL(db=6) + Redis(db=6) + Milvus + 大模型API
-  /api/file/*      → rewrite(/api/v1/*) → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
+  /core-api/*      → rewrite(/api/*)    → 核心业务 :8082  → MySQL(db=6) + Redis(db=6)
+  /ai-api/*        → rewrite(/api/*)    → AI服务   :8083  → MySQL(db=6) + Redis(db=6) + Milvus + 大模型API
+  /file-api/*      → 直接转发            → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
+  /support-api/*   → rewrite(/api/*)    → 支撑中心 :8080  → MySQL(db=6) + Redis(db=6)
 
 业务系统 → Interaction Starter → /api/eleAiTender/interaction/*
 ```
