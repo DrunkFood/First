@@ -140,6 +140,8 @@ public class DetectionServiceImpl implements IDetectionService {
             // 解析问题数
             int issueCount = parseIssueCount(record.getResult());
             item.setIssueCount(issueCount);
+            int score = DetectionResultParser.parseScore(record.getResult());
+            item.setScore(java.math.BigDecimal.valueOf(score));
             totalIssues += issueCount;
 
             if (!AiTaskStatus.COMPLETED.getCode().equals(record.getStatus())) {
