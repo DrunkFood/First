@@ -12,6 +12,7 @@ export interface RequirementInfo {
   projectId?: number
   content?: string
   status: string
+  progress?: number
   createTime: string
   createName: string
 }
@@ -21,6 +22,9 @@ export interface RequirementQueryParams {
   pageSize: number
   requirementName?: string
   status?: string
+  projectType?: string
+  createTimeStart?: string
+  createTimeEnd?: string
 }
 
 export interface RequirementCreateParams {
@@ -30,6 +34,8 @@ export interface RequirementCreateParams {
   budget?: number
   requirementDescription?: string
   matchMode?: string
+  uploadedFileId?: number
   projectId?: number
   content?: string
+  status?: string
 }

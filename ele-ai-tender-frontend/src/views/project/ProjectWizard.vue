@@ -4,7 +4,7 @@
 
     <el-steps :active="currentStep" finish-status="success" class="wizard-steps">
       <el-step title="基础信息" description="模板选择与项目信息" />
-      <el-step title="招标需求" description="AI生成/手动编辑" />
+      <el-step title="详细需求" description="AI生成/手动编辑" />
       <el-step title="评审项设置" description="评审标准配置" />
       <el-step title="文档集成" description="预览与导出" />
       <el-step title="智能检测" description="合规检测" />
@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { projectApi } from '@/api/project'
 import type { ProjectInfo } from '@/types/project'
@@ -60,21 +60,57 @@ const router = useRouter()
 const projectId = computed(() => Number(route.params.id))
 const project = ref<ProjectInfo | null>(null)
 
-const currentStep = computed(() => {
-  if (!project.value?.currentPhase) return 0
-  return Math.max(0, project.value.currentPhase - 1)
-})
+const currentStep = ref(0)
+
+/** 从项目状态推断当前步骤 */
+const getStepFromPhase = (phase?: number) => {
+  if (!phase) return 0
+  return Math.max(0, phase - 1)
+}
+
+/** 从URL query参数读取step，支持跳转到指定步骤 */
+const initStepFromRoute = () => {
+  const stepParam = route.query.step
+  if (stepParam !== undefined) {
+    const step = Number(stepParam)
+    if (!isNaN(step) && step >= 0 && step <= 4) {
+      currentStep.value = step
+      return true
+    }
+  }
+  return false
+}
 
 const loadProject = async () => {
   project.value = await projectApi.getById(projectId.value)
+  // 如果URL没有指定步骤，则从项目状态推断
+  if (!initStepFromRoute()) {
+    currentStep.value = getStepFromPhase(project.value?.currentPhase)
+  }
 }
+
+// 监听route.query变化，支持运行时步骤跳转
+watch(() => route.query.step, (newStep) => {
+  if (newStep !== undefined) {
+    const step = Number(newStep)
+    if (!isNaN(step) && step >= 0 && step <= 4) {
+      currentStep.value = step
+    }
+  }
+})
 
 const handleNext = async () => {
   await loadProject()
+  if (currentStep.value < 4) {
+    currentStep.value++
+  }
 }
 
 const handlePrev = async () => {
   await loadProject()
+  if (currentStep.value > 0) {
+    currentStep.value--
+  }
 }
 
 const handleFinish = () => {

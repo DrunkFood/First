@@ -77,6 +77,11 @@
             />
           </el-form-item>
           <el-form-item>
+            <div class="remember-row">
+              <el-checkbox v-model="rememberUsername">记住密码</el-checkbox>
+            </div>
+          </el-form-item>
+          <el-form-item>
             <el-button
               type="primary"
               size="large"
@@ -135,22 +140,20 @@
             </el-button>
           </el-form-item>
         </el-form>
-
-        <div class="tips">
-          测试账号：`testuser / user123` 或 `admin / admin123`
-        </div>
       </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Lock, User, Iphone, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { authApi } from '@/api/auth'
+
+const REMEMBERED_USERNAME_KEY = 'remembered_username'
 
 const router = useRouter()
 const route = useRoute()
@@ -160,6 +163,7 @@ const loginType = ref<'password' | 'phone'>('password')
 const loading = ref(false)
 const sendingCode = ref(false)
 const countdown = ref(0)
+const rememberUsername = ref(false)
 
 // 账号密码登录
 const passwordFormRef = ref<FormInstance>()
@@ -187,6 +191,14 @@ const handlePasswordLogin = async () => {
     loading.value = true
     try {
       await userStore.login(passwordForm.username, passwordForm.password)
+
+      // 记住用户名逻辑：勾选则存储，未勾选则清除
+      if (rememberUsername.value) {
+        localStorage.setItem(REMEMBERED_USERNAME_KEY, passwordForm.username)
+      } else {
+        localStorage.removeItem(REMEMBERED_USERNAME_KEY)
+      }
+
       ElMessage.success('登录成功')
       router.push((route.query.redirect as string) || '/')
     } catch (error) {
@@ -268,6 +280,15 @@ const handlePhoneLogin = async () => {
     }
   })
 }
+
+// 页面加载时检查是否有记住的用户名
+onMounted(() => {
+  const saved = localStorage.getItem(REMEMBERED_USERNAME_KEY)
+  if (saved) {
+    passwordForm.username = saved
+    rememberUsername.value = true
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -418,14 +439,12 @@ const handlePhoneLogin = async () => {
   }
 }
 
-.submit-btn {
+.remember-row {
   width: 100%;
 }
 
-.tips {
-  margin-top: 16px;
-  color: #6c8479;
-  font-size: 12px;
+.submit-btn {
+  width: 100%;
 }
 
 @media (max-width: 960px) {

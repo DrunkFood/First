@@ -13,19 +13,53 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
+    redirect: '/dashboard',
     meta: { requiresAuth: true },
     children: [
+      // 首页
       {
-        path: '',
+        path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: { title: '首页' },
       },
+      // 业务需求管理
+      {
+        path: 'requirement',
+        name: 'RequirementList',
+        component: () => import('@/views/requirement/RequirementList.vue'),
+        meta: { title: '业务需求列表' },
+      },
+      {
+        path: 'requirement/create',
+        name: 'RequirementCreate',
+        component: () => import('@/views/requirement/RequirementCreate.vue'),
+        meta: { title: '新建业务需求' },
+      },
+      {
+        path: 'requirement/edit/:id',
+        name: 'RequirementEditor',
+        component: () => import('@/views/requirement/RequirementEditor.vue'),
+        meta: { title: '编辑业务需求' },
+      },
+      {
+        path: 'requirement/generate/:id',
+        name: 'RequirementGenerate',
+        component: () => import('@/views/requirement/RequirementGenerate.vue'),
+        meta: { title: 'AI生成需求' },
+      },
+      {
+        path: 'requirement/detect/:id',
+        name: 'RequirementDetect',
+        component: () => import('@/views/requirement/RequirementDetect.vue'),
+        meta: { title: '需求智能检测' },
+      },
+      // 招标文件管理
       {
         path: 'project',
         name: 'ProjectList',
         component: () => import('@/views/project/ProjectList.vue'),
-        meta: { title: '项目管理' },
+        meta: { title: '项目列表' },
       },
       {
         path: 'project/create',
@@ -34,34 +68,16 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '新建项目' },
       },
       {
+        path: 'project/edit/:id',
+        name: 'ProjectEdit',
+        component: () => import('@/views/project/ProjectCreate.vue'),
+        meta: { title: '编辑项目' },
+      },
+      {
         path: 'project/:id',
         name: 'ProjectDetail',
         component: () => import('@/views/project/ProjectDetail.vue'),
         meta: { title: '项目详情' },
-      },
-      {
-        path: 'requirement',
-        name: 'RequirementList',
-        component: () => import('@/views/requirement/RequirementList.vue'),
-        meta: { title: '需求编制' },
-      },
-      {
-        path: 'requirement/create',
-        name: 'RequirementCreate',
-        component: () => import('@/views/requirement/RequirementCreate.vue'),
-        meta: { title: '新建需求' },
-      },
-      {
-        path: 'requirement/edit/:id',
-        name: 'RequirementEditor',
-        component: () => import('@/views/requirement/RequirementEditor.vue'),
-        meta: { title: '编辑需求' },
-      },
-      {
-        path: 'review/:projectId',
-        name: 'ReviewEditor',
-        component: () => import('@/views/review/ReviewEditor.vue'),
-        meta: { title: '评审项管理' },
       },
       {
         path: 'project/:id/wizard',
@@ -69,12 +85,14 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/project/ProjectWizard.vue'),
         meta: { title: '项目编制' },
       },
+      // 政策文件管理
       {
         path: 'policy-file',
         name: 'PolicyFileList',
         component: () => import('@/views/policy/PolicyFileList.vue'),
         meta: { title: '政策文件管理' },
       },
+      // 消息中心
       {
         path: 'message',
         name: 'MessageCenter',
@@ -90,29 +108,17 @@ const router = createRouter({
   routes,
 })
 
-// 路由守卫
 router.beforeEach((to, _from, next) => {
-  // 直接从 localStorage 读取 token，避免 Pinia 时序问题
   const token = localStorage.getItem('token')
-
-  // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - AI招标文件编制` : 'AI招标文件编制'
-
-  // 如果访问登录页且已登录，重定向到首页
   if (to.meta.guest && token) {
-    next('/')
+    next('/dashboard')
     return
   }
-
-  // 如果路由需要认证但未登录，重定向到登录页
   if (to.meta.requiresAuth && !token) {
-    next({
-      path: '/login',
-      query: { redirect: to.fullPath },
-    })
+    next({ path: '/login', query: { redirect: to.fullPath } })
     return
   }
-
   next()
 })
 

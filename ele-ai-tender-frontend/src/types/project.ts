@@ -28,7 +28,12 @@ export interface ProjectQueryParams {
   pageNum: number
   pageSize: number
   projectName?: string
+  projectCode?: string
   status?: string
+  projectCategory?: string
+  projectType?: string
+  createTimeStart?: string
+  createTimeEnd?: string
 }
 
 export interface ProjectCreateParams {
@@ -39,6 +44,13 @@ export interface ProjectCreateParams {
   budget?: number
   reviewType?: string
   requirementContent?: string
+  templateId?: number
+  requirementId?: number
+  requirementSource?: string
+  tenderUnit?: string
+  contactPerson?: string
+  contactPhone?: string
+  projectDescription?: string
 }
 
 export interface ProjectVersionInfo {

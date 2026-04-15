@@ -8,11 +8,29 @@
 
     <!-- 提交检测 -->
     <div v-if="!submitted" class="detection-submit">
+      <!-- 检测类型选择 -->
+      <div class="detection-type-section">
+        <h4>选择检测类型</h4>
+        <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
+          <el-checkbox value="SENSITIVE_WORD">敏感词检测</el-checkbox>
+          <el-checkbox value="TYPO">错别字检测</el-checkbox>
+          <el-checkbox value="POLICY_REVIEW">合规性检测</el-checkbox>
+          <el-checkbox value="FORMAT_CHECK">格式规范检测</el-checkbox>
+        </el-checkbox-group>
+      </div>
+
+      <!-- 政策文件选择 -->
       <PolicyFileSelect
         v-model="selectedPolicyFileIds"
         :applicable-category="projectCategory"
       />
-      <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
+
+      <el-button
+        type="primary"
+        :loading="isSubmitting"
+        :disabled="!selectedDetectionTypes.length"
+        @click="handleSubmit"
+      >
         提交检测
       </el-button>
     </div>
@@ -47,6 +65,7 @@ import AiUnavailableAlert from '@/components/AiUnavailableAlert.vue'
 import PolicyFileSelect from '@/components/detection/PolicyFileSelect.vue'
 import DetectionProgress from '@/components/detection/DetectionProgress.vue'
 import DetectionReport from '@/components/detection/DetectionReport.vue'
+import type { DetectionType } from '@/types/detection'
 
 const props = defineProps<{ projectId: number }>()
 defineEmits<{ prev: []; finish: [] }>()
@@ -56,6 +75,12 @@ const isSubmitting = ref(false)
 const showReport = ref(false)
 const hasUnavailable = ref(false)
 const selectedPolicyFileIds = ref<number[]>([])
+const selectedDetectionTypes = ref<DetectionType[]>([
+  'SENSITIVE_WORD',
+  'TYPO',
+  'POLICY_REVIEW',
+  'FORMAT_CHECK',
+])
 const projectCategory = ref('')
 
 const canFinish = computed(() => submitted.value)
@@ -73,9 +98,15 @@ const loadProject = async () => {
 }
 
 const handleSubmit = async () => {
+  if (!selectedDetectionTypes.value.length) {
+    ElMessage.warning('请至少选择一种检测类型')
+    return
+  }
   isSubmitting.value = true
   try {
-    await detectionApi.submit(props.projectId, { policyFileIds: selectedPolicyFileIds.value })
+    await detectionApi.submit(props.projectId, {
+      policyFileIds: selectedPolicyFileIds.value,
+    })
     submitted.value = true
     ElMessage.success('检测已提交')
   } catch {
@@ -117,6 +148,20 @@ onMounted(loadProject)
 <style scoped>
 .detection-submit {
   margin-bottom: 20px;
+}
+
+.detection-type-section {
+  margin-bottom: 16px;
+}
+
+.detection-type-section h4 {
+  margin-bottom: 8px;
+}
+
+.detection-type-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .phase-actions {

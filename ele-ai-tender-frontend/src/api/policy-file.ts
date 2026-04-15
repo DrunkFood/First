@@ -4,7 +4,7 @@ import type { PolicyFileVO, PolicyFileRequest } from '@/types/policy-file'
 
 export const policyFileApi = {
   /** 分页查询政策文件 */
-  getList(params: { pageNum: number; pageSize: number; fileName?: string }) {
+  getList(params: { pageNum: number; pageSize: number; fileName?: string; fileCategory?: string; source?: string }) {
     return request.get<any, PageResult<PolicyFileVO>>('/core-api/v1/policy-files', { params })
   },
 

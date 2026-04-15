@@ -24,4 +24,24 @@ export const projectApi = {
   export(projectId: number) {
     return request.post(`/core-api/v1/projects/${projectId}/export`)
   },
+  /** 手动推进阶段 */
+  advancePhase(id: number, phase: number) {
+    return request.put(`/core-api/v1/projects/${id}/phase`, { phase })
+  },
+  /** 变更项目状态 */
+  changeStatus(id: number, status: string) {
+    return request.put(`/core-api/v1/projects/${id}/status`, { status })
+  },
+  /** 取消项目 */
+  cancel(id: number) {
+    return request.post(`/core-api/v1/projects/${id}/cancel`)
+  },
+  /** 发布项目 */
+  publish(id: number) {
+    return request.post(`/core-api/v1/projects/${id}/publish`)
+  },
+  /** 归档项目 */
+  archive(id: number) {
+    return request.post(`/core-api/v1/projects/${id}/archive`)
+  },
 }
