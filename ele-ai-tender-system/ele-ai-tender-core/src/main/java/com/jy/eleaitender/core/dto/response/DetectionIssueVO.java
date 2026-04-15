@@ -33,4 +33,7 @@ public class DetectionIssueVO {
 
     @Schema(description = "是否已处理: 0-未处理 1-已接受 2-已拒绝")
     private Integer handleStatus;
+
+    @Schema(description = "问题索引(在result JSON issues数组中的位置)")
+    private Integer issueIndex;
 }

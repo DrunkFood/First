@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招标文件生成系统 - 智能检测</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --brand-color: #336CFF;
+            --auxiliary-color: #31E3FD;
+            --embellishment-color: #FF8D3B;
+            --bg-primary: #0F1419;
+            --bg-secondary: #1A1F26;
+            --bg-tertiary: #242B33;
+            --bg-elevated: #2D353D;
+            --text-primary: #F0F2F5;
+            --text-secondary: #B9BBBE;
+            --text-tertiary: #8B8E93;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.12);
+            --hover-state: rgba(51, 108, 255, 0.12);
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --card-bg: rgba(26, 31, 38, 0.95);
+            --input-bg: rgba(15, 20, 25, 0.6);
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root {
+                --brand-color: #336CFF;
+                --auxiliary-color: #00B8D4;
+                --embellishment-color: #FF9800;
+                --bg-primary: #FFFFFF;
+                --bg-secondary: #F8F9FA;
+                --bg-tertiary: #F1F3F4;
+                --bg-elevated: #FFFFFF;
+                --text-primary: #1F2937;
+                --text-secondary: #4B5563;
+                --text-tertiary: #6B7280;
+                --border-light: rgba(0, 0, 0, 0.08);
+                --border-medium: rgba(0, 0, 0, 0.12);
+                --hover-state: rgba(51, 108, 255, 0.06);
+                --shadow-color: rgba(0, 0, 0, 0.08);
+                --card-bg: rgba(255, 255, 255, 0.98);
+                --input-bg: rgba(243, 244, 246, 0.8);
+            }
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 220px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-light);
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand-color);
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .nav-item {
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-left-color: var(--brand-color);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 220px;
+            padding: 0;
+        }
+        
+        .top-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-light);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb a:hover {
+            color: var(--brand-color);
+        }
+        
+        .breadcrumb span {
+            margin: 0 8px;
+            color: var(--text-tertiary);
+        }
+        
+        .breadcrumb .current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .message-icon {
+            position: relative;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+        
+        .message-icon:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .message-badge {
+            background: var(--danger-color);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            line-height: 1;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+        
+        .user-info:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-color), var(--auxiliary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .content-area {
+            padding: 24px 40px;
+            max-width: 1600px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .progress-indicator {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: var(--border-light);
+            z-index: 0;
+        }
+        
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+        
+        .step-item.active .step-circle {
+            background: var(--brand-color);
+            border-color: var(--brand-color);
+            color: white;
+        }
+        
+        .step-item.completed .step-circle {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 120px;
+        }
+        
+        .step-item.active .step-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .step-item.completed .step-label {
+            color: var(--success-color);
+        }
+        
+        .main-layout {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .left-panel {
+            width: 240px;
+            flex-shrink: 0;
+        }
+        
+        .right-panel {
+            flex: 1;
+        }
+        
+        .step-nav {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .step-nav-title {
+            padding: 16px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .step-nav-item {
+            padding: 14px 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-nav-item:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .step-nav-item.active {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-left-color: var(--brand-color);
+            font-weight: 500;
+        }
+        
+        .step-nav-item .step-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .step-nav-item.active .step-icon {
+            background: var(--brand-color);
+            color: white;
+        }
+        
+        .step-nav-item.completed .step-icon {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .form-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .form-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .form-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-section {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--brand-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2855d9;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-medium);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--brand-color);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #D97706;
+        }
+        
+        .btn-danger {
+            background: transparent;
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+            padding: 6px 12px;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .form-actions {
+            padding: 20px 24px;
+            background: var(--bg-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .form-actions-left {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .form-actions-right {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .review-status {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--brand-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+        
+        .status-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+        
+        .status-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .status-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+        
+        .review-items {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 32px;
+        }
+        
+        .review-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-light);
+        }
+        
+        .review-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .review-item-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .review-item-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .review-item-status.completed {
+            color: var(--success-color);
+        }
+        
+        .review-item-status.processing {
+            color: var(--brand-color);
+        }
+        
+        .progress-bar-container {
+            margin-top: 12px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand-color), var(--auxiliary-color));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        
+        .total-progress {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+            border: 2px solid var(--brand-color);
+        }
+        
+        .total-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .total-progress-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .total-progress-percent {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--brand-color);
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(51, 108, 255, 0.3);
+            z-index: 1000;
+            transition: all 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            background: #2855d9;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">切换主题</button>
+    
+    <div class="layout">
+        <div class="sidebar">
+            <div class="nav-item" onclick="window.location.href='business-requirement-list.html'">编制业务需求</div>
+            <div class="nav-item active" onclick="window.location.href='project-list.html'">项目管理</div>
+            <div class="nav-item" onclick="window.location.href='template-list.html'">模板管理</div>
+            <div class="nav-item" onclick="window.location.href='policy-file-list.html'">政策文件管理</div>
+            <div class="nav-item" onclick="window.location.href='statistics.html'">统计分析</div>
+            <div class="nav-item" onclick="window.location.href='message-center.html'">消息中心</div>
+            <div class="nav-item" onclick="window.location.href='system-settings.html'">系统设置</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="breadcrumb">
+                    <a href="project-list.html">首页</a>
+                    <span>/</span>
+                    <a href="project-detail.html">项目详情</a>
+                    <span>/</span>
+                    <span class="current">智能检测</span>
+                </div>
+                <div class="header-actions">
+                    <div class="message-icon" onclick="window.location.href='message-center.html'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="message-badge">3</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar">张</div>
+                        <span>张专员</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="page-header">
+                    <h1 class="page-title">智能检测</h1>
+                    <button class="btn btn-secondary" onclick="window.location.href='project-list.html'">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        返回列表
+                    </button>
+                </div>
+                
+                <div class="progress-indicator">
+                    <div class="progress-steps">
+                        <div class="step-item completed">
+                            <div class="step-circle">1</div>
+                            <div class="step-label">基础信息录入</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">详细需求生成</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">评审项设置</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">文档集成</div>
+                        </div>
+                        <div class="step-item active">
+                            <div class="step-circle">5</div>
+                            <div class="step-label">智能检测</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="main-layout">
+                    <div class="left-panel">
+                        <div class="step-nav">
+                            <div class="step-nav-title">文件编制流程</div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-init.html'">
+                                <span class="step-icon">✓</span>
+                                <span>基础信息录入</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-requirement.html'">
+                                <span class="step-icon">✓</span>
+                                <span>详细需求生成</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-review.html'">
+                                <span class="step-icon">✓</span>
+                                <span>评审项设置</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-integration.html'">
+                                <span class="step-icon">✓</span>
+                                <span>文档集成</span>
+                            </div>
+                            <div class="step-nav-item active">
+                                <span class="step-icon">5</span>
+                                <span>智能检测</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="right-panel">
+                        <div class="form-container">
+                            <div class="form-header">
+                                <h3 class="form-title">智能检测</h3>
+                            </div>
+                            
+                            <div class="form-section">
+                                <div class="review-status">
+                                    <div class="status-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="status-title">正在执行智能检测</div>
+                                    <div class="status-desc">系统正在进行公平竞争检测、合规性检查和错别字检查，请稍候...</div>
+                                    
+                                    <div class="review-items">
+                                        <div class="review-item">
+                                            <div class="review-item-header">
+                                                <div class="review-item-title">公平竞争检测</div>
+                                                <div class="review-item-status completed">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                    已完成
+                                                </div>
+                                            </div>
+                                            <div class="progress-bar-container">
+                                                <div class="progress-bar">
+                                                    <div class="progress-fill" style="width: 100%"></div>
+                                                </div>
+                                                <div class="progress-text">100%</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="review-item">
+                                            <div class="review-item-header">
+                                                <div class="review-item-title">合规性检查</div>
+                                                <div class="review-item-status processing">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <path d="M12 6v6l4 2"></path>
+                                                    </svg>
+                                                    检测中
+                                                </div>
+                                            </div>
+                                            <div class="progress-bar-container">
+                                                <div class="progress-bar">
+                                                    <div class="progress-fill" style="width: 65%"></div>
+                                                </div>
+                                                <div class="progress-text">65%</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="review-item">
+                                            <div class="review-item-header">
+                                                <div class="review-item-title">错别字检查</div>
+                                                <div class="review-item-status">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                    </svg>
+                                                    等待中
+                                                </div>
+                                            </div>
+                                            <div class="progress-bar-container">
+                                                <div class="progress-bar">
+                                                    <div class="progress-fill" style="width: 0%"></div>
+                                                </div>
+                                                <div class="progress-text">0%</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="review-item">
+                                            <div class="review-item-header">
+                                                <div class="review-item-title">敏感词检测</div>
+                                                <div class="review-item-status">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                    </svg>
+                                                    等待中
+                                                </div>
+                                            </div>
+                                            <div class="progress-bar-container">
+                                                <div class="progress-bar">
+                                                    <div class="progress-fill" style="width: 0%"></div>
+                                                </div>
+                                                <div class="progress-text">0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="total-progress">
+                                        <div class="total-progress-header">
+                                            <div class="total-progress-title">总进度</div>
+                                            <div class="total-progress-percent">55%</div>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 55%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <div class="form-actions-left">
+                                    <button class="btn btn-secondary" onclick="window.location.href='project-integration.html'">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                                            <polyline points="12 19 5 12 12 5"></polyline>
+                                        </svg>
+                                        上一步
+                                    </button>
+                                </div>
+                                <div class="form-actions-right">
+                                    <button class="btn btn-secondary" onclick="window.location.href='project-integration.html'">
+                                        返回修改
+                                    </button>
+                                    <button class="btn btn-primary" onclick="viewResults()" disabled id="viewResultsBtn">
+                                        查看结果
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <script>
+        let currentProgress = {
+            fair: 100,
+            compliance: 65,
+            typo: 0,
+            sensitive: 0
+        };
+        
+        function calculateTotalProgress() {
+            return Math.round((currentProgress.fair + currentProgress.compliance + currentProgress.typo + currentProgress.sensitive) / 4);
+        }
+        
+        function updateProgress() {
+            const totalProgress = calculateTotalProgress();
+            document.querySelector('.total-progress-percent').textContent = totalProgress + '%';
+            document.querySelector('.total-progress .progress-fill').style.width = totalProgress + '%';
+            
+            if (totalProgress === 100) {
+                document.getElementById('viewResultsBtn').disabled = false;
+                document.querySelector('.status-icon').innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                `;
+                document.querySelector('.status-icon').style.background = 'var(--success-color)';
+                document.querySelector('.status-icon').style.animation = 'none';
+                document.querySelector('.status-title').textContent = '检测完成';
+                document.querySelector('.status-desc').textContent = '智能检测已完成，发现3个问题需要处理';
+            }
+        }
+        
+        function simulateProgress() {
+            const complianceItem = document.querySelectorAll('.review-item')[1];
+            const typoItem = document.querySelectorAll('.review-item')[2];
+            
+            let complianceProgress = currentProgress.compliance;
+            let typoProgress = currentProgress.typo;
+            
+            const complianceInterval = setInterval(() => {
+                complianceProgress += Math.random() * 10;
+                if (complianceProgress >= 100) {
+                    complianceProgress = 100;
+                    clearInterval(complianceInterval);
+                    
+                    currentProgress.compliance = 100;
+                    complianceItem.querySelector('.progress-fill').style.width = '100%';
+                    complianceItem.querySelector('.progress-text').textContent = '100%';
+                    complianceItem.querySelector('.review-item-status').innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        已完成
+                    `;
+                    complianceItem.querySelector('.review-item-status').className = 'review-item-status completed';
+                    
+                    updateProgress();
+                    startTypoCheck();
+                } else {
+                    currentProgress.compliance = Math.round(complianceProgress);
+                    complianceItem.querySelector('.progress-fill').style.width = complianceProgress + '%';
+                    complianceItem.querySelector('.progress-text').textContent = Math.round(complianceProgress) + '%';
+                    updateProgress();
+                }
+            }, 500);
+        }
+        
+        function startTypoCheck() {
+            const typoItem = document.querySelectorAll('.review-item')[2];
+            typoItem.querySelector('.review-item-status').innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v6l4 2"></path>
+                </svg>
+                检测中
+            `;
+            typoItem.querySelector('.review-item-status').className = 'review-item-status processing';
+            
+            let typoProgress = 0;
+            
+            const typoInterval = setInterval(() => {
+                typoProgress += Math.random() * 15;
+                if (typoProgress >= 100) {
+                    typoProgress = 100;
+                    clearInterval(typoInterval);
+                    
+                    currentProgress.typo = 100;
+                    typoItem.querySelector('.progress-fill').style.width = '100%';
+                    typoItem.querySelector('.progress-text').textContent = '100%';
+                    typoItem.querySelector('.review-item-status').innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        已完成
+                    `;
+                    typoItem.querySelector('.review-item-status').className = 'review-item-status completed';
+                    
+                    updateProgress();
+                    startSensitiveCheck();
+                } else {
+                    currentProgress.typo = Math.round(typoProgress);
+                    typoItem.querySelector('.progress-fill').style.width = typoProgress + '%';
+                    typoItem.querySelector('.progress-text').textContent = Math.round(typoProgress) + '%';
+                    updateProgress();
+                }
+            }, 400);
+        }
+        
+        function startSensitiveCheck() {
+            const sensitiveItem = document.querySelectorAll('.review-item')[3];
+            sensitiveItem.querySelector('.review-item-status').innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v6l4 2"></path>
+                </svg>
+                检测中
+            `;
+            sensitiveItem.querySelector('.review-item-status').className = 'review-item-status processing';
+            
+            let sensitiveProgress = 0;
+            
+            const sensitiveInterval = setInterval(() => {
+                sensitiveProgress += Math.random() * 12;
+                if (sensitiveProgress >= 100) {
+                    sensitiveProgress = 100;
+                    clearInterval(sensitiveInterval);
+                    
+                    currentProgress.sensitive = 100;
+                    sensitiveItem.querySelector('.progress-fill').style.width = '100%';
+                    sensitiveItem.querySelector('.progress-text').textContent = '100%';
+                    sensitiveItem.querySelector('.review-item-status').innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        已完成
+                    `;
+                    sensitiveItem.querySelector('.review-item-status').className = 'review-item-status completed';
+                    
+                    updateProgress();
+                } else {
+                    currentProgress.sensitive = Math.round(sensitiveProgress);
+                    sensitiveItem.querySelector('.progress-fill').style.width = sensitiveProgress + '%';
+                    sensitiveItem.querySelector('.progress-text').textContent = Math.round(sensitiveProgress) + '%';
+                    updateProgress();
+                }
+            }, 350);
+        }
+        
+        function viewResults() {
+            alert('即将跳转到检测报告页');
+            window.location.href = 'review-report.html';
+        }
+        
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.style.getPropertyValue('--bg-primary');
+            
+            if (currentTheme === '#FFFFFF') {
+                body.style.setProperty('--bg-primary', '#0F1419');
+                body.style.setProperty('--bg-secondary', '#1A1F26');
+                body.style.setProperty('--bg-tertiary', '#242B33');
+                body.style.setProperty('--text-primary', '#F0F2F5');
+                body.style.setProperty('--text-secondary', '#B9BBBE');
+            } else {
+                body.style.setProperty('--bg-primary', '#FFFFFF');
+                body.style.setProperty('--bg-secondary', '#F8F9FA');
+                body.style.setProperty('--bg-tertiary', '#F1F3F4');
+                body.style.setProperty('--text-primary', '#1F2937');
+                body.style.setProperty('--text-secondary', '#4B5563');
+            }
+        }
+        
+        setTimeout(() => {
+            simulateProgress();
+        }, 1000);
+    </script>
+</body>
+</html>

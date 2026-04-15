@@ -17,6 +17,7 @@ import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
+import com.jy.eleaitender.core.util.DetectionResultParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -323,18 +324,10 @@ public class DetectionServiceImpl implements IDetectionService {
     }
 
     private int parseIssueCount(String resultJson) {
-        if (!StringUtils.hasText(resultJson)) {
-            return 0;
-        }
-        // 简化实现：后续可解析JSON中的issues数组长度
-        return 0;
+        return DetectionResultParser.parseIssueCount(resultJson);
     }
 
     private List<DetectionIssueVO> parseIssues(AiDetectionRecord record) {
-        if (!StringUtils.hasText(record.getResult())) {
-            return Collections.emptyList();
-        }
-        // 简化实现：后续解析result JSON中的issues
-        return Collections.emptyList();
+        return DetectionResultParser.parseIssues(record);
     }
 }

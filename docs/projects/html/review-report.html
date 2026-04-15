@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招标文件生成系统 - 检测报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --brand-color: #336CFF;
+            --auxiliary-color: #31E3FD;
+            --embellishment-color: #FF8D3B;
+            --bg-primary: #0F1419;
+            --bg-secondary: #1A1F26;
+            --bg-tertiary: #242B33;
+            --bg-elevated: #2D353D;
+            --text-primary: #F0F2F5;
+            --text-secondary: #B9BBBE;
+            --text-tertiary: #8B8E93;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.12);
+            --hover-state: rgba(51, 108, 255, 0.12);
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --card-bg: rgba(26, 31, 38, 0.95);
+            --input-bg: rgba(15, 20, 25, 0.6);
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root {
+                --brand-color: #336CFF;
+                --auxiliary-color: #00B8D4;
+                --embellishment-color: #FF9800;
+                --bg-primary: #FFFFFF;
+                --bg-secondary: #F8F9FA;
+                --bg-tertiary: #F1F3F4;
+                --bg-elevated: #FFFFFF;
+                --text-primary: #1F2937;
+                --text-secondary: #4B5563;
+                --text-tertiary: #6B7280;
+                --border-light: rgba(0, 0, 0, 0.08);
+                --border-medium: rgba(0, 0, 0, 0.12);
+                --hover-state: rgba(51, 108, 255, 0.06);
+                --shadow-color: rgba(0, 0, 0, 0.08);
+                --card-bg: rgba(255, 255, 255, 0.98);
+                --input-bg: rgba(243, 244, 246, 0.8);
+            }
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 220px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-light);
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand-color);
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .nav-item {
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-left-color: var(--brand-color);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 220px;
+            padding: 0;
+        }
+        
+        .top-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-light);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb a:hover {
+            color: var(--brand-color);
+        }
+        
+        .breadcrumb span {
+            margin: 0 8px;
+            color: var(--text-tertiary);
+        }
+        
+        .breadcrumb .current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .message-icon {
+            position: relative;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+        
+        .message-icon:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .message-badge {
+            background: var(--danger-color);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            line-height: 1;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+        
+        .user-info:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-color), var(--auxiliary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .content-area {
+            padding: 24px 40px;
+            max-width: 1600px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .page-title .badge {
+            display: inline-block;
+            background: var(--warning-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+        
+        .progress-indicator {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: var(--border-light);
+            z-index: 0;
+        }
+        
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+        
+        .step-item.active .step-circle {
+            background: var(--brand-color);
+            border-color: var(--brand-color);
+            color: white;
+        }
+        
+        .step-item.completed .step-circle {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 120px;
+        }
+        
+        .step-item.active .step-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .step-item.completed .step-label {
+            color: var(--success-color);
+        }
+        
+        .main-layout {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .left-panel {
+            width: 240px;
+            flex-shrink: 0;
+        }
+        
+        .right-panel {
+            flex: 1;
+        }
+        
+        .step-nav {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .step-nav-title {
+            padding: 16px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .step-nav-item {
+            padding: 14px 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-nav-item:hover {
+            background: var(--hover-state);
+            color: var(--brand-color);
+        }
+        
+        .step-nav-item.active {
+            background: var(--hover-state);
+            color: var(--brand-color);
+            border-left-color: var(--brand-color);
+            font-weight: 500;
+        }
+        
+        .step-nav-item .step-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .step-nav-item.active .step-icon {
+            background: var(--brand-color);
+            color: white;
+        }
+        
+        .step-nav-item.completed .step-icon {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .form-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+        
+        .form-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        .form-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-section {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--brand-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2855d9;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-medium);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--brand-color);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #D97706;
+        }
+        
+        .btn-danger {
+            background: transparent;
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+            padding: 6px 12px;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .form-actions {
+            padding: 20px 24px;
+            background: var(--bg-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .form-actions-left {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .form-actions-right {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .review-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .summary-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-light);
+            transition: all 0.2s;
+        }
+        
+        .summary-card:hover {
+            border-color: var(--brand-color);
+        }
+        
+        .summary-card.success {
+            border-left: 3px solid var(--success-color);
+        }
+        
+        .summary-card.warning {
+            border-left: 3px solid var(--warning-color);
+        }
+        
+        .summary-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .summary-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .summary-card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .summary-card.success .summary-card-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+        }
+        
+        .summary-card.warning .summary-card-icon {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+        }
+        
+        .summary-card-content {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .summary-card-count {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 8px;
+        }
+        
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--brand-color);
+        }
+        
+        .issue-group {
+            margin-bottom: 24px;
+        }
+        
+        .issue-group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+        
+        .issue-type-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .issue-type-badge.fair {
+            background: rgba(51, 108, 255, 0.15);
+            color: var(--brand-color);
+        }
+        
+        .issue-type-badge.compliance {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+        }
+        
+        .issue-type-badge.typo {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+        }
+        
+        .issue-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .issue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .issue-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-light);
+            transition: all 0.2s;
+        }
+        
+        .issue-card:hover {
+            border-color: var(--brand-color);
+        }
+        
+        .issue-card.accepted {
+            border-left: 3px solid var(--success-color);
+            opacity: 0.7;
+        }
+        
+        .issue-card.rejected {
+            border-left: 3px solid var(--danger-color);
+            opacity: 0.7;
+        }
+        
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .issue-meta {
+            flex: 1;
+        }
+        
+        .issue-location {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+        }
+        
+        .issue-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .severity-badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .severity-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+        }
+        
+        .severity-badge.medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+        }
+        
+        .severity-badge.low {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+        }
+        
+        .issue-body {
+            margin-bottom: 12px;
+        }
+        
+        .issue-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .issue-suggestion {
+            background: var(--bg-elevated);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-primary);
+            border-left: 3px solid var(--brand-color);
+        }
+        
+        .issue-suggestion-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        
+        .issue-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .issue-status {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(51, 108, 255, 0.3);
+            z-index: 1000;
+            transition: all 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            background: #2855d9;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">切换主题</button>
+    
+    <div class="layout">
+        <div class="sidebar">
+            <div class="nav-item" onclick="window.location.href='business-requirement-list.html'">编制业务需求</div>
+            <div class="nav-item active" onclick="window.location.href='project-list.html'">项目管理</div>
+            <div class="nav-item" onclick="window.location.href='template-list.html'">模板管理</div>
+            <div class="nav-item" onclick="window.location.href='policy-file-list.html'">政策文件管理</div>
+            <div class="nav-item" onclick="window.location.href='statistics.html'">统计分析</div>
+            <div class="nav-item" onclick="window.location.href='message-center.html'">消息中心</div>
+            <div class="nav-item" onclick="window.location.href='system-settings.html'">系统设置</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="breadcrumb">
+                    <a href="project-list.html">首页</a>
+                    <span>/</span>
+                    <a href="project-detail.html">项目详情</a>
+                    <span>/</span>
+                    <span class="current">检测报告</span>
+                </div>
+                <div class="header-actions">
+                    <div class="message-icon" onclick="window.location.href='message-center.html'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="message-badge">3</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar">张</div>
+                        <span>张专员</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="page-header">
+                    <h1 class="page-title">检测报告 <span class="badge">3个问题</span></h1>
+                    <button class="btn btn-secondary" onclick="window.location.href='project-list.html'">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        返回列表
+                    </button>
+                </div>
+                
+                <div class="progress-indicator">
+                    <div class="progress-steps">
+                        <div class="step-item completed">
+                            <div class="step-circle">1</div>
+                            <div class="step-label">基础信息输入</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">交易需求目录生成</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">详细需求生成</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">评审项设置</div>
+                        </div>
+                        <div class="step-item completed">
+                            <div class="step-circle">5</div>
+                            <div class="step-label">文档集成</div>
+                        </div>
+                        <div class="step-item active">
+                            <div class="step-circle">6</div>
+                            <div class="step-label">智能检测</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="main-layout">
+                    <div class="left-panel">
+                        <div class="step-nav">
+                            <div class="step-nav-title">文件编制流程</div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-init.html'">
+                                <span class="step-icon">✓</span>
+                                <span>基础信息输入</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-catalog.html'">
+                                <span class="step-icon">✓</span>
+                                <span>交易需求目录生成</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-requirement.html'">
+                                <span class="step-icon">✓</span>
+                                <span>详细需求生成</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-review.html'">
+                                <span class="step-icon">✓</span>
+                                <span>评审项设置</span>
+                            </div>
+                            <div class="step-nav-item completed" onclick="window.location.href='project-integration.html'">
+                                <span class="step-icon">✓</span>
+                                <span>文档集成</span>
+                            </div>
+                            <div class="step-nav-item active">
+                                <span class="step-icon">6</span>
+                                <span>智能检测</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="right-panel">
+                        <div class="form-container">
+                            <div class="form-header">
+                                <h3 class="form-title">检测报告</h3>
+                            </div>
+                            
+                            <div class="form-section">
+                                <div class="review-summary">
+                                    <div class="summary-card success">
+                                        <div class="summary-card-header">
+                                            <div class="summary-card-title">公平竞争检测</div>
+                                            <div class="summary-card-icon">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="summary-card-content">通过检测，未发现问题</div>
+                                        <div class="summary-card-count">0个问题</div>
+                                    </div>
+                                    
+                                    <div class="summary-card warning">
+                                        <div class="summary-card-header">
+                                            <div class="summary-card-title">合规性检查</div>
+                                            <div class="summary-card-icon">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="summary-card-content">发现需要修改的内容</div>
+                                        <div class="summary-card-count">2个问题</div>
+                                    </div>
+                                    
+                                    <div class="summary-card warning">
+                                        <div class="summary-card-header">
+                                            <div class="summary-card-title">错别字检查</div>
+                                            <div class="summary-card-icon">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="summary-card-content">发现错别字</div>
+                                        <div class="summary-card-count">1个问题</div>
+                                    </div>
+                                    
+                                    <div class="summary-card success">
+                                        <div class="summary-card-header">
+                                            <div class="summary-card-title">敏感词检测</div>
+                                            <div class="summary-card-icon">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="summary-card-content">通过检测，未发现问题</div>
+                                        <div class="summary-card-count">0个问题</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="section-title">检测文件</div>
+                                
+                                <div class="form-group" style="margin-bottom: 24px;">
+                                    <div style="border: 1px solid var(--border-light); border-radius: 6px; padding: 16px;">
+                                        <div style="font-weight: 500; margin-bottom: 12px;">本次检测的文件：</div>
+                                        <ul style="list-style: none; padding: 0;">
+                                            <li style="display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                </svg>
+                                                <div style="flex: 1;">
+                                                    <div style="font-size: 13px;">XX市政道路改造工程招标文件.docx</div>
+                                                    <div style="font-size: 12px; color: var(--text-tertiary);">主招标文件</div>
+                                                </div>
+                                            </li>
+                                            <li style="display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                </svg>
+                                                <div style="flex: 1;">
+                                                    <div style="font-size: 13px;">中华人民共和国招标投标法.pdf</div>
+                                                    <div style="font-size: 12px; color: var(--text-tertiary);">政策文件</div>
+                                                </div>
+                                            </li>
+                                            <li style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                </svg>
+                                                <div style="flex: 1;">
+                                                    <div style="font-size: 13px;">工程建设项目施工招标投标办法.docx</div>
+                                                    <div style="font-size: 12px; color: var(--text-tertiary);">规章制度</div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="section-title">问题列表</div>
+                                
+                                <div class="issue-group">
+                                    <div class="issue-group-header">
+                                        <span class="issue-type-badge compliance">合规性检查</span>
+                                        <span class="issue-count">2个问题</span>
+                                    </div>
+                                    
+                                    <div class="issue-list">
+                                        <div class="issue-card" id="issue-1">
+                                            <div class="issue-header">
+                                                <div class="issue-meta">
+                                                    <div class="issue-location">第三章第二节 - 投标人资格要求</div>
+                                                    <div class="issue-title">指定特定品牌或供应商</div>
+                                                </div>
+                                                <span class="severity-badge high">高</span>
+                                            </div>
+                                            <div class="issue-body">
+                                                <div class="issue-description">
+                                                    文档中指定了"XX品牌"作为唯一选择，违反了公平竞争原则，限制了潜在投标人的参与。
+                                                </div>
+                                                <div class="issue-suggestion">
+                                                    <div class="issue-suggestion-label">修改建议：</div>
+                                                    建议修改为"或相当于XX品牌性能的产品"，允许同等性能的其他品牌参与竞争。
+                                                </div>
+                                            </div>
+                                            <div class="issue-actions">
+                                                <button class="btn btn-success btn-small" onclick="acceptSuggestion('issue-1')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                    接受建议
+                                                </button>
+                                                <button class="btn btn-danger btn-small" onclick="rejectSuggestion('issue-1')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                    </svg>
+                                                    拒绝建议
+                                                </button>
+                                                <button class="btn btn-secondary btn-small" onclick="viewOriginal('issue-1')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                    查看原文
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="issue-card" id="issue-2">
+                                            <div class="issue-header">
+                                                <div class="issue-meta">
+                                                    <div class="issue-location">第五章 - 评标办法</div>
+                                                    <div class="issue-title">评分标准不明确</div>
+                                                </div>
+                                                <span class="severity-badge medium">中</span>
+                                            </div>
+                                            <div class="issue-body">
+                                                <div class="issue-description">
+                                                    评分标准中"技术方案优秀得10分"的表述过于主观，缺乏具体的评分细则，可能导致评标过程中的争议。
+                                                </div>
+                                                <div class="issue-suggestion">
+                                                    <div class="issue-suggestion-label">修改建议：</div>
+                                                    建议细化评分标准，明确"优秀"、"良好"、"一般"的具体评判依据，如"技术方案包含完整的施工组织设计、质量保证措施、安全文明施工措施等，且方案合理可行"。
+                                                </div>
+                                            </div>
+                                            <div class="issue-actions">
+                                                <button class="btn btn-success btn-small" onclick="acceptSuggestion('issue-2')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                    接受建议
+                                                </button>
+                                                <button class="btn btn-danger btn-small" onclick="rejectSuggestion('issue-2')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                    </svg>
+                                                    拒绝建议
+                                                </button>
+                                                <button class="btn btn-secondary btn-small" onclick="viewOriginal('issue-2')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                    查看原文
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="issue-group">
+                                    <div class="issue-group-header">
+                                        <span class="issue-type-badge typo">错别字检查</span>
+                                        <span class="issue-count">1个问题</span>
+                                    </div>
+                                    
+                                    <div class="issue-list">
+                                        <div class="issue-card" id="issue-3">
+                                            <div class="issue-header">
+                                                <div class="issue-meta">
+                                                    <div class="issue-location">第一章第一节 - 项目概况</div>
+                                                    <div class="issue-title">错别字</div>
+                                                </div>
+                                                <span class="severity-badge low">低</span>
+                                            </div>
+                                            <div class="issue-body">
+                                                <div class="issue-description">
+                                                    文档中"投标人应具备相应的资质正书"存在错别字，"正书"应为"证书"。
+                                                </div>
+                                                <div class="issue-suggestion">
+                                                    <div class="issue-suggestion-label">修改建议：</div>
+                                                    将"资质正书"修改为"资质证书"。
+                                                </div>
+                                            </div>
+                                            <div class="issue-actions">
+                                                <button class="btn btn-success btn-small" onclick="acceptSuggestion('issue-3')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                    接受建议
+                                                </button>
+                                                <button class="btn btn-danger btn-small" onclick="rejectSuggestion('issue-3')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                    </svg>
+                                                    拒绝建议
+                                                </button>
+                                                <button class="btn btn-secondary btn-small" onclick="viewOriginal('issue-3')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                    查看原文
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <div class="form-actions-left">
+                                    <button class="btn btn-secondary" onclick="window.location.href='review-progress.html'">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                                            <polyline points="12 19 5 12 12 5"></polyline>
+                                        </svg>
+                                        上一步
+                                    </button>
+                                </div>
+                                <div class="form-actions-right">
+                                    <button class="btn btn-secondary" onclick="window.location.href='project-detail.html'">
+                                        返回项目详情
+                                    </button>
+                                    <button class="btn btn-warning" onclick="acceptAll()">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        一键接受全部
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="reReview()">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                        </svg>
+                                        重新检测
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function acceptSuggestion(issueId) {
+            const issueCard = document.getElementById(issueId);
+            issueCard.classList.add('accepted');
+            
+            const actionsDiv = issueCard.querySelector('.issue-actions');
+            actionsDiv.innerHTML = '<span class="issue-status">✓ 已接受建议，文档已自动修订</span>';
+            
+            updateIssueCount();
+        }
+        
+        function rejectSuggestion(issueId) {
+            const issueCard = document.getElementById(issueId);
+            issueCard.classList.add('rejected');
+            
+            const actionsDiv = issueCard.querySelector('.issue-actions');
+            actionsDiv.innerHTML = '<span class="issue-status">✗ 已拒绝建议，请手动修改</span>';
+            
+            updateIssueCount();
+        }
+        
+        function viewOriginal(issueId) {
+            alert('将在文档预览区高亮显示问题位置');
+        }
+        
+        function acceptAll() {
+            if (confirm('将接受所有修改建议，是否继续？')) {
+                const issueCards = document.querySelectorAll('.issue-card:not(.accepted):not(.rejected)');
+                issueCards.forEach(card => {
+                    card.classList.add('accepted');
+                    const actionsDiv = card.querySelector('.issue-actions');
+                    actionsDiv.innerHTML = '<span class="issue-status">✓ 已接受建议，文档已自动修订</span>';
+                });
+                
+                updateIssueCount();
+                alert('已接受所有建议，文档已自动修订完成！');
+            }
+        }
+        
+        function reReview() {
+            if (confirm('重新检测将覆盖当前结果，是否继续？')) {
+                window.location.href = 'review-progress.html';
+            }
+        }
+        
+        function updateIssueCount() {
+            const totalIssues = document.querySelectorAll('.issue-card').length;
+            const handledIssues = document.querySelectorAll('.issue-card.accepted, .issue-card.rejected').length;
+            const remainingIssues = totalIssues - handledIssues;
+            
+            const badge = document.querySelector('.page-title .badge');
+            badge.textContent = remainingIssues + '个问题';
+            
+            if (remainingIssues === 0) {
+                badge.style.background = 'var(--success-color)';
+            }
+        }
+        
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.style.getPropertyValue('--bg-primary');
+            
+            if (currentTheme === '#FFFFFF') {
+                body.style.setProperty('--bg-primary', '#0F1419');
+                body.style.setProperty('--bg-secondary', '#1A1F26');
+                body.style.setProperty('--bg-tertiary', '#242B33');
+                body.style.setProperty('--text-primary', '#F0F2F5');
+                body.style.setProperty('--text-secondary', '#B9BBBE');
+            } else {
+                body.style.setProperty('--bg-primary', '#FFFFFF');
+                body.style.setProperty('--bg-secondary', '#F8F9FA');
+                body.style.setProperty('--bg-tertiary', '#F1F3F4');
+                body.style.setProperty('--text-primary', '#1F2937');
+                body.style.setProperty('--text-secondary', '#4B5563');
+            }
+        }
+    </script>
+</body>
+</html>
