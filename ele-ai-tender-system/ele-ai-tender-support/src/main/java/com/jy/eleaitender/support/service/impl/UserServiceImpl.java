@@ -7,6 +7,7 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.util.PasswordUtil;
 import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.common.entity.support.SysUserRole;
+import com.jy.eleaitender.common.util.RsaKeyUtil;
 import com.jy.eleaitender.support.mapper.SysUserMapper;
 import com.jy.eleaitender.support.mapper.SysUserRoleMapper;
 import com.jy.eleaitender.support.service.IUserService;

@@ -4,22 +4,22 @@ import type { ApiResponse, PageResult } from '@/types'
 
 export const modelRouteApi = {
   getList(params: ModelRouteQueryParams): Promise<ApiResponse<PageResult<ModelRouteRuleInfo>>> {
-    return request.get<PageResult<ModelRouteRuleInfo>>('/model-routes', { params })
+    return request.get<PageResult<ModelRouteRuleInfo>>('/v1/model-routes', { params })
   },
 
   create(params: ModelRouteRuleParams): Promise<ApiResponse<ModelRouteRuleInfo>> {
-    return request.post<ModelRouteRuleInfo>('/model-routes', params)
+    return request.post<ModelRouteRuleInfo>('/v1/model-routes', params)
   },
 
   update(id: number, params: ModelRouteRuleParams): Promise<ApiResponse<void>> {
-    return request.put(`/model-routes/${id}`, params)
+    return request.put(`/v1/model-routes/${id}`, params)
   },
 
   deleteById(id: number): Promise<ApiResponse<void>> {
-    return request.delete(`/model-routes/${id}`)
+    return request.delete(`/v1/model-routes/${id}`)
   },
 
   setActive(id: number, isActive: number): Promise<ApiResponse<void>> {
-    return request.put(`/model-routes/${id}/active`, undefined, { params: { isActive } })
+    return request.put(`/v1/model-routes/${id}/active`, undefined, { params: { isActive } })
   },
 }

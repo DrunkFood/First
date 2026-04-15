@@ -1,6 +1,7 @@
 export interface LoginRequest {
   username: string
   password: string
+  keyId?: string // RSA加密后由auth.ts自动填充
 }
 
 export interface PhoneLoginRequest {

@@ -9,6 +9,7 @@ import com.jy.eleaitender.common.exception.AuthException;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.util.JwtUtil;
 import com.jy.eleaitender.common.util.PasswordUtil;
+import com.jy.eleaitender.common.util.RsaKeyUtil;
 import com.jy.eleaitender.common.util.SignatureUtil;
 import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
@@ -97,8 +98,11 @@ public class AuthServiceImpl implements IAuthService {
             throw new AuthException(ResponseCode.USER_PASSWORD_ERROR);
         }
 
+        // RSA解密密码
+        String rawPassword = RsaKeyUtil.decryptPassword(request.getKeyId(), request.getPassword());
+
         // 验证密码
-        if (!PasswordUtil.matches(request.getPassword(), user.getPassword())) {
+        if (!PasswordUtil.matches(rawPassword, user.getPassword())) {
             throw new AuthException(ResponseCode.USER_PASSWORD_ERROR);
         }
 

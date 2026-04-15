@@ -4,6 +4,6 @@ import type { ApiResponse } from '@/types'
 
 export const statisticsApi = {
   getOverview(): Promise<ApiResponse<StatisticsOverview>> {
-    return request.get<StatisticsOverview>('/statistics/overview')
+    return request.get<StatisticsOverview>('/v1/statistics/overview')
   },
 }

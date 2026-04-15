@@ -8,6 +8,7 @@ import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.common.entity.support.SysMenu;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
+import com.jy.eleaitender.common.util.RsaKeyUtil;
 import com.jy.eleaitender.support.service.IAuthService;
 import com.jy.eleaitender.support.service.IMenuService;
 import com.jy.eleaitender.support.service.ISmsService;
@@ -41,6 +42,12 @@ public class AuthController {
 
     @Autowired
     private ISmsService smsService;
+
+    @GetMapping("/public-key")
+    @Operation(summary = "获取RSA公钥（用于密码加密传输）")
+    public Result<RsaKeyUtil.PublicKeyInfo> getPublicKey() {
+        return Result.success(RsaKeyUtil.getPublicKeyInfo());
+    }
 
     @PostMapping("/login")
     @Operation(summary = "用户登录")
@@ -100,7 +107,12 @@ public class AuthController {
     @Operation(summary = "修改当前用户密码")
     public Result<Void> changePassword(@RequestBody Map<String, String> params) {
         Long userId = SecurityContextHolder.getLoginUser().getUserId();
-        userService.changePassword(userId, params.get("oldPassword"), params.get("newPassword"));
+
+        // RSA解密密码
+        String oldRawPassword = RsaKeyUtil.decryptPassword(params.get("keyId"), params.get("oldPassword"));
+        String newRawPassword = RsaKeyUtil.decryptPassword(params.get("keyId"), params.get("newPassword"));
+
+        userService.changePassword(userId, oldRawPassword, newRawPassword);
         return Result.success();
     }
 }

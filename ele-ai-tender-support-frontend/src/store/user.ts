@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import type { UserInfo, MenuInfo, AuthUserInfo } from '@/types'
 import { storage } from '@/utils/storage'
 import { authApi } from '@/api/auth'
+import { encryptByPublicKey, formatPublicKey } from '@/utils/crypto'
+import { ElMessage } from 'element-plus'
 import router from '@/router'
 
 export const useUserStore = defineStore('user', () => {
@@ -30,9 +32,21 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  // 登录
+  // 登录（RSA加密密码后传输）
   async function login(username: string, password: string) {
-    const res = await authApi.login({ username, password })
+    // 获取RSA公钥
+    const keyRes = await authApi.getPublicKey()
+    const { keyId, publicKey } = keyRes.data
+    const formattedKey = formatPublicKey(keyId, publicKey)
+
+    // 使用公钥加密密码
+    const encryptedPassword = encryptByPublicKey(formattedKey, password)
+    if (!encryptedPassword) {
+      ElMessage.error('密码加密失败')
+      throw new Error('密码加密失败')
+    }
+
+    const res = await authApi.login({ username, password: encryptedPassword, keyId })
     token.value = res.data.token
     userInfo.value = normalizeUserInfo(res.data.userInfo)
     permissions.value = res.data.permissions || []

@@ -10,36 +10,36 @@ import type { ApiResponse, PageResult } from '@/types'
 export const templateApi = {
   // 分页查询模板
   getList(params: TemplateQueryParams): Promise<ApiResponse<PageResult<TemplateInfo>>> {
-    return request.get<PageResult<TemplateInfo>>('/template-configs', { params })
+    return request.get<PageResult<TemplateInfo>>('/v1/template-configs', { params })
   },
 
   // 获取模板详情
   getById(id: number): Promise<ApiResponse<TemplateInfo>> {
-    return request.get<TemplateInfo>(`/template-configs/${id}`)
+    return request.get<TemplateInfo>(`/v1/template-configs/${id}`)
   },
 
   // 创建模板
   create(params: TemplateCreateParams): Promise<ApiResponse<TemplateInfo>> {
-    return request.post<TemplateInfo>('/template-configs', params)
+    return request.post<TemplateInfo>('/v1/template-configs', params)
   },
 
   // 更新模板
   update(params: TemplateUpdateParams): Promise<ApiResponse<void>> {
-    return request.put(`/template-configs/${params.id}`, params)
+    return request.put(`/v1/template-configs/${params.id}`, params)
   },
 
   // 删除模板
   deleteById(id: number): Promise<ApiResponse<void>> {
-    return request.delete(`/template-configs/${id}`)
+    return request.delete(`/v1/template-configs/${id}`)
   },
 
   // 批量删除模板
   deleteByIds(ids: number[]): Promise<ApiResponse<void>> {
-    return request.delete('/template-configs/batch', { data: ids })
+    return request.delete('/v1/template-configs/batch', { data: ids })
   },
 
   // 设为默认模板
   setDefault(id: number): Promise<ApiResponse<void>> {
-    return request.put(`/template-configs/${id}/set-default`)
+    return request.put(`/v1/template-configs/${id}/set-default`)
   },
 }

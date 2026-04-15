@@ -4,6 +4,6 @@ import type { ApiResponse, PageResult } from '@/types'
 
 export const operationLogApi = {
   getList(params: OperationLogQueryParams): Promise<ApiResponse<PageResult<OperationLogInfo>>> {
-    return request.get<PageResult<OperationLogInfo>>('/operation-logs', { params })
+    return request.get<PageResult<OperationLogInfo>>('/v1/operation-logs', { params })
   },
 }

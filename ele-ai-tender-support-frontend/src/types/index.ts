@@ -152,10 +152,11 @@ export interface PluginInfo {
   updateTime?: string
 }
 
-// 登录请求参数
+// 登录请求参数（密码为RSA加密后的密文）
 export interface LoginParams {
   username: string
   password: string
+  keyId: string
 }
 
 // 登录响应数据

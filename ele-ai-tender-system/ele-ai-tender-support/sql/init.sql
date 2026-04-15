@@ -423,10 +423,10 @@ INSERT INTO `sup_user_role` (`user_id`, `role_id`, `create_time`, `modify_time`)
 VALUES (1, 1, NOW(), NOW());
 
 -- -----------------------------------------------
--- 4. 测试业务用户 (密码: user123)
+-- 4. 测试业务用户 (密码: 123456, BCrypt加密)
 -- -----------------------------------------------
 INSERT INTO `sup_user` (`username`, `password`, `real_name`, `phone`, `email`, `status`, `create_time`, `create_id`, `create_name`, `modify_time`, `modify_id`, `modify_name`)
-VALUES ('testuser', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lqkkO9QS3TzCjH3rS', '测试用户', '13800138000', 'testuser@example.com', 1, NOW(), 1, 'admin', NOW(), 1, 'admin');
+VALUES ('testuser', '$2a$10$305PBEMiyk/uFtrUC.ywKO731rAgH0dxt3ynt9bTCQs.lqYJkXKZC', '测试用户', '13800138000', 'testuser@example.com', 1, NOW(), 1, 'admin', NOW(), 1, 'admin');
 
 INSERT INTO `sup_user_role` (`user_id`, `role_id`, `create_time`, `create_id`, `create_name`, `modify_time`, `modify_id`, `modify_name`)
 SELECT u.id, r.id, NOW(), 1, 'admin', NOW(), 1, 'admin'

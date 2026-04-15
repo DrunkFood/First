@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '@/api/auth'
 import type { UserInfo } from '@/types/auth'
+import router from '@/router'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || '')
@@ -43,6 +44,7 @@ export const useUserStore = defineStore('user', () => {
     permissions.value = []
     localStorage.removeItem('token')
     localStorage.removeItem('userInfo')
+    router.push('/login')
   }
 
   async function getUserInfo() {
