@@ -18,7 +18,7 @@ public class WebConfig {
         return new JwtAuthenticationFilter(
                 redisTemplate,
                 List.of(),
-                Set.of(CommonConstant.TOKEN_TYPE_EXTERNAL)
+                Set.of(CommonConstant.TOKEN_TYPE_INTERNAL, CommonConstant.TOKEN_TYPE_EXTERNAL)
         );
     }
 
