@@ -1,105 +1,111 @@
 <template>
   <div class="requirement-create">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <el-button @click="router.push('/requirement')">返回列表</el-button>
-          <h3>新建业务需求</h3>
-        </div>
-      </template>
+    <!-- 页面头部 -->
+    <div class="page-header">
+      <h1 class="page-title">新建业务需求</h1>
+      <el-button @click="router.push('/requirement')">
+        <el-icon><ArrowLeft /></el-icon>
+        返回列表
+      </el-button>
+    </div>
 
+    <div class="form-container">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="130px">
         <!-- 第一部分：业务需求基本信息 -->
-        <el-divider content-position="left">业务需求基本信息</el-divider>
+        <div class="form-section">
+          <h3 class="section-title">业务需求基本信息</h3>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="项目名称" prop="requirementName">
-              <el-input
-                v-model="form.requirementName"
-                placeholder="请输入项目名称，1-100字符，必须唯一"
-                maxlength="100"
-                show-word-limit
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="项目类别" prop="projectCategory">
-              <el-select v-model="form.projectCategory" placeholder="请选择项目类别">
-                <el-option label="限额以下" value="LIMITED_BELOW" />
-                <el-option label="产权交易" value="PROPERTY_TRADE" />
-                <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="项目名称" prop="requirementName">
+                <el-input
+                  v-model="form.requirementName"
+                  placeholder="请输入项目名称，1-100字符，必须唯一"
+                  maxlength="100"
+                  show-word-limit
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="项目类别" prop="projectCategory">
+                <el-select v-model="form.projectCategory" placeholder="请选择项目类别">
+                  <el-option label="限额以下" value="LIMITED_BELOW" />
+                  <el-option label="产权交易" value="PROPERTY_TRADE" />
+                  <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="项目类型" prop="projectType">
-              <el-select v-model="form.projectType" placeholder="请选择项目类型" @change="handleTypeChange">
-                <el-option label="工程类" value="ENGINEERING" />
-                <el-option label="货物类" value="GOODS" />
-                <el-option-group label="服务类">
-                  <el-option label="服务类" value="SERVICE" />
-                  <el-option label="物业" value="PROPERTY" />
-                  <el-option label="IT服务" value="IT_SERVICE" />
-                  <el-option label="咨询服务" value="CONSULTING" />
-                  <el-option label="维保服务" value="MAINTENANCE" />
-                </el-option-group>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="预算价(万元)" prop="budget">
-              <el-input-number
-                v-model="form.budget"
-                :min="0"
-                :precision="2"
-                :step="0.01"
-                placeholder="请输入正数，保留2位小数"
-                class="full-width"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="项目类型" prop="projectType">
+                <el-select v-model="form.projectType" placeholder="请选择项目类型" @change="handleTypeChange">
+                  <el-option label="工程类" value="ENGINEERING" />
+                  <el-option label="货物类" value="GOODS" />
+                  <el-option-group label="服务类">
+                    <el-option label="服务类" value="SERVICE" />
+                    <el-option label="物业" value="PROPERTY" />
+                    <el-option label="IT服务" value="IT_SERVICE" />
+                    <el-option label="咨询服务" value="CONSULTING" />
+                    <el-option label="维保服务" value="MAINTENANCE" />
+                  </el-option-group>
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="预算价(万元)" prop="budget">
+                <el-input-number
+                  v-model="form.budget"
+                  :min="0"
+                  :precision="2"
+                  :step="0.01"
+                  placeholder="请输入正数，保留2位小数"
+                  class="full-width"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-        <el-form-item label="项目基本情况描述">
-          <el-input
-            v-model="form.requirementDescription"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入项目基本情况描述，最多500字"
-            maxlength="500"
-            show-word-limit
-          />
-        </el-form-item>
+          <el-form-item label="项目基本情况描述">
+            <el-input
+              v-model="form.requirementDescription"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入项目基本情况描述，最多500字"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+        </div>
 
         <!-- 第二部分：历史业务需求匹配 -->
-        <el-divider content-position="left">历史业务需求匹配</el-divider>
+        <div class="form-section">
+          <h3 class="section-title">历史业务需求匹配</h3>
 
-        <el-form-item label="匹配模式">
-          <MatchModePanel
-            v-model="form.matchMode"
-            :match-files="matchFiles"
-            :selected-file-id="form.matchedFileId"
-            :upload-accept="'.doc,.docx'"
-            :upload-limit="1"
-            mode="create"
-            @update:selected-file-id="form.matchedFileId = $event"
-            @file-preview="handlePreviewFile"
-          />
-        </el-form-item>
+          <el-form-item label="匹配模式">
+            <MatchModePanel
+              v-model="form.matchMode"
+              :match-files="matchFiles"
+              :selected-file-id="form.matchedFileId"
+              :upload-accept="'.doc,.docx'"
+              :upload-limit="1"
+              mode="create"
+              @update:selected-file-id="form.matchedFileId = $event"
+              @file-preview="handlePreviewFile"
+            />
+          </el-form-item>
+        </div>
 
         <!-- 底部按钮 -->
-        <el-form-item class="form-actions">
+        <div class="form-actions">
           <el-button @click="router.push('/requirement')">取消</el-button>
           <el-button type="primary" :loading="submitting" @click="handleSubmit">
             保存并继续
           </el-button>
-        </el-form-item>
+        </div>
       </el-form>
-    </el-card>
+    </div>
 
     <!-- 文件预览弹窗 -->
     <el-dialog v-model="previewVisible" title="文件预览" width="600px" destroy-on-close>
@@ -121,6 +127,7 @@ import { useRouter } from 'vue-router'
 import { requirementApi } from '@/api/requirement'
 import { toYuan } from '@/utils/budget'
 import { ElMessage, type FormInstance } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import MatchModePanel from '@/components/requirement/MatchModePanel.vue'
 import type { MatchFile } from '@/types/requirement'
 
@@ -205,19 +212,46 @@ onMounted(async () => {
 
 <style scoped>
 .requirement-create {
-  padding: 20px;
+  padding: 24px 40px;
 }
 
-.card-header {
+.page-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.card-header h3 {
-  margin: 0;
-  font-size: 16px;
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
   color: var(--app-text-primary);
+  margin: 0;
+}
+
+.form-container {
+  background: var(--app-bg-elevated);
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+  overflow: hidden;
+}
+
+.form-section {
+  padding: 24px;
+  border-bottom: 1px solid var(--app-border-light);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--app-brand-color);
 }
 
 .full-width {
@@ -225,8 +259,11 @@ onMounted(async () => {
 }
 
 .form-actions {
-  margin-top: 24px;
-  padding-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px;
+  background: var(--app-bg-tertiary);
   border-top: 1px solid var(--app-border-light);
 }
 

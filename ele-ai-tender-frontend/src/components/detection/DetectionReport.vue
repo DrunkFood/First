@@ -96,8 +96,6 @@ const summaryItems = computed(() => {
     COMPLIANCE: '合规性检查',
     TYPO: '错别字检查',
     SENSITIVE_WORD: '敏感词检测',
-    POLICY_REVIEW: '合规性检测',
-    FORMAT_CHECK: '格式规范检测',
   }
   const grouped: Record<string, { name: string; issueCount: number }> = {}
   for (const issue of report.value.issues) {
@@ -124,8 +122,6 @@ const groupedIssues = computed(() => {
     COMPLIANCE: '合规性检查',
     TYPO: '错别字检查',
     SENSITIVE_WORD: '敏感词检测',
-    POLICY_REVIEW: '合规性检测',
-    FORMAT_CHECK: '格式规范检测',
   }
   const groups: Record<string, { name: string; issues: DetectionIssueVO[] }> = {}
   for (const issue of report.value.issues) {

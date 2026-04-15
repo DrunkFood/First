@@ -7,7 +7,26 @@
       "mcp__zai-mcp-server__analyze_image",
       "Bash(export JAVA_HOME=\"D:/Users/admin/.jdks/openjdk-21.0.5\")",
       "Bash(D:/Users/admin/.jdks/openjdk-21.0.5/bin/java -version)",
-      "Bash(mvn compile *)"
+      "Bash(mvn compile *)",
+      "Bash(mvn spring-boot:run -q)",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :8080 | findstr LISTENING\")",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :8081 | findstr LISTENING\")",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :8082 | findstr LISTENING\")",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :8083 | findstr LISTENING\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/api/auth/public-key)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8081/api/file/info/1)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8082/api/v1/requirements)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8083/api/v1/ai/suggest)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(curl -s http://localhost:8080/api/auth/public-key)",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
+      "Bash(node -e ' *)",
+      "Bash(curl -s http://localhost:8082/api/v1/requirements -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T')",
+      "Bash(curl -sv http://localhost:8082/api/v1/requirements -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T')",
+      "Bash(curl -s -X POST http://localhost:8082/api/v1/requirements -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T' -H 'Content-Type: application/json' -d '{\"requirementName\":\"联调测试需求\",\"projectCategory\":\"LIMITED_BELOW\",\"projectType\":\"GOODS\",\"budget\":50.00,\"requirementDescription\":\"联调测试\",\"matchMode\":\"AUTO_MATCH\",\"status\":\"IN_PROGRESS\",\"progress\":0}')",
+      "Bash(curl -s http://localhost:8082/api/v1/projects -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T')",
+      "Bash(mkdir -p D:/tmp)"
     ]
   }
 }

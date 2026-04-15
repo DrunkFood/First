@@ -5,7 +5,7 @@
       <div class="toolbar-left">
         <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
         <el-divider direction="vertical" />
-        <span class="toolbar-title">{{ requirementName || '需求智能检测' }}</span>
+        <span class="toolbar-title">{{ requirementName || '业务需求智能检测' }}</span>
       </div>
     </div>
 
@@ -74,10 +74,10 @@
               <div class="item-header">
                 <span class="item-title">{{ getTypeLabel(issue.detectionType) }}</span>
                 <el-tag
-                  :type="issue.severity === 'HIGH' ? 'danger' : 'warning'"
+                  :type="issue.severity === 'HIGH' ? 'danger' : issue.severity === 'MEDIUM' ? 'warning' : 'info'"
                   size="small"
                 >
-                  {{ issue.severity === 'HIGH' ? '严重' : '警告' }}
+                  {{ issue.severity === 'HIGH' ? '严重' : issue.severity === 'MEDIUM' ? '警告' : '提示' }}
                 </el-tag>
               </div>
               <div class="item-body">
@@ -123,13 +123,10 @@
             <span class="card-title">检测结论</span>
           </div>
           <div class="conclusion-body">
-            <p>
-              共检测 {{ detectCards.length }} 项内容，
-              <template v-for="(card, idx) in detectCards" :key="card.type">
-                {{ card.label }}发现 {{ card.issueCount }} 个问题
-                <span v-if="card.issueCount > 0">，建议修改</span>
-                <span v-if="idx < detectCards.length - 1">；</span>。
-              </template>
+            <p v-for="card in detectCards" :key="card.type" class="conclusion-line">
+              <strong>{{ card.label }}：</strong>
+              <template v-if="card.issueCount > 0">发现 {{ card.issueCount }} 个问题，建议进行修改。</template>
+              <template v-else>未发现问题，通过检测。</template>
             </p>
             <p v-if="totalUnhandledIssues > 0" class="conclusion-warning">
               还有 {{ totalUnhandledIssues }} 个未处理的问题，建议处理后再提交。
@@ -180,9 +177,11 @@ interface DetectCard {
   failed: boolean
 }
 
-const DETECT_TYPE_CONFIG: Record<string, { label: string }> = {
-  TYPO: { label: '错别字检查' },
-  SENSITIVE_WORD: { label: '敏感词检测' },
+const DETECT_TYPE_CONFIG: Record<string, { label: string; icon: string }> = {
+  FAIRNESS: { label: '公平竞争检测', icon: 'ScaleToOriginal' },
+  COMPLIANCE: { label: '合规性检查', icon: 'DocumentChecked' },
+  TYPO: { label: '错别字检查', icon: 'EditPen' },
+  SENSITIVE_WORD: { label: '敏感词检测', icon: 'Warning' },
 }
 
 const router = useRouter()
@@ -194,6 +193,8 @@ const requirementName = ref('')
 
 // ---- 检测卡片 ----
 const detectCards = ref<DetectCard[]>([
+  { type: 'FAIRNESS', label: '公平竞争检测', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
+  { type: 'COMPLIANCE', label: '合规性检查', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
   { type: 'TYPO', label: '错别字检查', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
   { type: 'SENSITIVE_WORD', label: '敏感词检测', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
 ])
@@ -360,6 +361,7 @@ function parseTaskResult(card: DetectCard, resultJson?: string) {
           suggestion: issue.suggestion || '',
           severity: issue.severity || 'MEDIUM',
           handleStatus: issue.handleStatus || 0,
+          issueIndex: issues.value.length,
         })
       }
       card.issueCount = result.issues.length
@@ -416,7 +418,8 @@ function getTypeLabel(type: DetectionType): string {
 function getIssueClass(issue: DetectionIssueVO): string {
   if (issue.handleStatus !== 0) return 'is-handled'
   if (issue.severity === 'HIGH') return 'is-danger'
-  return 'is-warning'
+  if (issue.severity === 'MEDIUM') return 'is-warning'
+  return 'is-info'
 }
 </script>
 
@@ -517,16 +520,16 @@ function getIssueClass(issue: DetectionIssueVO): string {
 
 .summary-item.has-issues {
   background: var(--app-color-warning-light, rgba(230, 162, 60, 0.1));
-  border-left: 3px solid var(--app-color-warning);
+  border: 1px solid rgba(230, 162, 60, 0.2);
 }
 
 .summary-item.no-issues {
   background: var(--app-color-success-light, rgba(103, 194, 58, 0.1));
-  border-left: 3px solid var(--app-color-success);
+  border: 1px solid rgba(103, 194, 58, 0.2);
 }
 
 .summary-number {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
 }
 
@@ -563,11 +566,17 @@ function getIssueClass(issue: DetectionIssueVO): string {
 }
 
 .detail-item.is-danger {
-  border-left: 3px solid var(--app-color-danger);
+  border-left: 4px solid var(--app-color-danger);
+  background: rgba(239, 68, 68, 0.05);
 }
 
 .detail-item.is-warning {
-  border-left: 3px solid var(--app-color-warning);
+  border-left: 4px solid var(--app-color-warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.detail-item.is-info {
+  border-left: 4px solid var(--app-brand-color);
 }
 
 .detail-item.is-handled {
@@ -598,7 +607,8 @@ function getIssueClass(issue: DetectionIssueVO): string {
 }
 
 .detail-item .item-suggestion {
-  background: var(--app-color-success-light, rgba(103, 194, 58, 0.1));
+  background: var(--app-bg-secondary);
+  border-left: 3px solid var(--app-brand-color);
   border-radius: 4px;
   padding: 8px 12px;
   margin: 0;
@@ -650,6 +660,10 @@ function getIssueClass(issue: DetectionIssueVO): string {
   margin: 0 0 8px 0;
 }
 
+.conclusion-line strong {
+  color: var(--app-text-primary);
+}
+
 .conclusion-warning {
   color: var(--app-color-warning);
   font-weight: 500;
@@ -665,8 +679,10 @@ function getIssueClass(issue: DetectionIssueVO): string {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--app-border-light);
+  padding: 16px 20px;
+  background: var(--app-bg-tertiary, var(--app-bg-secondary));
+  border-radius: 0 0 var(--app-radius-sm, 8px) var(--app-radius-sm, 8px);
+  margin: 16px -20px -20px;
 }
 
 /* ---- 查看原文弹窗 ---- */

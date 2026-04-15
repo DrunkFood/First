@@ -13,8 +13,8 @@
       <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
         <el-checkbox value="SENSITIVE_WORD">敏感词检测</el-checkbox>
         <el-checkbox value="TYPO">错别字检测</el-checkbox>
-        <el-checkbox value="POLICY_REVIEW">合规性检测</el-checkbox>
-        <el-checkbox value="FORMAT_CHECK">格式规范检测</el-checkbox>
+        <el-checkbox value="FAIRNESS">公平竞争检测</el-checkbox>
+        <el-checkbox value="COMPLIANCE">合规性检测</el-checkbox>
       </el-checkbox-group>
 
       <!-- 政策文件选择 -->
@@ -79,10 +79,10 @@ const showReport = ref(false)
 const hasUnavailable = ref(false)
 const selectedPolicyFileIds = ref<number[]>([])
 const selectedDetectionTypes = ref<DetectionType[]>([
-  'SENSITIVE_WORD',
+  'FAIRNESS',
+  'COMPLIANCE',
   'TYPO',
-  'POLICY_REVIEW',
-  'FORMAT_CHECK',
+  'SENSITIVE_WORD',
 ])
 const projectCategory = ref('')
 

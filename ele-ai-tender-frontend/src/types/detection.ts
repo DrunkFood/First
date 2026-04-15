@@ -1,5 +1,5 @@
 /** 检测类型 */
-export type DetectionType = 'SENSITIVE_WORD' | 'TYPO' | 'POLICY_REVIEW' | 'FORMAT_CHECK'
+export type DetectionType = 'FAIRNESS' | 'COMPLIANCE' | 'TYPO' | 'SENSITIVE_WORD'
 
 /** 检测项进度 */
 export interface DetectionItemProgress {

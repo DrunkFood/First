@@ -3,7 +3,7 @@
     <!-- 顶部工具栏 -->
     <div class="gen-toolbar">
       <div class="toolbar-left">
-        <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
+        <el-button :icon="ArrowLeft" @click="router.back()">返回列表</el-button>
         <el-divider direction="vertical" />
         <span class="toolbar-title">业务需求生成</span>
       </div>
@@ -142,6 +142,7 @@
         <!-- 底部导航 -->
         <div class="bottom-nav">
           <el-button @click="router.back()">返回修改</el-button>
+          <div style="flex: 1" />
           <el-button type="primary" @click="handleNextStep">
             下一步：智能检测
           </el-button>
@@ -574,8 +575,13 @@ function formatBudget(yuan?: number): string {
 /* ---- 底部导航 ---- */
 .bottom-nav {
   display: flex;
-  justify-content: space-between;
-  padding: 16px 0;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--app-bg-tertiary);
+  border-top: 1px solid var(--app-border-light);
+  border-radius: 0 0 var(--app-radius-sm, 8px) var(--app-radius-sm, 8px);
+  margin: 16px -20px -20px;
 }
 
 /* ---- AI助手浮动面板 ---- */

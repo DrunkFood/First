@@ -1,21 +1,22 @@
 <template>
   <div class="requirement-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <h3>编制业务需求</h3>
-          <el-button type="primary" @click="handleCreate">新建业务需求</el-button>
-        </div>
-      </template>
+    <!-- 页面标题 -->
+    <h1 class="page-title">编制业务需求</h1>
 
+    <!-- 筛选区域 -->
+    <div class="filter-section">
       <el-form :inline="true" :model="queryParams" class="search-form">
         <el-form-item label="项目名称">
           <el-input v-model="queryParams.requirementName" placeholder="请输入项目名称" clearable />
         </el-form-item>
         <el-form-item label="需求状态">
           <el-select v-model="queryParams.status" placeholder="全部" clearable>
-            <el-option label="进行中" value="GENERATING" />
-            <el-option label="已完成" value="APPROVED" />
+            <el-option
+              v-for="(item, key) in REQUIREMENT_STATUS_MAP"
+              :key="key"
+              :label="item.label"
+              :value="key"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="项目类型">
@@ -44,6 +45,14 @@
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3 class="table-title">业务需求列表</h3>
+        <el-button type="primary" @click="handleCreate">新建业务需求</el-button>
+      </div>
 
       <el-table :data="tableData" v-loading="loading">
         <el-table-column type="selection" width="50" />
@@ -68,17 +77,23 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleView(row.id)">查看</el-button>
-            <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+            <div class="action-buttons">
+              <el-tooltip content="查看" placement="top">
+                <el-button :icon="View" link type="primary" @click="handleView(row.id)" />
+              </el-tooltip>
+              <el-tooltip content="删除" placement="top">
+                <el-button :icon="Delete" link type="danger" @click="handleDelete(row.id)" />
+              </el-tooltip>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <div class="pagination-wrapper">
         <span class="pagination-info">
-          共 {{ total }} 条记录，当前显示第 {{ paginationStart }}-{{ paginationEnd }} 条
+          共 <strong>{{ total }}</strong> 条记录，当前显示第 <strong>{{ paginationStart }}-{{ paginationEnd }}</strong> 条
         </span>
         <el-pagination
           v-model:current-page="queryParams.pageNum"
@@ -90,7 +105,7 @@
           :page-sizes="[5, 10, 20, 50]"
         />
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -99,9 +114,10 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { requirementApi } from '@/api/requirement'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { View, Delete } from '@element-plus/icons-vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import ProgressCell from '@/components/common/ProgressCell.vue'
-import { PROJECT_TYPE_MAP } from '@/constants/status-maps'
+import { PROJECT_TYPE_MAP, REQUIREMENT_STATUS_MAP } from '@/constants/status-maps'
 import { formatBudgetWanYuan } from '@/utils/budget'
 import type { RequirementQueryParams } from '@/types/requirement'
 
@@ -197,31 +213,67 @@ onMounted(fetchData)
 </script>
 
 <style scoped>
-.card-header {
+.requirement-list {
+  padding: 24px 40px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0 0 24px 0;
+}
+
+.filter-section {
+  background: var(--app-bg-elevated);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--app-border-light);
+}
+
+.table-container {
+  background: var(--app-bg-elevated);
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+  overflow: hidden;
+}
+
+.table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--app-border-light);
 }
 
-.card-header h3 {
+.table-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--app-text-primary);
-}
-
-.search-form {
-  margin-bottom: 20px;
 }
 
 .pagination-wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--app-border-light);
 }
 
 .pagination-info {
   font-size: 13px;
-  color: var(--app-text-tertiary);
+  color: var(--app-text-secondary);
+}
+
+.pagination-info strong {
+  color: var(--app-text-primary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 </style>

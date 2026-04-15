@@ -1,104 +1,112 @@
 <template>
   <div class="requirement-edit">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <el-button @click="router.push('/requirement')">返回列表</el-button>
-          <h3>编辑业务需求</h3>
-        </div>
-      </template>
+    <!-- 页面头部 -->
+    <div class="page-header">
+      <h1 class="page-title">编辑业务需求</h1>
+      <el-button @click="router.push('/requirement')">
+        <el-icon><ArrowLeft /></el-icon>
+        返回列表
+      </el-button>
+    </div>
 
+    <div class="form-container">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="130px">
         <!-- 第一部分：业务需求基本信息 -->
-        <el-divider content-position="left">业务需求基本信息</el-divider>
+        <div class="form-section">
+          <h3 class="section-title">业务需求基本信息</h3>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="项目名称" prop="requirementName">
-              <el-input v-model="form.requirementName" placeholder="请输入项目名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="项目类型" prop="projectType">
-              <el-select v-model="form.projectType" placeholder="请选择项目类型">
-                <el-option label="工程类" value="ENGINEERING" />
-                <el-option label="货物类" value="GOODS" />
-                <el-option label="服务类" value="SERVICE" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="项目名称" prop="requirementName">
+                <el-input v-model="form.requirementName" placeholder="请输入项目名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="项目类型" prop="projectType">
+                <el-select v-model="form.projectType" placeholder="请选择项目类型">
+                  <el-option label="工程类" value="ENGINEERING" />
+                  <el-option label="货物类" value="GOODS" />
+                  <el-option label="服务类" value="SERVICE" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="项目预算(万元)" prop="budget">
-              <el-input-number
-                v-model="form.budget"
-                :min="0"
-                :precision="2"
-                :step="0.01"
-                class="full-width"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="需求类型" prop="requirementType">
-              <el-select v-model="form.requirementType" placeholder="请选择需求类型">
-                <el-option label="新增需求" value="NEW" />
-                <el-option label="修改需求" value="MODIFY" />
-                <el-option label="延续需求" value="CONTINUE" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="项目预算(万元)" prop="budget">
+                <el-input-number
+                  v-model="form.budget"
+                  :min="0"
+                  :precision="2"
+                  :step="0.01"
+                  class="full-width"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="需求类型" prop="requirementType">
+                <el-select v-model="form.requirementType" placeholder="请选择需求类型">
+                  <el-option label="新增需求" value="NEW" />
+                  <el-option label="修改需求" value="MODIFY" />
+                  <el-option label="延续需求" value="CONTINUE" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-        <el-form-item label="项目基本情况描述">
-          <el-input
-            v-model="form.requirementDescription"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入项目基本情况描述"
-            maxlength="500"
-            show-word-limit
-          />
-        </el-form-item>
+          <el-form-item label="项目基本情况描述">
+            <el-input
+              v-model="form.requirementDescription"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入项目基本情况描述"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+        </div>
 
         <!-- 第二部分：参考文件选择 -->
-        <el-divider content-position="left">参考文件选择</el-divider>
+        <div class="form-section">
+          <h3 class="section-title">参考文件选择</h3>
 
-        <el-form-item label="匹配模式">
-          <MatchModePanel
-            v-model="form.matchMode"
-            :match-files="matchFiles"
-            :selected-file-ids="form.matchedFileIds"
-            :upload-accept="'.doc,.docx,.pdf'"
-            :upload-limit="5"
-            mode="edit"
-            :requirement-id="requirementId"
-            @update:selected-file-ids="form.matchedFileIds = $event"
-            @file-preview="handlePreviewFile"
-          />
-        </el-form-item>
+          <el-form-item label="匹配模式">
+            <MatchModePanel
+              v-model="form.matchMode"
+              :match-files="matchFiles"
+              :selected-file-ids="form.matchedFileIds"
+              :upload-accept="'.doc,.docx,.pdf'"
+              :upload-limit="5"
+              mode="edit"
+              :requirement-id="requirementId"
+              @update:selected-file-ids="form.matchedFileIds = $event"
+              @file-preview="handlePreviewFile"
+            />
+          </el-form-item>
+        </div>
 
         <!-- 第三部分：资格要求 -->
-        <el-divider content-position="left">资格要求</el-divider>
+        <div class="form-section">
+          <h3 class="section-title">资格要求</h3>
 
-        <el-form-item label="资格条件">
-          <QualificationList
-            v-model="form.qualifications"
-            :min-items="1"
-          />
-        </el-form-item>
+          <el-form-item label="资格条件">
+            <QualificationList
+              v-model="form.qualifications"
+              :min-items="1"
+            />
+          </el-form-item>
+        </div>
 
         <!-- 底部按钮 -->
-        <el-form-item class="form-actions">
+        <div class="form-actions">
           <el-button @click="router.push('/requirement')">取消</el-button>
           <el-button type="primary" :loading="submitting" @click="handleSubmit">
             保存修改
           </el-button>
-        </el-form-item>
+        </div>
       </el-form>
-    </el-card>
+    </div>
 
     <!-- 文件预览弹窗 -->
     <el-dialog v-model="previewVisible" title="文件预览" width="600px" destroy-on-close>
@@ -120,6 +128,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { requirementApi } from '@/api/requirement'
 import { toYuan } from '@/utils/budget'
 import { ElMessage, type FormInstance } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import MatchModePanel from '@/components/requirement/MatchModePanel.vue'
 import QualificationList from '@/components/requirement/QualificationList.vue'
 import type { MatchFile, RequirementType } from '@/types/requirement'
@@ -228,19 +237,46 @@ function formatBudget(yuan?: number): string {
 
 <style scoped>
 .requirement-edit {
-  padding: 20px;
+  padding: 24px 40px;
 }
 
-.card-header {
+.page-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.card-header h3 {
-  margin: 0;
-  font-size: 16px;
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
   color: var(--app-text-primary);
+  margin: 0;
+}
+
+.form-container {
+  background: var(--app-bg-elevated);
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+  overflow: hidden;
+}
+
+.form-section {
+  padding: 24px;
+  border-bottom: 1px solid var(--app-border-light);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--app-brand-color);
 }
 
 .full-width {
@@ -248,8 +284,11 @@ function formatBudget(yuan?: number): string {
 }
 
 .form-actions {
-  margin-top: 24px;
-  padding-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px;
+  background: var(--app-bg-tertiary);
   border-top: 1px solid var(--app-border-light);
 }
 

@@ -50,6 +50,7 @@ public class AiTaskProcessor {
             if (updated == 0) {
                 continue; // 已被其他实例抢占
             }
+            log.info("开始处理AI任务: id={}, type={}", task.getId(), task.getTaskType());
 
             try {
                 String result = dispatch(task);
