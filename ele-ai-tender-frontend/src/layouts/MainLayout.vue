@@ -4,7 +4,7 @@
       <Header />
     </el-header>
     <el-container>
-      <el-aside width="200px" class="main-aside">
+      <el-aside width="240px" class="main-aside">
         <Sidebar />
       </el-aside>
       <el-main class="main-content">
@@ -31,6 +31,8 @@ import Sidebar from './components/Sidebar.vue'
 }
 .main-aside {
   background: var(--app-sidebar-bg);
+  backdrop-filter: var(--app-backdrop-blur);
+  -webkit-backdrop-filter: var(--app-backdrop-blur);
   border-right: 1px solid var(--app-border-light);
   transition: var(--app-transition-base);
 }

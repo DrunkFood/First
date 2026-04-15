@@ -46,6 +46,7 @@ onMounted(async () => {
   background: var(--app-sidebar-bg);
   border-right: none;
   transition: var(--app-transition-base);
+  padding: 20px 0;
 
   // 文字颜色
   :deep(.el-menu-item),
@@ -53,6 +54,9 @@ onMounted(async () => {
     color: var(--app-text-secondary);
     border-left: 3px solid transparent;
     transition: var(--app-transition-base);
+    padding: 12px 20px;
+    height: auto;
+    line-height: normal;
 
     &:hover {
       background: var(--app-hover-state);
