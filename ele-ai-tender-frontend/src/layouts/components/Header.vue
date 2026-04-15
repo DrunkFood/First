@@ -1,25 +1,28 @@
 <template>
   <div class="header-container">
     <div class="logo">AI招标文件编制系统</div>
-    <div class="user-info">
-      <el-dropdown @command="handleCommand">
-        <span class="user-name">
-          <el-avatar :size="28" :icon="UserFilled" style="margin-right: 6px;" />
-          {{ userStore.userInfo?.username || '管理员' }}
-        </span>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="password">
-              <el-icon><Lock /></el-icon>
-              修改密码
-            </el-dropdown-item>
-            <el-dropdown-item divided command="logout">
-              <el-icon><SwitchButton /></el-icon>
-              退出登录
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+    <div class="header-actions">
+      <ThemeToggle />
+      <div class="user-info">
+        <el-dropdown @command="handleCommand">
+          <span class="user-name">
+            <el-avatar :size="28" :icon="UserFilled" style="margin-right: 6px;" />
+            {{ userStore.userInfo?.username || '管理员' }}
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="password">
+                <el-icon><Lock /></el-icon>
+                修改密码
+              </el-dropdown-item>
+              <el-dropdown-item divided command="logout">
+                <el-icon><SwitchButton /></el-icon>
+                退出登录
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </div>
   </div>
 
@@ -50,6 +53,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { UserFilled, Lock, SwitchButton } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { authApi } from '@/api/auth'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -124,13 +128,18 @@ function handleLogout() {
   align-items: center;
   height: 60px;
   padding: 0 20px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: var(--app-header-bg);
+  transition: var(--app-transition-base);
 }
 .logo {
   font-size: 18px;
   font-weight: bold;
-  color: #1890ff;
+  color: var(--app-brand-color);
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .user-info {
   display: flex;
@@ -140,12 +149,12 @@ function handleLogout() {
   display: flex;
   align-items: center;
   cursor: pointer;
-  color: #333;
+  color: var(--app-text-primary);
   padding: 6px 12px;
-  border-radius: 4px;
-  transition: background 0.3s;
+  border-radius: var(--app-radius-sm);
+  transition: var(--app-transition-base);
 }
 .user-name:hover {
-  background: #f5f5f5;
+  background: var(--app-hover-state);
 }
 </style>

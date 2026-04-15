@@ -1,0 +1,46 @@
+// ============================================================
+// 基础重置
+// ============================================================
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--app-bg-primary);
+  color: var(--app-text-primary);
+  font-family: var(--app-font-family);
+  font-size: var(--app-font-size-body);
+  line-height: 1.6;
+  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100vh;
+}
+
+// 选择框样式
+::selection {
+  background: var(--app-brand-color);
+  color: #fff;
+}
+
+// 滚动条
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--app-border-medium);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--app-text-tertiary);
+}

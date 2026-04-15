@@ -54,8 +54,20 @@ public class StatisticsOverviewVO {
     @Schema(description = "未读消息总数")
     private long unreadMessageCount;
 
+    @Schema(description = "待检测项目数")
+    private long pendingDetectionCount;
+
+    @Schema(description = "检测未通过项目数")
+    private long detectionFailedCount;
+
+    @Schema(description = "编制中项目数")
+    private long inProgressCount;
+
     @Schema(description = "近7天每日操作统计")
     private List<DailyStatItem> dailyOperations;
+
+    @Schema(description = "项目状态分布")
+    private List<StatusDistItem> projectStatusDist;
 
     /**
      * 每日统计项
@@ -66,6 +78,23 @@ public class StatisticsOverviewVO {
 
         @Schema(description = "日期 yyyy-MM-dd")
         private String date;
+
+        @Schema(description = "数量")
+        private long count;
+    }
+
+    /**
+     * 状态分布项
+     */
+    @Data
+    @Schema(description = "状态分布项")
+    public static class StatusDistItem {
+
+        @Schema(description = "状态码")
+        private String status;
+
+        @Schema(description = "状态名称")
+        private String statusName;
 
         @Schema(description = "数量")
         private long count;

@@ -6,7 +6,7 @@
     <el-row :gutter="16" class="stat-row">
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: #409eff">
+          <div class="stat-icon" :style="{ background: 'var(--app-brand-color)' }">
             <el-icon :size="28"><Folder /></el-icon>
           </div>
           <div class="stat-info">
@@ -17,7 +17,7 @@
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: #67c23a">
+          <div class="stat-icon" :style="{ background: 'var(--app-color-success)' }">
             <el-icon :size="28"><Document /></el-icon>
           </div>
           <div class="stat-info">
@@ -28,7 +28,7 @@
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: #e6a23c">
+          <div class="stat-icon" :style="{ background: 'var(--app-color-warning)' }">
             <el-icon :size="28"><Checked /></el-icon>
           </div>
           <div class="stat-info">
@@ -39,7 +39,7 @@
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon" style="background: #f56c6c">
+          <div class="stat-icon" :style="{ background: 'var(--app-color-danger)' }">
             <el-icon :size="28"><Clock /></el-icon>
           </div>
           <div class="stat-info">
@@ -194,6 +194,7 @@ onMounted(async () => {
   margin: 0 0 20px;
   font-size: 20px;
   font-weight: 600;
+  color: var(--app-text-primary);
 }
 .stat-row {
   margin-bottom: 20px;
@@ -201,6 +202,10 @@ onMounted(async () => {
 .stat-card {
   display: flex;
   align-items: center;
+  transition: var(--app-transition-base);
+}
+.stat-card:hover {
+  transform: translateY(-4px);
 }
 .stat-card :deep(.el-card__body) {
   display: flex;
@@ -211,7 +216,7 @@ onMounted(async () => {
 .stat-icon {
   width: 56px;
   height: 56px;
-  border-radius: 12px;
+  border-radius: var(--app-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -224,12 +229,12 @@ onMounted(async () => {
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #303133;
+  color: var(--app-text-primary);
   line-height: 1.2;
 }
 .stat-label {
   font-size: 13px;
-  color: #909399;
+  color: var(--app-text-tertiary);
   margin-top: 4px;
 }
 .card-header {
@@ -252,13 +257,13 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--app-border-light);
 }
 .todo-item:last-child {
   border-bottom: none;
 }
 .todo-label {
   font-size: 14px;
-  color: #303133;
+  color: var(--app-text-primary);
 }
 </style>

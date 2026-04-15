@@ -415,9 +415,10 @@ function getCardIcon(card: DetectCard) {
 }
 
 function getCardIconColor(card: DetectCard): string {
-  if (card.failed) return '#F56C6C'
-  if (card.completed) return '#67C23A'
-  return '#409EFF'
+  const style = getComputedStyle(document.documentElement)
+  if (card.failed) return style.getPropertyValue('--app-color-danger').trim()
+  if (card.completed) return style.getPropertyValue('--app-color-success').trim()
+  return style.getPropertyValue('--app-brand-color').trim()
 }
 
 /** 高亮原文片段中的问题词（简单的 **...** 标记转 <mark>） */
@@ -437,7 +438,8 @@ function highlightLocation(location: string): string {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f5f7fa;
+  background: var(--app-bg-secondary);
+  transition: var(--app-transition-base);
 }
 
 /* ---- 顶部工具栏 ---- */
@@ -446,8 +448,8 @@ function highlightLocation(location: string): string {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--app-bg-elevated);
+  border-bottom: 1px solid var(--app-border-medium);
   flex-shrink: 0;
 }
 
@@ -460,7 +462,7 @@ function highlightLocation(location: string): string {
 .toolbar-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--app-text-primary);
 }
 
 /* ---- 主内容区 ---- */
@@ -477,7 +479,7 @@ function highlightLocation(location: string): string {
   align-items: center;
   justify-content: center;
   padding: 80px 0;
-  color: #909399;
+  color: var(--app-text-tertiary);
   gap: 12px;
 }
 
@@ -490,19 +492,24 @@ function highlightLocation(location: string): string {
 }
 
 .detect-card {
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  background: var(--app-bg-elevated);
+  border: 1px solid var(--app-border-medium);
+  border-radius: var(--app-radius-sm);
   padding: 20px;
-  transition: border-color 0.3s;
+  transition: var(--app-transition-base);
+}
+
+.detect-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--app-shadow-md);
 }
 
 .detect-card.is-completed {
-  border-color: #67c23a;
+  border-color: var(--app-color-success);
 }
 
 .detect-card.is-failed {
-  border-color: #f56c6c;
+  border-color: var(--app-color-danger);
 }
 
 .card-header {
@@ -515,7 +522,7 @@ function highlightLocation(location: string): string {
 .card-title {
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: var(--app-text-primary);
   flex: 1;
 }
 
@@ -529,22 +536,22 @@ function highlightLocation(location: string): string {
 }
 
 .issue-count {
-  color: #f56c6c;
+  color: var(--app-color-danger);
 }
 
 .no-issue {
-  color: #67c23a;
+  color: var(--app-color-success);
 }
 
 .waiting-text {
-  color: #909399;
+  color: var(--app-text-tertiary);
 }
 
 /* ---- 检测结果 ---- */
 .detect-result {
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  background: var(--app-bg-elevated);
+  border: 1px solid var(--app-border-medium);
+  border-radius: var(--app-radius-sm);
   padding: 20px;
   margin-bottom: 24px;
 }
@@ -559,7 +566,7 @@ function highlightLocation(location: string): string {
 .result-header h4 {
   margin: 0;
   font-size: 16px;
-  color: #303133;
+  color: var(--app-text-primary);
 }
 
 /* ---- 问题列表 ---- */
@@ -570,14 +577,14 @@ function highlightLocation(location: string): string {
 }
 
 .result-item {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--app-border-light);
   border-radius: 6px;
   padding: 16px;
-  transition: box-shadow 0.2s;
+  transition: var(--app-transition-base);
 }
 
 .result-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .item-header {
@@ -595,11 +602,11 @@ function highlightLocation(location: string): string {
   margin-bottom: 12px;
   line-height: 1.6;
   font-size: 14px;
-  color: #606266;
+  color: var(--app-text-secondary);
 }
 
 .item-body .label {
-  color: #909399;
+  color: var(--app-text-tertiary);
   font-size: 13px;
 }
 
@@ -608,12 +615,12 @@ function highlightLocation(location: string): string {
 }
 
 .location-text {
-  color: #303133;
+  color: var(--app-text-primary);
 }
 
 .location-text :deep(mark) {
-  background: #fde2e2;
-  color: #f56c6c;
+  background: var(--app-color-danger-light);
+  color: var(--app-color-danger);
   padding: 1px 4px;
   border-radius: 2px;
   font-weight: 600;
@@ -624,13 +631,13 @@ function highlightLocation(location: string): string {
 }
 
 .item-suggestion {
-  background: #f0f9eb;
+  background: var(--app-color-success-light);
   border-radius: 4px;
   padding: 8px 12px;
 }
 
 .suggestion-text {
-  color: #67c23a;
+  color: var(--app-color-success);
   font-weight: 500;
 }
 
@@ -647,7 +654,7 @@ function highlightLocation(location: string): string {
   justify-content: center;
   gap: 8px;
   padding: 40px 0;
-  color: #909399;
+  color: var(--app-text-tertiary);
 }
 
 /* ---- 底部操作 ---- */

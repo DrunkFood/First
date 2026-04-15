@@ -27,6 +27,19 @@
         </el-card>
       </div>
 
+      <!-- 待办提醒 -->
+      <div v-if="todoItems.length > 0" class="todo-bar">
+        <el-card shadow="never" class="panel-card todo-card">
+          <div class="todo-list">
+            <div v-for="item in todoItems" :key="item.label" class="todo-item" :class="item.level">
+              <el-icon :size="16"><component :is="item.icon" /></el-icon>
+              <span class="todo-label">{{ item.label }}</span>
+              <el-tag :type="item.tagType" round size="small">{{ item.count }}</el-tag>
+            </div>
+          </div>
+        </el-card>
+      </div>
+
       <!-- 辅助指标 -->
       <div class="stats-grid secondary">
         <el-card v-for="item in secondaryStatCards" :key="item.label" shadow="never" class="panel-card stat-card small">
@@ -37,8 +50,9 @@
         </el-card>
       </div>
 
-      <!-- 趋势 + 快捷入口 -->
+      <!-- 趋势 + 项目状态 + 快捷入口 -->
       <div class="bottom-grid">
+        <!-- 近7天操作趋势 -->
         <el-card shadow="never" class="panel-card">
           <template #header>
             <span>近7天操作趋势</span>
@@ -56,6 +70,26 @@
           </el-table>
         </el-card>
 
+        <!-- 项目状态分布 -->
+        <el-card shadow="never" class="panel-card">
+          <template #header>
+            <span>项目状态分布</span>
+          </template>
+          <el-table :data="overview?.projectStatusDist || []" border stripe size="small">
+            <el-table-column prop="statusName" label="状态" />
+            <el-table-column prop="count" label="数量">
+              <template #default="{ row }">
+                <div class="bar-wrap">
+                  <div class="status-bar" :class="statusClass(row.status)" :style="{ width: statusBarWidth(row.count) }" />
+                  <span class="bar-text">{{ row.count }}</span>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-if="!overview?.projectStatusDist?.length" description="暂无项目数据" :image-size="60" />
+        </el-card>
+
+        <!-- 快捷入口 + 系统信息 -->
         <div class="right-col">
           <el-card shadow="never" class="panel-card">
             <template #header>
@@ -71,7 +105,7 @@
                 <span>角色管理</span>
               </button>
               <button class="quick-tile" @click="$router.push('/template')">
-                <el-icon><Document /></el-icon>
+                <el-icon><Notebook /></el-icon>
                 <span>模板管理</span>
               </button>
               <button class="quick-tile" @click="$router.push('/knowledge')">
@@ -110,7 +144,7 @@
 import { computed, onMounted, ref } from 'vue'
 import {
   User, UserFilled, Connection, FolderOpened,
-  Collection, Bell, Refresh, Notebook,
+  Collection, Bell, Refresh, Notebook, Warning, Clock, CircleClose,
 } from '@element-plus/icons-vue'
 import type { StatisticsOverview } from '@/types/statistics'
 import { statisticsApi } from '@/api/statistics'
@@ -144,13 +178,58 @@ const secondaryStatCards = computed(() => {
   ]
 })
 
+/** 待办事项：只展示数量 > 0 的项目 */
+const todoItems = computed(() => {
+  const o = overview.value
+  if (!o) return []
+  const items: { label: string; count: number; icon: typeof Warning; level: string; tagType: 'danger' | 'warning' | 'info' }[] = []
+  if (o.pendingDetectionCount > 0) {
+    items.push({ label: '待检测项目', count: o.pendingDetectionCount, icon: Clock, level: 'warn', tagType: 'warning' })
+  }
+  if (o.detectionFailedCount > 0) {
+    items.push({ label: '检测未通过', count: o.detectionFailedCount, icon: CircleClose, level: 'danger', tagType: 'danger' })
+  }
+  if (o.unreadMessageCount > 0) {
+    items.push({ label: '未读消息', count: o.unreadMessageCount, icon: Bell, level: 'info', tagType: 'info' })
+  }
+  if (o.inProgressCount > 0) {
+    items.push({ label: '编制中项目', count: o.inProgressCount, icon: Warning, level: 'accent', tagType: 'info' })
+  }
+  return items
+})
+
 const maxCount = computed(() => {
   const items = overview.value?.dailyOperations || []
   return Math.max(...items.map(i => i.count), 1)
 })
 
+const maxProjectStatus = computed(() => {
+  const items = overview.value?.projectStatusDist || []
+  return Math.max(...items.map(i => i.count), 1)
+})
+
 const barWidth = (count: number) => {
   return `${Math.max((count / maxCount.value) * 100, 2)}%`
+}
+
+const statusBarWidth = (count: number) => {
+  return `${Math.max((count / maxProjectStatus.value) * 100, 2)}%`
+}
+
+/** 根据项目状态返回对应的样式类 */
+const statusClass = (status: string): string => {
+  const map: Record<string, string> = {
+    DRAFT: 'status-draft',
+    IN_PROGRESS: 'status-progress',
+    PENDING_DETECTION: 'status-pending',
+    DETECTING: 'status-detecting',
+    DETECTION_PASSED: 'status-passed',
+    DETECTION_FAILED: 'status-failed',
+    PUBLISHED: 'status-published',
+    ARCHIVED: 'status-archived',
+    CANCELLED: 'status-cancelled',
+  }
+  return map[status] || 'status-draft'
 }
 
 const fetchData = async () => {
@@ -261,9 +340,55 @@ onMounted(() => {
     }
   }
 
+  .todo-bar {
+    margin-bottom: 14px;
+  }
+
+  .todo-card {
+    border: none;
+    background: linear-gradient(135deg, #fef9f0 0%, #fdf6ec 100%);
+
+    :deep(.el-card__body) {
+      padding: 10px 16px;
+    }
+  }
+
+  .todo-list {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+
+    &.warn {
+      color: var(--el-color-warning, #e6a23c);
+    }
+
+    &.danger {
+      color: var(--el-color-danger, #f56c6c);
+    }
+
+    &.accent {
+      color: var(--el-color-primary, #197b55);
+    }
+
+    &.info {
+      color: var(--el-color-info, #909399);
+    }
+  }
+
+  .todo-label {
+    white-space: nowrap;
+  }
+
   .bottom-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 14px;
   }
 
@@ -279,7 +404,7 @@ onMounted(() => {
 
   .quick-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
 
@@ -316,10 +441,60 @@ onMounted(() => {
     transition: width 0.3s;
   }
 
+  .status-bar {
+    height: 18px;
+    border-radius: 4px;
+    transition: width 0.3s;
+
+    &.status-draft {
+      background: #c0c4cc;
+    }
+
+    &.status-progress {
+      background: #409eff;
+    }
+
+    &.status-pending {
+      background: #e6a23c;
+    }
+
+    &.status-detecting {
+      background: #f56c6c;
+    }
+
+    &.status-passed {
+      background: #67c23a;
+    }
+
+    &.status-failed {
+      background: #f56c6c;
+    }
+
+    &.status-published {
+      background: #197b55;
+    }
+
+    &.status-archived {
+      background: #909399;
+    }
+
+    &.status-cancelled {
+      background: #c0c4cc;
+    }
+  }
+
   .bar-text {
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-page {
+    .bottom-grid {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 }
 

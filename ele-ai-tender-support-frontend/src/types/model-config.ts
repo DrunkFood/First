@@ -4,7 +4,7 @@ export interface ModelConfigInfo {
   modelName: string
   modelType: string
   endpoint: string
-  apiKey?: string
+  apiKey?: string        // 脱敏后的密钥（如 sk-****1234）
   modelCode: string
   maxTokens: number
   temperature: number
@@ -14,10 +14,11 @@ export interface ModelConfigInfo {
   tokenUsage: number
   tokenLimit: number
   isActive: number
-  status: number
+  usageScenario?: string
+  cost?: number
   remark?: string
   createTime?: string
-  updateTime?: string
+  modifyTime?: string
   createId?: number
   createName?: string
 }
@@ -28,7 +29,7 @@ export interface ModelConfigQueryParams {
   pageSize: number
   modelName?: string
   modelType?: string
-  status?: number
+  usageScenario?: string
 }
 
 // AI模型配置创建参数
@@ -36,7 +37,8 @@ export interface ModelConfigCreateParams {
   modelName: string
   modelType: string
   endpoint: string
-  apiKey?: string
+  apiKey?: string         // RSA加密后的密文
+  keyId?: string          // RSA密钥ID
   modelCode: string
   maxTokens?: number
   temperature?: number
@@ -44,6 +46,7 @@ export interface ModelConfigCreateParams {
   timeout?: number
   parameters?: string
   tokenLimit?: number
+  usageScenario?: string
   remark?: string
 }
 
@@ -53,7 +56,8 @@ export interface ModelConfigUpdateParams {
   modelName?: string
   modelType?: string
   endpoint?: string
-  apiKey?: string
+  apiKey?: string         // RSA加密后的密文（为空则不更新）
+  keyId?: string          // RSA密钥ID
   modelCode?: string
   maxTokens?: number
   temperature?: number
@@ -61,6 +65,6 @@ export interface ModelConfigUpdateParams {
   timeout?: number
   parameters?: string
   tokenLimit?: number
-  status?: number
+  usageScenario?: string
   remark?: string
 }

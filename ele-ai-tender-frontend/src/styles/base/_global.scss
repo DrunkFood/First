@@ -1,0 +1,62 @@
+// ============================================================
+// 全局工具类
+// ============================================================
+
+// ---- 渐变按钮 ----
+.gradient-btn {
+  background: var(--app-gradient-brand) !important;
+  border: none !important;
+  color: #fff !important;
+  transition: var(--app-transition-base);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(51, 108, 255, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// ---- 卡片悬停效果 ----
+.card-hover {
+  transition: var(--app-transition-base);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--app-shadow-lg);
+  }
+}
+
+// ---- 毛玻璃效果 ----
+.glass-effect {
+  background: var(--app-card-bg);
+  backdrop-filter: var(--app-backdrop-blur);
+  -webkit-backdrop-filter: var(--app-backdrop-blur);
+  border: 1px solid var(--app-border-light);
+}
+
+// ---- 状态徽章 ----
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: var(--app-font-size-caption);
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-badge-success {
+  background: var(--app-color-success-light);
+  color: var(--app-color-success);
+}
+
+.status-badge-warning {
+  background: var(--app-color-warning-light);
+  color: var(--app-color-warning);
+}
+
+.status-badge-danger {
+  background: var(--app-color-danger-light);
+  color: var(--app-color-danger);
+}

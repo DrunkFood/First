@@ -1,0 +1,16 @@
+// ============================================================
+// 间距、圆角、阴影、动画 工具类
+// ============================================================
+
+// ---- 圆角 ----
+.radius-sm { border-radius: var(--app-radius-sm); }
+.radius-md { border-radius: var(--app-radius-md); }
+.radius-lg { border-radius: var(--app-radius-lg); }
+
+// ---- 阴影 ----
+.shadow-sm { box-shadow: var(--app-shadow-sm); }
+.shadow-md { box-shadow: var(--app-shadow-md); }
+.shadow-lg { box-shadow: var(--app-shadow-lg); }
+
+// ---- 过渡 ----
+.transition-base { transition: var(--app-transition-base); }

@@ -1,10 +1,8 @@
 <template>
   <el-menu
     :default-active="route.path"
-    background-color="#001529"
-    text-color="#ffffffb3"
-    active-text-color="#1890ff"
     router
+    class="sidebar-menu"
   >
     <el-menu-item index="/dashboard">
       <span>首页</span>
@@ -43,7 +41,45 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.sidebar-menu {
+  background: var(--app-sidebar-bg);
+  border-right: none;
+  transition: var(--app-transition-base);
+
+  // 文字颜色
+  :deep(.el-menu-item),
+  :deep(.el-sub-menu__title) {
+    color: var(--app-text-secondary);
+    border-left: 3px solid transparent;
+    transition: var(--app-transition-base);
+
+    &:hover {
+      background: var(--app-hover-state);
+      color: var(--app-brand-color);
+    }
+  }
+
+  // 激活状态 - 左边框指示器
+  :deep(.el-menu-item.is-active) {
+    color: var(--app-brand-color);
+    background: var(--app-hover-state);
+    border-left-color: var(--app-brand-color);
+  }
+
+  // 子菜单
+  :deep(.el-sub-menu) {
+    .el-menu-item {
+      padding-left: 52px !important;
+    }
+  }
+
+  // 子菜单标题图标
+  :deep(.el-sub-menu__icon-arrow) {
+    color: var(--app-text-tertiary);
+  }
+}
+
 .msg-badge {
   margin-left: 8px;
 }

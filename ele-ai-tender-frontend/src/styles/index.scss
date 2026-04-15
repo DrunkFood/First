@@ -1,0 +1,21 @@
+// ============================================================
+// 主入口 - 按序导入所有样式
+// ============================================================
+
+// 1. 设计 Token（最先导入，定义 CSS 自定义属性）
+@use './variables/tokens';
+
+// 2. Element Plus 变量覆盖（依赖 token 定义）
+@use './variables/element-overrides';
+
+// 3. 字体规范
+@use './variables/typography';
+
+// 4. 间距工具
+@use './variables/spacing';
+
+// 5. 基础重置
+@use './base/reset';
+
+// 6. 全局工具类
+@use './base/global';

@@ -23,22 +23,42 @@
       </el-row>
 
       <!-- 近7天操作趋势 -->
-      <el-card shadow="never" class="panel-card">
-        <template #header>
-          <span style="font-weight: 600">近7天操作趋势</span>
-        </template>
-        <el-table :data="overview?.dailyOperations || []" border stripe>
-          <el-table-column prop="date" label="日期" />
-          <el-table-column prop="count" label="操作次数">
-            <template #default="{ row }">
-              <div class="bar-wrap">
-                <div class="bar" :style="{ width: barWidth(row.count) }" />
-                <span class="bar-text">{{ row.count }}</span>
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-card>
+      <div class="trend-grid">
+        <el-card shadow="never" class="panel-card">
+          <template #header>
+            <span style="font-weight: 600">近7天操作趋势</span>
+          </template>
+          <el-table :data="overview?.dailyOperations || []" border stripe>
+            <el-table-column prop="date" label="日期" />
+            <el-table-column prop="count" label="操作次数">
+              <template #default="{ row }">
+                <div class="bar-wrap">
+                  <div class="bar" :style="{ width: barWidth(row.count) }" />
+                  <span class="bar-text">{{ row.count }}</span>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+
+        <el-card shadow="never" class="panel-card">
+          <template #header>
+            <span style="font-weight: 600">项目状态分布</span>
+          </template>
+          <el-table :data="overview?.projectStatusDist || []" border stripe>
+            <el-table-column prop="statusName" label="状态" />
+            <el-table-column prop="count" label="数量">
+              <template #default="{ row }">
+                <div class="bar-wrap">
+                  <div class="bar" :style="{ width: statusBarWidth(row.count) }" />
+                  <span class="bar-text">{{ row.count }}</span>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-if="!overview?.projectStatusDist?.length" description="暂无项目数据" :image-size="60" />
+        </el-card>
+      </div>
     </div>
   </div>
 </template>
@@ -78,8 +98,17 @@ const maxCount = computed(() => {
   return Math.max(...items.map(i => i.count), 1)
 })
 
+const maxProjectStatus = computed(() => {
+  const items = overview.value?.projectStatusDist || []
+  return Math.max(...items.map(i => i.count), 1)
+})
+
 const barWidth = (count: number) => {
   return `${Math.max((count / maxCount.value) * 100, 2)}%`
+}
+
+const statusBarWidth = (count: number) => {
+  return `${Math.max((count / maxProjectStatus.value) * 100, 2)}%`
 }
 
 const fetchData = async () => {
@@ -114,6 +143,11 @@ onMounted(() => {
   font-size: 13px;
   color: #909399;
   margin-top: 4px;
+}
+.trend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 .bar-wrap {
   display: flex;

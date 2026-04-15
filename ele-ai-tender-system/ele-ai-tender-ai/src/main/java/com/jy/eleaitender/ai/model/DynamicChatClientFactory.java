@@ -3,6 +3,7 @@ package com.jy.eleaitender.ai.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.entity.support.AiModelConfig;
+import com.jy.eleaitender.common.util.AesUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
@@ -61,7 +62,9 @@ public class DynamicChatClientFactory {
         String modelName = params.model != null ? params.model : config.getModelName();
 
         // 创建OpenAI兼容的API客户端（适用于DeepSeek、GPT、本地vLLM/Ollama等）
-        OpenAiApi api = new OpenAiApi(config.getApiEndpoint(), config.getApiKey());
+        // apiKey存储时AES加密，使用前需解密
+        String plainApiKey = decryptApiKey(config.getApiKey());
+        OpenAiApi api = new OpenAiApi(config.getApiEndpoint(), plainApiKey);
 
         // 构建ChatOptions
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
@@ -82,6 +85,22 @@ public class DynamicChatClientFactory {
 
         // 构建ChatClient
         return ChatClient.builder(chatModel).build();
+    }
+
+    /**
+     * 解密apiKey（兼容AES密文和明文）
+     */
+    private String decryptApiKey(String apiKey) {
+        if (!StringUtils.hasText(apiKey)) {
+            return apiKey;
+        }
+        try {
+            return AesUtil.decrypt(apiKey);
+        } catch (Exception e) {
+            // 解密失败可能是历史明文数据，直接返回原始值
+            log.warn("apiKey解密失败，可能为历史明文数据");
+            return apiKey;
+        }
     }
 
     /**

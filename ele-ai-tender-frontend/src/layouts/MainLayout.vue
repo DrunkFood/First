@@ -24,15 +24,19 @@ import Sidebar from './components/Sidebar.vue'
   height: 100vh;
 }
 .main-header {
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  background: var(--app-header-bg);
+  box-shadow: var(--app-header-shadow);
   padding: 0;
+  transition: var(--app-transition-base);
 }
 .main-aside {
-  background: #001529;
+  background: var(--app-sidebar-bg);
+  border-right: 1px solid var(--app-border-light);
+  transition: var(--app-transition-base);
 }
 .main-content {
-  background: #f0f2f5;
+  background: var(--app-bg-secondary);
   padding: 20px;
+  transition: var(--app-transition-base);
 }
 </style>

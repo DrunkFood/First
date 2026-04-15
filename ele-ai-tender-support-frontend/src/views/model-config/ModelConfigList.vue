@@ -21,9 +21,9 @@
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
+            <el-select v-model="queryParams.isActive" placeholder="请选择状态" clearable>
               <el-option label="启用" :value="1" />
-              <el-option label="禁用" :value="0" />
+              <el-option label="停用" :value="0" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -72,6 +72,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="modelCode" label="模型代码" width="130" />
+        <el-table-column prop="endpoint" label="API端点" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="apiKey" label="API密钥" width="130">
+          <template #default="{ row }">
+            <span v-if="row.apiKey" class="masked-key">{{ row.apiKey }}</span>
+            <span v-else class="text-muted">未配置</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="isActive" label="激活" width="80">
           <template #default="{ row }">
             <el-switch
@@ -85,12 +92,6 @@
         <el-table-column prop="tokenUsage" label="Token用量" width="100">
           <template #default="{ row }">
             {{ row.tokenUsage }} / {{ row.tokenLimit || '不限' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 1" type="success" size="small">启用</el-tag>
-            <el-tag v-else type="danger" size="small">禁用</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="170" />
@@ -158,8 +159,9 @@
             v-model="formData.apiKey"
             type="password"
             show-password
-            placeholder="请输入API密钥"
+            :placeholder="isEdit ? '不修改请留空' : '请输入API密钥'"
           />
+          <div v-if="isEdit" class="form-tip">留空表示不修改，如需更换请输入新密钥</div>
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
@@ -258,13 +260,14 @@ const loading = ref(false)
 const tableData = ref<ModelConfigInfo[]>([])
 const total = ref(0)
 const selectedIds = ref<number[]>([])
+const isEdit = ref(false)
 
 const queryParams = reactive<ModelConfigQueryParams>({
   pageNum: 1,
   pageSize: 10,
   modelName: undefined,
   modelType: undefined,
-  status: undefined,
+  usageScenario: undefined,
 })
 
 const dialogVisible = ref(false)
@@ -316,17 +319,19 @@ const handleSearch = () => {
 const handleReset = () => {
   queryParams.modelName = undefined
   queryParams.modelType = undefined
-  queryParams.status = undefined
+  queryParams.usageScenario = undefined
   queryParams.pageNum = 1
   fetchList()
 }
 
 const handleAdd = () => {
+  isEdit.value = false
   dialogTitle.value = '新增模型配置'
   dialogVisible.value = true
 }
 
 const handleEdit = (row: ModelConfigInfo) => {
+  isEdit.value = true
   dialogTitle.value = '编辑模型配置'
   Object.assign(formData, {
     id: row.id,
@@ -334,7 +339,7 @@ const handleEdit = (row: ModelConfigInfo) => {
     modelType: row.modelType,
     modelCode: row.modelCode,
     endpoint: row.endpoint,
-    apiKey: row.apiKey,
+    apiKey: '',  // 编辑时不回显密钥，用户需要重新输入
     maxTokens: row.maxTokens,
     temperature: row.temperature,
     topP: row.topP,
@@ -382,13 +387,9 @@ const handleBatchDelete = async () => {
 
 const handleToggleActive = async (row: ModelConfigInfo) => {
   try {
-    if (row.isActive === 1) {
-      await modelConfigApi.changeStatus(row.id, 0)
-      ElMessage.success('已停用模型')
-    } else {
-      await modelConfigApi.setActive(row.id)
-      ElMessage.success('已激活模型')
-    }
+    // v-model 已将 row.isActive 翻转到目标值，直接发送即可
+    await modelConfigApi.changeStatus(row.id, row.isActive)
+    ElMessage.success(row.isActive === 1 ? '已激活模型' : '已停用模型')
     fetchList()
   } catch (error) {
     console.error('切换激活状态失败:', error)
@@ -418,7 +419,26 @@ const handleSubmit = async () => {
     submitLoading.value = true
     try {
       if (formData.id) {
-        await modelConfigApi.update(formData as ModelConfigUpdateParams)
+        // 编辑模式：构建更新参数，apiKey为空则不传
+        const updateParams: ModelConfigUpdateParams = {
+          id: formData.id,
+          modelName: formData.modelName,
+          modelType: formData.modelType,
+          modelCode: formData.modelCode,
+          endpoint: formData.endpoint,
+          maxTokens: formData.maxTokens,
+          temperature: formData.temperature,
+          topP: formData.topP,
+          timeout: formData.timeout,
+          parameters: formData.parameters,
+          tokenLimit: formData.tokenLimit,
+          remark: formData.remark,
+        }
+        // 仅当用户输入了新的apiKey时才提交
+        if (formData.apiKey && formData.apiKey.trim() !== '') {
+          updateParams.apiKey = formData.apiKey
+        }
+        await modelConfigApi.update(updateParams)
         ElMessage.success('更新成功')
       } else {
         await modelConfigApi.create(formData)
@@ -460,4 +480,19 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @import '@/assets/styles/index.scss';
+
+.masked-key {
+  color: var(--el-text-color-secondary);
+  font-family: monospace;
+}
+
+.text-muted {
+  color: var(--el-text-color-placeholder);
+}
+
+.form-tip {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-top: 4px;
+}
 </style>

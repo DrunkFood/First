@@ -14,11 +14,22 @@ export interface StatisticsOverview {
   todayOperationCount: number
   todayProjectCount: number
   unreadMessageCount: number
+  pendingDetectionCount: number
+  detectionFailedCount: number
+  inProgressCount: number
   dailyOperations: DailyStatItem[]
+  projectStatusDist: StatusDistItem[]
 }
 
 // 每日统计项
 export interface DailyStatItem {
   date: string
+  count: number
+}
+
+// 状态分布项
+export interface StatusDistItem {
+  status: string
+  statusName: string
   count: number
 }

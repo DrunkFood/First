@@ -298,7 +298,13 @@ onMounted(() => {
   place-items: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(150deg, #f3faf6 0, #edf4ff 55%, #fef8ed 100%);
+  background: linear-gradient(
+    150deg,
+    var(--app-bg-secondary) 0,
+    var(--app-bg-primary) 55%,
+    var(--app-bg-tertiary) 100%
+  );
+  transition: var(--app-transition-base);
 }
 
 .bg-orb {
@@ -312,7 +318,7 @@ onMounted(() => {
   height: 460px;
   top: -140px;
   right: -80px;
-  background: radial-gradient(circle, rgba(42, 175, 128, 0.35), rgba(42, 175, 128, 0));
+  background: radial-gradient(circle, rgba(51, 108, 255, 0.2), rgba(51, 108, 255, 0));
 }
 
 .orb-b {
@@ -320,7 +326,7 @@ onMounted(() => {
   height: 360px;
   left: -120px;
   bottom: -90px;
-  background: radial-gradient(circle, rgba(228, 178, 86, 0.3), rgba(228, 178, 86, 0));
+  background: radial-gradient(circle, rgba(49, 227, 253, 0.15), rgba(49, 227, 253, 0));
 }
 
 .login-grid {
@@ -332,17 +338,22 @@ onMounted(() => {
   gap: 16px;
 }
 
-.brand-panel,
-.form-panel {
+.panel-card {
   padding: 30px;
+  background: var(--app-card-bg);
+  backdrop-filter: var(--app-backdrop-blur);
+  -webkit-backdrop-filter: var(--app-backdrop-blur);
+  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--app-border-light);
+  transition: var(--app-transition-base);
 }
 
 .kicker {
   display: inline-block;
   padding: 5px 10px;
   border-radius: 999px;
-  background: #e8f7f0;
-  color: #12734f;
+  background: var(--app-hover-state);
+  color: var(--app-brand-color);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.6px;
@@ -352,11 +363,11 @@ onMounted(() => {
   margin: 16px 0 10px;
   font-size: 38px;
   line-height: 1.1;
-  color: #142e24;
+  color: var(--app-text-primary);
 }
 
 .desc {
-  color: #55766a;
+  color: var(--app-text-secondary);
   line-height: 1.7;
 }
 
@@ -370,7 +381,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #30574b;
+  color: var(--app-text-secondary);
   font-weight: 500;
 }
 
@@ -378,17 +389,17 @@ onMounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 8px;
-  background: #21a06f;
+  background: var(--app-brand-color);
 }
 
 .form-head h2 {
   margin: 0;
   font-size: 28px;
-  color: #153428;
+  color: var(--app-text-primary);
 }
 
 .form-head p {
-  color: #708b80;
+  color: var(--app-text-tertiary);
   margin: 8px 0 22px;
 }
 
@@ -397,9 +408,9 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
-  background: #f0f4f2;
+  background: var(--app-bg-tertiary);
   padding: 4px;
-  border-radius: 8px;
+  border-radius: var(--app-radius-sm);
 }
 
 .tab-btn {
@@ -410,18 +421,18 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  color: #5a7a6c;
+  color: var(--app-text-tertiary);
   transition: all 0.2s;
 
   &:hover {
-    color: #2a7a5a;
+    color: var(--app-brand-color);
   }
 
   &.active {
-    background: white;
-    color: #1a5a42;
+    background: var(--app-bg-elevated);
+    color: var(--app-brand-color);
     font-weight: 600;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px var(--app-shadow-color);
   }
 }
 
@@ -445,6 +456,13 @@ onMounted(() => {
 
 .submit-btn {
   width: 100%;
+  background: var(--app-gradient-brand) !important;
+  border: none !important;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(51, 108, 255, 0.4);
+  }
 }
 
 @media (max-width: 960px) {
