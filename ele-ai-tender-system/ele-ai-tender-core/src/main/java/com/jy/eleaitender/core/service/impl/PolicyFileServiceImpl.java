@@ -2,7 +2,7 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.ai.AiPolicyFile;
+import com.jy.eleaitender.common.entity.core.AiPolicyFile;
 import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;

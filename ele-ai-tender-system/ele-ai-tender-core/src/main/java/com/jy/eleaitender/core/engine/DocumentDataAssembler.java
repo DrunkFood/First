@@ -2,9 +2,9 @@ package com.jy.eleaitender.core.engine;
 
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.core.entity.AiProject;
-import com.jy.eleaitender.core.entity.AiRequirement;
-import com.jy.eleaitender.core.entity.AiReviewItem;
+import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.common.entity.core.AiReviewItem;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.mapper.AiRequirementMapper;
 import com.jy.eleaitender.core.mapper.AiReviewItemMapper;

@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jy.eleaitender.core.entity.AiProjectVersion;
+import com.jy.eleaitender.common.entity.core.AiProjectVersion;
 import com.jy.eleaitender.core.mapper.AiProjectVersionMapper;
 import com.jy.eleaitender.core.service.IProjectVersionService;
 import org.springframework.beans.factory.annotation.Autowired;

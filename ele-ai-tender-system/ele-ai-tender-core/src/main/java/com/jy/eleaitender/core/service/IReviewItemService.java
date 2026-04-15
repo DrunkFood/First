@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.core.entity.AiReviewItem;
+import com.jy.eleaitender.common.entity.core.AiReviewItem;
 
 import java.util.List;
 import java.util.Map;

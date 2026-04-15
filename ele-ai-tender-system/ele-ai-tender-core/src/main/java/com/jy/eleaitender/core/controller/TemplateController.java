@@ -3,7 +3,7 @@ package com.jy.eleaitender.core.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
-import com.jy.eleaitender.common.entity.ai.AiTemplate;
+import com.jy.eleaitender.common.entity.core.AiTemplate;
 import com.jy.eleaitender.core.service.ITemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

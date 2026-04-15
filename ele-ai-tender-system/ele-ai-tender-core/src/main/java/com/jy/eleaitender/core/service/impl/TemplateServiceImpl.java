@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.entity.ai.AiTemplate;
+import com.jy.eleaitender.common.entity.core.AiTemplate;
 import com.jy.eleaitender.core.mapper.AiTemplateMapper;
 import com.jy.eleaitender.core.service.ITemplateService;
 import org.springframework.beans.factory.annotation.Autowired;

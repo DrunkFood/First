@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.dto.response;
 
-import com.jy.eleaitender.core.entity.AiProject;
-import com.jy.eleaitender.core.entity.AiRequirement;
+import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.AiRequirement;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 

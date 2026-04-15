@@ -5,7 +5,7 @@ import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.core.entity.AiReviewItem;
+import com.jy.eleaitender.common.entity.core.AiReviewItem;
 import com.jy.eleaitender.core.mapper.AiReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IReviewItemService;

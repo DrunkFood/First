@@ -7,7 +7,7 @@ import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
-import com.jy.eleaitender.core.entity.AiProject;
+import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;

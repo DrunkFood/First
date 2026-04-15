@@ -1,4 +1,4 @@
-package com.jy.eleaitender.core.entity;
+package com.jy.eleaitender.common.entity.core;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.jy.eleaitender.common.entity.base.BaseEntity;

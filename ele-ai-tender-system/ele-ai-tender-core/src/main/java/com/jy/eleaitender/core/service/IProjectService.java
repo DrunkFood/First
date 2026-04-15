@@ -2,7 +2,7 @@ package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
-import com.jy.eleaitender.core.entity.AiProject;
+import com.jy.eleaitender.common.entity.core.AiProject;
 
 import java.util.List;
 

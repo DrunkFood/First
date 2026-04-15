@@ -1,6 +1,6 @@
 package com.jy.eleaitender.core.dto.response;
 
-import com.jy.eleaitender.common.entity.ai.AiTemplate;
+import com.jy.eleaitender.common.entity.core.AiTemplate;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 

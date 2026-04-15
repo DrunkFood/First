@@ -2,7 +2,7 @@ package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.core.entity.AiRequirement;
+import com.jy.eleaitender.common.entity.core.AiRequirement;
 
 import java.util.Map;
 

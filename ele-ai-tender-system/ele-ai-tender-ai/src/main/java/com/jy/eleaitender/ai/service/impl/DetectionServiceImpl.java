@@ -2,7 +2,7 @@ package com.jy.eleaitender.ai.service.impl;
 
 import com.jy.eleaitender.ai.dto.request.DetectionRequest;
 import com.jy.eleaitender.ai.dto.response.DetectionResultVO;
-import com.jy.eleaitender.ai.entity.AiDetectionRecord;
+import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
 import com.jy.eleaitender.ai.mapper.AiDetectionRecordMapper;
 import com.jy.eleaitender.ai.service.IDetectionService;
 import org.springframework.beans.factory.annotation.Autowired;

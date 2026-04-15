@@ -6,7 +6,7 @@ import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
 import com.jy.eleaitender.core.engine.DocumentDataAssembler;
 import com.jy.eleaitender.core.engine.MarkdownTemplateEngine;
 import com.jy.eleaitender.core.engine.WordDocumentGenerator;
-import com.jy.eleaitender.core.entity.AiProject;
+import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.service.IDocumentIntegrationService;
 import lombok.extern.slf4j.Slf4j;
@@ -184,7 +184,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         if (items instanceof java.util.List<?> list && !list.isEmpty()) {
             sb.append(header);
             for (Object item : list) {
-                if (item instanceof com.jy.eleaitender.core.entity.AiReviewItem reviewItem) {
+                if (item instanceof com.jy.eleaitender.common.entity.core.AiReviewItem reviewItem) {
                     String indent = "  ".repeat(Math.max(0, (reviewItem.getLevel() != null ? reviewItem.getLevel() : 1) - 1));
                     sb.append(indent).append("- **").append(reviewItem.getItemName()).append("**");
                     if (StringUtils.hasText(reviewItem.getItemContent())) {

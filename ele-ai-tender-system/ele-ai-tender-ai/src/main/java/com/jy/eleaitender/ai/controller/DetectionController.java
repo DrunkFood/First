@@ -2,7 +2,7 @@ package com.jy.eleaitender.ai.controller;
 
 import com.jy.eleaitender.ai.dto.request.DetectionRequest;
 import com.jy.eleaitender.ai.dto.response.DetectionResultVO;
-import com.jy.eleaitender.ai.entity.AiDetectionRecord;
+import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
 import com.jy.eleaitender.ai.service.IDetectionService;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;

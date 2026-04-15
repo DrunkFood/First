@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.ai.AiTemplate;
+import com.jy.eleaitender.common.entity.core.AiTemplate;
 
 import java.util.List;
 

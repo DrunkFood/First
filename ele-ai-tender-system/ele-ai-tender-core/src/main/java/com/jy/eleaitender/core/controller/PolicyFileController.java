@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.ai.AiPolicyFile;
+import com.jy.eleaitender.common.entity.core.AiPolicyFile;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.request.PolicyFileRequest;

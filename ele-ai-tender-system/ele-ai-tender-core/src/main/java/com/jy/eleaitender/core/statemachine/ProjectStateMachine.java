@@ -3,7 +3,7 @@ package com.jy.eleaitender.core.statemachine;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.core.entity.AiProject;
+import com.jy.eleaitender.common.entity.core.AiProject;
 
 import java.util.Map;
 import java.util.Set;

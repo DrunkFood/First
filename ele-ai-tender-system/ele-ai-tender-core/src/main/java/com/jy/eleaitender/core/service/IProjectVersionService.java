@@ -1,6 +1,6 @@
 package com.jy.eleaitender.core.service;
 
-import com.jy.eleaitender.core.entity.AiProjectVersion;
+import com.jy.eleaitender.common.entity.core.AiProjectVersion;
 
 import java.util.List;
 
