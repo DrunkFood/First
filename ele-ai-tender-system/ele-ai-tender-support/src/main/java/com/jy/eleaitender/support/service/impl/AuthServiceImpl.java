@@ -14,9 +14,13 @@ import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
+import com.jy.eleaitender.common.entity.support.SysRole;
 import com.jy.eleaitender.common.entity.support.SysUser;
+import com.jy.eleaitender.common.entity.support.SysUserRole;
 import com.jy.eleaitender.support.mapper.SysAccessSystemMapper;
+import com.jy.eleaitender.support.mapper.SysRoleMapper;
 import com.jy.eleaitender.support.mapper.SysUserMapper;
+import com.jy.eleaitender.support.mapper.SysUserRoleMapper;
 import com.jy.eleaitender.common.security.LoginUser;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.support.service.IAuthService;
@@ -24,6 +28,7 @@ import com.jy.eleaitender.support.service.ISmsService;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueCommand;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueResult;
 import com.jy.eleaitender.support.model.external.ExternalUserInfoView;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import io.jsonwebtoken.Claims;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +59,14 @@ public class AuthServiceImpl implements IAuthService {
 
     @Autowired
     private ISmsService smsService;
+
+    @Autowired
+    private SysRoleMapper roleMapper;
+
+    @Autowired
+    private SysUserRoleMapper userRoleMapper;
+
+    private static final String DEFAULT_ROLE_CODE = "BID_USER";
 
     @Value("${jwt.expiration:7200}")
     private long tokenExpireSeconds;
@@ -94,43 +107,12 @@ public class AuthServiceImpl implements IAuthService {
             throw new AuthException(ResponseCode.USER_DISABLED);
         }
 
-        // 生成Token
-        long tokenExpireSeconds = resolveTokenExpireSeconds();
-        String token = JwtUtil.generateToken(user.getId(), user.getUsername(), tokenExpireSeconds * 1000);
-
-        // 存储Token到Redis
-        String redisKey = RedisKeyConstant.TOKEN_PREFIX + user.getId();
-        redisTemplate.opsForValue().set(redisKey, token, 
-                tokenExpireSeconds, TimeUnit.SECONDS);
-
-        // 加载用户权限并缓存
-        List<String> permissions = userMapper.selectPermissionsByUserId(user.getId());
-        String permissionKey = RedisKeyConstant.USER_PERMISSIONS_PREFIX + user.getId();
-        redisTemplate.delete(permissionKey);
-        if (permissions != null && !permissions.isEmpty()) {
-            redisTemplate.opsForSet().add(permissionKey, permissions.toArray(new String[0]));
-            redisTemplate.expire(permissionKey, RedisKeyConstant.PERMISSION_CACHE_EXPIRE_SECONDS, TimeUnit.SECONDS);
-        }
-
         // 更新最后登录时间
         user.setLastLoginTime(new Date());
         userMapper.updateById(user);
 
-        // 构建响应
-        UserLoginResponse response = new UserLoginResponse();
-        response.setToken(token);
-        response.setExpireIn(tokenExpireSeconds);
-        response.setPermissions(permissions);
-
-        UserLoginResponse.UserInfo userInfo = new UserLoginResponse.UserInfo();
-        userInfo.setUserId(user.getId());
-        userInfo.setUsername(user.getUsername());
-        userInfo.setRealName(user.getRealName());
-        userInfo.setEmail(user.getEmail());
-        userInfo.setPhone(user.getPhone());
-        userInfo.setRoles(userMapper.selectRoleCodesByUserId(user.getId()));
-        response.setUserInfo(userInfo);
-
+        // 构建登录响应
+        UserLoginResponse response = buildLoginResponse(user);
         log.info("用户[{}]登录成功", user.getUsername());
         return response;
     }
@@ -143,10 +125,10 @@ public class AuthServiceImpl implements IAuthService {
             throw new BusinessException("验证码错误或已过期");
         }
 
-        // 查询用户（通过手机号）
+        // 查询用户（通过手机号），未注册则自动注册
         SysUser user = userMapper.selectByPhone(request.getPhone());
         if (user == null) {
-            throw new BusinessException("该手机号未注册");
+            user = autoRegisterByPhone(request.getPhone());
         }
 
         // 检查用户状态
@@ -154,13 +136,64 @@ public class AuthServiceImpl implements IAuthService {
             throw new AuthException(ResponseCode.USER_DISABLED);
         }
 
+        // 更新最后登录时间
+        user.setLastLoginTime(new Date());
+        userMapper.updateById(user);
+
+        // 构建登录响应
+        UserLoginResponse response = buildLoginResponse(user);
+        log.info("用户[{}]通过手机验证码登录成功", user.getUsername());
+        return response;
+    }
+
+    /**
+     * 手机号自动注册：创建用户并分配默认角色
+     */
+    private SysUser autoRegisterByPhone(String phone) {
+        // 检查用户名是否已存在（以手机号作为用户名）
+        SysUser existing = userMapper.selectByUsername(phone);
+        if (existing != null) {
+            throw new BusinessException("该手机号对应的用户名已存在");
+        }
+
+        // 创建用户
+        SysUser user = new SysUser();
+        user.setUsername(phone);
+        user.setPassword(PasswordUtil.encode(PasswordUtil.generateRandomPassword()));
+        user.setRealName("用户" + phone.substring(phone.length() - 4));
+        user.setPhone(phone);
+        user.setStatus(1);
+        userMapper.insert(user);
+
+        // 查找默认角色 BID_USER 并分配
+        LambdaQueryWrapper<SysRole> roleQuery = new LambdaQueryWrapper<>();
+        roleQuery.eq(SysRole::getRoleCode, DEFAULT_ROLE_CODE)
+                 .eq(SysRole::getStatus, 1);
+        SysRole defaultRole = roleMapper.selectOne(roleQuery);
+        if (defaultRole != null) {
+            SysUserRole userRole = new SysUserRole();
+            userRole.setUserId(user.getId());
+            userRole.setRoleId(defaultRole.getId());
+            userRoleMapper.insert(userRole);
+        } else {
+            log.warn("默认角色[BID_USER]不存在，自动注册用户[{}]未分配角色", phone);
+        }
+
+        log.info("手机号[{}]自动注册成功，分配角色: {}", phone, DEFAULT_ROLE_CODE);
+        return user;
+    }
+
+    /**
+     * 构建登录响应（Token生成 + 权限加载 + 响应构建）
+     */
+    private UserLoginResponse buildLoginResponse(SysUser user) {
         // 生成Token
         long tokenExpireSeconds = resolveTokenExpireSeconds();
         String token = JwtUtil.generateToken(user.getId(), user.getUsername(), tokenExpireSeconds * 1000);
 
         // 存储Token到Redis
         String redisKey = RedisKeyConstant.TOKEN_PREFIX + user.getId();
-        redisTemplate.opsForValue().set(redisKey, token, 
+        redisTemplate.opsForValue().set(redisKey, token,
                 tokenExpireSeconds, TimeUnit.SECONDS);
 
         // 加载用户权限并缓存
@@ -171,10 +204,6 @@ public class AuthServiceImpl implements IAuthService {
             redisTemplate.opsForSet().add(permissionKey, permissions.toArray(new String[0]));
             redisTemplate.expire(permissionKey, RedisKeyConstant.PERMISSION_CACHE_EXPIRE_SECONDS, TimeUnit.SECONDS);
         }
-
-        // 更新最后登录时间
-        user.setLastLoginTime(new Date());
-        userMapper.updateById(user);
 
         // 构建响应
         UserLoginResponse response = new UserLoginResponse();
@@ -191,7 +220,6 @@ public class AuthServiceImpl implements IAuthService {
         userInfo.setRoles(userMapper.selectRoleCodesByUserId(user.getId()));
         response.setUserInfo(userInfo);
 
-        log.info("用户[{}]通过手机验证码登录成功", user.getUsername());
         return response;
     }
 

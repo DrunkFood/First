@@ -23,6 +23,11 @@ public enum ResponseCode {
     USER_EXISTS(1004, "用户已存在"),
     USER_TOKEN_EXPIRED(1005, "Token已过期"),
     USER_TOKEN_INVALID(1006, "Token无效"),
+
+    // 短信验证码相关 1011-1019
+    SMS_CODE_EXPIRED(1011, "验证码已过期"),
+    SMS_CODE_ERROR(1012, "验证码错误"),
+    SMS_SEND_TOO_FREQUENT(1013, "短信发送过于频繁"),
     
     // 角色权限相关 2001-2999
     ROLE_NOT_FOUND(2001, "角色不存在"),

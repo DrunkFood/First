@@ -14,6 +14,7 @@ import com.jy.eleaitender.support.service.ISmsService;
 import com.jy.eleaitender.support.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -50,8 +51,10 @@ public class AuthController {
 
     @PostMapping("/send-sms-code")
     @Operation(summary = "发送手机验证码")
-    public Result<String> sendSmsCode(@Valid @RequestBody SendSmsCodeRequest request) {
-        String code = smsService.sendSmsCode(request.getPhone());
+    public Result<String> sendSmsCode(@Valid @RequestBody SendSmsCodeRequest request,
+                                      HttpServletRequest httpRequest) {
+        String ipAddress = httpRequest.getRemoteAddr();
+        String code = smsService.sendSmsCode(request.getPhone(), "LOGIN", ipAddress);
         return Result.success(code); // 仅测试用，实际不返回验证码
     }
 
