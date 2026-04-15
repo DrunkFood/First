@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -99,6 +100,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (CommonConstant.TOKEN_TYPE_INTERNAL.equals(tokenType)) {
             loginUser.setUserId(getInternalUserId(claims));
             loginUser.setUsername(claims.get("username", String.class));
+            // 从 Redis 加载角色缓存（数据隔离需要判断管理员）
+            loadRolesFromRedis(loginUser);
             return loginUser;
         }
 
@@ -121,5 +124,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return longUserId;
         }
         return Long.valueOf(String.valueOf(userIdObj));
+    }
+
+    /**
+     * 从 Redis 加载用户角色缓存
+     * 角色在登录时由 AuthServiceImpl 写入 Redis
+     */
+    private void loadRolesFromRedis(LoginUser loginUser) {
+        if (loginUser.getUserId() == null) {
+            return;
+        }
+        try {
+            String roleKey = RedisKeyConstant.USER_ROLES_PREFIX + loginUser.getUserId();
+            Set<String> roles = redisTemplate.opsForSet().members(roleKey);
+            if (roles != null && !roles.isEmpty()) {
+                loginUser.setRoles(new ArrayList<>(roles));
+            }
+        } catch (Exception e) {
+            // Redis 读取失败不影响主流程
+        }
     }
 }

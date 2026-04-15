@@ -38,9 +38,15 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'requirement/edit/:id',
+        name: 'RequirementEdit',
+        component: () => import('@/views/requirement/RequirementEdit.vue'),
+        meta: { title: '编辑业务需求' },
+      },
+      {
+        path: 'requirement/editor/:id',
         name: 'RequirementEditor',
         component: () => import('@/views/requirement/RequirementEditor.vue'),
-        meta: { title: '编辑业务需求' },
+        meta: { title: '内容编辑' },
       },
       {
         path: 'requirement/generate/:id',

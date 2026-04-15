@@ -32,7 +32,7 @@ public class DataScopeHelper {
      * 判断表是否需要数据隔离
      */
     public static boolean isDataScopeTable(String tableName) {
-        return DataScopeTable.ISOLATED_TABLES.contains(tableName);
+        return tableName != null && DataScopeTable.ISOLATED_TABLES.contains(tableName);
     }
 
     /**
@@ -79,7 +79,7 @@ public class DataScopeHelper {
     /**
      * 检查 MappedStatement 对应的方法是否标记了 @DataScope(skip=true)
      */
-    private static boolean isDataScopeSkip(MappedStatement ms) {
+    public static boolean isDataScopeSkip(MappedStatement ms) {
         try {
             String id = ms.getId();
             int lastDot = id.lastIndexOf('.');

@@ -7,7 +7,7 @@
         <el-dropdown @command="handleCommand">
           <span class="user-name">
             <el-avatar :size="28" :icon="UserFilled" style="margin-right: 6px;" />
-            {{ userStore.userInfo?.username || '管理员' }}
+            {{ userStore.userInfo?.username }}
           </span>
           <template #dropdown>
             <el-dropdown-menu>

@@ -3,31 +3,27 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <h3>需求编制</h3>
-          <el-button type="primary" @click="handleCreate">新建需求</el-button>
+          <h3>编制业务需求</h3>
+          <el-button type="primary" @click="handleCreate">新建业务需求</el-button>
         </div>
       </template>
 
       <el-form :inline="true" :model="queryParams" class="search-form">
-        <el-form-item label="需求名称">
-          <el-input v-model="queryParams.requirementName" placeholder="请输入需求名称" clearable />
+        <el-form-item label="项目名称">
+          <el-input v-model="queryParams.requirementName" placeholder="请输入项目名称" clearable />
         </el-form-item>
         <el-form-item label="需求状态">
-          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-            <el-option
-              v-for="(item, key) in REQUIREMENT_STATUS_MAP"
-              :key="key"
-              :label="item.label"
-              :value="key"
-            />
+          <el-select v-model="queryParams.status" placeholder="全部" clearable>
+            <el-option label="进行中" value="GENERATING" />
+            <el-option label="已完成" value="APPROVED" />
           </el-select>
         </el-form-item>
         <el-form-item label="项目类型">
-          <el-select v-model="queryParams.projectType" placeholder="请选择项目类型" clearable>
+          <el-select v-model="queryParams.projectType" placeholder="全部" clearable>
             <el-option
               v-for="(item, key) in PROJECT_TYPE_MAP"
               :key="key"
-              :label="item.label"
+              :label="item.label + '类'"
               :value="key"
             />
           </el-select>
@@ -51,7 +47,7 @@
 
       <el-table :data="tableData" v-loading="loading">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="requirementName" label="需求名称" min-width="160">
+        <el-table-column prop="requirementName" label="项目名称" min-width="160">
           <template #default="{ row }">
             <el-link type="primary" @click="handleView(row.id)">{{ row.requirementName }}</el-link>
           </template>
@@ -61,14 +57,9 @@
             <StatusBadge :status="row.projectType" :type-map="PROJECT_TYPE_MAP" />
           </template>
         </el-table-column>
-        <el-table-column prop="budget" label="项目预算" width="130" align="right">
+        <el-table-column prop="budget" label="项目预算(万元)" width="150" align="right">
           <template #default="{ row }">
             {{ formatBudget(row.budget) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="120">
-          <template #default="{ row }">
-            <StatusBadge :status="row.status" :type-map="REQUIREMENT_STATUS_MAP" />
           </template>
         </el-table-column>
         <el-table-column prop="progress" label="完成进度" width="180">
@@ -77,37 +68,40 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleView(row.id)">查看</el-button>
-            <el-button link type="primary" @click="handleGenerate(row.id)">生成</el-button>
-            <el-button link type="primary" @click="handleDetect(row.id)">检测</el-button>
             <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-pagination
-        v-model:current-page="queryParams.pageNum"
-        v-model:page-size="queryParams.pageSize"
-        :total="total"
-        @current-change="fetchData"
-        @size-change="fetchData"
-        layout="total, sizes, prev, pager, next"
-        :page-sizes="[10, 20, 50]"
-      />
+      <div class="pagination-wrapper">
+        <span class="pagination-info">
+          共 {{ total }} 条记录，当前显示第 {{ paginationStart }}-{{ paginationEnd }} 条
+        </span>
+        <el-pagination
+          v-model:current-page="queryParams.pageNum"
+          v-model:page-size="queryParams.pageSize"
+          :total="total"
+          @current-change="fetchData"
+          @size-change="fetchData"
+          layout="sizes, prev, pager, next"
+          :page-sizes="[5, 10, 20, 50]"
+        />
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { requirementApi } from '@/api/requirement'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import ProgressCell from '@/components/common/ProgressCell.vue'
-import { REQUIREMENT_STATUS_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
+import { PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import { formatBudgetWanYuan } from '@/utils/budget'
 import type { RequirementQueryParams } from '@/types/requirement'
 
@@ -119,12 +113,21 @@ const dateRange = ref<[string, string] | null>(null)
 
 const queryParams = reactive<RequirementQueryParams>({
   pageNum: 1,
-  pageSize: 10,
+  pageSize: 5,
   requirementName: '',
   status: '',
   projectType: '',
   createTimeStart: '',
   createTimeEnd: '',
+})
+
+const paginationStart = computed(() => {
+  if (total.value === 0) return 0
+  return (queryParams.pageNum - 1) * queryParams.pageSize + 1
+})
+
+const paginationEnd = computed(() => {
+  return Math.min(queryParams.pageNum * queryParams.pageSize, total.value)
 })
 
 async function fetchData() {
@@ -168,15 +171,7 @@ function handleCreate() {
 }
 
 function handleView(id: number) {
-  router.push(`/requirement/edit/${id}`)
-}
-
-function handleGenerate(id: number) {
   router.push(`/requirement/generate/${id}`)
-}
-
-function handleDetect(id: number) {
-  router.push(`/requirement/detect/${id}`)
 }
 
 async function handleDelete(id: number) {
@@ -190,7 +185,7 @@ async function handleDelete(id: number) {
     ElMessage.success('删除成功')
     fetchData()
   } catch {
-    // 用户取消或删除失败，不处理
+    // 用户取消或删除失败
   }
 }
 
@@ -207,11 +202,26 @@ onMounted(fetchData)
   justify-content: space-between;
   align-items: center;
 }
+
+.card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--app-text-primary);
+}
+
 .search-form {
   margin-bottom: 20px;
 }
-.el-pagination {
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 20px;
-  justify-content: flex-end;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--app-text-tertiary);
 }
 </style>

@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import type { PageResult } from '@/types'
-import type { RequirementInfo, RequirementQueryParams, RequirementCreateParams } from '@/types/requirement'
+import type { RequirementInfo, RequirementQueryParams, RequirementCreateParams, RequirementEditParams, MatchFile } from '@/types/requirement'
 
 export const requirementApi = {
   getList(params: RequirementQueryParams) {
@@ -12,7 +12,7 @@ export const requirementApi = {
   create(data: RequirementCreateParams) {
     return request.post<any, RequirementInfo>('/core-api/v1/requirements', data)
   },
-  update(id: number, data: Partial<RequirementCreateParams>) {
+  update(id: number, data: Partial<RequirementCreateParams> | Partial<RequirementEditParams>) {
     return request.put(`/core-api/v1/requirements/${id}`, data)
   },
   deleteById(id: number) {
@@ -20,6 +20,18 @@ export const requirementApi = {
   },
   match(id: number, data: any) {
     return request.post(`/core-api/v1/requirements/${id}/match`, data)
+  },
+  /** 获取匹配文件列表 */
+  getMatchFiles(params: { requirementId?: number; keyword?: string }) {
+    return request.get<any, MatchFile[]>('/core-api/v1/requirements/match-files', { params })
+  },
+  /** 预览匹配文件 */
+  previewMatchFile(fileId: number) {
+    return request.get<any, any>(`/core-api/v1/requirements/match-files/${fileId}/preview`)
+  },
+  /** 导出需求文档 */
+  exportDocument(id: number) {
+    return request.get<any, Blob>(`/core-api/v1/requirements/${id}/export`, { responseType: 'blob' })
   },
   /** 提交AI生成需求 */
   generate(id: number, params: Record<string, any>) {

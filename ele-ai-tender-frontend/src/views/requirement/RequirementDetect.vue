@@ -6,11 +6,6 @@
         <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
         <el-divider direction="vertical" />
         <span class="toolbar-title">{{ requirementName || '需求智能检测' }}</span>
-        <StatusBadge
-          v-if="detectionStatus"
-          :status="detectionStatus"
-          :type-map="DETECTION_STATUS_MAP"
-        />
       </div>
     </div>
 
@@ -23,148 +18,157 @@
       </div>
 
       <template v-else>
-        <!-- 检测类型卡片 -->
-        <div class="detect-cards">
-          <div
-            v-for="card in detectCards"
-            :key="card.type"
-            class="detect-card"
-            :class="{ 'is-completed': card.completed, 'is-failed': card.failed }"
-          >
-            <div class="card-header">
-              <el-icon :size="20" :color="getCardIconColor(card)">
-                <component :is="getCardIcon(card)" />
-              </el-icon>
-              <span class="card-title">{{ card.label }}</span>
-              <el-tag
-                v-if="card.status"
-                :type="getTaskStatusType(card.status)"
-                size="small"
-              >
-                {{ getTaskStatusLabel(card.status) }}
-              </el-tag>
-            </div>
-            <el-progress
-              :percentage="card.percentage"
-              :status="getProgressStatus(card.status)"
-              :stroke-width="8"
-              class="card-progress"
-            />
-            <div class="card-footer">
-              <span v-if="card.issueCount > 0" class="issue-count">
-                发现 <strong>{{ card.issueCount }}</strong> 个问题
-              </span>
-              <span v-else-if="card.completed" class="no-issue">暂无问题</span>
-              <span v-else class="waiting-text">检测中...</span>
+        <!-- 卡片1：检测进度 -->
+        <div class="detect-card progress-card">
+          <div class="card-header">
+            <span class="card-title">检测进度</span>
+            <el-button
+              v-if="allCompleted"
+              :icon="RefreshRight"
+              size="small"
+              :loading="reDetecting"
+              @click="handleReDetect"
+            >
+              重新检测
+            </el-button>
+          </div>
+          <el-progress
+            :percentage="overallProgress"
+            :stroke-width="8"
+            :status="allCompleted ? 'success' : ''"
+          />
+          <span class="progress-text">{{ overallProgress }}% 完成</span>
+        </div>
+
+        <!-- 卡片2：检测结果汇总 -->
+        <div v-if="allCompleted" class="detect-card summary-card">
+          <div class="card-header">
+            <span class="card-title">检测结果汇总</span>
+          </div>
+          <div class="summary-items">
+            <div
+              v-for="card in detectCards"
+              :key="card.type"
+              class="summary-item"
+              :class="{ 'has-issues': card.issueCount > 0, 'no-issues': card.issueCount === 0 }"
+            >
+              <div class="summary-number">{{ card.issueCount }}</div>
+              <div class="summary-label">{{ card.label }}</div>
             </div>
           </div>
         </div>
 
-        <!-- 检测结果 -->
-        <div class="detect-result">
-          <div class="result-header">
-            <h4>检测结果</h4>
-            <el-tag v-if="issues.length > 0" type="danger" size="small">
-              共 {{ issues.length }} 个问题
-            </el-tag>
-            <el-tag v-else-if="allCompleted && issues.length === 0" type="success" size="small">
-              检测通过
-            </el-tag>
+        <!-- 卡片3：检测详情 -->
+        <div class="detect-card detail-card">
+          <div class="card-header">
+            <span class="card-title">检测详情</span>
           </div>
 
-          <div v-if="issues.length > 0" class="result-list">
+          <div v-if="issues.length > 0" class="detail-list">
             <div
               v-for="(issue, idx) in issues"
               :key="idx"
-              class="result-item"
+              class="detail-item"
+              :class="getIssueClass(issue)"
             >
               <div class="item-header">
+                <span class="item-title">{{ getTypeLabel(issue.detectionType) }}</span>
                 <el-tag
-                  :type="issue.detectionType === 'SENSITIVE_WORD' ? 'danger' : 'warning'"
+                  :type="issue.severity === 'HIGH' ? 'danger' : 'warning'"
                   size="small"
                 >
-                  {{ getTypeLabel(issue.detectionType) }}
-                </el-tag>
-                <el-tag
-                  :type="issue.severity === 'HIGH' ? 'danger' : issue.severity === 'MEDIUM' ? 'warning' : 'info'"
-                  size="small"
-                  class="severity-tag"
-                >
-                  {{ getSeverityLabel(issue.severity) }}
+                  {{ issue.severity === 'HIGH' ? '严重' : '警告' }}
                 </el-tag>
               </div>
               <div class="item-body">
-                <div class="item-location">
-                  <span class="label">原文片段：</span>
-                  <span class="location-text" v-html="highlightLocation(issue.location)"></span>
-                </div>
-                <div v-if="issue.description" class="item-desc">
-                  <span class="label">问题描述：</span>
-                  {{ issue.description }}
-                </div>
-                <div v-if="issue.suggestion" class="item-suggestion">
+                <p class="item-content">{{ issue.description }}</p>
+                <p v-if="issue.suggestion" class="item-suggestion">
                   <span class="label">AI建议：</span>
                   <span class="suggestion-text">{{ issue.suggestion }}</span>
-                </div>
+                </p>
               </div>
               <div class="item-actions">
-                <el-tooltip content="功能开发中" placement="top">
-                  <el-button size="small" type="primary" disabled>接受</el-button>
-                </el-tooltip>
-                <el-tooltip content="功能开发中" placement="top">
-                  <el-button size="small" disabled>拒绝</el-button>
-                </el-tooltip>
+                <template v-if="issue.handleStatus === 0">
+                  <el-button size="small" type="success" @click="handleAccept(issue, idx)">
+                    接受建议
+                  </el-button>
+                  <el-button size="small" type="danger" @click="handleReject(issue, idx)">
+                    拒绝建议
+                  </el-button>
+                </template>
+                <el-tag v-else :type="issue.handleStatus === 1 ? 'success' : 'info'" size="small">
+                  {{ issue.handleStatus === 1 ? '已处理' : '已拒绝' }}
+                </el-tag>
+                <el-button size="small" @click="handleViewOriginal(issue)">
+                  查看原文
+                </el-button>
               </div>
             </div>
           </div>
 
-          <el-empty
-            v-else-if="allCompleted"
-            description="检测通过，未发现问题"
-            :image-size="80"
-          />
-          <div v-else class="result-waiting">
+          <div v-else-if="allCompleted" class="no-issues-tip">
+            <el-icon :size="32" color="var(--app-color-success)"><CircleCheck /></el-icon>
+            <p>通过检测，未发现问题</p>
+          </div>
+
+          <div v-else class="detecting-tip">
             <el-icon class="is-loading"><Loading /></el-icon>
             <span>正在检测中，请稍候...</span>
           </div>
         </div>
 
-        <!-- 底部操作 -->
-        <div class="detect-actions">
-          <el-tooltip content="功能开发中" placement="top">
-            <el-button type="primary" :disabled="issues.length === 0">
-              批量接受
+        <!-- 卡片4：检测结论 -->
+        <div v-if="allCompleted" class="detect-card conclusion-card">
+          <div class="card-header">
+            <span class="card-title">检测结论</span>
+          </div>
+          <div class="conclusion-body">
+            <p>
+              共检测 {{ detectCards.length }} 项内容，
+              <template v-for="(card, idx) in detectCards" :key="card.type">
+                {{ card.label }}发现 {{ card.issueCount }} 个问题
+                <span v-if="card.issueCount > 0">，建议修改</span>
+                <span v-if="idx < detectCards.length - 1">；</span>。
+              </template>
+            </p>
+            <p v-if="totalUnhandledIssues > 0" class="conclusion-warning">
+              还有 {{ totalUnhandledIssues }} 个未处理的问题，建议处理后再提交。
+            </p>
+            <p v-else class="conclusion-success">
+              所有问题已处理完毕，可以提交。
+            </p>
+          </div>
+          <div class="conclusion-actions">
+            <el-button @click="router.push(`/requirement/generate/${requirementId}`)">
+              上一步
             </el-button>
-          </el-tooltip>
-          <el-button @click="router.back()">返回修改</el-button>
+            <el-button type="primary" :disabled="totalUnhandledIssues > 0" @click="handleFinish">
+              完成检测
+            </el-button>
+          </div>
         </div>
       </template>
     </div>
+
+    <!-- 查看原文弹窗 -->
+    <el-dialog v-model="originalVisible" title="查看原文" width="500px">
+      <div v-if="currentOriginal" class="original-content">
+        <p class="original-text">{{ currentOriginal.location || currentOriginal.description }}</p>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { ArrowLeft, Loading, Warning, DocumentChecked, CircleCheck, CircleClose } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowLeft, Loading, RefreshRight, CircleCheck } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { aiTaskApi } from '@/api/ai-task'
-import StatusBadge from '@/components/common/StatusBadge.vue'
 import type { AiTaskStatus } from '@/types/ai-task'
 import type { DetectionType, DetectionIssueVO } from '@/types/detection'
 
-const router = useRouter()
-const route = useRoute()
-
-// ---- 检测状态映射（复用项目检测状态） ----
-const DETECTION_STATUS_MAP: Record<string, { label: string; type?: '' | 'success' | 'warning' | 'info' | 'danger'; pulse?: boolean }> = {
-  DETECTING: { label: '检测中', type: '', pulse: true },
-  DETECTION_PASSED: { label: '检测通过', type: 'success' },
-  DETECTION_FAILED: { label: '检测未通过', type: 'danger' },
-}
-
-// ---- 检测类型配置 ----
 interface DetectCard {
   type: DetectionType
   label: string
@@ -177,37 +181,21 @@ interface DetectCard {
 }
 
 const DETECT_TYPE_CONFIG: Record<string, { label: string }> = {
+  TYPO: { label: '错别字检查' },
   SENSITIVE_WORD: { label: '敏感词检测' },
-  TYPO: { label: '错别字检测' },
 }
+
+const router = useRouter()
+const route = useRoute()
 
 // ---- 基础数据 ----
 const requirementId = ref(0)
 const requirementName = ref('')
-const detectionStatus = ref('')
 
 // ---- 检测卡片 ----
 const detectCards = ref<DetectCard[]>([
-  {
-    type: 'SENSITIVE_WORD',
-    label: '敏感词检测',
-    taskId: null,
-    status: '',
-    percentage: 0,
-    issueCount: 0,
-    completed: false,
-    failed: false,
-  },
-  {
-    type: 'TYPO',
-    label: '错别字检测',
-    taskId: null,
-    status: '',
-    percentage: 0,
-    issueCount: 0,
-    completed: false,
-    failed: false,
-  },
+  { type: 'TYPO', label: '错别字检查', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
+  { type: 'SENSITIVE_WORD', label: '敏感词检测', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
 ])
 
 // ---- 检测问题 ----
@@ -215,10 +203,23 @@ const issues = ref<DetectionIssueVO[]>([])
 
 // ---- 状态 ----
 const submitting = ref(false)
+const reDetecting = ref(false)
+const originalVisible = ref(false)
+const currentOriginal = ref<DetectionIssueVO | null>(null)
 let pollingTimer: ReturnType<typeof setInterval> | null = null
 
 // ---- 计算属性 ----
 const allCompleted = computed(() => detectCards.value.every(c => c.completed || c.failed))
+
+const overallProgress = computed(() => {
+  if (detectCards.value.length === 0) return 0
+  const total = detectCards.value.reduce((sum, c) => sum + c.percentage, 0)
+  return Math.round(total / detectCards.value.length)
+})
+
+const totalUnhandledIssues = computed(() =>
+  issues.value.filter(i => i.handleStatus === 0).length
+)
 
 // ---- 初始化 ----
 onMounted(async () => {
@@ -253,19 +254,16 @@ async function startDetection() {
     const taskMap = await requirementApi.detect(requirementId.value)
     submitting.value = false
 
-    // taskMap: { SENSITIVE_WORD: taskId, TYPO: taskId }
     for (const card of detectCards.value) {
       const taskId = taskMap[card.type]
       if (taskId) {
         card.taskId = taskId
       } else {
-        // 没有返回该类型的任务ID，标记为完成（无问题）
         card.completed = true
         card.percentage = 100
       }
     }
 
-    detectionStatus.value = 'DETECTING'
     startPolling()
   } catch {
     submitting.value = false
@@ -273,10 +271,30 @@ async function startDetection() {
   }
 }
 
+// ---- 重新检测 ----
+async function handleReDetect() {
+  reDetecting.value = true
+  try {
+    // 重置状态
+    for (const card of detectCards.value) {
+      card.taskId = null
+      card.status = ''
+      card.percentage = 0
+      card.issueCount = 0
+      card.completed = false
+      card.failed = false
+    }
+    issues.value = []
+
+    await startDetection()
+  } finally {
+    reDetecting.value = false
+  }
+}
+
 // ---- 轮询逻辑 ----
 function startPolling() {
   pollingTimer = setInterval(pollTaskStatus, 3000)
-  // 立即执行一次
   pollTaskStatus()
 }
 
@@ -290,7 +308,7 @@ function stopPolling() {
 async function pollTaskStatus() {
   const pendingCards = detectCards.value.filter(c => c.taskId && !c.completed && !c.failed)
   if (pendingCards.length === 0) {
-    onAllTasksFinished()
+    if (allCompleted.value) stopPolling()
     return
   }
 
@@ -302,7 +320,6 @@ async function pollTaskStatus() {
       if (task.status === 'COMPLETED') {
         card.completed = true
         card.percentage = 100
-        // 解析任务结果中的问题列表
         parseTaskResult(card, task.result)
       } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
         card.failed = true
@@ -321,7 +338,7 @@ async function pollTaskStatus() {
   }
 
   if (allCompleted.value) {
-    onAllTasksFinished()
+    stopPolling()
   }
 }
 
@@ -329,7 +346,6 @@ function parseTaskResult(card: DetectCard, resultJson?: string) {
   if (!resultJson) return
   try {
     const result = JSON.parse(resultJson)
-    // 任务结果可能包含 issueCount 和/或 issues 数组
     if (typeof result.issueCount === 'number') {
       card.issueCount = result.issueCount
     }
@@ -353,18 +369,43 @@ function parseTaskResult(card: DetectCard, resultJson?: string) {
   }
 }
 
-function onAllTasksFinished() {
-  stopPolling()
-  const hasFailed = detectCards.value.some(c => c.failed)
-  const hasIssues = issues.value.length > 0
-
-  if (hasFailed) {
-    detectionStatus.value = 'DETECTION_FAILED'
-  } else if (hasIssues) {
-    detectionStatus.value = 'DETECTION_FAILED'
-  } else {
-    detectionStatus.value = 'DETECTION_PASSED'
+// ---- 接受/拒绝建议 ----
+async function handleAccept(_issue: DetectionIssueVO, idx: number) {
+  try {
+    await requirementApi.update(requirementId.value, {} as any)
+    if (issues.value[idx]) {
+      issues.value[idx].handleStatus = 1
+    }
+    ElMessage.success('已接受建议')
+  } catch {
+    ElMessage.error('操作失败')
   }
+}
+
+async function handleReject(_issue: DetectionIssueVO, idx: number) {
+  try {
+    await ElMessageBox.confirm('确定拒绝该建议吗？', '拒绝确认', {
+      confirmButtonText: '确定拒绝',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    if (issues.value[idx]) {
+      issues.value[idx].handleStatus = 2
+    }
+    ElMessage.info('已拒绝建议')
+  } catch {
+    // 用户取消
+  }
+}
+
+function handleViewOriginal(issue: DetectionIssueVO) {
+  currentOriginal.value = issue
+  originalVisible.value = true
+}
+
+function handleFinish() {
+  ElMessage.success('检测完成')
+  router.push('/requirement')
 }
 
 // ---- 辅助函数 ----
@@ -372,64 +413,10 @@ function getTypeLabel(type: DetectionType): string {
   return DETECT_TYPE_CONFIG[type]?.label || type
 }
 
-function getSeverityLabel(severity: string): string {
-  const map: Record<string, string> = { HIGH: '高', MEDIUM: '中', LOW: '低' }
-  return map[severity] || severity
-}
-
-function getTaskStatusType(status: string): '' | 'success' | 'warning' | 'info' | 'danger' {
-  const map: Record<string, '' | 'success' | 'warning' | 'info' | 'danger'> = {
-    PENDING: 'info',
-    PROCESSING: '',
-    COMPLETED: 'success',
-    FAILED: 'danger',
-    AI_UNAVAILABLE: 'warning',
-    SKIPPED: 'info',
-  }
-  return map[status] || 'info'
-}
-
-function getTaskStatusLabel(status: string): string {
-  const map: Record<string, string> = {
-    PENDING: '等待中',
-    PROCESSING: '检测中',
-    COMPLETED: '已完成',
-    FAILED: '失败',
-    AI_UNAVAILABLE: 'AI不可用',
-    SKIPPED: '已跳过',
-  }
-  return map[status] || status
-}
-
-function getProgressStatus(status: string): '' | 'success' | 'warning' | 'exception' {
-  if (status === 'COMPLETED' || status === 'SKIPPED') return 'success'
-  if (status === 'FAILED') return 'exception'
-  if (status === 'AI_UNAVAILABLE') return 'warning'
-  return ''
-}
-
-function getCardIcon(card: DetectCard) {
-  if (card.failed) return CircleClose
-  if (card.completed) return CircleCheck
-  return card.type === 'SENSITIVE_WORD' ? Warning : DocumentChecked
-}
-
-function getCardIconColor(card: DetectCard): string {
-  const style = getComputedStyle(document.documentElement)
-  if (card.failed) return style.getPropertyValue('--app-color-danger').trim()
-  if (card.completed) return style.getPropertyValue('--app-color-success').trim()
-  return style.getPropertyValue('--app-brand-color').trim()
-}
-
-/** 高亮原文片段中的问题词（简单的 **...** 标记转 <mark>） */
-function highlightLocation(location: string): string {
-  if (!location) return ''
-  // 将 **xxx** 格式转为 <mark>xxx</mark>
-  return location
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\*\*(.+?)\*\*/g, '<mark>$1</mark>')
+function getIssueClass(issue: DetectionIssueVO): string {
+  if (issue.handleStatus !== 0) return 'is-handled'
+  if (issue.severity === 'HIGH') return 'is-danger'
+  return 'is-warning'
 }
 </script>
 
@@ -470,6 +457,9 @@ function highlightLocation(location: string): string {
   flex: 1;
   overflow: auto;
   padding: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* ---- 加载中 ---- */
@@ -483,157 +473,140 @@ function highlightLocation(location: string): string {
   gap: 12px;
 }
 
-/* ---- 检测类型卡片 ---- */
-.detect-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
+/* ---- 检测卡片 ---- */
 .detect-card {
   background: var(--app-bg-elevated);
   border: 1px solid var(--app-border-medium);
   border-radius: var(--app-radius-sm);
   padding: 20px;
+  margin-bottom: 16px;
   transition: var(--app-transition-base);
 }
 
-.detect-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--app-shadow-md);
-}
-
-.detect-card.is-completed {
-  border-color: var(--app-color-success);
-}
-
-.detect-card.is-failed {
-  border-color: var(--app-color-danger);
-}
-
-.card-header {
+.detect-card .card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 12px;
 }
 
-.card-title {
+.detect-card .card-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--app-text-primary);
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--app-text-secondary);
+  margin-top: 4px;
+}
+
+/* ---- 汇总卡片 ---- */
+.summary-items {
+  display: flex;
+  gap: 24px;
+}
+
+.summary-item {
   flex: 1;
+  text-align: center;
+  padding: 16px;
+  border-radius: var(--app-radius-sm);
 }
 
-.card-progress {
-  margin-bottom: 8px;
+.summary-item.has-issues {
+  background: var(--app-color-warning-light, rgba(230, 162, 60, 0.1));
+  border-left: 3px solid var(--app-color-warning);
 }
 
-.card-footer {
-  font-size: 13px;
-  min-height: 20px;
+.summary-item.no-issues {
+  background: var(--app-color-success-light, rgba(103, 194, 58, 0.1));
+  border-left: 3px solid var(--app-color-success);
 }
 
-.issue-count {
-  color: var(--app-color-danger);
+.summary-number {
+  font-size: 32px;
+  font-weight: 700;
 }
 
-.no-issue {
+.has-issues .summary-number {
+  color: var(--app-color-warning);
+}
+
+.no-issues .summary-number {
   color: var(--app-color-success);
 }
 
-.waiting-text {
-  color: var(--app-text-tertiary);
+.summary-label {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  margin-top: 4px;
 }
 
-/* ---- 检测结果 ---- */
-.detect-result {
-  background: var(--app-bg-elevated);
-  border: 1px solid var(--app-border-medium);
-  border-radius: var(--app-radius-sm);
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.result-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.result-header h4 {
-  margin: 0;
-  font-size: 16px;
-  color: var(--app-text-primary);
-}
-
-/* ---- 问题列表 ---- */
-.result-list {
+/* ---- 详情列表 ---- */
+.detail-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.result-item {
+.detail-item {
   border: 1px solid var(--app-border-light);
   border-radius: 6px;
   padding: 16px;
   transition: var(--app-transition-base);
 }
 
-.result-item:hover {
+.detail-item:hover {
   box-shadow: var(--app-shadow-sm);
 }
 
-.item-header {
+.detail-item.is-danger {
+  border-left: 3px solid var(--app-color-danger);
+}
+
+.detail-item.is-warning {
+  border-left: 3px solid var(--app-color-warning);
+}
+
+.detail-item.is-handled {
+  opacity: 0.6;
+}
+
+.detail-item .item-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.severity-tag {
-  margin-left: auto;
+.detail-item .item-title {
+  font-weight: 600;
+  color: var(--app-text-primary);
 }
 
-.item-body {
+.detail-item .item-body {
   margin-bottom: 12px;
   line-height: 1.6;
   font-size: 14px;
   color: var(--app-text-secondary);
 }
 
-.item-body .label {
-  color: var(--app-text-tertiary);
-  font-size: 13px;
+.detail-item .item-content {
+  margin: 0 0 8px 0;
 }
 
-.item-location {
-  margin-bottom: 6px;
-}
-
-.location-text {
-  color: var(--app-text-primary);
-}
-
-.location-text :deep(mark) {
-  background: var(--app-color-danger-light);
-  color: var(--app-color-danger);
-  padding: 1px 4px;
-  border-radius: 2px;
-  font-weight: 600;
-}
-
-.item-desc {
-  margin-bottom: 6px;
-}
-
-.item-suggestion {
-  background: var(--app-color-success-light);
+.detail-item .item-suggestion {
+  background: var(--app-color-success-light, rgba(103, 194, 58, 0.1));
   border-radius: 4px;
   padding: 8px 12px;
+  margin: 0;
+}
+
+.detail-item .item-suggestion .label {
+  color: var(--app-text-tertiary);
+  font-size: 13px;
 }
 
 .suggestion-text {
@@ -641,14 +614,23 @@ function highlightLocation(location: string): string {
   font-weight: 500;
 }
 
-.item-actions {
+.detail-item .item-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
 
-/* ---- 等待检测结果 ---- */
-.result-waiting {
+/* ---- 无问题/检测中 ---- */
+.no-issues-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px;
+  color: var(--app-color-success);
+}
+
+.detecting-tip {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -657,11 +639,47 @@ function highlightLocation(location: string): string {
   color: var(--app-text-tertiary);
 }
 
-/* ---- 底部操作 ---- */
-.detect-actions {
+/* ---- 结论卡片 ---- */
+.conclusion-body {
+  line-height: 1.8;
+  font-size: 14px;
+  color: var(--app-text-secondary);
+}
+
+.conclusion-body p {
+  margin: 0 0 8px 0;
+}
+
+.conclusion-warning {
+  color: var(--app-color-warning);
+  font-weight: 500;
+}
+
+.conclusion-success {
+  color: var(--app-color-success);
+  font-weight: 500;
+}
+
+.conclusion-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--app-border-light);
+}
+
+/* ---- 查看原文弹窗 ---- */
+.original-content {
+  padding: 8px 0;
+}
+
+.original-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--app-text-primary);
+  background: var(--app-bg-secondary);
+  padding: 12px 16px;
+  border-radius: var(--app-radius-sm);
 }
 </style>

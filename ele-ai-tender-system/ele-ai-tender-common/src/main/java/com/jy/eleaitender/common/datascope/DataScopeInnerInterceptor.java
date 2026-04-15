@@ -40,6 +40,12 @@ public class DataScopeInnerInterceptor extends TenantLineInnerInterceptor {
 
     /**
      * 判断是否跳过数据隔离
+     * 只检查 SQL 解析前能确定的条件：
+     * 1. 无用户上下文 → 跳过
+     * 2. 管理员 → 跳过
+     * 3. @DataScope(skip=true) → 跳过
+     *
+     * 表级别的过滤由 DataScopeTenantHandler.ignoreTable() 在 SQL 解析阶段处理
      */
     private boolean shouldSkip(MappedStatement ms) {
         // 无用户上下文跳过（后台任务等）
@@ -52,9 +58,7 @@ public class DataScopeInnerInterceptor extends TenantLineInnerInterceptor {
             return true;
         }
         // 方法标记 @DataScope(skip=true) 跳过
-        if (ms != null && DataScopeHelper.shouldSkipDataScope(null, ms)) {
-            // shouldSkipDataScope 已包含管理员和非隔离表判断
-            // 这里主要检查 @DataScope(skip) 注解
+        if (ms != null && DataScopeHelper.isDataScopeSkip(ms)) {
             return true;
         }
         return false;
@@ -80,8 +84,8 @@ public class DataScopeInnerInterceptor extends TenantLineInnerInterceptor {
 
         @Override
         public boolean ignoreTable(String tableName) {
-            // 非隔离表忽略
-            return !DataScopeTable.ISOLATED_TABLES.contains(tableName);
+            // 非隔离表忽略（使用 DataScopeHelper 确保 null 安全）
+            return !DataScopeHelper.isDataScopeTable(tableName);
         }
     }
 }

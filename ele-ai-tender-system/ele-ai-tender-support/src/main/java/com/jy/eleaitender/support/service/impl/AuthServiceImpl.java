@@ -209,6 +209,15 @@ public class AuthServiceImpl implements IAuthService {
             redisTemplate.expire(permissionKey, RedisKeyConstant.PERMISSION_CACHE_EXPIRE_SECONDS, TimeUnit.SECONDS);
         }
 
+        // 加载用户角色并缓存（数据隔离需要角色信息判断管理员）
+        List<String> roles = userMapper.selectRoleCodesByUserId(user.getId());
+        String roleKey = RedisKeyConstant.USER_ROLES_PREFIX + user.getId();
+        redisTemplate.delete(roleKey);
+        if (roles != null && !roles.isEmpty()) {
+            redisTemplate.opsForSet().add(roleKey, roles.toArray(new String[0]));
+            redisTemplate.expire(roleKey, RedisKeyConstant.PERMISSION_CACHE_EXPIRE_SECONDS, TimeUnit.SECONDS);
+        }
+
         // 构建响应
         UserLoginResponse response = new UserLoginResponse();
         response.setToken(token);
@@ -238,6 +247,10 @@ public class AuthServiceImpl implements IAuthService {
             // 删除权限缓存
             String permissionKey = RedisKeyConstant.USER_PERMISSIONS_PREFIX + loginUser.getUserId();
             redisTemplate.delete(permissionKey);
+
+            // 删除角色缓存
+            String roleKey = RedisKeyConstant.USER_ROLES_PREFIX + loginUser.getUserId();
+            redisTemplate.delete(roleKey);
 
             log.info("用户[{}]登出成功", loginUser.getUsername());
         }

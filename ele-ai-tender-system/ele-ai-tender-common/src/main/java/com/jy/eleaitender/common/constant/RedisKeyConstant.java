@@ -23,6 +23,11 @@ public class RedisKeyConstant {
     public static final String USER_PERMISSIONS_PREFIX = "user:permissions:";
 
     /**
+     * 用户角色缓存前缀
+     */
+    public static final String USER_ROLES_PREFIX = "user:roles:";
+
+    /**
      * 用户菜单缓存前缀
      */
     public static final String USER_MENUS_PREFIX = "user:menus:";
