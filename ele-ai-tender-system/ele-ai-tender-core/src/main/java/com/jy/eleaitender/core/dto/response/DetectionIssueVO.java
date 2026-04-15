@@ -36,4 +36,10 @@ public class DetectionIssueVO {
 
     @Schema(description = "问题索引(在result JSON issues数组中的位置)")
     private Integer issueIndex;
+
+    @Schema(description = "相关政策引用（政策审查专用）")
+    private String policyReference;
+
+    @Schema(description = "违反的格式规则（格式检测专用）")
+    private String ruleViolated;
 }

@@ -54,6 +54,8 @@ public class DetectionResultParser {
                 vo.setSeverity(getStringValue(issueNode, "severity", "MEDIUM"));
                 vo.setHandleStatus(getIntValue(issueNode, "handleStatus", 0));
                 vo.setIssueIndex(i);
+                vo.setPolicyReference(getStringValue(issueNode, "policyReference", null));
+                vo.setRuleViolated(getStringValue(issueNode, "ruleViolated", null));
                 result.add(vo);
             }
             return result;
@@ -116,10 +118,10 @@ public class DetectionResultParser {
                 ((ObjectNode) issuesNode.get(issueIndex)).put("handleStatus", handleStatus);
                 return MAPPER.writeValueAsString(root);
             }
-            return resultJson;
+            return null; // 越界时返回null，上层已判断 null 不写入
         } catch (Exception e) {
             log.error("更新检测问题处理状态失败, issueIndex={}", issueIndex, e);
-            return resultJson;
+            return null;
         }
     }
 
@@ -138,7 +140,10 @@ public class DetectionResultParser {
             JsonNode issuesNode = root.get("issues");
             if (issuesNode != null && issuesNode.isArray()) {
                 for (JsonNode issue : issuesNode) {
-                    ((ObjectNode) issue).put("handleStatus", 1);
+                    JsonNode statusNode = issue.get("handleStatus");
+                    if (statusNode == null || statusNode.asInt(-1) == 0) {
+                        ((ObjectNode) issue).put("handleStatus", 1);
+                    }
                 }
                 return MAPPER.writeValueAsString(root);
             }

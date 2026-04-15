@@ -35,7 +35,7 @@
 
         <div
           v-for="issue in group.issues"
-          :key="issue.recordId"
+          :key="issue.recordId + '-' + issue.issueIndex"
           class="issue-card"
           :class="{
             accepted: issue.handleStatus === 1,
