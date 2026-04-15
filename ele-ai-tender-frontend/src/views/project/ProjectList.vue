@@ -1,13 +1,10 @@
 <template>
   <div class="project-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <h3>项目管理</h3>
-          <el-button type="primary" @click="handleCreate">新建项目</el-button>
-        </div>
-      </template>
-
+    <!-- 筛选条件 -->
+    <div class="filter-section">
+      <div class="filter-header">
+        <h3>筛选条件</h3>
+      </div>
       <el-form :inline="true" :model="queryParams" class="search-form">
         <el-form-item label="搜索项目">
           <el-input
@@ -63,6 +60,24 @@
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </div>
+
+    <!-- 项目列表 -->
+    <div class="table-section">
+      <div class="table-header">
+        <h3>项目列表</h3>
+        <div class="table-actions">
+          <el-button
+            type="danger"
+            plain
+            :disabled="!selectedIds.length"
+            @click="handleBatchDelete"
+          >
+            批量删除{{ selectedIds.length ? `(${selectedIds.length})` : '' }}
+          </el-button>
+          <el-button type="primary" @click="handleCreate">新建项目</el-button>
+        </div>
+      </div>
 
       <el-table :data="tableData" v-loading="loading" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="45" />
@@ -74,12 +89,27 @@
         </el-table-column>
         <el-table-column label="项目类别" width="120" align="center">
           <template #default="{ row }">
-            <StatusBadge :status="row.projectCategory" :type-map="PROJECT_CATEGORY_MAP" />
+            <el-tag
+              :type="getCategoryTagType(row.projectCategory)"
+              effect="dark"
+              size="small"
+              round
+            >
+              {{ getCategoryLabel(row.projectCategory) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="项目类型" width="100" align="center">
           <template #default="{ row }">
-            <StatusBadge :status="row.projectType" :type-map="PROJECT_TYPE_MAP" />
+            <el-tag
+              :color="PROJECT_TYPE_MAP[row.projectType]?.color"
+              effect="dark"
+              size="small"
+              round
+              :style="PROJECT_TYPE_MAP[row.projectType]?.color ? { color: '#fff', borderColor: PROJECT_TYPE_MAP[row.projectType]?.color } : {}"
+            >
+              {{ getTypeLabel(row.projectType) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="项目预算" width="130" align="right">
@@ -98,9 +128,10 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleView(row.id)">查看</el-button>
+            <el-button link type="primary" @click="handleEdit(row.id)">编辑</el-button>
             <el-popconfirm title="确定删除该项目？" @confirm="handleDelete(row.id)">
               <template #reference>
                 <el-button link type="danger">删除</el-button>
@@ -119,7 +150,7 @@
         @current-change="fetchData"
         @size-change="fetchData"
       />
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -127,7 +158,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { projectApi } from '@/api/project'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import ProgressCell from '@/components/common/ProgressCell.vue'
 import { PROJECT_STATUS_MAP, PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
@@ -154,6 +185,23 @@ const queryParams = reactive({
 
 function formatBudget(value?: number): string {
   return formatBudgetWanYuan(value)
+}
+
+function getCategoryLabel(key: string): string {
+  return PROJECT_CATEGORY_MAP[key]?.label || key
+}
+
+function getCategoryTagType(key: string): '' | 'success' | 'warning' | 'info' {
+  const map: Record<string, '' | 'success' | 'warning' | 'info'> = {
+    LIMITED_BELOW: '',
+    PROPERTY_TRADE: 'warning',
+    GOVERNMENT_PROCUREMENT: 'success',
+  }
+  return map[key] || 'info'
+}
+
+function getTypeLabel(key: string): string {
+  return PROJECT_TYPE_MAP[key]?.label || key
 }
 
 function buildQueryParams() {
@@ -202,6 +250,10 @@ function handleView(id: number) {
   router.push(`/project/${id}`)
 }
 
+function handleEdit(id: number) {
+  router.push(`/project/edit/${id}`)
+}
+
 function handleSelectionChange(rows: ProjectInfo[]) {
   selectedIds.value = rows.map(r => r.id)
 }
@@ -216,18 +268,64 @@ async function handleDelete(id: number) {
   }
 }
 
+async function handleBatchDelete() {
+  if (!selectedIds.value.length) return
+  try {
+    await ElMessageBox.confirm(
+      `确定删除选中的 ${selectedIds.value.length} 个项目？`,
+      '批量删除确认',
+      { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' },
+    )
+    await projectApi.deleteByIds(selectedIds.value)
+    ElMessage.success('批量删除成功')
+    selectedIds.value = []
+    fetchData()
+  } catch {
+    // 用户取消
+  }
+}
+
 onMounted(fetchData)
 </script>
 
-<style scoped>
-.card-header {
+<style scoped lang="scss">
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filter-section,
+.table-section {
+  background: var(--app-bg-primary);
+  border-radius: var(--app-radius-sm);
+  padding: 20px;
+  border: 1px solid var(--app-border-light);
+}
+
+.filter-header,
+.table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--app-text-primary);
+  }
 }
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .search-form {
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
+
 .el-pagination {
   margin-top: 20px;
   justify-content: flex-end;

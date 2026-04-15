@@ -1,6 +1,6 @@
 <template>
   <div class="project-detail" v-loading="pageLoading">
-    <!-- 顶部信息区 -->
+    <!-- 顶部项目信息卡 -->
     <div class="detail-header">
       <div class="header-top">
         <el-button :icon="ArrowLeft" @click="router.back()" text>返回</el-button>
@@ -12,25 +12,41 @@
             :type-map="PROJECT_STATUS_MAP"
           />
         </div>
+        <el-button type="primary" plain @click="handleEditProject">编辑项目</el-button>
       </div>
       <div class="header-meta">
-        <span>项目编号：{{ project?.projectCode || '-' }}</span>
-        <el-divider direction="vertical" />
-        <span>类别：{{ projectCategoryLabel }}</span>
-        <el-divider direction="vertical" />
-        <span>类型：{{ projectTypeLabel }}</span>
-        <el-divider direction="vertical" />
-        <span>预算：{{ formatBudgetWanYuan(project?.budget) }}</span>
-        <el-divider direction="vertical" />
-        <span>评审类型：{{ project?.reviewType || '-' }}</span>
-        <el-divider direction="vertical" />
-        <span>创建时间：{{ project?.createTime || '-' }}</span>
-        <el-divider direction="vertical" />
-        <span>创建人：{{ project?.createName || '-' }}</span>
+        <div class="meta-item">
+          <span class="meta-label">项目编号</span>
+          <span class="meta-value">{{ project?.projectCode || '-' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">项目类别</span>
+          <span class="meta-value">{{ projectCategoryLabel }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">项目类型</span>
+          <span class="meta-value">{{ projectTypeLabel }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">项目预算</span>
+          <span class="meta-value">{{ formatBudgetWanYuan(project?.budget) }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">评审类型</span>
+          <span class="meta-value">{{ project?.reviewType === 'MANUAL' ? '人工评审' : '智能评审' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">创建时间</span>
+          <span class="meta-value">{{ project?.createTime || '-' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">创建人</span>
+          <span class="meta-value">{{ project?.createName || '-' }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- Tab 区 -->
+    <!-- Tab区 -->
     <el-tabs v-model="activeTab" class="detail-tabs">
       <!-- Tab1: 基本信息 -->
       <el-tab-pane label="基本信息" name="basic">
@@ -49,7 +65,7 @@
         </el-descriptions>
 
         <!-- 发布区域 -->
-        <div v-if="canPublishOrPublished" class="action-section">
+        <div v-if="canPublishOrPublished" class="action-section publish-section">
           <h4>文档操作</h4>
           <div class="action-buttons">
             <el-tooltip content="功能开发中" placement="top">
@@ -69,25 +85,19 @@
               type="success"
               :icon="Promotion"
               @click="handleAction('publish')"
-            >
-              发布项目
-            </el-button>
+            >发布项目</el-button>
             <el-button
               v-if="project?.status === 'PUBLISHED'"
               type="info"
               :icon="FolderChecked"
               @click="handleAction('archive')"
-            >
-              归档项目
-            </el-button>
+            >归档项目</el-button>
             <el-button
               v-if="canCancel"
               type="danger"
               :icon="CircleClose"
               @click="handleAction('cancel')"
-            >
-              取消项目
-            </el-button>
+            >取消项目</el-button>
           </div>
         </div>
       </el-tab-pane>
@@ -95,20 +105,34 @@
       <!-- Tab2: 文档信息 -->
       <el-tab-pane label="文档信息" name="document">
         <div class="document-section">
-          <el-card shadow="hover" class="doc-card">
-            <template #header>
-              <div class="doc-card-header">
-                <span>生成文档</span>
-                <el-tag v-if="project?.generatedFileId" type="success" size="small">已生成</el-tag>
-                <el-tag v-else type="info" size="small">未生成</el-tag>
+          <!-- 文档卡片 -->
+          <el-card v-if="project?.generatedFileId" shadow="hover" class="doc-card">
+            <div class="doc-card-body">
+              <div class="doc-file-info">
+                <el-icon size="48" color="var(--app-brand-color)"><Document /></el-icon>
+                <div class="doc-file-detail">
+                  <h4>{{ project?.projectName || '招标文件' }}.docx</h4>
+                  <p>版本：最新</p>
+                </div>
               </div>
-            </template>
-            <div v-if="project?.generatedFileId" class="doc-info">
-              <p>文件ID：{{ project.generatedFileId }}</p>
-              <el-button type="primary" :icon="View" size="small" @click="showPreview = true">预览文档</el-button>
+              <div class="doc-file-actions">
+                <el-button type="primary" :icon="View" @click="showPreview = true">预览</el-button>
+                <el-button :icon="Download" @click="handleExport">导出</el-button>
+              </div>
             </div>
-            <el-empty v-else description="暂无生成文档，请先完成文档集成步骤" :image-size="80" />
           </el-card>
+          <el-empty v-else description="暂无生成文档，请先完成文档集成步骤" :image-size="80" />
+
+          <!-- 文档结构大纲 -->
+          <div v-if="documentOutline.length" class="doc-outline">
+            <h4>文档结构</h4>
+            <el-tree
+              :data="documentOutline"
+              :props="{ children: 'children', label: 'title' }"
+              default-expand-all
+              class="outline-tree"
+            />
+          </div>
         </div>
       </el-tab-pane>
 
@@ -166,6 +190,7 @@ import {
   FolderChecked,
   CircleClose,
   Sort,
+  Document,
 } from '@element-plus/icons-vue'
 import { projectApi } from '@/api/project'
 import { formatBudgetWanYuan } from '@/utils/budget'
@@ -187,6 +212,29 @@ const pageLoading = ref(false)
 const exportLoading = ref(false)
 const showPreview = ref(false)
 const showVersionCompare = ref(false)
+
+/** 文档结构大纲 */
+const documentOutline = computed(() => {
+  if (!project.value?.generatedFileId) return []
+  return [
+    { title: '第一章 招标公告', children: [
+      { title: '1.1 招标条件' },
+      { title: '1.2 项目概况' },
+    ]},
+    { title: '第二章 投标人须知', children: [
+      { title: '2.1 总则' },
+      { title: '2.2 投标人资格' },
+    ]},
+    { title: '第三章 技术规格及要求', children: [
+      { title: '3.1 工程范围' },
+      { title: '3.2 技术要求' },
+    ]},
+    { title: '第四章 评标办法', children: [
+      { title: '4.1 评标方法' },
+      { title: '4.2 评分标准' },
+    ]},
+  ]
+})
 
 const projectCategoryLabel = computed(() => {
   const category = project.value?.projectCategory
@@ -231,6 +279,10 @@ function handleTimelineClick(index: number) {
   router.push(`/project/${projectId.value}/wizard?step=${index}`)
 }
 
+function handleEditProject() {
+  router.push(`/project/edit/${projectId.value}`)
+}
+
 async function handleExport() {
   exportLoading.value = true
   try {
@@ -264,7 +316,6 @@ const actionHandlers: Record<string, { api: () => Promise<any>, success: string,
 async function handleAction(action: 'publish' | 'archive' | 'cancel') {
   const handler = actionHandlers[action]
   if (!handler) return
-
   try {
     await ElMessageBox.confirm(handler.confirm, '操作确认', {
       confirmButtonText: '确认',
@@ -274,7 +325,6 @@ async function handleAction(action: 'publish' | 'archive' | 'cancel') {
   } catch {
     return
   }
-
   try {
     await handler.api()
     ElMessage.success(handler.success)
@@ -290,59 +340,84 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .project-detail {
   padding: 20px;
 }
 
 .detail-header {
-  margin-bottom: 20px;
+  background: var(--app-bg-primary);
+  border-radius: var(--app-radius-sm);
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid var(--app-border-light);
 }
 
 .header-top {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .header-title {
   display: flex;
   align-items: center;
   gap: 12px;
-}
+  flex: 1;
 
-.header-title h2 {
-  margin: 0;
-  font-size: 20px;
-  color: var(--el-text-color-primary);
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--app-text-primary);
+  }
 }
 
 .header-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  color: var(--el-text-color-secondary);
-  font-size: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
   margin-left: 80px;
 }
 
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: var(--app-text-tertiary);
+}
+
+.meta-value {
+  font-size: 14px;
+  color: var(--app-text-primary);
+}
+
 .detail-tabs {
-  margin-top: 4px;
+  background: var(--app-bg-primary);
+  border-radius: var(--app-radius-sm);
+  padding: 20px;
+  border: 1px solid var(--app-border-light);
 }
 
 .action-section {
   margin-top: 24px;
   padding: 16px;
-  background: var(--el-bg-color-page);
-  border-radius: 8px;
+  background: var(--app-bg-secondary);
+  border-radius: var(--app-radius-sm);
+}
+
+.publish-section {
+  border-left: 3px solid var(--app-color-success);
 }
 
 .action-section h4 {
   margin: 0 0 12px;
   font-size: 15px;
-  color: var(--el-text-color-primary);
+  color: var(--app-text-primary);
 }
 
 .action-buttons {
@@ -358,24 +433,49 @@ onMounted(() => {
 }
 
 .doc-card {
-  max-width: 600px;
+  .doc-card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 
-.doc-card-header {
+.doc-file-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
+
+  h4 {
+    margin: 0 0 4px;
+    color: var(--app-text-primary);
+  }
+
+  p {
+    margin: 0;
+    color: var(--app-text-tertiary);
+    font-size: 13px;
+  }
 }
 
-.doc-info {
+.doc-file-actions {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
-.doc-info p {
-  margin: 0;
-  color: var(--el-text-color-regular);
+.doc-outline {
+  background: var(--app-bg-secondary);
+  border-radius: var(--app-radius-sm);
+  padding: 16px;
+
+  h4 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: var(--app-text-primary);
+  }
+}
+
+.outline-tree {
+  background: transparent;
 }
 
 .version-header {
@@ -383,11 +483,11 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-}
 
-.version-header h4 {
-  margin: 0;
-  font-size: 15px;
-  color: var(--el-text-color-primary);
+  h4 {
+    margin: 0;
+    font-size: 15px;
+    color: var(--app-text-primary);
+  }
 }
 </style>

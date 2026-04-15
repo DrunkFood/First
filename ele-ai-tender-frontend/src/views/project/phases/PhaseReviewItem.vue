@@ -6,6 +6,46 @@
       @skip="handleSkipAi"
     />
 
+    <!-- 评分摘要栏 -->
+    <div class="score-summary">
+      <div class="score-item compliance">
+        <span class="score-label">符合性审查</span>
+        <span class="score-value">{{ complianceCount }}项</span>
+        <el-tag :type="complianceCount > 0 ? 'success' : 'info'" size="small">
+          {{ complianceCount > 0 ? '通过/不通过' : '未设置' }}
+        </el-tag>
+      </div>
+      <div class="score-item credit">
+        <span class="score-label">资信评审</span>
+        <span class="score-value">{{ creditScore }}分</span>
+      </div>
+      <div class="score-item technical">
+        <span class="score-label">技术评审</span>
+        <span class="score-value">{{ technicalScore }}分</span>
+      </div>
+      <div class="score-item commercial">
+        <span class="score-label">商务评审</span>
+        <span class="score-value">{{ commercialScore }}分</span>
+      </div>
+      <div class="score-item total" :class="{ valid: scoreTotal === 100, invalid: scoreTotal !== 100 }">
+        <span class="score-label">合计总分</span>
+        <span class="score-value">{{ scoreTotal }}分</span>
+        <el-tag v-if="scoreTotal === 100" type="success" size="small">符合</el-tag>
+        <el-tag v-else-if="scoreTotal > 0" type="warning" size="small">需调整</el-tag>
+      </div>
+    </div>
+
+    <!-- 评分说明 -->
+    <el-alert
+      v-if="scoreTotal > 0 && scoreTotal !== 100"
+      title="资信评审、技术评审、商务评审三项合计必须为100分"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="score-alert"
+    />
+
+    <!-- 工具栏 -->
     <div class="review-toolbar">
       <el-button type="primary" :loading="isGenerating" @click="handleGenerate">
         AI 生成评审项
@@ -17,93 +57,128 @@
         @retry="handleRetry"
         @skip="handleSkipAi"
       />
-      <el-button @click="handleAddRoot">手动添加根项</el-button>
     </div>
 
     <!-- 评审类型Tabs -->
     <el-tabs v-model="activeReviewType" class="review-tabs">
-      <el-tab-pane label="符合性审查" name="COMPLIANCE" />
-      <el-tab-pane label="技术标" name="TECHNICAL" />
-      <el-tab-pane label="资信标" name="CREDIT" />
-      <el-tab-pane label="商务标" name="COMMERCIAL" />
+      <!-- 符合性审查 -->
+      <el-tab-pane label="符合性审查" name="COMPLIANCE">
+        <el-table :data="complianceItems" border class="review-table">
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column label="评审标准" min-width="300">
+            <template #default="{ row }">
+              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ $index }">
+              <el-button link type="danger" size="small" @click="handleDeleteItem('COMPLIANCE', $index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
+          <el-icon><Plus /></el-icon> 添加评审项
+        </div>
+      </el-tab-pane>
+
+      <!-- 资信评审 -->
+      <el-tab-pane label="资信评审" name="CREDIT">
+        <el-table :data="creditItems" border class="review-table">
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column label="评审标准" min-width="240">
+            <template #default="{ row }">
+              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
+            </template>
+          </el-table-column>
+          <el-table-column label="主观/客观" width="120" align="center">
+            <template #default="{ row }">
+              <el-select v-model="row.subjective" size="small">
+                <el-option :value="false" label="客观" />
+                <el-option :value="true" label="主观" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="分值" width="100" align="center">
+            <template #default="{ row }">
+              <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" style="width: 80px" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ $index }">
+              <el-button link type="danger" size="small" @click="handleDeleteItem('CREDIT', $index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="add-item-btn" @click="handleAddItem('CREDIT')">
+          <el-icon><Plus /></el-icon> 添加评审项
+        </div>
+      </el-tab-pane>
+
+      <!-- 技术评审 -->
+      <el-tab-pane label="技术评审" name="TECHNICAL">
+        <el-table :data="technicalItems" border class="review-table">
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column label="评审标准" min-width="240">
+            <template #default="{ row }">
+              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
+            </template>
+          </el-table-column>
+          <el-table-column label="主观/客观" width="120" align="center">
+            <template #default="{ row }">
+              <el-select v-model="row.subjective" size="small">
+                <el-option :value="false" label="客观" />
+                <el-option :value="true" label="主观" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="分值" width="100" align="center">
+            <template #default="{ row }">
+              <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" style="width: 80px" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ $index }">
+              <el-button link type="danger" size="small" @click="handleDeleteItem('TECHNICAL', $index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="add-item-btn" @click="handleAddItem('TECHNICAL')">
+          <el-icon><Plus /></el-icon> 添加评审项
+        </div>
+      </el-tab-pane>
+
+      <!-- 商务评审 -->
+      <el-tab-pane label="商务评审" name="COMMERCIAL">
+        <el-table :data="commercialItems" border class="review-table">
+          <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-table-column label="评审标准" min-width="300">
+            <template #default="{ row }">
+              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
+            </template>
+          </el-table-column>
+          <el-table-column label="分值" width="100" align="center">
+            <template #default="{ row }">
+              <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" style="width: 80px" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ $index }">
+              <el-button link type="danger" size="small" @click="handleDeleteItem('COMMERCIAL', $index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
+          <el-icon><Plus /></el-icon> 添加评审项
+        </div>
+      </el-tab-pane>
     </el-tabs>
 
-    <!-- 当前类型的评审项统计 -->
-    <div class="review-type-summary">
-      <el-tag type="info" size="small">共 {{ currentTypeItems.length }} 项</el-tag>
-      <el-tag type="primary" size="small">客观 {{ currentTypeObjectiveCount }}</el-tag>
-      <el-tag type="warning" size="small">主观 {{ currentTypeSubjectiveCount }}</el-tag>
-    </div>
-
-    <!-- 评审项标记与权重编辑弹窗 -->
-    <el-dialog v-model="editDialogVisible" title="编辑评审项" width="480px" destroy-on-close>
-      <el-form :model="editForm" label-width="90px">
-        <el-form-item label="评审项名称">
-          <el-input v-model="editForm.itemName" />
-        </el-form-item>
-        <el-form-item label="评审类型">
-          <el-select v-model="editForm.reviewType">
-            <el-option label="符合性审查" value="COMPLIANCE" />
-            <el-option label="技术标" value="TECHNICAL" />
-            <el-option label="资信标" value="CREDIT" />
-            <el-option label="商务标" name="COMMERCIAL" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="客观/主观">
-          <el-radio-group v-model="editForm.subjective">
-            <el-radio :value="false">
-              <el-tag type="primary" size="small">客观</el-tag>
-            </el-radio>
-            <el-radio :value="true">
-              <el-tag type="warning" size="small">主观</el-tag>
-            </el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="分值权重">
-          <el-input-number v-model="editForm.score" :min="0" :max="100" :precision="1" />
-        </el-form-item>
-        <el-form-item label="评审内容">
-          <el-input v-model="editForm.itemContent" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="editSaving" @click="handleSaveEdit">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 当前类型的评审项树（内联渲染，支持客观/主观标记和分值） -->
-    <el-tree
-      v-if="treeData.length"
-      :data="treeData"
-      :props="treeProps"
-      node-key="id"
-      default-expand-all
-      class="review-tree"
-    >
-      <template #default="{ data }">
-        <div class="tree-node">
-          <span class="node-name">{{ data.itemName }}</span>
-          <el-tag
-            :type="data.subjective ? 'warning' : 'primary'"
-            size="small"
-          >
-            {{ data.subjective ? '主观' : '客观' }}
-          </el-tag>
-          <span v-if="data.score" class="node-score">{{ data.score }}分</span>
-          <span class="node-actions">
-            <el-button text size="small" @click.stop="openEditDialog(data)">编辑</el-button>
-            <el-button text size="small" type="danger" @click.stop="handleDelete(data)">删除</el-button>
-          </span>
-        </div>
-      </template>
-    </el-tree>
-
-    <el-empty v-if="!currentTypeItems.length" description="当前类型暂无评审项" />
-
+    <!-- 底部操作 -->
     <div class="phase-actions">
       <el-button @click="$emit('prev')">上一步</el-button>
-      <el-button type="primary" @click="handleNext">保存并继续</el-button>
+      <el-button type="warning" plain @click="handleGenerate">重新生成</el-button>
+      <div style="flex: 1" />
+      <el-button type="primary" @click="handleNext">确认评审项</el-button>
     </div>
   </div>
 </template>
@@ -111,25 +186,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { reviewApi } from '@/api/review'
 import { useTaskPolling } from '@/composables/useTaskPolling'
 import AiTaskStatus from '@/components/AiTaskStatus.vue'
 import AiUnavailableAlert from '@/components/AiUnavailableAlert.vue'
 
-/** 评审类型枚举 */
 type ReviewCategory = 'COMPLIANCE' | 'TECHNICAL' | 'CREDIT' | 'COMMERCIAL'
 
 interface ReviewItemData {
-  id: number
+  id?: number
   parentId?: number
   level: number
   itemName: string
   itemContent?: string
-  reviewType?: string
-  subjective?: boolean
-  score?: number
+  reviewType: ReviewCategory
+  subjective: boolean
+  score: number
   sortOrder: number
-  children?: ReviewItemData[]
 }
 
 const props = defineProps<{ projectId: number }>()
@@ -140,65 +214,35 @@ const taskId = ref<number | null>(null)
 const isGenerating = ref(false)
 const activeReviewType = ref<ReviewCategory>('COMPLIANCE')
 
-// 编辑弹窗
-const editDialogVisible = ref(false)
-const editSaving = ref(false)
-const editForm = ref<ReviewItemData>({
-  id: 0,
-  level: 1,
-  itemName: '',
-  itemContent: '',
-  reviewType: 'COMPLIANCE',
-  subjective: false,
-  score: 0,
-  sortOrder: 0,
-})
-
 const { task, retry: retryTask, skip: skipTask } = useTaskPolling(taskId)
 const isAiUnavailable = computed(() => task.value?.status === 'AI_UNAVAILABLE')
 
-/** 按当前Tab筛选评审项 */
-const currentTypeItems = computed(() => {
-  return reviewItems.value.filter(item => {
-    const type = item.reviewType || 'COMPLIANCE'
-    return type === activeReviewType.value
-  })
-})
+// 按类型分组
+const complianceItems = computed(() => reviewItems.value.filter(i => i.reviewType === 'COMPLIANCE'))
+const creditItems = computed(() => reviewItems.value.filter(i => i.reviewType === 'CREDIT'))
+const technicalItems = computed(() => reviewItems.value.filter(i => i.reviewType === 'TECHNICAL'))
+const commercialItems = computed(() => reviewItems.value.filter(i => i.reviewType === 'COMMERCIAL'))
 
-/** 构建树形结构 */
-const treeProps = { children: 'children', label: 'itemName' }
-
-const treeData = computed(() => {
-  const items = currentTypeItems.value
-  const map = new Map<number, ReviewItemData & { children: ReviewItemData[] }>()
-  const roots: (ReviewItemData & { children: ReviewItemData[] })[] = []
-
-  for (const item of items) {
-    map.set(item.id, { ...item, children: [] })
-  }
-
-  for (const item of items) {
-    const node = map.get(item.id)!
-    if (item.parentId && map.has(item.parentId)) {
-      map.get(item.parentId)!.children.push(node)
-    } else {
-      roots.push(node)
-    }
-  }
-
-  return roots
-})
-
-const currentTypeObjectiveCount = computed(() =>
-  currentTypeItems.value.filter(i => !i.subjective).length,
-)
-
-const currentTypeSubjectiveCount = computed(() =>
-  currentTypeItems.value.filter(i => i.subjective).length,
-)
+// 评分计算
+const complianceCount = computed(() => complianceItems.value.length)
+const creditScore = computed(() => creditItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
+const technicalScore = computed(() => technicalItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
+const commercialScore = computed(() => commercialItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
+const scoreTotal = computed(() => creditScore.value + technicalScore.value + commercialScore.value)
 
 const loadReviewItems = async () => {
-  reviewItems.value = await reviewApi.getTree(props.projectId)
+  const data = await reviewApi.getTree(props.projectId)
+  reviewItems.value = (data || []).map((item: any) => ({
+    id: item.id,
+    parentId: item.parentId,
+    level: item.level ?? 1,
+    itemName: item.itemName || '',
+    itemContent: item.itemContent || '',
+    reviewType: item.reviewType || 'COMPLIANCE',
+    subjective: item.subjective ?? false,
+    score: item.score ?? 0,
+    sortOrder: item.sortOrder ?? 0,
+  }))
 }
 
 const handleGenerate = async () => {
@@ -213,50 +257,39 @@ const handleGenerate = async () => {
   }
 }
 
-const handleAddRoot = async () => {
-  await reviewApi.create({
-    projectId: props.projectId,
-    itemName: '新评审项',
+const handleAddItem = async (type: ReviewCategory) => {
+  const newItem: ReviewItemData = {
     level: 1,
-    sortOrder: reviewItems.value.length,
-    reviewType: activeReviewType.value,
+    itemName: '',
+    reviewType: type,
     subjective: false,
     score: 0,
-  })
-  await loadReviewItems()
-}
+    sortOrder: reviewItems.value.filter(i => i.reviewType === type).length,
+  }
 
-/** 打开编辑弹窗 */
-const openEditDialog = (data: ReviewItemData) => {
-  editForm.value = { ...data }
-  editDialogVisible.value = true
-}
-
-/** 保存编辑 */
-const handleSaveEdit = async () => {
-  editSaving.value = true
   try {
-    await reviewApi.update(editForm.value.id, {
-      itemName: editForm.value.itemName,
-      itemContent: editForm.value.itemContent,
-      reviewType: editForm.value.reviewType,
-      subjective: editForm.value.subjective,
-      score: editForm.value.score,
+    await reviewApi.create({
+      projectId: props.projectId,
+      itemName: newItem.itemName || '新评审项',
+      level: newItem.level,
+      sortOrder: newItem.sortOrder,
+      reviewType: newItem.reviewType,
+      subjective: newItem.subjective,
+      score: newItem.score,
     })
-    ElMessage.success('保存成功')
-    editDialogVisible.value = false
     await loadReviewItems()
   } catch {
-    ElMessage.error('保存失败')
-  } finally {
-    editSaving.value = false
+    ElMessage.error('添加失败')
   }
 }
 
-/** 删除评审项 */
-const handleDelete = async (data: ReviewItemData) => {
-  await ElMessageBox.confirm(`确定删除「${data.itemName}」及其子项？`, '确认')
-  await reviewApi.deleteById(data.id)
+const handleDeleteItem = async (type: ReviewCategory, index: number) => {
+  const items = reviewItems.value.filter(i => i.reviewType === type)
+  const item = items[index]
+  if (!item?.id) return
+
+  await ElMessageBox.confirm(`确定删除「${item.itemName}」？`, '确认')
+  await reviewApi.deleteById(item.id)
   ElMessage.success('删除成功')
   await loadReviewItems()
 }
@@ -264,14 +297,103 @@ const handleDelete = async (data: ReviewItemData) => {
 const handleRetry = () => retryTask()
 const handleSkipAi = () => skipTask()
 
-const handleNext = () => {
+const handleNext = async () => {
+  // 校验100分
+  if (scoreTotal.value > 0 && scoreTotal.value !== 100) {
+    ElMessage.warning(`资信+技术+商务评审合计应为100分，当前为${scoreTotal.value}分`)
+    return
+  }
+
+  // 保存所有修改
+  try {
+    const itemsToUpdate = reviewItems.value.filter(i => i.id)
+    for (const item of itemsToUpdate) {
+      await reviewApi.update(item.id!, {
+        itemName: item.itemName,
+        itemContent: item.itemContent,
+        reviewType: item.reviewType,
+        subjective: item.subjective,
+        score: item.score,
+      })
+    }
+  } catch {
+    ElMessage.error('保存失败')
+    return
+  }
+
   emit('next')
 }
 
 onMounted(loadReviewItems)
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+// 评分摘要栏
+.score-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.score-item {
+  flex: 1;
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+  background: var(--app-bg-secondary);
+  border-left: 3px solid var(--app-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.score-label {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+}
+
+.score-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--app-text-primary);
+}
+
+.score-item.compliance {
+  border-left-color: var(--app-brand-color);
+}
+
+.score-item.credit {
+  border-left-color: var(--app-color-success);
+}
+
+.score-item.technical {
+  border-left-color: var(--app-auxiliary-color);
+}
+
+.score-item.commercial {
+  border-left-color: var(--app-embellishment-color);
+}
+
+.score-item.total {
+  border-left-width: 4px;
+
+  &.valid {
+    border-left-color: var(--app-color-success);
+    .score-value { color: var(--app-color-success); }
+  }
+
+  &.invalid {
+    border-left-color: var(--app-color-warning);
+    .score-value { color: var(--app-color-warning); }
+  }
+}
+
+.score-alert {
+  margin-bottom: 16px;
+}
+
+// 工具栏
 .review-toolbar {
   display: flex;
   align-items: center;
@@ -283,36 +405,31 @@ onMounted(loadReviewItems)
   margin-bottom: 8px;
 }
 
-.review-type-summary {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+.review-table {
+  margin-bottom: 8px;
 }
 
-.review-tree {
-  margin-bottom: 12px;
-}
-
-.tree-node {
+// 添加评审项虚线按钮
+.add-item-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 1;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px;
+  border: 2px dashed var(--app-border-medium);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--app-text-tertiary);
+  font-size: 14px;
+  transition: var(--app-transition-base);
+
+  &:hover {
+    border-color: var(--app-brand-color);
+    color: var(--app-brand-color);
+  }
 }
 
-.node-name {
-  font-weight: 500;
-}
-
-.node-score {
-  color: var(--el-color-primary);
-  font-size: 12px;
-}
-
-.node-actions {
-  margin-left: auto;
-}
-
+// 底部操作
 .phase-actions {
   margin-top: 24px;
   display: flex;

@@ -9,30 +9,31 @@
     <!-- 提交检测 -->
     <div v-if="!submitted" class="detection-submit">
       <!-- 检测类型选择 -->
-      <div class="detection-type-section">
-        <h4>选择检测类型</h4>
-        <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
-          <el-checkbox value="SENSITIVE_WORD">敏感词检测</el-checkbox>
-          <el-checkbox value="TYPO">错别字检测</el-checkbox>
-          <el-checkbox value="POLICY_REVIEW">合规性检测</el-checkbox>
-          <el-checkbox value="FORMAT_CHECK">格式规范检测</el-checkbox>
-        </el-checkbox-group>
-      </div>
+      <div class="section-title">选择检测类型</div>
+      <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
+        <el-checkbox value="SENSITIVE_WORD">敏感词检测</el-checkbox>
+        <el-checkbox value="TYPO">错别字检测</el-checkbox>
+        <el-checkbox value="POLICY_REVIEW">合规性检测</el-checkbox>
+        <el-checkbox value="FORMAT_CHECK">格式规范检测</el-checkbox>
+      </el-checkbox-group>
 
       <!-- 政策文件选择 -->
+      <div class="section-title">选择政策文件</div>
       <PolicyFileSelect
         v-model="selectedPolicyFileIds"
         :applicable-category="projectCategory"
       />
 
-      <el-button
-        type="primary"
-        :loading="isSubmitting"
-        :disabled="!selectedDetectionTypes.length"
-        @click="handleSubmit"
-      >
-        提交检测
-      </el-button>
+      <div class="submit-actions">
+        <el-button
+          type="primary"
+          :loading="isSubmitting"
+          :disabled="!selectedDetectionTypes.length"
+          @click="handleSubmit"
+        >
+          提交检测
+        </el-button>
+      </div>
     </div>
 
     <!-- 检测进度 -->
@@ -49,6 +50,8 @@
 
     <div class="phase-actions">
       <el-button @click="$emit('prev')">上一步</el-button>
+      <div style="flex: 1" />
+      <el-button v-if="showReport" @click="$emit('prev')">返回修改</el-button>
       <el-button type="success" :disabled="!canFinish" @click="$emit('finish')">
         完成编制
       </el-button>
@@ -88,7 +91,6 @@ const canFinish = computed(() => submitted.value)
 const loadProject = async () => {
   const project = await projectApi.getById(props.projectId)
   projectCategory.value = project.projectCategory || ''
-  // 检查是否已提交过检测
   if (['DETECTING', 'DETECTION_PASSED', 'DETECTION_FAILED', 'DETECTION_SKIPPED'].includes(project.status)) {
     submitted.value = true
     if (['DETECTION_PASSED', 'DETECTION_FAILED'].includes(project.status)) {
@@ -145,23 +147,33 @@ const handleAcceptAll = async () => {
 onMounted(loadProject)
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 20px 0 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--app-brand-color);
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
 .detection-submit {
   margin-bottom: 20px;
-}
-
-.detection-type-section {
-  margin-bottom: 16px;
-}
-
-.detection-type-section h4 {
-  margin-bottom: 8px;
 }
 
 .detection-type-group {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  margin-bottom: 16px;
+}
+
+.submit-actions {
+  margin-top: 16px;
 }
 
 .phase-actions {

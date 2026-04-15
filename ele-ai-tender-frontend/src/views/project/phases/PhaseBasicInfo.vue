@@ -1,88 +1,132 @@
 <template>
   <div class="phase-basic-info">
+    <!-- 项目基本信息 -->
+    <div class="section-title">项目基本信息</div>
     <el-form :model="form" label-width="120px" :rules="rules" ref="formRef">
-      <el-form-item label="项目名称" prop="projectName">
-        <el-input v-model="form.projectName" placeholder="请输入项目名称" />
-      </el-form-item>
-      <el-form-item label="项目类别" prop="projectCategory">
-        <el-select v-model="form.projectCategory" placeholder="请选择" @change="handleCategoryChange">
-          <el-option label="限额以下" value="LIMITED_BELOW" />
-          <el-option label="产权交易" value="PROPERTY_TRADE" />
-          <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="项目类型" prop="projectType">
-        <el-select v-model="form.projectType" placeholder="请选择" @change="handleTypeChange">
-          <el-option label="工程" value="ENGINEERING" />
-          <el-option label="货物" value="GOODS" />
-          <el-option label="服务" value="SERVICE" />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-if="form.projectType === 'SERVICE'" label="服务子类型">
-        <el-select v-model="form.serviceSubType" placeholder="请选择">
-          <el-option label="物业服务" value="物业服务" />
-          <el-option label="IT服务" value="IT服务" />
-          <el-option label="咨询服务" value="咨询服务" />
-          <el-option label="维保服务" value="维保服务" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="预算金额(万元)" prop="budget">
-        <el-input-number v-model="form.budget" :min="0" :precision="2" />
-      </el-form-item>
-      <el-form-item label="评审方式" prop="reviewType">
-        <el-radio-group v-model="form.reviewType">
-          <el-radio value="INTELLIGENT">智能评审</el-radio>
-          <el-radio value="MANUAL">人工评审</el-radio>
-        </el-radio-group>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="项目名称" prop="projectName">
+            <el-input v-model="form.projectName" placeholder="请输入项目名称" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="项目类别" prop="projectCategory">
+            <el-select v-model="form.projectCategory" placeholder="请选择" style="width: 100%" @change="handleCategoryChange">
+              <el-option label="限额以下" value="LIMITED_BELOW" />
+              <el-option label="产权交易" value="PROPERTY_TRADE" />
+              <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="项目类型" prop="projectType">
+            <el-select v-model="form.projectType" placeholder="请选择" style="width: 100%" @change="handleTypeChange">
+              <el-option label="工程" value="ENGINEERING" />
+              <el-option label="货物" value="GOODS" />
+              <el-option label="服务" value="SERVICE" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item v-if="form.projectType === 'SERVICE'" label="服务子类型">
+            <el-select v-model="form.serviceSubType" placeholder="请选择" style="width: 100%">
+              <el-option label="物业服务" value="物业服务" />
+              <el-option label="IT服务" value="IT服务" />
+              <el-option label="咨询服务" value="咨询服务" />
+              <el-option label="维保服务" value="维保服务" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="预算金额(万元)" prop="budget">
+            <el-input-number v-model="form.budget" :min="0" :precision="2" style="width: 100%" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="评审方式" prop="reviewType">
+            <el-radio-group v-model="form.reviewType">
+              <el-radio value="INTELLIGENT">智能评审</el-radio>
+              <el-radio value="MANUAL">人工评审</el-radio>
+            </el-radio-group>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="招标单位">
+            <el-input v-model="form.tenderUnit" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="联系人">
+            <el-input v-model="form.contactPerson" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-form-item label="联系电话">
+        <el-input v-model="form.contactPhone" />
       </el-form-item>
       <el-form-item label="项目描述">
         <el-input v-model="form.projectDescription" type="textarea" :rows="3" />
       </el-form-item>
-      <el-form-item label="招标单位">
-        <el-input v-model="form.tenderUnit" />
-      </el-form-item>
-      <el-form-item label="联系人">
-        <el-input v-model="form.contactPerson" />
-      </el-form-item>
-      <el-form-item label="联系电话">
-        <el-input v-model="form.contactPhone" />
-      </el-form-item>
-
-      <!-- 模板选择 -->
-      <el-divider content-position="left">模板选择</el-divider>
-      <el-form-item label="选择模板">
-        <el-select
-          v-model="form.templateId"
-          placeholder="请选择模板"
-          clearable
-          filterable
-          :loading="templateLoading"
-          style="width: 100%"
-        >
-          <el-option
-            v-for="tpl in templateList"
-            :key="tpl.id"
-            :label="tpl.templateName"
-            :value="tpl.id"
-          >
-            <span>{{ tpl.templateName }}</span>
-            <el-tag size="small" style="margin-left: 8px">{{ tpl.projectCategory }}</el-tag>
-          </el-option>
-        </el-select>
-      </el-form-item>
     </el-form>
 
+    <!-- 选择招标文件模板 -->
+    <div class="section-title">选择招标文件模板</div>
+    <div class="template-grid" v-loading="templateLoading">
+      <div
+        v-for="tpl in templateList"
+        :key="tpl.id"
+        class="template-card"
+        :class="{ selected: form.templateId === tpl.id }"
+        @click="form.templateId = tpl.id"
+      >
+        <div class="tpl-card-header">
+          <span class="tpl-name">{{ tpl.templateName }}</span>
+          <el-tag
+            v-if="isDefaultTemplate(tpl)"
+            type="success"
+            size="small"
+            effect="dark"
+          >推荐</el-tag>
+        </div>
+        <p class="tpl-desc">{{ tpl.structureDefinition || '标准招标文件模板' }}</p>
+        <div class="tpl-meta">
+          <span>v{{ tpl.versionNo || '1' }}</span>
+          <span>{{ tpl.createTime || '-' }}</span>
+        </div>
+        <el-button text size="small" @click.stop="handlePreviewTemplate(tpl)">预览</el-button>
+      </div>
+      <el-empty v-if="!templateLoading && !templateList.length" description="暂无可用模板" :image-size="60" />
+    </div>
+
     <!-- 历史招标文件匹配 -->
-    <el-divider content-position="left">历史招标文件匹配</el-divider>
+    <div class="section-title">历史招标文件匹配</div>
     <div class="match-section">
-      <div class="match-toolbar">
+      <el-radio-group v-model="matchMode" class="match-mode-group">
+        <el-radio-button value="auto">系统自动匹配</el-radio-button>
+        <el-radio-button value="manual">手动选择</el-radio-button>
+        <el-radio-button value="upload">上传文件</el-radio-button>
+      </el-radio-group>
+
+      <!-- 自动匹配模式 -->
+      <div v-if="matchMode === 'auto'" class="match-content">
+        <p class="match-desc">系统将根据项目名称和描述自动匹配历史招标文件</p>
         <el-button type="primary" :loading="autoMatching" @click="handleAutoMatch">
-          自动匹配
+          开始自动匹配
         </el-button>
         <el-button type="success" :loading="suggesting" @click="handleSuggest">
           AI推荐
         </el-button>
-        <div class="manual-search">
+      </div>
+
+      <!-- 手动选择模式 -->
+      <div v-if="matchMode === 'manual'" class="match-content">
+        <div class="manual-search-bar">
           <el-input
             v-model="manualKeyword"
             placeholder="输入关键词搜索"
@@ -94,29 +138,49 @@
             </template>
           </el-input>
         </div>
+        <div v-if="matchResults.length" class="match-file-list">
+          <div
+            v-for="item in matchResults"
+            :key="item.requirementId"
+            class="match-file-card"
+            :class="{ selected: selectedMatchId === item.requirementId }"
+            @click="selectedMatchId = item.requirementId"
+          >
+            <div class="match-file-info">
+              <span class="match-file-name">{{ item.requirementName }}</span>
+              <el-progress
+                :percentage="Math.round(item.similarity * 100)"
+                :stroke-width="10"
+                :format="() => Math.round(item.similarity * 100) + '%'"
+                style="width: 120px"
+              />
+            </div>
+            <div class="match-file-actions">
+              <el-button text size="small" @click.stop="handlePreviewMatch(item)">预览</el-button>
+              <el-button text size="small" type="primary" @click.stop="selectedMatchId = item.requirementId">选择</el-button>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else-if="!manualMatching" description="暂无匹配结果，请输入关键词搜索" :image-size="60" />
       </div>
 
-      <el-table
-        v-if="matchResults.length"
-        :data="matchResults"
-        stripe
-        highlight-current-row
-        @current-change="handleSelectMatch"
-        class="match-table"
-      >
-        <el-table-column prop="requirementName" label="需求名称" />
-        <el-table-column prop="similarity" label="相似度" width="120">
-          <template #default="{ row }">
-            <el-progress
-              :percentage="Math.round(row.similarity * 100)"
-              :stroke-width="12"
-              :format="() => Math.round(row.similarity * 100) + '%'"
-            />
+      <!-- 上传模式 -->
+      <div v-if="matchMode === 'upload'" class="match-content">
+        <el-upload
+          drag
+          :auto-upload="false"
+          accept=".doc,.docx"
+          :limit="1"
+          :on-change="handleFileChange"
+          class="upload-area"
+        >
+          <el-icon size="48"><UploadFilled /></el-icon>
+          <div>将文件拖到此处，或<em>点击上传</em></div>
+          <template #tip>
+            <div class="upload-tip">仅支持.doc/.docx格式，最大50MB</div>
           </template>
-        </el-table-column>
-        <el-table-column prop="content" label="内容摘要" show-overflow-tooltip />
-      </el-table>
-      <el-empty v-else description="暂无匹配结果，请点击自动匹配或手动搜索" :image-size="60" />
+        </el-upload>
+      </div>
 
       <!-- AI推荐结果 -->
       <div v-if="suggestResults.length" class="suggest-section">
@@ -126,12 +190,11 @@
           :key="idx"
           class="suggest-tag"
           effect="plain"
-        >
-          {{ s }}
-        </el-tag>
+        >{{ s }}</el-tag>
       </div>
     </div>
 
+    <!-- 底部操作 -->
     <div class="phase-actions">
       <el-button type="primary" @click="handleSaveAndNext">保存并继续</el-button>
     </div>
@@ -144,6 +207,7 @@ import { projectApi } from '@/api/project'
 import { templateApi } from '@/api/template'
 import { aiApi } from '@/api/ai'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue'
 import { toWanYuan, toYuan } from '@/utils/budget'
 import type { TemplateInfo } from '@/types/template'
 import type { AiMatchResult } from '@/types/ai'
@@ -177,6 +241,9 @@ const rules: FormRules = {
 // --- 模板 ---
 const templateList = ref<TemplateInfo[]>([])
 const templateLoading = ref(false)
+const defaultTemplateId = ref<number | null>(null)
+
+const isDefaultTemplate = (tpl: TemplateInfo) => tpl.id === defaultTemplateId.value
 
 const loadTemplates = async () => {
   templateLoading.value = true
@@ -190,7 +257,6 @@ const loadTemplates = async () => {
   }
 }
 
-/** 类别/类型变更时自动选择默认模板 */
 const handleCategoryChange = () => handleAutoSelectDefaultTemplate()
 const handleTypeChange = () => handleAutoSelectDefaultTemplate()
 
@@ -200,6 +266,7 @@ const handleAutoSelectDefaultTemplate = async () => {
     const tpl = await templateApi.getDefault(form.value.projectCategory, form.value.projectType)
     if (tpl?.id) {
       form.value.templateId = tpl.id
+      defaultTemplateId.value = tpl.id
       ElMessage.success(`已自动选择默认模板：${tpl.templateName}`)
     }
   } catch {
@@ -207,12 +274,17 @@ const handleAutoSelectDefaultTemplate = async () => {
   }
 }
 
+const handlePreviewTemplate = (tpl: TemplateInfo) => {
+  ElMessage.info(`预览模板：${tpl.templateName}`)
+}
+
 // --- 历史匹配 ---
+const matchMode = ref<'auto' | 'manual' | 'upload'>('auto')
 const matchResults = ref<AiMatchResult[]>([])
 const autoMatching = ref(false)
 const manualMatching = ref(false)
 const manualKeyword = ref('')
-const selectedMatch = ref<AiMatchResult | null>(null)
+const selectedMatchId = ref<number | null>(null)
 
 const handleAutoMatch = async () => {
   if (!form.value.projectName && !form.value.projectDescription) {
@@ -262,8 +334,12 @@ const handleManualMatch = async () => {
   }
 }
 
-const handleSelectMatch = (row: AiMatchResult | null) => {
-  selectedMatch.value = row
+const handlePreviewMatch = (item: AiMatchResult) => {
+  ElMessage.info(`预览：${item.requirementName}`)
+}
+
+const handleFileChange = () => {
+  ElMessage.info('文件已选择')
 }
 
 // --- AI推荐 ---
@@ -283,11 +359,6 @@ const handleSuggest = async () => {
       projectId: props.projectId,
     })
     suggestResults.value = res.suggestions || []
-    if (suggestResults.value.length) {
-      ElMessage.success('AI推荐已生成')
-    } else {
-      ElMessage.info('暂无推荐')
-    }
   } catch {
     ElMessage.error('AI推荐失败')
   } finally {
@@ -332,34 +403,169 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.phase-basic-info {
-  max-width: 800px;
+<style scoped lang="scss">
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 24px 0 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--app-brand-color);
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
-.match-section {
-  padding: 0 0 0 120px;
-}
-
-.match-toolbar {
-  display: flex;
-  align-items: center;
+// 模板卡片网格
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.manual-search {
-  flex: 1;
-  max-width: 360px;
+.template-card {
+  background: var(--app-bg-secondary);
+  border: 2px solid var(--app-border-light);
+  border-radius: var(--app-radius-sm);
+  padding: 16px;
+  cursor: pointer;
+  transition: var(--app-transition-base);
+
+  &:hover {
+    border-color: var(--app-brand-color-light-5);
+  }
+
+  &.selected {
+    border-color: var(--app-brand-color);
+    background: var(--app-hover-state);
+  }
 }
 
-.match-table {
+.tpl-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tpl-name {
+  font-weight: 600;
+  color: var(--app-text-primary);
+  font-size: 14px;
+}
+
+.tpl-desc {
+  font-size: 13px;
+  color: var(--app-text-tertiary);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.tpl-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--app-text-tertiary);
+  margin-bottom: 4px;
+}
+
+// 匹配区
+.match-section {
+  padding: 0;
+}
+
+.match-mode-group {
   margin-bottom: 16px;
 }
 
-.suggest-section h4 {
-  margin-bottom: 8px;
-  color: var(--el-text-color-regular);
+.match-content {
+  margin-top: 12px;
+}
+
+.match-desc {
+  color: var(--app-text-secondary);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.manual-search-bar {
+  max-width: 400px;
+  margin-bottom: 12px;
+}
+
+.match-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.match-file-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--app-bg-secondary);
+  border: 2px solid var(--app-border-light);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--app-transition-base);
+
+  &:hover {
+    border-color: var(--app-brand-color-light-5);
+  }
+
+  &.selected {
+    border-color: var(--app-brand-color);
+    background: var(--app-hover-state);
+  }
+}
+
+.match-file-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.match-file-name {
+  font-weight: 500;
+  color: var(--app-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-file-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.upload-area {
+  width: 100%;
+
+  :deep(.el-upload-dragger) {
+    background: var(--app-bg-secondary);
+    border-color: var(--app-border-medium);
+  }
+}
+
+.upload-tip {
+  color: var(--app-text-tertiary);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.suggest-section {
+  margin-top: 16px;
+
+  h4 {
+    margin-bottom: 8px;
+    color: var(--app-text-secondary);
+  }
 }
 
 .suggest-tag {
