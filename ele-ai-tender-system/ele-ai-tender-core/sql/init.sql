@@ -6,11 +6,7 @@
 -- 覆盖模块: core + ai + common
 -- =========================================
 -- 说明:
---   本脚本为编制中心全量建表脚本，包含:
---   1. core模块: ai_project / ai_project_version / ai_requirement /
---      ai_review_item / ai_detection_record
---   2. common+ai模块: ai_task / ai_policy_file / ai_knowledge_document /
---      ai_model_config / ai_template
+--   本脚本为编制中心全量建表脚本，包含: ai_project / ai_project_version / ai_requirement / ai_review_item / ai_detection_record / ai_policy_file / ai_template
 --   所有字段严格对应Java实体类定义
 -- =========================================
 

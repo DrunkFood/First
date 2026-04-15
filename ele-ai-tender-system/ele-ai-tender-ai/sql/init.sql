@@ -116,10 +116,6 @@ SELECT TABLE_NAME, TABLE_COMMENT
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = 'ele_ai_tender'
   AND TABLE_NAME IN (
-    'ai_model_config', 'sup_model_route_rule', 'ai_task',
-    'ai_project', 'ai_requirement', 'ai_review_item',
-    'ai_detection_record', 'ai_project_version', 'ai_template',
-    'ai_knowledge_document', 'ai_policy_file', 'sup_policy_file',
-    'sup_message', 'sup_sys_parameter'
+    'ai_model_config', 'ai_task', 'ai_knowledge_document'
   )
 ORDER BY TABLE_NAME;
