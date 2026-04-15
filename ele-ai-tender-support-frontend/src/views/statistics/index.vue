@@ -13,7 +13,7 @@
 
     <div v-loading="loading">
       <!-- 数字卡片 -->
-      <el-row :gutter="16" style="margin-bottom: 20px">
+      <el-row :gutter="12" style="margin-bottom: 20px">
         <el-col :span="6" v-for="card in statCards" :key="card.label">
           <el-card shadow="never" class="stat-card">
             <div class="stat-value">{{ card.value }}</div>
@@ -56,13 +56,19 @@ const statCards = computed(() => {
   const o = overview.value
   if (!o) return []
   return [
+    { label: '项目总数', value: o.projectCount },
+    { label: '需求总数', value: o.requirementCount },
     { label: '用户总数', value: o.userCount },
+    { label: '角色总数', value: o.roleCount },
     { label: '模板总数', value: o.templateCount },
     { label: '知识文档', value: o.knowledgeCount },
     { label: '模型配置', value: o.modelConfigCount },
+    { label: '接入系统', value: o.accessSystemCount },
+    { label: '版本总数', value: o.versionCount },
     { label: '操作日志', value: o.operationLogCount },
     { label: '政策文件', value: o.policyFileCount },
     { label: '今日操作', value: o.todayOperationCount },
+    { label: '今日新建项目', value: o.todayProjectCount },
     { label: '未读消息', value: o.unreadMessageCount },
   ]
 })

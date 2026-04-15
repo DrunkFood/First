@@ -20,7 +20,7 @@ public class RequirementRequest {
     @Schema(description = "项目类型")
     private String projectType;
     
-    @Schema(description = "预算价(万元)")
+    @Schema(description = "预算价(元)")
     private BigDecimal budget;
     
     @Schema(description = "需求描述")

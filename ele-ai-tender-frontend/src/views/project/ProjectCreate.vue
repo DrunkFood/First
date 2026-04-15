@@ -210,6 +210,7 @@ import { projectApi } from '@/api/project'
 import { requirementApi } from '@/api/requirement'
 import { templateApi } from '@/api/template'
 import { PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
+import { toWanYuan, toYuan } from '@/utils/budget'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import type { ProjectCreateParams } from '@/types/project'
@@ -291,7 +292,7 @@ async function loadProjectDetail(id: number) {
       projectCategory: data.projectCategory || '',
       projectType: data.projectType || '',
       serviceSubType: data.serviceSubType,
-      budget: data.budget,
+      budget: toWanYuan(data.budget),
       reviewType: data.reviewType,
       requirementContent: data.requirementContent,
       templateId: data.templateId,
@@ -328,7 +329,7 @@ function handleRequirementChange(reqId: number | undefined) {
   if (!req) return
   form.projectCategory = req.projectCategory || ''
   form.projectType = req.projectType || ''
-  form.budget = req.budget
+  form.budget = toWanYuan(req.budget)
   form.requirementContent = req.content || req.requirementDescription || ''
   if (req.requirementName && !form.projectName) {
     form.projectName = req.requirementName
@@ -380,12 +381,13 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
+    const submitData = { ...form, budget: toYuan(form.budget) }
     if (isEdit.value) {
       const id = Number(route.params.id)
-      await projectApi.update(id, form)
+      await projectApi.update(id, submitData)
       ElMessage.success('修改成功')
     } else {
-      await projectApi.create(form)
+      await projectApi.create(submitData)
       ElMessage.success('创建成功')
     }
     router.push('/project')

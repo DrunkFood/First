@@ -20,7 +20,7 @@
         <el-divider direction="vertical" />
         <span>类型：{{ projectTypeLabel }}</span>
         <el-divider direction="vertical" />
-        <span>预算：{{ project?.budget ? `¥${project.budget.toLocaleString()} 元` : '-' }}</span>
+        <span>预算：{{ formatBudgetWanYuan(project?.budget) }}</span>
         <el-divider direction="vertical" />
         <span>评审类型：{{ project?.reviewType || '-' }}</span>
         <el-divider direction="vertical" />
@@ -38,7 +38,7 @@
           <el-descriptions-item label="项目编号">{{ project?.projectCode || '-' }}</el-descriptions-item>
           <el-descriptions-item label="项目类别">{{ projectCategoryLabel }}</el-descriptions-item>
           <el-descriptions-item label="项目类型">{{ projectTypeLabel }}</el-descriptions-item>
-          <el-descriptions-item label="预算金额">{{ project?.budget ? `¥${project.budget.toLocaleString()} 元` : '-' }}</el-descriptions-item>
+          <el-descriptions-item label="预算金额">{{ formatBudgetWanYuan(project?.budget) }}</el-descriptions-item>
           <el-descriptions-item label="评审类型">{{ project?.reviewType || '-' }}</el-descriptions-item>
           <el-descriptions-item label="招标单位">{{ project?.tenderUnit || '-' }}</el-descriptions-item>
           <el-descriptions-item label="联系人">{{ project?.contactPerson || '-' }}</el-descriptions-item>
@@ -168,6 +168,7 @@ import {
   Sort,
 } from '@element-plus/icons-vue'
 import { projectApi } from '@/api/project'
+import { formatBudgetWanYuan } from '@/utils/budget'
 import { PROJECT_STATUS_MAP, PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import ProjectTimeline from '@/components/project/ProjectTimeline.vue'

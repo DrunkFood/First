@@ -1,7 +1,10 @@
 package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.AiRequirement;
 import com.jy.eleaitender.common.entity.support.SupMessage;
+import com.jy.eleaitender.common.entity.support.SysMainVersion;
 import com.jy.eleaitender.common.entity.support.SysOperationLog;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.support.mapper.*;
@@ -16,13 +19,28 @@ import java.util.*;
 
 /**
  * 统计分析服务实现
- * 第一阶段: 基于支撑中心已有数据做简单 COUNT 统计
+ * 基于支撑中心及核心业务已有数据做 COUNT 统计
  */
 @Service
 public class StatisticsServiceImpl implements IStatisticsService {
 
     @Autowired
     private SysUserMapper userMapper;
+
+    @Autowired
+    private SysRoleMapper roleMapper;
+
+    @Autowired
+    private SysAccessSystemMapper accessSystemMapper;
+
+    @Autowired
+    private SysMainVersionMapper mainVersionMapper;
+
+    @Autowired
+    private AiProjectMapper projectMapper;
+
+    @Autowired
+    private AiRequirementMapper requirementMapper;
 
     @Autowired
     private TemplateConfigMapper templateMapper;
@@ -46,8 +64,15 @@ public class StatisticsServiceImpl implements IStatisticsService {
     public StatisticsOverviewVO getOverview() {
         StatisticsOverviewVO vo = new StatisticsOverviewVO();
 
-        // 基础计数
+        // 支撑中心基础计数
         vo.setUserCount(userMapper.selectCount(null));
+        vo.setRoleCount(roleMapper.selectCount(null));
+        vo.setAccessSystemCount(accessSystemMapper.selectCount(null));
+        vo.setVersionCount(mainVersionMapper.selectCount(null));
+
+        // 核心业务计数
+        vo.setProjectCount(projectMapper.selectCount(null));
+        vo.setRequirementCount(requirementMapper.selectCount(null));
         vo.setTemplateCount(templateMapper.selectCount(null));
         vo.setKnowledgeCount(knowledgeMapper.selectCount(null));
         vo.setModelConfigCount(modelConfigMapper.selectCount(null));
@@ -64,6 +89,11 @@ public class StatisticsServiceImpl implements IStatisticsService {
         LambdaQueryWrapper<SysOperationLog> todayWrapper = new LambdaQueryWrapper<>();
         todayWrapper.ge(SysOperationLog::getCreateTime, todayStart.getTime());
         vo.setTodayOperationCount(operationLogMapper.selectCount(todayWrapper));
+
+        // 今日新建项目数
+        LambdaQueryWrapper<AiProject> todayProjectWrapper = new LambdaQueryWrapper<>();
+        todayProjectWrapper.ge(AiProject::getCreateTime, todayStart.getTime());
+        vo.setTodayProjectCount(projectMapper.selectCount(todayProjectWrapper));
 
         // 当前用户未读消息数
         Long userId = SecurityContextHolder.getUserId();

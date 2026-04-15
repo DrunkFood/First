@@ -144,6 +144,7 @@ import { projectApi } from '@/api/project'
 import { templateApi } from '@/api/template'
 import { aiApi } from '@/api/ai'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { toWanYuan, toYuan } from '@/utils/budget'
 import type { TemplateInfo } from '@/types/template'
 import type { AiMatchResult } from '@/types/ai'
 
@@ -302,7 +303,7 @@ const loadProject = async () => {
     projectCategory: project.projectCategory || '',
     projectType: project.projectType || '',
     serviceSubType: project.serviceSubType || '',
-    budget: project.budget || 0,
+    budget: toWanYuan(project.budget) ?? 0,
     reviewType: project.reviewType || 'INTELLIGENT',
     projectDescription: project.projectDescription || '',
     tenderUnit: project.tenderUnit || '',
@@ -318,6 +319,7 @@ const handleSaveAndNext = async () => {
 
   await projectApi.update(props.projectId, {
     ...form.value,
+    budget: toYuan(form.value.budget),
     templateId: form.value.templateId ?? undefined,
   })
   ElMessage.success('基础信息保存成功')

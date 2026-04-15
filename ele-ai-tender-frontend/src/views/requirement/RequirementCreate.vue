@@ -72,6 +72,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { requirementApi } from '@/api/requirement'
+import { toYuan } from '@/utils/budget'
 import { ElMessage, type FormInstance, type UploadFile, type UploadFiles, type UploadRawFile } from 'element-plus'
 import { getToken } from '@/utils/auth'
 
@@ -153,7 +154,7 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    const res = await requirementApi.create(form)
+    const res = await requirementApi.create({ ...form, budget: toYuan(form.budget) })
     ElMessage.success('创建成功')
     if (aiAssisted.value && res?.id) {
       router.push(`/requirement/generate/${res.id}`)

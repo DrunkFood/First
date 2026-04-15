@@ -131,6 +131,7 @@ import { ElMessage } from 'element-plus'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import ProgressCell from '@/components/common/ProgressCell.vue'
 import { PROJECT_STATUS_MAP, PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
+import { formatBudgetWanYuan } from '@/utils/budget'
 import type { ProjectInfo } from '@/types/project'
 
 const router = useRouter()
@@ -152,8 +153,7 @@ const queryParams = reactive({
 })
 
 function formatBudget(value?: number): string {
-  if (value == null) return '-'
-  return '¥' + value.toLocaleString('zh-CN')
+  return formatBudgetWanYuan(value)
 }
 
 function buildQueryParams() {

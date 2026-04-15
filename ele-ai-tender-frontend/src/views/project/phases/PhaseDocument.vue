@@ -92,6 +92,7 @@ import { documentApi } from '@/api/document'
 import { policyFileApi } from '@/api/policy-file'
 import { aiApi } from '@/api/ai'
 import { projectApi } from '@/api/project'
+import { toWanYuan } from '@/utils/budget'
 import type { DocumentPreviewVO } from '@/types/document'
 import type { PolicyFileVO } from '@/types/policy-file'
 import type { ProjectInfo } from '@/types/project'
@@ -174,7 +175,7 @@ const initVariables = () => {
     { key: 'projectName', label: '项目名称', value: project.value.projectName || '' },
     { key: 'projectCategory', label: '项目类别', value: project.value.projectCategory || '' },
     { key: 'projectType', label: '项目类型', value: project.value.projectType || '' },
-    { key: 'budget', label: '预算金额(万元)', value: project.value.budget ? String(project.value.budget) : '' },
+    { key: 'budget', label: '预算金额(万元)', value: project.value.budget ? String(toWanYuan(project.value.budget)) : '' },
     { key: 'tenderUnit', label: '招标单位', value: project.value.tenderUnit || '' },
     { key: 'contactPerson', label: '联系人', value: project.value.contactPerson || '' },
     { key: 'contactPhone', label: '联系电话', value: project.value.contactPhone || '' },

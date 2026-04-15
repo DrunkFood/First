@@ -34,7 +34,7 @@ public class AiProject extends BaseEntity {
     @Schema(description = "服务子类型")
     private String serviceSubType;
 
-    @Schema(description = "预算金额(万元)")
+    @Schema(description = "预算金额(元)")
     private BigDecimal budget;
 
     @Schema(description = "项目基本情况描述")

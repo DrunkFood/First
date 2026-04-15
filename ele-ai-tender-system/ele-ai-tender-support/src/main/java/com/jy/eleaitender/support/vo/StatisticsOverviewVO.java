@@ -15,6 +15,21 @@ public class StatisticsOverviewVO {
     @Schema(description = "用户总数")
     private long userCount;
 
+    @Schema(description = "角色总数")
+    private long roleCount;
+
+    @Schema(description = "接入系统数")
+    private long accessSystemCount;
+
+    @Schema(description = "版本总数")
+    private long versionCount;
+
+    @Schema(description = "项目总数")
+    private long projectCount;
+
+    @Schema(description = "需求总数")
+    private long requirementCount;
+
     @Schema(description = "模板总数")
     private long templateCount;
 
@@ -32,6 +47,9 @@ public class StatisticsOverviewVO {
 
     @Schema(description = "今日操作次数")
     private long todayOperationCount;
+
+    @Schema(description = "今日新建项目数")
+    private long todayProjectCount;
 
     @Schema(description = "未读消息总数")
     private long unreadMessageCount;

@@ -231,9 +231,9 @@ public final class PromptTemplates {
             项目名称：%s
             项目类型：%s
             项目类别：%s
-            项目预算：%s万元
+            项目预算：%s元
             项目描述：%s
-            
+
             参考文档内容：
             %s
             """;
@@ -248,7 +248,7 @@ public final class PromptTemplates {
             项目名称：%s
             项目类型：%s
             项目类别：%s
-            项目预算：%s万元
+            项目预算：%s元
             
             业务需求内容：
             %s

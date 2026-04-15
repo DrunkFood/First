@@ -31,7 +31,7 @@ public class AiRequirement extends BaseEntity {
     @Schema(description = "服务子分类")
     private String serviceSubType;
 
-    @Schema(description = "预算价(万元)")
+    @Schema(description = "预算价(元)")
     private BigDecimal budget;
 
     @Schema(description = "需求描述")

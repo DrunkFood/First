@@ -5,80 +5,169 @@
         <div class="page-title">运营总览</div>
         <div class="page-subtitle">聚焦当前系统状态与常用操作入口</div>
       </div>
-      <el-tag type="success" effect="dark" round>系统正常</el-tag>
+      <el-button @click="fetchData" :loading="loading">
+        <el-icon><Refresh /></el-icon>
+        刷新
+      </el-button>
     </div>
 
-    <div class="stats-grid">
-      <el-card v-for="item in statCards" :key="item.label" shadow="never" class="panel-card stat-card">
-        <div class="stat-head">
-          <div class="icon-box" :class="item.className">
-            <el-icon :size="20"><component :is="item.icon" /></el-icon>
+    <div v-loading="loading">
+      <!-- 核心指标 -->
+      <div class="stats-grid">
+        <el-card v-for="item in coreStatCards" :key="item.label" shadow="never" class="panel-card stat-card">
+          <div class="stat-head">
+            <div class="icon-box" :class="item.className">
+              <el-icon :size="20"><component :is="item.icon" /></el-icon>
+            </div>
+            <div class="stat-meta">
+              <div class="meta-label">{{ item.label }}</div>
+              <div class="meta-value">{{ item.value }}</div>
+            </div>
           </div>
-          <div class="stat-meta">
-            <div class="meta-label">{{ item.label }}</div>
-            <div class="meta-value">{{ item.value }}</div>
+        </el-card>
+      </div>
+
+      <!-- 辅助指标 -->
+      <div class="stats-grid secondary">
+        <el-card v-for="item in secondaryStatCards" :key="item.label" shadow="never" class="panel-card stat-card small">
+          <div class="stat-simple">
+            <span class="simple-label">{{ item.label }}</span>
+            <span class="simple-value" :class="item.highlight">{{ item.value }}</span>
           </div>
-        </div>
-      </el-card>
-    </div>
+        </el-card>
+      </div>
 
-    <div class="bottom-grid">
-      <el-card shadow="never" class="panel-card">
-        <template #header>
-          <span>快捷入口</span>
-        </template>
-        <div class="quick-grid">
-          <button class="quick-tile" @click="$router.push('/system/user')">
-            <el-icon><User /></el-icon>
-            <span>用户管理</span>
-          </button>
-          <button class="quick-tile" @click="$router.push('/system/role')">
-            <el-icon><UserFilled /></el-icon>
-            <span>角色管理</span>
-          </button>
-          <button class="quick-tile" @click="$router.push('/external')">
-            <el-icon><Connection /></el-icon>
-            <span>接入系统</span>
-          </button>
-          <button class="quick-tile" @click="$router.push('/version')">
-            <el-icon><Files /></el-icon>
-            <span>版本管理</span>
-          </button>
-        </div>
-      </el-card>
+      <!-- 趋势 + 快捷入口 -->
+      <div class="bottom-grid">
+        <el-card shadow="never" class="panel-card">
+          <template #header>
+            <span>近7天操作趋势</span>
+          </template>
+          <el-table :data="overview?.dailyOperations || []" border stripe size="small">
+            <el-table-column prop="date" label="日期" width="120" />
+            <el-table-column prop="count" label="操作次数">
+              <template #default="{ row }">
+                <div class="bar-wrap">
+                  <div class="bar" :style="{ width: barWidth(row.count) }" />
+                  <span class="bar-text">{{ row.count }}</span>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
 
-      <el-card shadow="never" class="panel-card">
-        <template #header>
-          <span>系统信息</span>
-        </template>
-        <el-descriptions :column="1" border>
-          <el-descriptions-item label="系统名称">EleAITender 支撑中心管理系统</el-descriptions-item>
-          <el-descriptions-item label="系统版本">v1.0.0</el-descriptions-item>
-          <el-descriptions-item label="后端服务">Spring Boot 3.2</el-descriptions-item>
-          <el-descriptions-item label="前端框架">Vue 3 + Element Plus</el-descriptions-item>
-        </el-descriptions>
-      </el-card>
+        <div class="right-col">
+          <el-card shadow="never" class="panel-card">
+            <template #header>
+              <span>快捷入口</span>
+            </template>
+            <div class="quick-grid">
+              <button class="quick-tile" @click="$router.push('/system/user')">
+                <el-icon><User /></el-icon>
+                <span>用户管理</span>
+              </button>
+              <button class="quick-tile" @click="$router.push('/system/role')">
+                <el-icon><UserFilled /></el-icon>
+                <span>角色管理</span>
+              </button>
+              <button class="quick-tile" @click="$router.push('/template')">
+                <el-icon><Document /></el-icon>
+                <span>模板管理</span>
+              </button>
+              <button class="quick-tile" @click="$router.push('/knowledge')">
+                <el-icon><Collection /></el-icon>
+                <span>知识库</span>
+              </button>
+              <button class="quick-tile" @click="$router.push('/external')">
+                <el-icon><Connection /></el-icon>
+                <span>接入系统</span>
+              </button>
+              <button class="quick-tile" @click="$router.push('/message')">
+                <el-icon><Bell /></el-icon>
+                <span>消息中心</span>
+              </button>
+            </div>
+          </el-card>
+
+          <el-card shadow="never" class="panel-card system-info-card">
+            <template #header>
+              <span>系统信息</span>
+            </template>
+            <el-descriptions :column="1" border size="small">
+              <el-descriptions-item label="系统名称">EleAITender 支撑中心</el-descriptions-item>
+              <el-descriptions-item label="系统版本">v1.0.0</el-descriptions-item>
+              <el-descriptions-item label="后端框架">Spring Boot 3.2</el-descriptions-item>
+              <el-descriptions-item label="前端框架">Vue 3 + Element Plus</el-descriptions-item>
+            </el-descriptions>
+          </el-card>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
-import { User, UserFilled, Connection, Files } from '@element-plus/icons-vue'
+import { computed, onMounted, ref } from 'vue'
+import {
+  User, UserFilled, Connection, FolderOpened,
+  Collection, Bell, Refresh, Notebook,
+} from '@element-plus/icons-vue'
+import type { StatisticsOverview } from '@/types/statistics'
+import { statisticsApi } from '@/api/statistics'
 
-const stats = reactive({
-  userCount: 128,
-  roleCount: 8,
-  systemCount: 15,
-  versionCount: 23,
+const loading = ref(false)
+const overview = ref<StatisticsOverview | null>(null)
+
+const coreStatCards = computed(() => {
+  const o = overview.value
+  if (!o) return []
+  return [
+    { label: '项目总数', value: o.projectCount, icon: FolderOpened, className: 'projects' },
+    { label: '需求总数', value: o.requirementCount, icon: Collection, className: 'requirements' },
+    { label: '用户总数', value: o.userCount, icon: User, className: 'users' },
+    { label: '模板总数', value: o.templateCount, icon: Notebook, className: 'templates' },
+  ]
 })
 
-const statCards = computed(() => [
-  { label: '用户总数', value: stats.userCount, icon: User, className: 'users' },
-  { label: '角色总数', value: stats.roleCount, icon: UserFilled, className: 'roles' },
-  { label: '接入系统', value: stats.systemCount, icon: Connection, className: 'systems' },
-  { label: '版本总数', value: stats.versionCount, icon: Files, className: 'versions' },
-])
+const secondaryStatCards = computed(() => {
+  const o = overview.value
+  if (!o) return []
+  return [
+    { label: '知识文档', value: o.knowledgeCount, highlight: '' },
+    { label: '接入系统', value: o.accessSystemCount, highlight: '' },
+    { label: '模型配置', value: o.modelConfigCount, highlight: '' },
+    { label: '今日新建项目', value: o.todayProjectCount, highlight: 'accent' },
+    { label: '今日操作', value: o.todayOperationCount, highlight: 'accent' },
+    { label: '未读消息', value: o.unreadMessageCount, highlight: o.unreadMessageCount > 0 ? 'warn' : '' },
+    { label: '角色总数', value: o.roleCount, highlight: '' },
+    { label: '版本总数', value: o.versionCount, highlight: '' },
+  ]
+})
+
+const maxCount = computed(() => {
+  const items = overview.value?.dailyOperations || []
+  return Math.max(...items.map(i => i.count), 1)
+})
+
+const barWidth = (count: number) => {
+  return `${Math.max((count / maxCount.value) * 100, 2)}%`
+}
+
+const fetchData = async () => {
+  loading.value = true
+  try {
+    const res = await statisticsApi.getOverview()
+    overview.value = res.data
+  } catch (error) {
+    console.error('Fetch statistics failed:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
 </script>
 
 <style scoped lang="scss">
@@ -88,10 +177,20 @@ const statCards = computed(() => [
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 14px;
+
+    &.secondary {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   .stat-card {
     border: none;
+
+    &.small {
+      :deep(.el-card__body) {
+        padding: 12px 16px;
+      }
+    }
   }
 
   .stat-head {
@@ -108,26 +207,26 @@ const statCards = computed(() => [
     place-items: center;
     color: #fff;
 
-    &.users {
+    &.projects {
       background: linear-gradient(130deg, #197b55, #0f8a5f);
     }
 
-    &.roles {
+    &.requirements {
       background: linear-gradient(130deg, #2f9068, #16806a);
     }
 
-    &.systems {
+    &.users {
       background: linear-gradient(130deg, #aa7a2d, #c17814);
     }
 
-    &.versions {
+    &.templates {
       background: linear-gradient(130deg, #8d5f25, #a96f12);
     }
   }
 
   .meta-label {
     font-size: 12px;
-    color: var(--et-text-weak);
+    color: var(--et-text-weak, #909399);
   }
 
   .meta-value {
@@ -137,15 +236,50 @@ const statCards = computed(() => [
     color: #173528;
   }
 
+  .stat-simple {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .simple-label {
+    font-size: 13px;
+    color: var(--et-text-weak, #909399);
+  }
+
+  .simple-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #173528;
+
+    &.accent {
+      color: var(--el-color-primary, #197b55);
+    }
+
+    &.warn {
+      color: var(--el-color-warning, #e6a23c);
+    }
+  }
+
   .bottom-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
   }
 
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .system-info-card {
+    flex: 1;
+  }
+
   .quick-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
   }
 
@@ -167,6 +301,25 @@ const statCards = computed(() => [
       background: #eef8f3;
       transform: translateY(-1px);
     }
+  }
+
+  .bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bar {
+    height: 18px;
+    background: var(--el-color-primary-light-5);
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  .bar-text {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
   }
 }
 

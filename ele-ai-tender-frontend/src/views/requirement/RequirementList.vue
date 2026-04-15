@@ -108,6 +108,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import ProgressCell from '@/components/common/ProgressCell.vue'
 import { REQUIREMENT_STATUS_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
+import { formatBudgetWanYuan } from '@/utils/budget'
 import type { RequirementQueryParams } from '@/types/requirement'
 
 const router = useRouter()
@@ -194,8 +195,7 @@ async function handleDelete(id: number) {
 }
 
 function formatBudget(value?: number): string {
-  if (value == null) return '-'
-  return `¥${value.toLocaleString('zh-CN')}`
+  return formatBudgetWanYuan(value)
 }
 
 onMounted(fetchData)

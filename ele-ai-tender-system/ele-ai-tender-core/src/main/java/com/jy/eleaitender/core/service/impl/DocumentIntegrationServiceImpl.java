@@ -142,7 +142,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         appendTableRow(sb, "项目编号", data.get("projectCode"));
         appendTableRow(sb, "项目类别", data.get("projectCategory"));
         appendTableRow(sb, "项目类型", data.get("projectType"));
-        appendTableRow(sb, "预算金额(万元)", data.get("budget"));
+        appendTableRow(sb, "预算金额(元)", data.get("budget"));
         appendTableRow(sb, "招标单位", data.get("tenderUnit"));
         appendTableRow(sb, "项目地点", data.get("projectLocation"));
         appendTableRow(sb, "联系人", data.get("contactPerson"));

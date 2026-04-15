@@ -20,7 +20,7 @@ public class MatchRequest {
     @Schema(description = "项目类别: LIMITED_BELOW/PROPERTY_TRADE/GOVERNMENT_PROCUREMENT")
     private String projectCategory;
 
-    @Schema(description = "项目预算(万元)")
+    @Schema(description = "项目预算(元)")
     private BigDecimal budget;
 
     @Schema(description = "项目描述/关键词")
