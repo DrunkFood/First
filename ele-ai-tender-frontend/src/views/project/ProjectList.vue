@@ -127,7 +127,11 @@
             <StatusBadge :status="row.status" :type-map="PROJECT_STATUS_MAP" />
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="170" />
+        <el-table-column label="创建时间" width="170">
+          <template #default="{ row }">
+            {{ formatTime(row.createTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleView(row.id)">查看</el-button>
@@ -147,6 +151,8 @@
         :total="total"
         :page-sizes="[10, 20, 50]"
         layout="total, sizes, prev, pager, next, jumper"
+        :prev-text="'上一页'"
+        :next-text="'下一页'"
         @current-change="fetchData"
         @size-change="fetchData"
       />
@@ -185,6 +191,24 @@ const queryParams = reactive({
 
 function formatBudget(value?: number): string {
   return formatBudgetWanYuan(value)
+}
+
+function formatTime(value?: string): string {
+  if (!value) return '-'
+  // 处理ISO格式：2026-04-15T03:18:36.000+00:00 -> 2026-04-15 11:18:36
+  try {
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return value
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    const h = String(date.getHours()).padStart(2, '0')
+    const min = String(date.getMinutes()).padStart(2, '0')
+    const s = String(date.getSeconds()).padStart(2, '0')
+    return `${y}-${m}-${d} ${h}:${min}:${s}`
+  } catch {
+    return value
+  }
 }
 
 function getCategoryLabel(key: string): string {

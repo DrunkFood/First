@@ -97,7 +97,7 @@
         <p class="tpl-desc">{{ tpl.structureDefinition || '标准招标文件模板' }}</p>
         <div class="tpl-meta">
           <span>v{{ tpl.versionNo || '1' }}</span>
-          <span>{{ tpl.createTime || '-' }}</span>
+          <span>{{ formatTime(tpl.createTime) }}</span>
         </div>
         <el-button text size="small" @click.stop="handlePreviewTemplate(tpl)">预览</el-button>
       </div>
@@ -254,6 +254,20 @@ const loadTemplates = async () => {
     ElMessage.error('获取模板列表失败')
   } finally {
     templateLoading.value = false
+  }
+}
+
+function formatTime(value?: string): string {
+  if (!value) return '-'
+  try {
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return value
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  } catch {
+    return value
   }
 }
 

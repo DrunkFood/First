@@ -37,7 +37,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">创建时间</span>
-          <span class="meta-value">{{ project?.createTime || '-' }}</span>
+          <span class="meta-value">{{ formatTime(project?.createTime) }}</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">创建人</span>
@@ -55,12 +55,12 @@
           <el-descriptions-item label="项目类别">{{ projectCategoryLabel }}</el-descriptions-item>
           <el-descriptions-item label="项目类型">{{ projectTypeLabel }}</el-descriptions-item>
           <el-descriptions-item label="预算金额">{{ formatBudgetWanYuan(project?.budget) }}</el-descriptions-item>
-          <el-descriptions-item label="评审类型">{{ project?.reviewType || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="评审类型">{{ project?.reviewType === 'MANUAL' ? '人工评审' : '智能评审' }}</el-descriptions-item>
           <el-descriptions-item label="招标单位">{{ project?.tenderUnit || '-' }}</el-descriptions-item>
           <el-descriptions-item label="联系人">{{ project?.contactPerson || '-' }}</el-descriptions-item>
           <el-descriptions-item label="联系电话">{{ project?.contactPhone || '-' }}</el-descriptions-item>
           <el-descriptions-item label="项目描述" :span="2">{{ project?.projectDescription || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ project?.createTime || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatTime(project?.createTime) }}</el-descriptions-item>
           <el-descriptions-item label="创建人">{{ project?.createName || '-' }}</el-descriptions-item>
         </el-descriptions>
 
@@ -155,7 +155,9 @@
             <template #default="{ row }">v{{ row.versionNo }}</template>
           </el-table-column>
           <el-table-column prop="createName" label="操作人" width="120" />
-          <el-table-column prop="createTime" label="操作时间" width="180" />
+          <el-table-column prop="createTime" label="操作时间" width="180">
+            <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+          </el-table-column>
           <el-table-column prop="changeDescription" label="变更摘要" min-width="200">
             <template #default="{ row }">{{ row.changeDescription || '-' }}</template>
           </el-table-column>
@@ -245,6 +247,23 @@ const projectTypeLabel = computed(() => {
   const type = project.value?.projectType
   return type ? (PROJECT_TYPE_MAP[type]?.label || type) : '-'
 })
+
+function formatTime(value?: string): string {
+  if (!value) return '-'
+  try {
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return value
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    const h = String(date.getHours()).padStart(2, '0')
+    const min = String(date.getMinutes()).padStart(2, '0')
+    const s = String(date.getSeconds()).padStart(2, '0')
+    return `${y}-${m}-${d} ${h}:${min}:${s}`
+  } catch {
+    return value
+  }
+}
 
 const canPublishOrPublished = computed(() => {
   const status = project.value?.status
