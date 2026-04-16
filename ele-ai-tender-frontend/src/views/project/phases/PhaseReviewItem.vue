@@ -1,9 +1,16 @@
 <template>
   <div class="phase-review-item">
     <!-- 评审项生成进度 -->
-    <div v-if="latestTask" class="task-status-top">
-      <AiTaskStatus :task="latestTask" />
-    </div>
+    <GenerationStatusCard
+      :task="latestTask"
+      :can-create-new="canCreateNew"
+      :progress-percent="progressPercent"
+      generating-title="正在生成评审项"
+      generating-desc="AI正在生成评审项内容，请稍候..."
+      completed-desc="评审项已生成完成，您可以在下方查看和修改内容"
+      idle-title="AI生成评审项"
+      idle-desc="点击下方重新生成按钮开始AI生成评审项内容"
+    />
 
     <!-- 评分摘要栏 -->
     <div class="score-summary">
@@ -206,7 +213,8 @@ import { Plus, Delete, ArrowLeft, ArrowRight, RefreshRight } from '@element-plus
 import { reviewApi } from '@/api/review'
 import { projectApi } from '@/api/project'
 import { useLatestTask } from '@/composables/useLatestTask'
-import AiTaskStatus from '@/components/AiTaskStatus.vue'
+import { getTaskProgress } from '@/types/ai-task'
+import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 
 type ReviewCategory = 'COMPLIANCE' | 'TECHNICAL' | 'CREDIT' | 'COMMERCIAL'
 
@@ -253,6 +261,11 @@ const creditScore = computed(() => creditItems.value.reduce((sum, i) => sum + (i
 const technicalScore = computed(() => technicalItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
 const commercialScore = computed(() => commercialItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
 const scoreTotal = computed(() => creditScore.value + technicalScore.value + commercialScore.value)
+
+const progressPercent = computed(() => {
+  if (!latestTask.value) return 0
+  return getTaskProgress(latestTask.value.status)
+})
 
 const loadReviewItems = async () => {
   const data = await reviewApi.getTree(props.projectId)
@@ -364,22 +377,6 @@ onMounted(loadReviewItems)
 </script>
 
 <style scoped lang="scss">
-// ============================================================
-// 评分摘要栏
-// ============================================================
-// ============================================================
-// 顶部生成进度
-// ============================================================
-.task-status-top {
-  margin-bottom: 16px;
-
-  :deep(.ai-task-status) {
-    padding: 12px 16px;
-    font-size: 13px;
-    border-radius: 8px;
-  }
-}
-
 // ============================================================
 // 评分摘要栏
 // ============================================================
