@@ -16,39 +16,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * 动态ChatClient工厂
  * 根据数据库中的模型配置动态创建ChatClient实例
  * 支持多种模型供应商：OPENAI兼容协议 / 智谱AI
+ * 不缓存ChatClient，每次根据最新配置创建，保证配置变更实时生效
  */
 @Slf4j
 @Component
 public class DynamicChatClientFactory {
 
-    /** ChatClient缓存，key=modelConfigId */
-    private final ConcurrentHashMap<Long, ChatClient> clientCache = new ConcurrentHashMap<>();
-
     @Autowired
     private ObjectMapper objectMapper;
 
     /**
-     * 获取或创建ChatClient（带缓存）
+     * 创建ChatClient（不缓存，每次根据最新配置创建）
      *
      * @param config 数据库中的模型配置
      * @return ChatClient实例
      */
     public ChatClient getOrCreateChatClient(AiModelConfig config) {
-        return clientCache.computeIfAbsent(config.getId(), id -> buildChatClient(config));
-    }
-
-    /**
-     * 清除所有缓存的ChatClient（配置刷新时调用）
-     */
-    public void evictAll() {
-        clientCache.clear();
-        log.info("ChatClient缓存已清除, 下次调用将重新创建");
+        return buildChatClient(config);
     }
 
     /**

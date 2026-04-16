@@ -17,7 +17,6 @@ import com.jy.eleaitender.support.service.IModelConfigService;
 import com.jy.eleaitender.support.vo.ModelConfigVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -29,13 +28,8 @@ import java.util.List;
 @Slf4j
 public class ModelConfigServiceImpl implements IModelConfigService {
 
-    private static final String CONFIG_REFRESH_CHANNEL = "ai:config:refresh";
-
     @Autowired
     private ModelConfigMapper modelConfigMapper;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -102,7 +96,6 @@ public class ModelConfigServiceImpl implements IModelConfigService {
         encryptApiKey(config, dto.getApiKey(), dto.getKeyId());
 
         modelConfigMapper.insert(config);
-        publishConfigRefresh();
         return toVO(config);
     }
 
@@ -124,21 +117,18 @@ public class ModelConfigServiceImpl implements IModelConfigService {
         // 未传apiKey则保留原值，不做修改
 
         modelConfigMapper.updateById(existing);
-        publishConfigRefresh();
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
         modelConfigMapper.deleteById(id);
-        publishConfigRefresh();
     }
 
     @Override
     @Transactional
     public void deleteByIds(List<Long> ids) {
         modelConfigMapper.deleteBatchIds(ids);
-        publishConfigRefresh();
     }
 
     @Override
@@ -150,7 +140,6 @@ public class ModelConfigServiceImpl implements IModelConfigService {
         }
         config.setIsActive(isActive);
         modelConfigMapper.updateById(config);
-        publishConfigRefresh();
     }
 
     // ==================== 转换方法 ====================
@@ -369,14 +358,4 @@ public class ModelConfigServiceImpl implements IModelConfigService {
         }
     }
 
-    /**
-     * 发布模型配置刷新通知到Redis Pub/Sub
-     */
-    private void publishConfigRefresh() {
-        try {
-            redisTemplate.convertAndSend(CONFIG_REFRESH_CHANNEL, "model_config_updated");
-        } catch (Exception e) {
-            // 通知失败不影响主流程，缓存会自然过期
-        }
-    }
 }

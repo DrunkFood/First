@@ -11,7 +11,6 @@ import com.jy.eleaitender.support.mapper.ModelRouteRuleMapper;
 import com.jy.eleaitender.support.service.IModelRouteRuleService;
 import com.jy.eleaitender.support.vo.ModelRouteRuleVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -27,16 +26,11 @@ import java.util.stream.Collectors;
 @Service
 public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
 
-    private static final String CONFIG_REFRESH_CHANNEL = "ai:config:refresh";
-
     @Autowired
     private ModelRouteRuleMapper routeRuleMapper;
 
     @Autowired
     private ModelConfigMapper modelConfigMapper;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
 
     @Override
     public Page<ModelRouteRuleVO> getPage(Integer pageNum, Integer pageSize, String usageScenario) {
@@ -75,7 +69,6 @@ public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
             rule.setPriority(0);
         }
         routeRuleMapper.insert(rule);
-        publishConfigRefresh();
         return rule;
     }
 
@@ -83,14 +76,12 @@ public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
     @Transactional
     public void update(SupModelRouteRule rule) {
         routeRuleMapper.updateById(rule);
-        publishConfigRefresh();
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
         routeRuleMapper.deleteById(id);
-        publishConfigRefresh();
     }
 
     @Override
@@ -102,18 +93,6 @@ public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
         }
         rule.setIsActive(isActive);
         routeRuleMapper.updateById(rule);
-        publishConfigRefresh();
-    }
-
-    /**
-     * 发布模型配置刷新通知到Redis Pub/Sub
-     */
-    private void publishConfigRefresh() {
-        try {
-            redisTemplate.convertAndSend(CONFIG_REFRESH_CHANNEL, "route_rule_updated");
-        } catch (Exception e) {
-            // 通知失败不影响主流程，缓存会自然过期
-        }
     }
 
     /**
