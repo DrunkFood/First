@@ -2,171 +2,236 @@
   <div class="phase-review-item">
     <!-- 评分摘要栏 -->
     <div class="score-summary">
-      <div class="score-item compliance">
-        <span class="score-label">符合性审查</span>
-        <span class="score-value">{{ complianceCount }}项</span>
-        <el-tag :type="complianceCount > 0 ? 'success' : 'info'" size="small">
-          {{ complianceCount > 0 ? '通过/不通过' : '未设置' }}
-        </el-tag>
+      <div class="score-item">
+        <div class="score-label">符合性审查</div>
+        <div class="score-value info">通过/不通过</div>
       </div>
-      <div class="score-item credit">
-        <span class="score-label">资信评审</span>
-        <span class="score-value">{{ creditScore }}分</span>
+      <div class="score-item">
+        <div class="score-label">资信评审</div>
+        <div class="score-value">{{ creditScore }}分</div>
       </div>
-      <div class="score-item technical">
-        <span class="score-label">技术评审</span>
-        <span class="score-value">{{ technicalScore }}分</span>
+      <div class="score-item">
+        <div class="score-label">技术评审</div>
+        <div class="score-value">{{ technicalScore }}分</div>
       </div>
-      <div class="score-item commercial">
-        <span class="score-label">商务评审</span>
-        <span class="score-value">{{ commercialScore }}分</span>
+      <div class="score-item">
+        <div class="score-label">商务评审</div>
+        <div class="score-value">{{ commercialScore }}分</div>
       </div>
-      <div class="score-item total" :class="{ valid: scoreTotal === 100, invalid: scoreTotal !== 100 }">
-        <span class="score-label">合计总分</span>
-        <span class="score-value">{{ scoreTotal }}分</span>
-        <el-tag v-if="scoreTotal === 100" type="success" size="small">符合</el-tag>
-        <el-tag v-else-if="scoreTotal > 0" type="warning" size="small">需调整</el-tag>
+      <div class="score-item">
+        <div class="score-label">三项合计总分</div>
+        <div class="score-value" :class="scoreTotal === 100 ? 'success' : scoreTotal > 0 ? 'warning' : ''">
+          {{ scoreTotal }}分
+        </div>
       </div>
     </div>
 
     <!-- 评分说明 -->
-    <el-alert
-      v-if="scoreTotal > 0 && scoreTotal !== 100"
-      title="资信评审、技术评审、商务评审三项合计必须为100分"
-      type="warning"
-      :closable="false"
-      show-icon
-      class="score-alert"
-    />
+    <div class="score-notice info-notice">
+      <strong>评分说明：</strong>资信评审、技术评审、商务评审三项合计总分必须为100分。允许其中一项或两项为0分。
+    </div>
 
-    <!-- 工具栏 -->
-    <div class="review-toolbar">
-      <el-button type="primary" :disabled="!canCreateNew" :loading="!canCreateNew" @click="handleGenerate">
-        AI 生成评审项
-      </el-button>
-      <AiTaskStatus :task="latestTask" />
+    <!-- 评分建议 -->
+    <div class="score-notice warning-notice">
+      <strong>评分建议：</strong>建议货物类项目商务分30-60，资信10-25分；建议服务类项目商务分10-30，资信10-25分。
     </div>
 
     <!-- 评审类型Tabs -->
-    <el-tabs v-model="activeReviewType" class="review-tabs">
-      <!-- 符合性审查 -->
-      <el-tab-pane label="符合性审查" name="COMPLIANCE">
-        <el-table :data="complianceItems" border class="review-table">
-          <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column label="评审标准" min-width="300">
-            <template #default="{ row }">
-              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="80" align="center">
-            <template #default="{ $index }">
-              <el-button link type="danger" size="small" @click="handleDeleteItem('COMPLIANCE', $index)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
-          <el-icon><Plus /></el-icon> 添加评审项
-        </div>
-      </el-tab-pane>
+    <div class="review-tabs-wrap">
+      <el-tabs v-model="activeReviewType" class="review-tabs">
+        <!-- 符合性审查 -->
+        <el-tab-pane label="符合性审查" name="COMPLIANCE">
+          <div class="table-container">
+            <el-table :data="complianceItems" class="review-table" :border="true">
+              <el-table-column type="index" label="序号" width="60" align="center" />
+              <el-table-column label="评审标准" min-width="500">
+                <template #default="{ row }">
+                  <el-input
+                    v-model="row.itemName"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="请输入评审标准"
+                    class="table-textarea"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="70" align="center">
+                <template #default="{ $index }">
+                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('COMPLIANCE', $index)">
+                    <el-icon :size="16"><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
+            <el-icon><Plus /></el-icon> 添加评审项
+          </div>
+        </el-tab-pane>
 
-      <!-- 资信评审 -->
-      <el-tab-pane label="资信评审" name="CREDIT">
-        <el-table :data="creditItems" border class="review-table">
-          <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column label="评审标准" min-width="240">
-            <template #default="{ row }">
-              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
-            </template>
-          </el-table-column>
-          <el-table-column label="主观/客观" width="120" align="center">
-            <template #default="{ row }">
-              <el-select v-model="row.subjective" size="small">
-                <el-option :value="false" label="客观" />
-                <el-option :value="true" label="主观" />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="分值" width="100" align="center">
-            <template #default="{ row }">
-              <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" style="width: 80px" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="80" align="center">
-            <template #default="{ $index }">
-              <el-button link type="danger" size="small" @click="handleDeleteItem('CREDIT', $index)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="add-item-btn" @click="handleAddItem('CREDIT')">
-          <el-icon><Plus /></el-icon> 添加评审项
-        </div>
-      </el-tab-pane>
+        <!-- 资信评审 -->
+        <el-tab-pane label="资信评审" name="CREDIT">
+          <div class="table-container">
+            <el-table :data="creditItems" class="review-table" :border="true">
+              <el-table-column type="index" label="序号" width="60" align="center" />
+              <el-table-column label="评审标准" min-width="300">
+                <template #default="{ row }">
+                  <el-input
+                    v-model="row.itemName"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="请输入评审标准"
+                    class="table-textarea"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column label="主观/客观" width="120" align="center">
+                <template #default="{ row }">
+                  <el-select v-model="row.subjective" size="small" class="subjective-select">
+                    <el-option :value="false" label="客观" />
+                    <el-option :value="true" label="主观" />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="分值" width="100" align="center">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.score"
+                    :min="0"
+                    :max="100"
+                    :precision="1"
+                    size="small"
+                    class="score-input"
+                    controls-position="right"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="70" align="center">
+                <template #default="{ $index }">
+                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('CREDIT', $index)">
+                    <el-icon :size="16"><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div class="add-item-btn" @click="handleAddItem('CREDIT')">
+            <el-icon><Plus /></el-icon> 添加评审项
+          </div>
+        </el-tab-pane>
 
-      <!-- 技术评审 -->
-      <el-tab-pane label="技术评审" name="TECHNICAL">
-        <el-table :data="technicalItems" border class="review-table">
-          <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column label="评审标准" min-width="240">
-            <template #default="{ row }">
-              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
-            </template>
-          </el-table-column>
-          <el-table-column label="主观/客观" width="120" align="center">
-            <template #default="{ row }">
-              <el-select v-model="row.subjective" size="small">
-                <el-option :value="false" label="客观" />
-                <el-option :value="true" label="主观" />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="分值" width="100" align="center">
-            <template #default="{ row }">
-              <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" style="width: 80px" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="80" align="center">
-            <template #default="{ $index }">
-              <el-button link type="danger" size="small" @click="handleDeleteItem('TECHNICAL', $index)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="add-item-btn" @click="handleAddItem('TECHNICAL')">
-          <el-icon><Plus /></el-icon> 添加评审项
-        </div>
-      </el-tab-pane>
+        <!-- 技术评审 -->
+        <el-tab-pane label="技术评审" name="TECHNICAL">
+          <div class="table-container">
+            <el-table :data="technicalItems" class="review-table" :border="true">
+              <el-table-column type="index" label="序号" width="60" align="center" />
+              <el-table-column label="评审标准" min-width="300">
+                <template #default="{ row }">
+                  <el-input
+                    v-model="row.itemName"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="请输入评审标准"
+                    class="table-textarea"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column label="主观/客观" width="120" align="center">
+                <template #default="{ row }">
+                  <el-select v-model="row.subjective" size="small" class="subjective-select">
+                    <el-option :value="false" label="客观" />
+                    <el-option :value="true" label="主观" />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="分值" width="100" align="center">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.score"
+                    :min="0"
+                    :max="100"
+                    :precision="1"
+                    size="small"
+                    class="score-input"
+                    controls-position="right"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="70" align="center">
+                <template #default="{ $index }">
+                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('TECHNICAL', $index)">
+                    <el-icon :size="16"><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div class="add-item-btn" @click="handleAddItem('TECHNICAL')">
+            <el-icon><Plus /></el-icon> 添加评审项
+          </div>
+        </el-tab-pane>
 
-      <!-- 商务评审 -->
-      <el-tab-pane label="商务评审" name="COMMERCIAL">
-        <el-table :data="commercialItems" border class="review-table">
-          <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column label="评审标准" min-width="300">
-            <template #default="{ row }">
-              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" />
-            </template>
-          </el-table-column>
-          <el-table-column label="分值" width="100" align="center">
-            <template #default="{ row }">
-              <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" style="width: 80px" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="80" align="center">
-            <template #default="{ $index }">
-              <el-button link type="danger" size="small" @click="handleDeleteItem('COMMERCIAL', $index)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
-          <el-icon><Plus /></el-icon> 添加评审项
-        </div>
-      </el-tab-pane>
-    </el-tabs>
+        <!-- 商务评审 -->
+        <el-tab-pane label="商务评审" name="COMMERCIAL">
+          <div class="table-container">
+            <el-table :data="commercialItems" class="review-table" :border="true">
+              <el-table-column type="index" label="序号" width="60" align="center" />
+              <el-table-column label="评审标准" min-width="400">
+                <template #default="{ row }">
+                  <el-input
+                    v-model="row.itemName"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="请输入评审标准"
+                    class="table-textarea"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column label="分值" width="100" align="center">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.score"
+                    :min="0"
+                    :max="100"
+                    :precision="1"
+                    size="small"
+                    class="score-input"
+                    controls-position="right"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="70" align="center">
+                <template #default="{ $index }">
+                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('COMMERCIAL', $index)">
+                    <el-icon :size="16"><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
+            <el-icon><Plus /></el-icon> 添加评审项
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
 
-    <!-- 底部操作 -->
-    <div class="phase-actions">
-      <el-button @click="$emit('prev')">上一步</el-button>
-      <el-button type="warning" plain :disabled="!canCreateNew" @click="handleGenerate">重新生成</el-button>
-      <div style="flex: 1" />
-      <el-button type="primary" @click="handleNext">确认评审项</el-button>
+    <!-- 底部操作栏 -->
+    <div class="form-actions">
+      <div class="actions-left">
+        <el-button @click="$emit('prev')">
+          <el-icon><ArrowLeft /></el-icon> 上一步
+        </el-button>
+        <el-button type="warning" :disabled="!canCreateNew" @click="handleGenerate">
+          <el-icon><RefreshRight /></el-icon> 重新生成
+        </el-button>
+        <AiTaskStatus v-if="latestTask" :task="latestTask" class="task-status-inline" />
+      </div>
+      <div class="actions-right">
+        <el-button type="primary" @click="handleNext">
+          确认评审项 <el-icon><ArrowRight /></el-icon>
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -174,7 +239,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Delete, ArrowLeft, ArrowRight, RefreshRight } from '@element-plus/icons-vue'
 import { reviewApi } from '@/api/review'
 import { useLatestTask } from '@/composables/useLatestTask'
 import AiTaskStatus from '@/components/AiTaskStatus.vue'
@@ -205,6 +270,12 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'REVIEW_ITEM_GENERATE',
   projectIdRef,
   'PROJECT',
+  (task) => {
+    // AI任务完成后，延迟等待后端同步结果，再重新加载评审项
+    if (task.status === 'COMPLETED') {
+      setTimeout(() => loadReviewItems(), 1500)
+    }
+  },
 )
 
 // 按类型分组
@@ -214,7 +285,6 @@ const technicalItems = computed(() => reviewItems.value.filter(i => i.reviewType
 const commercialItems = computed(() => reviewItems.value.filter(i => i.reviewType === 'COMMERCIAL'))
 
 // 评分计算
-const complianceCount = computed(() => complianceItems.value.length)
 const creditScore = computed(() => creditItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
 const technicalScore = computed(() => technicalItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
 const commercialScore = computed(() => commercialItems.value.reduce((sum, i) => sum + (i.score || 0), 0))
@@ -323,112 +393,290 @@ onMounted(loadReviewItems)
 </script>
 
 <style scoped lang="scss">
+// ============================================================
 // 评分摘要栏
+// ============================================================
 .score-summary {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--app-bg-tertiary);
+  border-radius: 8px;
 }
 
 .score-item {
   flex: 1;
-  padding: 12px;
-  border-radius: 6px;
   text-align: center;
-  background: var(--app-bg-secondary);
-  border-left: 3px solid var(--app-border-light);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: center;
 }
 
 .score-label {
   font-size: 13px;
   color: var(--app-text-secondary);
+  margin-bottom: 4px;
 }
 
 .score-value {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--app-text-primary);
-}
 
-.score-item.compliance {
-  border-left-color: var(--app-brand-color);
-}
-
-.score-item.credit {
-  border-left-color: var(--app-color-success);
-}
-
-.score-item.technical {
-  border-left-color: var(--app-auxiliary-color);
-}
-
-.score-item.commercial {
-  border-left-color: var(--app-embellishment-color);
-}
-
-.score-item.total {
-  border-left-width: 4px;
-
-  &.valid {
-    border-left-color: var(--app-color-success);
-    .score-value { color: var(--app-color-success); }
+  &.info {
+    color: var(--app-brand-color);
   }
 
-  &.invalid {
-    border-left-color: var(--app-color-warning);
-    .score-value { color: var(--app-color-warning); }
+  &.success {
+    color: var(--app-color-success);
+  }
+
+  &.warning {
+    color: var(--app-color-warning);
   }
 }
 
-.score-alert {
+// ============================================================
+// 评分说明 / 建议
+// ============================================================
+.score-notice {
   margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  line-height: 1.6;
+
+  strong {
+    font-weight: 600;
+  }
 }
 
-// 工具栏
-.review-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+.info-notice {
+  background: var(--app-bg-tertiary);
+
+  strong {
+    color: var(--app-brand-color);
+  }
+}
+
+.warning-notice {
+  background: var(--app-color-warning-light);
+  border: 1px solid rgba(230, 162, 60, 0.2);
+
+  strong {
+    color: var(--app-color-warning);
+  }
+}
+
+// ============================================================
+// Tabs 样式
+// ============================================================
+.review-tabs-wrap {
+  margin-bottom: 8px;
 }
 
 .review-tabs {
-  margin-bottom: 8px;
+  :deep(.el-tabs__header) {
+    margin-bottom: 0;
+  }
+
+  :deep(.el-tabs__nav-wrap::after) {
+    height: 2px;
+    background: var(--app-border-light);
+  }
+
+  :deep(.el-tabs__active-bar) {
+    height: 2px;
+    background-color: var(--app-brand-color);
+  }
+
+  :deep(.el-tabs__item) {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--app-text-secondary);
+    padding: 0 24px;
+    height: 46px;
+    line-height: 46px;
+
+    &.is-active {
+      color: var(--app-brand-color);
+    }
+
+    &:hover {
+      color: var(--app-brand-color);
+    }
+  }
+
+  :deep(.el-tabs__content) {
+    padding: 0;
+  }
 }
 
+// ============================================================
+// 表格容器
+// ============================================================
+.table-container {
+  border: 1px solid var(--app-border-light);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// ============================================================
+// 表格样式
+// ============================================================
 .review-table {
-  margin-bottom: 8px;
+  --el-table-border-color: var(--app-border-light);
+  --el-table-header-bg-color: var(--app-bg-tertiary);
+  --el-table-row-hover-bg-color: var(--app-hover-state);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-text-color: var(--app-text-primary);
+  --el-table-text-color: var(--app-text-primary);
+  --el-table-current-row-bg-color: var(--app-hover-state);
+
+  :deep(th.el-table__cell) {
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--app-bg-tertiary) !important;
+  }
+
+  :deep(td.el-table__cell) {
+    font-size: 13px;
+    border-bottom: 1px solid var(--app-border-light);
+  }
+
+  :deep(.el-table__body tr:last-child td.el-table__cell) {
+    border-bottom: none;
+  }
+
+  :deep(.el-table__inner-wrapper::before) {
+    display: none;
+  }
+
+  // textarea 输入框
+  .table-textarea {
+    :deep(.el-textarea__inner) {
+      background: var(--app-input-bg);
+      border: 1px solid var(--app-border-light);
+      border-radius: 4px;
+      color: var(--app-text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 60px;
+      padding: 6px 10px;
+
+      &:focus {
+        outline: none;
+        border-color: var(--app-brand-color);
+        background: var(--app-bg-elevated);
+      }
+    }
+  }
+
+  // 主观/客观选择框
+  .subjective-select {
+    width: 100%;
+
+    :deep(.el-input__wrapper) {
+      background: var(--app-input-bg);
+      border: 1px solid var(--app-border-light);
+      border-radius: 4px;
+      box-shadow: none;
+      color: var(--app-text-primary);
+      font-size: 13px;
+
+      &:hover {
+        border-color: var(--app-border-medium);
+      }
+    }
+  }
+
+  // 分值输入
+  .score-input {
+    width: 90px;
+
+    :deep(.el-input__wrapper) {
+      background: var(--app-input-bg);
+      border: 1px solid var(--app-border-light);
+      border-radius: 4px;
+      box-shadow: none;
+      text-align: center;
+
+      .el-input__inner {
+        text-align: center;
+        font-size: 13px;
+        color: var(--app-text-primary);
+      }
+    }
+  }
+
+  // 删除按钮
+  .delete-btn {
+    padding: 6px;
+    border-radius: 4px;
+    color: var(--app-color-danger);
+
+    &:hover {
+      background: var(--app-color-danger-light);
+    }
+  }
 }
 
-// 添加评审项虚线按钮
+// ============================================================
+// 添加评审项按钮
+// ============================================================
 .add-item-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 10px;
-  border: 2px dashed var(--app-border-medium);
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px dashed var(--app-border-light);
   border-radius: 6px;
+  color: var(--app-text-secondary);
+  font-size: 13px;
   cursor: pointer;
-  color: var(--app-text-tertiary);
-  font-size: 14px;
   transition: var(--app-transition-base);
 
   &:hover {
+    background: var(--app-hover-state);
     border-color: var(--app-brand-color);
     color: var(--app-brand-color);
   }
 }
 
-// 底部操作
-.phase-actions {
-  margin-top: 24px;
+// ============================================================
+// 底部操作栏
+// ============================================================
+.form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
+  padding: 24px;
+  margin-top: 16px;
+  background: var(--app-bg-tertiary);
+  border-top: 1px solid var(--app-border-light);
+  border-radius: 8px;
+}
+
+.actions-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.actions-right {
+  display: flex;
+  gap: 12px;
+}
+
+.task-status-inline {
+  :deep(.ai-task-status) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
 }
 </style>

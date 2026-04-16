@@ -1,62 +1,113 @@
 <template>
   <div class="phase-requirement">
-    <!-- 生成状态卡片 -->
-    <div v-if="latestTask" class="generation-status-card">
-      <div class="status-left">
-        <el-icon v-if="!canCreateNew" size="32" class="spinning" color="var(--app-brand-color)"><Loading /></el-icon>
-        <el-icon v-else-if="latestTask.status === 'COMPLETED'" size="32" color="var(--app-color-success)"><CircleCheck /></el-icon>
-        <el-icon v-else size="32" color="var(--app-brand-color)"><Document /></el-icon>
+    <!-- 卡片容器 -->
+    <div class="form-container">
+      <!-- 卡片头部 -->
+      <div class="form-header">
+        <h3 class="form-title">详细需求生成</h3>
       </div>
-      <div class="status-right">
-        <h4>{{ getStatusTitle }}</h4>
-        <el-progress
-          :percentage="progressPercent"
-          :stroke-width="8"
-          :status="progressStatus"
-          style="width: 300px"
-        />
-        <span v-if="latestTask.errorMsg" class="status-hint error-hint">{{ latestTask.errorMsg }}</span>
-        <span v-else-if="!canCreateNew" class="status-hint">AI正在生成招标需求内容，请稍候...</span>
-      </div>
-    </div>
 
-    <!-- 工具栏 -->
-    <div class="requirement-toolbar">
-      <el-button type="primary" :disabled="!canCreateNew" :loading="!canCreateNew" @click="handleGenerate">
-        AI 生成需求
-      </el-button>
-      <el-button type="warning" :loading="isOptimizing" @click="handleOptimize">
-        文本优化
-      </el-button>
-      <div style="flex: 1" />
-      <span v-if="isSaving" class="auto-save-hint">自动保存中...</span>
-      <span v-else-if="lastSaveTime" class="auto-save-hint">上次自动保存: {{ lastSaveTime }}</span>
-    </div>
+      <!-- 卡片内容区 -->
+      <div class="form-section">
+        <!-- AI生成状态卡片 -->
+        <div v-if="latestTask" class="generation-status">
+          <div :class="['status-icon', { completed: canCreateNew && latestTask.status === 'COMPLETED' }]">
+            <el-icon v-if="!canCreateNew" :size="24"><Loading /></el-icon>
+            <el-icon v-else-if="latestTask.status === 'COMPLETED'" :size="24"><CircleCheck /></el-icon>
+            <el-icon v-else :size="24"><Document /></el-icon>
+          </div>
+          <div class="status-info">
+            <div class="status-title">{{ getStatusTitle }}</div>
+            <div class="status-desc">
+              <template v-if="latestTask.errorMsg">{{ latestTask.errorMsg }}</template>
+              <template v-else-if="!canCreateNew">AI正在生成招标需求内容，请稍候...</template>
+              <template v-else-if="latestTask.status === 'COMPLETED'">所有章节已生成完成</template>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  :style="{ width: progressPercent + '%' }"
+                />
+              </div>
+              <div class="progress-text">{{ progressPercent }}%</div>
+            </div>
+          </div>
+        </div>
 
-    <!-- 编辑器 -->
-    <div class="requirement-body">
-      <div class="editor-area">
-        <MarkdownEditor v-model="content" />
+        <!-- 章节标题 -->
+        <h4 class="section-title">招标/采购需求</h4>
+
+        <!-- 编辑器区域 -->
+        <div class="editor-container">
+          <div class="editor-area">
+            <MarkdownEditor v-model="content" />
+          </div>
+        </div>
 
         <!-- AI内容反馈 -->
         <div v-if="content" class="ai-feedback">
-          <span class="feedback-label">对AI生成内容的评价：</span>
-          <el-button
-            :type="aiFeedbackType === 'like' ? 'success' : 'default'"
-            :icon="aiFeedbackType === 'like' ? '✓' : undefined"
-            size="small"
-            @click="handleFeedback('like')"
-          >
-            有帮助
-          </el-button>
-          <el-button
-            :type="aiFeedbackType === 'dislike' ? 'danger' : 'default'"
-            :icon="aiFeedbackType === 'dislike' ? '✗' : undefined"
-            size="small"
-            @click="handleFeedback('dislike')"
-          >
-            需改进
-          </el-button>
+          <h4 class="feedback-title">对AI生成内容的反馈</h4>
+          <div class="feedback-actions">
+            <button
+              :class="['feedback-btn', 'btn-like', { active: aiFeedbackType === 'like' }]"
+              @click="handleFeedback('like')"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              <span>赞</span>
+            </button>
+            <button
+              :class="['feedback-btn', 'btn-dislike', { active: aiFeedbackType === 'dislike' }]"
+              @click="handleFeedback('dislike')"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              <span>不行</span>
+            </button>
+            <span class="feedback-hint">帮助我们改进AI生成质量</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部操作栏 -->
+      <div class="form-actions">
+        <div class="form-actions-left">
+          <button class="btn btn-secondary" @click="$emit('prev')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            上一步
+          </button>
+          <button class="btn btn-warning" :disabled="!canCreateNew" @click="handleGenerate">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            重新生成章节
+          </button>
+        </div>
+        <div class="form-actions-right">
+          <button class="btn btn-secondary" @click="handleSave">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            保存编辑
+          </button>
+          <button class="btn btn-primary" @click="handleSaveAndNext">
+            确认需求
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -71,7 +122,7 @@
       <div v-if="chatVisible" class="ai-sidebar-content">
         <AiChatPanel
           show-close
-          greeting="您好！我是您的AI助手，可以帮助您修改招标需求内容。请选择快捷操作或输入您的修改需求。"
+          greeting="您好！我是您的AI助手，可以帮助您修改详细需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
           :context="content"
           :project-id="projectId"
           :requirement-id="requirementId"
@@ -90,15 +141,6 @@
         </AiChatPanel>
       </div>
     </div>
-
-    <!-- 底部操作 -->
-    <div class="phase-actions">
-      <el-button @click="$emit('prev')">上一步</el-button>
-      <el-button type="warning" plain :disabled="!canCreateNew" @click="handleGenerate">重新生成章节</el-button>
-      <div style="flex: 1" />
-      <el-button @click="handleSave">保存编辑</el-button>
-      <el-button type="primary" @click="handleSaveAndNext">确认需求</el-button>
-    </div>
   </div>
 </template>
 
@@ -111,7 +153,7 @@ import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useAutoSave } from '@/composables/useAutoSave'
-import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
+import { getTaskProgress } from '@/types/ai-task'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import type { AiChatMessage } from '@/types/ai'
@@ -134,7 +176,7 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'REQUIREMENT',
 )
 
-const { isSaving, lastSaveTime, startAutoSave, recoverDraft } = useAutoSave(
+const { startAutoSave, recoverDraft } = useAutoSave(
   requirementId,
   content,
   (id, data) => requirementApi.autoSave(id, data.content),
@@ -146,7 +188,7 @@ const getStatusTitle = computed(() => {
   if (!latestTask.value) return 'AI生成需求'
   const status = latestTask.value.status
   if (status === 'PENDING') return '任务排队中...'
-  if (status === 'PROCESSING') return '正在生成中...'
+  if (status === 'PROCESSING') return '正在生成中'
   if (status === 'COMPLETED') return '生成完成'
   if (status === 'FAILED') return '生成失败'
   if (status === 'AI_UNAVAILABLE') return 'AI服务不可用'
@@ -157,11 +199,6 @@ const getStatusTitle = computed(() => {
 const progressPercent = computed(() => {
   if (!latestTask.value) return 0
   return getTaskProgress(latestTask.value.status)
-})
-
-const progressStatus = computed(() => {
-  if (!latestTask.value) return ''
-  return getProgressStatus(latestTask.value.status)
 })
 
 const loadData = async () => {
@@ -177,7 +214,6 @@ const loadData = async () => {
 
 const handleGenerate = async () => {
   if (!requirementId.value) return
-  // 提交前刷新最新任务状态，确保校验是最新的
   await refresh()
   if (!canCreateNew.value) {
     ElMessage.warning('AI生成任务正在处理中，请稍候')
@@ -196,6 +232,7 @@ const handleGenerate = async () => {
   }
 }
 
+/** 文本优化（通过AI助手或直接调用） */
 const handleOptimize = async () => {
   if (!content.value.trim()) {
     ElMessage.warning('请先输入需求内容')
@@ -232,9 +269,12 @@ const handleOptimize = async () => {
   )
 }
 
+// 暴露给AI助手调用
+defineExpose({ handleOptimize })
+
 const handleFeedback = (type: 'like' | 'dislike') => {
   aiFeedbackType.value = aiFeedbackType.value === type ? null : type
-  ElMessage.success(type === 'like' ? '感谢反馈！' : '我们会持续改进AI生成质量')
+  ElMessage.success(type === 'like' ? '感谢反馈！我们会继续努力提供更好的AI生成内容。' : '感谢反馈！我们会根据您的意见进行改进。')
 }
 
 const sendQuickAction = (action: string) => {
@@ -276,24 +316,62 @@ onMounted(loadData)
 </script>
 
 <style scoped lang="scss">
+// ========================================
+// 卡片容器
+// ========================================
+.form-container {
+  background: var(--app-card-bg);
+  border-radius: var(--app-radius-sm);
+  border: 1px solid var(--app-border-light);
+  overflow: hidden;
+}
+
+.form-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--app-border-light);
+  background: var(--app-bg-tertiary);
+}
+
+.form-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0;
+}
+
+.form-section {
+  padding: 24px;
+}
+
+// ========================================
 // 生成状态卡片
-.generation-status-card {
+// ========================================
+.generation-status {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
-  background: var(--app-bg-secondary);
+  padding: 20px;
+  background: var(--app-bg-tertiary);
   border-radius: var(--app-radius-sm);
-  margin-bottom: 16px;
-  border: 1px solid var(--app-border-light);
+  margin-bottom: 20px;
 }
 
-.status-left {
+.status-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--app-brand-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
   flex-shrink: 0;
-}
-
-.spinning {
   animation: spin 1s linear infinite;
+
+  &.completed {
+    background: var(--app-color-success);
+    animation: none;
+  }
 }
 
 @keyframes spin {
@@ -301,113 +379,236 @@ onMounted(loadData)
   to { transform: rotate(360deg); }
 }
 
-.status-right {
-  h4 {
-    margin: 0 0 8px;
-    color: var(--app-text-primary);
-  }
-}
-
-.status-hint {
-  font-size: 12px;
-  color: var(--app-text-tertiary);
-}
-
-.error-hint {
-  color: var(--app-color-danger);
-}
-
-// 工具栏
-.requirement-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.auto-save-hint {
-  color: var(--app-text-tertiary);
-  font-size: 12px;
-}
-
-// 编辑器
-.requirement-body {
+.status-info {
   flex: 1;
-  min-height: 400px;
+  min-width: 0;
+}
+
+.status-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin-bottom: 4px;
+}
+
+.status-desc {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+}
+
+.progress-bar-container {
+  margin-top: 12px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--app-bg-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--app-brand-color), var(--app-auxiliary-color));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--app-text-secondary);
+  margin-top: 4px;
+  text-align: right;
+}
+
+// ========================================
+// 章节标题
+// ========================================
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--app-brand-color);
+}
+
+// ========================================
+// 编辑器
+// ========================================
+.editor-container {
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-input-bg);
+  overflow: hidden;
 }
 
 .editor-area {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--app-radius-sm);
-}
-
-// AI反馈
-.ai-feedback {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--app-bg-secondary);
-  border-top: 1px solid var(--app-border-light);
-}
-
-.feedback-label {
-  font-size: 13px;
-  color: var(--app-text-tertiary);
-  margin-right: 4px;
-}
-
-// 快速操作
-.quick-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.quick-action-btn {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--app-bg-elevated);
-  border: 1px solid var(--app-border-light);
-  border-radius: 6px;
-  color: var(--app-text-primary);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--app-hover-state, rgba(51, 108, 255, 0.12));
-    border-color: var(--app-brand-color);
-    color: var(--app-brand-color);
+  :deep(.markdown-editor) {
+    min-height: 500px;
   }
 }
 
+// ========================================
+// AI内容反馈
+// ========================================
+.ai-feedback {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--app-bg-tertiary);
+  border-radius: var(--app-radius-sm);
+  border: 1px solid var(--app-border-light);
+}
+
+.feedback-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0 0 12px 0;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+
+  &.btn-like {
+    background: var(--app-color-success);
+
+    &:hover,
+    &.active {
+      background: #4db87a;
+      box-shadow: 0 2px 8px rgba(103, 194, 58, 0.3);
+    }
+  }
+
+  &.btn-dislike {
+    background: var(--app-color-danger);
+
+    &:hover,
+    &.active {
+      background: #f78989;
+      box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
+    }
+  }
+}
+
+.feedback-hint {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  margin-left: 12px;
+}
+
+// ========================================
+// 底部操作栏
+// ========================================
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px;
+  background: var(--app-bg-tertiary);
+  border-top: 1px solid var(--app-border-light);
+}
+
+.form-actions-left,
+.form-actions-right {
+  display: flex;
+  gap: 12px;
+}
+
+// ========================================
+// 按钮样式（匹配原型）
+// ========================================
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  font-family: inherit;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: var(--app-brand-color);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #2855d9;
+  }
+}
+
+.btn-secondary {
+  background: var(--app-bg-elevated);
+  color: var(--app-text-primary);
+  border: 1px solid var(--app-border-light);
+
+  &:hover:not(:disabled) {
+    background: var(--app-bg-tertiary);
+    border-color: var(--app-border-medium);
+  }
+}
+
+.btn-warning {
+  background: var(--app-color-warning);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #cf8a2e;
+  }
+}
+
+// ========================================
 // AI助手侧边栏
+// ========================================
 .ai-sidebar {
   position: fixed;
-  right: 0;
-  top: 80px;
-  width: 340px;
-  height: calc(100vh - 80px);
+  right: 20px;
+  top: 100px;
+  width: 320px;
+  height: 600px;
   display: flex;
   flex-direction: column;
   z-index: 100;
   transition: transform 0.3s ease;
 
   &.collapsed {
-    transform: translateX(100%);
+    transform: translateX(calc(100% - 40px));
   }
 }
 
 .ai-toggle-btn {
   position: absolute;
-  left: -44px;
+  left: -40px;
   top: 20px;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   background: var(--app-brand-color);
   color: white;
   border: none;
@@ -416,8 +617,7 @@ onMounted(loadData)
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
 
   &:hover {
     background: #2855d9;
@@ -428,18 +628,34 @@ onMounted(loadData)
   flex: 1;
   overflow: hidden;
   background: var(--app-bg-secondary);
-  border-left: 1px solid var(--app-border-light);
-  border-top: 1px solid var(--app-border-light);
-  border-bottom: 1px solid var(--app-border-light);
-  border-radius: 8px 0 0 8px;
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--app-radius-sm);
+  box-shadow: 0 4px 16px var(--app-shadow-color);
 }
 
-// 底部操作
-.phase-actions {
-  margin-top: 24px;
+// ========================================
+// 快捷操作
+// ========================================
+.quick-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-action-btn {
+  padding: 6px 12px;
+  background: var(--app-bg-elevated);
+  border: 1px solid var(--app-border-light);
+  border-radius: 16px;
+  color: var(--app-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--app-hover-state);
+    color: var(--app-brand-color);
+    border-color: var(--app-brand-color);
+  }
 }
 </style>

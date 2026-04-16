@@ -63,3 +63,5 @@ ele-tender-demo-business-system/
 .project
 .classpath
 .settings/
+
+.playwright-mcp/

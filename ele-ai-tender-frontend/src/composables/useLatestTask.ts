@@ -12,8 +12,14 @@ import { TERMINAL_STATUSES, canCreateNewTask } from '@/types/ai-task'
  * @param taskType 任务类型编码
  * @param bizId 业务实体ID（响应式）
  * @param bizType 业务类型
+ * @param onTaskCompleted 任务进入终态时的回调（可选）
  */
-export function useLatestTask(taskType: string, bizId: Ref<number>, bizType: string) {
+export function useLatestTask(
+  taskType: string,
+  bizId: Ref<number>,
+  bizType: string,
+  onTaskCompleted?: (task: AiTaskVO) => void
+) {
   const latestTaskId = ref<number | null>(null)
   const latestTask = ref<AiTaskVO | null>(null)
   const loading = ref(false)
@@ -61,9 +67,14 @@ export function useLatestTask(taskType: string, bizId: Ref<number>, bizType: str
   }
 
   // 同步轮询结果
-  watch(task, (t) => {
+  watch(task, (t, oldT) => {
     if (t) {
       latestTask.value = t
+      // 任务从非终态变为终态时触发回调
+      if (TERMINAL_STATUSES.includes(t.status) &&
+          (!oldT || !TERMINAL_STATUSES.includes(oldT.status))) {
+        onTaskCompleted?.(t)
+      }
     }
   })
 

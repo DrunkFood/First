@@ -31,7 +31,7 @@
     </div>
 
     <!-- 检测进度 -->
-    <DetectionProgress v-if="submitted" :project-id="projectId" ref="progressRef" />
+    <DetectionProgress v-if="submitted" :project-id="projectId" ref="progressRef" @completed="handleDetectionCompleted" />
 
     <!-- 检测报告 -->
     <DetectionReport
@@ -132,6 +132,13 @@ const handleRejectIssue = async (recordId: number, issueIndex: number) => {
 const handleAcceptAll = async () => {
   await detectionApi.acceptAll(props.projectId)
   ElMessage.success('已接受所有建议')
+}
+
+const handleDetectionCompleted = async (_status: string) => {
+  // 检测完成后，延迟等待后端同步项目状态，再刷新
+  setTimeout(async () => {
+    await loadProject()
+  }, 1500)
 }
 
 onMounted(loadProject)

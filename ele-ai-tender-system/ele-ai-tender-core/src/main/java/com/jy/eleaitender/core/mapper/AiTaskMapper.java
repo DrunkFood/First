@@ -67,4 +67,21 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     AiTask selectLatestTask(@Param("taskType") String taskType,
                             @Param("bizId") Long bizId,
                             @Param("bizType") String bizType);
+
+    /**
+     * 查询已完成但未同步结果的AI任务
+     * 跳过数据隔离：后台定时任务无用户上下文
+     */
+    @DataScope(skip = true)
+    @Select("SELECT * FROM ai_task WHERE status IN ('COMPLETED','FAILED','AI_UNAVAILABLE','SKIPPED') " +
+            "AND result_synced = 0 AND is_delete = 0 ORDER BY completed_at ASC LIMIT #{limit}")
+    List<AiTask> selectUnsyncedTasks(@Param("limit") int limit);
+
+    /**
+     * 标记AI任务结果同步状态
+     * 跳过数据隔离：后台定时任务无用户上下文
+     */
+    @DataScope(skip = true)
+    @Update("UPDATE ai_task SET result_synced = #{synced} WHERE id = #{id} AND is_delete = 0")
+    int markSynced(@Param("id") Long id, @Param("synced") int synced);
 }

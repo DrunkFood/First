@@ -120,6 +120,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
         vo.setStartedAt(task.getStartedAt());
         vo.setCompletedAt(task.getCompletedAt());
         vo.setCreateTime(task.getCreateTime());
+        vo.setResultSynced(task.getResultSynced());
 
         try {
             AiTaskType taskType = AiTaskType.fromCode(task.getTaskType());

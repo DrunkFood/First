@@ -68,6 +68,7 @@ import { detectionApi } from '@/api/detection'
 import type { DetectionProgressVO, DetectionItemProgress } from '@/types/detection'
 
 const props = defineProps<{ projectId: number }>()
+const emit = defineEmits<{ completed: [overallStatus: string] }>()
 
 const progress = ref<DetectionProgressVO | null>(null)
 let timer: ReturnType<typeof setInterval> | null = null
@@ -85,6 +86,7 @@ const loadProgress = async () => {
   progress.value = await detectionApi.getProgress(props.projectId)
   if (progress.value?.overallStatus !== 'DETECTING') {
     stopPolling()
+    emit('completed', progress.value.overallStatus)
   }
 }
 

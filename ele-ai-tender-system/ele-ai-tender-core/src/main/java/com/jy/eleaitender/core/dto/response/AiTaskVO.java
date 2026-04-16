@@ -57,4 +57,7 @@ public class AiTaskVO {
 
     @Schema(description = "创建时间")
     private Date createTime;
+
+    @Schema(description = "结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败")
+    private Integer resultSynced;
 }
