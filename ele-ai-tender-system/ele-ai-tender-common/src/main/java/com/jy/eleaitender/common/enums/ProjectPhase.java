@@ -19,7 +19,10 @@ public enum ProjectPhase {
     private final int code;
     private final String label;
 
-    public static ProjectPhase fromCode(int code) {
+    public static ProjectPhase fromCode(Integer code) {
+        if (code == null) {
+            throw new IllegalArgumentException("编制阶段不能为空");
+        }
         for (ProjectPhase phase : values()) {
             if (phase.code == code) {
                 return phase;

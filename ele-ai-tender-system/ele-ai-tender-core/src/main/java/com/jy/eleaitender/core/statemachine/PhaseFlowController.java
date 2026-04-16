@@ -55,6 +55,9 @@ public class PhaseFlowController {
      * @param context 上下文参数（如policyFileIds等），可为null
      */
     public void advancePhase(AiProject project, ProjectPhase target, Map<String, Object> context) {
+        if (project.getCurrentPhase() == null) {
+            throw new BusinessException(ResponseCode.PROJECT_PHASE_ERROR, "项目阶段信息缺失，请确认项目数据完整性");
+        }
         ProjectPhase current = ProjectPhase.fromCode(project.getCurrentPhase());
 
         // 1. 校验转换规则（只能推进到下一阶段，不能跳跃）
