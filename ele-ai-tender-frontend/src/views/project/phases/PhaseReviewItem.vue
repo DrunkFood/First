@@ -241,6 +241,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, ArrowLeft, ArrowRight, RefreshRight } from '@element-plus/icons-vue'
 import { reviewApi } from '@/api/review'
+import { projectApi } from '@/api/project'
 import { useLatestTask } from '@/composables/useLatestTask'
 import AiTaskStatus from '@/components/AiTaskStatus.vue'
 
@@ -384,6 +385,13 @@ const handleNext = async () => {
   } catch {
     ElMessage.error('保存失败')
     return
+  }
+
+  // 推进阶段到"文档集成"，后端会自动执行文档集成
+  try {
+    await projectApi.advancePhase(props.projectId, 4)
+  } catch (e: any) {
+    ElMessage.warning(e?.message || '阶段推进失败，可手动进入下一步')
   }
 
   emit('next')

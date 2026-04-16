@@ -82,7 +82,7 @@
           </div>
           <div class="info-item">
             <div class="info-label">生成时间</div>
-            <div class="info-value">{{ formatTime(preview.generateTime) }}</div>
+            <div class="info-value">{{ formatTime(project?.createTime) }}</div>
           </div>
         </div>
 
@@ -91,10 +91,28 @@
 
         <!-- 预览容器 -->
         <div v-if="preview?.integrated" class="preview-container">
+          <!-- 目录浮层面板 -->
+          <transition name="toc-fade">
+            <div v-if="showTocPanel" class="toc-panel">
+              <div class="toc-title">目录导航</div>
+              <template v-for="chapter in tocData" :key="chapter.id">
+                <div class="toc-item" @click="handleTocClick(chapter)">{{ chapter.title }}</div>
+                <div
+                  v-for="child in chapter.children"
+                  :key="child.id"
+                  class="toc-item level-2"
+                  @click="handleTocClick(child)"
+                >
+                  {{ child.title }}
+                </div>
+              </template>
+            </div>
+          </transition>
+
           <!-- 预览工具栏 -->
           <div class="preview-toolbar">
             <div class="toolbar-left">
-              <button class="toolbar-btn" @click="showTocPanel = !showTocPanel">
+              <button class="toolbar-btn" :class="{ active: showTocPanel }" @click="showTocPanel = !showTocPanel">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="6" x2="21" y2="6" />
@@ -141,55 +159,12 @@
             </div>
           </div>
 
-          <!-- 预览内容区（含目录面板） -->
-          <div class="preview-body">
-            <!-- 目录面板 -->
-            <transition name="toc-slide">
-              <div v-if="showTocPanel" class="toc-panel">
-                <div class="toc-title">目录导航</div>
-                <template v-for="chapter in tocData" :key="chapter.id">
-                  <div class="toc-item" @click="handleTocClick(chapter)">{{ chapter.title }}</div>
-                  <div
-                    v-for="child in chapter.children"
-                    :key="child.id"
-                    class="toc-item level-2"
-                    @click="handleTocClick(child)"
-                  >
-                    {{ child.title }}
-                  </div>
-                </template>
-              </div>
-            </transition>
-
-            <!-- 预览/编辑区 -->
-            <div class="preview-content" :style="{ fontSize: zoomLevel / 100 * 14 + 'px' }">
-              <el-tabs v-model="activeTab" class="preview-tabs">
-                <el-tab-pane label="预览" name="html">
-                  <div class="html-preview" v-html="preview.htmlContent" />
-                </el-tab-pane>
-                <el-tab-pane label="Markdown编辑" name="markdown">
-                  <MarkdownEditor v-model="markdownContent" :preview="false" />
-                  <div class="save-edit-bar">
-                    <button class="btn btn-primary" @click="handleSaveEdit">保存修改</button>
-                  </div>
-                </el-tab-pane>
-                <el-tab-pane label="变量替换" name="variables">
-                  <div class="variable-section">
-                    <p class="variable-hint">以下变量将从项目信息中自动填充，您也可以手动修改</p>
-                    <div class="variable-grid">
-                      <div v-for="v in variables" :key="v.key" class="variable-item">
-                        <label class="variable-label">{{ v.label }}</label>
-                        <input v-model="v.value" class="variable-input" :placeholder="`请输入${v.label}`" />
-                      </div>
-                    </div>
-                    <button class="btn btn-primary" style="margin-top: 16px" @click="handleApplyVariables">
-                      应用变量替换
-                    </button>
-                  </div>
-                </el-tab-pane>
-              </el-tabs>
-            </div>
-          </div>
+          <!-- 预览内容 -->
+          <div
+            class="preview-content"
+            :style="{ fontSize: zoomLevel / 100 * 14 + 'px' }"
+            v-html="preview.htmlContent"
+          />
         </div>
 
         <!-- 未集成时显示空状态 -->
@@ -293,16 +268,14 @@ import { toWanYuan } from '@/utils/budget'
 import type { DocumentPreviewVO } from '@/types/document'
 import type { PolicyFileVO } from '@/types/policy-file'
 import type { ProjectInfo } from '@/types/project'
-import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 
 const props = defineProps<{ projectId: number }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const preview = ref<DocumentPreviewVO | null>(null)
 const markdownContent = ref('')
-const activeTab = ref('html')
 const isIntegrating = ref(false)
-const showTocPanel = ref(true)
+const showTocPanel = ref(false)
 const zoomLevel = ref(100)
 const policyModalVisible = ref(false)
 
@@ -392,7 +365,7 @@ const handleSuggestPolicy = async () => {
   }
 }
 
-const handleConfirmPolicyFiles = () => {
+const handleConfirmPolicyFiles = async () => {
   const selectedIds = Object.entries(selectedPolicyMap)
     .filter(([, checked]) => checked)
     .map(([id]) => Number(id))
@@ -401,7 +374,15 @@ const handleConfirmPolicyFiles = () => {
     return
   }
   policyModalVisible.value = false
-  ElMessage.success(`已选择 ${selectedIds.length} 个政策文件`)
+
+  // 推进阶段到"智能检测"，后端会自动提交检测并携带政策文件ID
+  try {
+    await projectApi.advancePhase(props.projectId, 5, { policyFileIds: selectedIds })
+    ElMessage.success('已提交检测，正在进入智能检测阶段')
+    emit('next')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '提交检测失败')
+  }
 }
 
 // --- 变量替换 ---
@@ -430,7 +411,6 @@ const handleApplyVariables = () => {
   }
   markdownContent.value = result
   ElMessage.success('变量替换完成，请检查内容后保存')
-  activeTab.value = 'markdown'
 }
 
 // --- 文档操作 ---
@@ -475,7 +455,6 @@ const handleSaveEdit = async () => {
   await documentApi.editContent(props.projectId, markdownContent.value)
   ElMessage.success('保存成功')
   await loadPreview()
-  activeTab.value = 'html'
 }
 
 const handleSaveDraft = () => {
@@ -491,6 +470,8 @@ onMounted(async () => {
   initVariables()
   await Promise.all([loadPreview(), loadPolicyFiles(), handleSuggestPolicy()])
 })
+
+defineExpose({ handleSaveEdit, handleApplyVariables })
 </script>
 
 <style scoped lang="scss">
@@ -660,7 +641,14 @@ onMounted(async () => {
   border: 1px solid var(--app-border-light);
   border-radius: var(--app-radius-sm);
   background: var(--app-input-bg);
-  overflow: hidden;
+  min-height: 600px;
+  position: relative;
+  overflow: visible;
+
+  // 工具栏以下区域裁剪
+  > .preview-content {
+    overflow-y: auto;
+  }
 }
 
 .preview-toolbar {
@@ -670,6 +658,8 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 
 .toolbar-left,
@@ -699,6 +689,12 @@ onMounted(async () => {
     border-color: var(--app-brand-color);
   }
 
+  &.active {
+    background: var(--app-hover-state);
+    color: var(--app-brand-color);
+    border-color: var(--app-brand-color);
+  }
+
   svg {
     width: 14px;
     height: 14px;
@@ -719,20 +715,21 @@ onMounted(async () => {
 }
 
 // ========================================
-// 预览主体
+// 目录浮层面板
 // ========================================
-.preview-body {
-  display: flex;
-  min-height: 500px;
-}
-
 .toc-panel {
-  width: 240px;
-  flex-shrink: 0;
-  background: var(--app-bg-secondary);
-  border-right: 1px solid var(--app-border-light);
+  position: absolute;
+  left: 0;
+  top: 49px; // toolbar 高度偏移
+  width: 260px;
+  background: var(--app-card-bg);
+  border: 1px solid var(--app-border-light);
+  border-radius: 0 8px 8px 0;
   padding: 16px;
+  max-height: 500px;
   overflow-y: auto;
+  z-index: 10;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .toc-title {
@@ -760,36 +757,89 @@ onMounted(async () => {
   &.level-2 {
     padding-left: 24px;
   }
+
+  &.level-3 {
+    padding-left: 36px;
+  }
 }
 
-.toc-slide-enter-active,
-.toc-slide-leave-active {
-  transition: all 0.3s ease;
+.toc-fade-enter-active,
+.toc-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.toc-slide-enter-from,
-.toc-slide-leave-to {
-  width: 0;
+.toc-fade-enter-from,
+.toc-fade-leave-to {
   opacity: 0;
-  padding: 0;
+  transform: translateX(-10px);
 }
 
+// ========================================
+// 预览内容
+// ========================================
 .preview-content {
-  flex: 1;
-  min-width: 0;
-  overflow-y: auto;
-}
-
-.preview-tabs {
-  padding: 0 16px;
-}
-
-.html-preview {
   padding: 40px;
   background: white;
   color: #1a1a1a;
-  min-height: 400px;
+  min-height: 500px;
   line-height: 1.8;
+  overflow-y: auto;
+
+  :deep(h1) {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #1a1a1a;
+  }
+
+  :deep(h2) {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    margin-top: 24px;
+    color: #1a1a1a;
+  }
+
+  :deep(h3) {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    margin-top: 20px;
+    color: #1a1a1a;
+  }
+
+  :deep(p) {
+    margin-bottom: 12px;
+    text-indent: 2em;
+  }
+
+  :deep(ul), :deep(ol) {
+    margin-left: 2em;
+    margin-bottom: 12px;
+  }
+
+  :deep(li) {
+    margin-bottom: 6px;
+  }
+
+  :deep(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+
+  :deep(th), :deep(td) {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+    text-indent: 0;
+  }
+
+  :deep(th) {
+    background: #f5f5f5;
+    font-weight: 600;
+  }
 }
 
 .save-edit-bar {

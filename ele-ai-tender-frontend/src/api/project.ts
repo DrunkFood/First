@@ -24,9 +24,9 @@ export const projectApi = {
   export(projectId: number) {
     return request.post(`/core-api/v1/projects/${projectId}/export`)
   },
-  /** 手动推进阶段 */
-  advancePhase(id: number, phase: number) {
-    return request.put(`/core-api/v1/projects/${id}/phase`, { phase })
+  /** 推进项目阶段（触发器自动发起下一阶段AI任务） */
+  advancePhase(id: number, targetPhase: number, context?: Record<string, any>) {
+    return request.put(`/core-api/v1/projects/${id}/phase`, { targetPhase, context })
   },
   /** 变更项目状态 */
   changeStatus(id: number, status: string) {

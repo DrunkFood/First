@@ -350,6 +350,14 @@ const handleSave = async () => {
 
 const handleSaveAndNext = async () => {
   await handleSave()
+
+  // 推进阶段到"评审项设置"，后端会自动触发AI评审项生成任务
+  try {
+    await projectApi.advancePhase(props.projectId, 3)
+  } catch (e: any) {
+    ElMessage.warning(e?.message || '阶段推进失败，可手动进入下一步')
+  }
+
   emit('next')
 }
 

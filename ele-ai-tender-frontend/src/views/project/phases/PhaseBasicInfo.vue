@@ -408,6 +408,14 @@ const handleSaveAndNext = async () => {
     templateId: form.value.templateId ?? undefined,
   })
   ElMessage.success('基础信息保存成功')
+
+  // 推进阶段到"需求生成"，后端会自动触发AI需求生成任务
+  try {
+    await projectApi.advancePhase(props.projectId, 2)
+  } catch (e: any) {
+    ElMessage.warning(e?.message || '阶段推进失败，可手动进入下一步')
+  }
+
   emit('next')
 }
 
