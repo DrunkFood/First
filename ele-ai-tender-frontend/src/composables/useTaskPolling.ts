@@ -7,7 +7,7 @@ import { TERMINAL_STATUSES } from '@/types/ai-task'
  * AI任务轮询组合式函数
  * 自动轮询任务状态，终态时停止轮询
  */
-export function useTaskPolling(taskId: Ref<number | null>, interval = 3000) {
+export function useTaskPolling(taskId: Ref<number | null>, interval = 8000) {
   const task = ref<AiTaskVO | null>(null)
   const isPolling = ref(false)
   const error = ref<string | null>(null)
