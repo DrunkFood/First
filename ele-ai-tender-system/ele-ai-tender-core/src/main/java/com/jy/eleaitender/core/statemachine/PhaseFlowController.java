@@ -44,8 +44,12 @@ public class PhaseFlowController {
     /**
      * 推进项目阶段
      * 流程: 校验转换规则 → 执行当前阶段onExit → 更新阶段 → 执行目标阶段onEnter → 联动Status
+     *
+     * @param project 项目实体
+     * @param target  目标阶段
+     * @param context 上下文参数（如policyFileIds等），可为null
      */
-    public void advancePhase(AiProject project, ProjectPhase target) {
+    public void advancePhase(AiProject project, ProjectPhase target, Map<String, Object> context) {
         ProjectPhase current = ProjectPhase.fromCode(project.getCurrentPhase());
 
         // 1. 校验转换规则（只能推进到下一阶段，不能跳跃）
@@ -65,10 +69,10 @@ public class PhaseFlowController {
         project.setCurrentPhase(target.getCode());
         project.setProgress(target.getProgressPercent());
 
-        // 4. 执行目标阶段的 onEnter
+        // 4. 执行目标阶段的 onEnter（自动发起AI任务等）
         PhaseTrigger targetTrigger = triggers.get(target);
         if (targetTrigger != null) {
-            targetTrigger.onEnter(project);
+            targetTrigger.onEnter(project, context);
         }
 
         // 5. 联动更新项目状态
@@ -110,8 +114,9 @@ public class PhaseFlowController {
 
     /**
      * 联动更新项目状态
-     * 进入 DETECTION 阶段 → Status=DETECTING
-     * 进入其他阶段 → Status=IN_PROGRESS（如果当前是DRAFT）
+     * - DRAFT → IN_PROGRESS：首次进入编制阶段
+     * - 进入 DETECTION 阶段：若状态已是 DETECTING（由 onEnter 触发器提交检测），跳过
+     * - 进入其他阶段：若当前是 DRAFT，流转到 IN_PROGRESS
      */
     private void syncProjectStatus(AiProject project, ProjectPhase target) {
         ProjectStatus expectedStatus = PHASE_STATUS_MAPPING.get(target);
@@ -121,24 +126,31 @@ public class PhaseFlowController {
 
         ProjectStatus currentStatus = ProjectStatus.fromCode(project.getStatus());
 
+        // 状态已符合预期，无需变更
+        if (currentStatus == expectedStatus) {
+            return;
+        }
+
         // DRAFT → IN_PROGRESS：首次进入编制阶段
         if (currentStatus == ProjectStatus.DRAFT && expectedStatus == ProjectStatus.IN_PROGRESS) {
             project.setStatus(ProjectStatus.IN_PROGRESS.getCode());
             return;
         }
 
-        // 进入检测阶段：如果当前是 IN_PROGRESS，流转到 DETECTING
+        // 进入检测阶段：状态已被 onEnter 触发器设为 DETECTING，无需再转换
+        if (target == ProjectPhase.DETECTION && currentStatus == ProjectStatus.DETECTING) {
+            return;
+        }
+
+        // 进入检测阶段：从 IN_PROGRESS 流转
         if (target == ProjectPhase.DETECTION && currentStatus == ProjectStatus.IN_PROGRESS) {
             ProjectStateMachine.transition(project, ProjectStatus.PENDING_DETECTION);
             ProjectStateMachine.transition(project, ProjectStatus.DETECTING);
             return;
         }
 
-        // 其他情况：状态已经符合预期，无需变更
-        if (currentStatus != expectedStatus) {
-            log.warn("阶段-状态不一致: phase={}, status={}, expected={}",
-                    target.getLabel(), currentStatus.getLabel(), expectedStatus.getLabel());
-        }
+        log.warn("阶段-状态不一致: phase={}, status={}, expected={}",
+                target.getLabel(), currentStatus.getLabel(), expectedStatus.getLabel());
     }
 
     /**

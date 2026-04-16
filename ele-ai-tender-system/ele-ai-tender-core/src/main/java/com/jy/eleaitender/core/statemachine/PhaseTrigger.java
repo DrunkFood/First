@@ -2,6 +2,8 @@ package com.jy.eleaitender.core.statemachine;
 
 import com.jy.eleaitender.common.entity.core.AiProject;
 
+import java.util.Map;
+
 /**
  * 阶段触发器接口
  * 每个编制阶段可注册一个触发器，控制阶段进入/离开/完成校验
@@ -9,9 +11,12 @@ import com.jy.eleaitender.common.entity.core.AiProject;
 public interface PhaseTrigger {
 
     /**
-     * 进入阶段时执行
+     * 进入阶段时执行（可用于自动发起AI任务等）
+     *
+     * @param project 项目实体
+     * @param context 上下文参数（如policyFileIds等），可为null
      */
-    default void onEnter(AiProject project) {
+    default void onEnter(AiProject project, Map<String, Object> context) {
     }
 
     /**

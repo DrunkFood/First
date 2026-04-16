@@ -4,6 +4,8 @@ import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 /**
  * 基础信息阶段触发器
  * 校验项目基础信息完整性

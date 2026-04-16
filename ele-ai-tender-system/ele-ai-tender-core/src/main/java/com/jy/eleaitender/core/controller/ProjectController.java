@@ -3,6 +3,7 @@ package com.jy.eleaitender.core.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
+import com.jy.eleaitender.core.dto.request.AdvancePhaseRequest;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.common.entity.core.AiProjectVersion;
@@ -95,9 +96,9 @@ public class ProjectController {
 
     @PutMapping("/{id}/phase")
     @RequireLogin
-    @Operation(summary = "手动推进阶段")
-    public Result<Void> advancePhase(@PathVariable Long id, @RequestParam Integer targetPhase) {
-        projectService.advancePhase(id, targetPhase);
+    @Operation(summary = "推进项目阶段")
+    public Result<Void> advancePhase(@PathVariable Long id, @RequestBody AdvancePhaseRequest request) {
+        projectService.advancePhase(id, request.getTargetPhase(), request.getContext());
         return Result.success();
     }
 

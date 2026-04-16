@@ -5,6 +5,7 @@ import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.common.entity.core.AiProject;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 项目服务接口
@@ -48,8 +49,12 @@ public interface IProjectService {
 
     /**
      * 推进项目阶段
+     *
+     * @param projectId   项目ID
+     * @param targetPhase 目标阶段编号
+     * @param context     上下文参数（如policyFileIds等），可为null
      */
-    void advancePhase(Long projectId, Integer targetPhase);
+    void advancePhase(Long projectId, Integer targetPhase, Map<String, Object> context);
 
     /**
      * 变更项目状态

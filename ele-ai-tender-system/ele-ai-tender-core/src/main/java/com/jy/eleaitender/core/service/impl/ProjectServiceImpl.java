@@ -19,6 +19,7 @@ import com.jy.eleaitender.core.statemachine.trigger.DocumentTrigger;
 import com.jy.eleaitender.core.statemachine.trigger.RequirementTrigger;
 import com.jy.eleaitender.core.statemachine.trigger.ReviewItemTrigger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,6 +27,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jakarta.annotation.PostConstruct;
@@ -42,18 +44,23 @@ public class ProjectServiceImpl implements IProjectService {
     @Autowired
     private PhaseFlowController phaseFlowController;
 
+    @Lazy
     @Autowired
     private BasicInfoTrigger basicInfoTrigger;
 
+    @Lazy
     @Autowired
     private RequirementTrigger requirementTrigger;
 
+    @Lazy
     @Autowired
     private ReviewItemTrigger reviewItemTrigger;
 
+    @Lazy
     @Autowired
     private DocumentTrigger documentTrigger;
 
+    @Lazy
     @Autowired
     private DetectionPhaseTrigger detectionPhaseTrigger;
 
@@ -184,10 +191,10 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     @Transactional
-    public void advancePhase(Long projectId, Integer targetPhase) {
+    public void advancePhase(Long projectId, Integer targetPhase, Map<String, Object> context) {
         AiProject project = getById(projectId); // 内部已做归属校验
         ProjectPhase target = ProjectPhase.fromCode(targetPhase);
-        phaseFlowController.advancePhase(project, target);
+        phaseFlowController.advancePhase(project, target, context);
         projectMapper.updateById(project);
     }
 

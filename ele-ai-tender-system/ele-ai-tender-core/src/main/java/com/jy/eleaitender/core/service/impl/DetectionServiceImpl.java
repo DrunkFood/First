@@ -116,13 +116,6 @@ public class DetectionServiceImpl implements IDetectionService {
         ProjectStateMachine.transition(project, ProjectStatus.DETECTING);
         projectMapper.updateById(project);
 
-        // 同步推进阶段到 DETECTION
-        if (project.getCurrentPhase() < ProjectPhase.DETECTION.getCode()) {
-            project.setCurrentPhase(ProjectPhase.DETECTION.getCode());
-            project.setProgress(ProjectPhase.DETECTION.getProgressPercent());
-            projectMapper.updateById(project);
-        }
-
         log.info("提交文档检测，项目ID: {}, 创建4个检测任务", projectId);
         return taskIds;
     }
