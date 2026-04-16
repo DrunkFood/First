@@ -6,9 +6,8 @@
     </div>
 
     <el-progress
-      v-if="showProgress"
       :percentage="progressPercent"
-      :status="progressStatus"
+      :status="progressStatusValue"
       :stroke-width="8"
       class="task-progress"
     />
@@ -16,39 +15,16 @@
     <div v-if="task.errorMsg" class="task-error">
       <el-text type="danger" size="small">{{ task.errorMsg }}</el-text>
     </div>
-
-    <div v-if="showActions" class="task-actions">
-      <el-button
-        v-if="canRetry"
-        size="small"
-        type="primary"
-        @click="$emit('retry')"
-      >
-        重试
-      </el-button>
-      <el-button
-        v-if="canSkip"
-        size="small"
-        @click="$emit('skip')"
-      >
-        跳过
-      </el-button>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { AiTaskVO, AiTaskStatus } from '@/types/ai-task'
+import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
 
 const props = defineProps<{
   task: AiTaskVO | null
-  showActions?: boolean
-}>()
-
-defineEmits<{
-  retry: []
-  skip: []
 }>()
 
 const statusTagType = computed(() => {
@@ -64,32 +40,14 @@ const statusTagType = computed(() => {
   return map[props.task.status] || 'info'
 })
 
-const showProgress = computed(() => {
-  return props.task && ['PENDING', 'PROCESSING'].includes(props.task.status)
-})
-
 const progressPercent = computed(() => {
   if (!props.task) return 0
-  if (props.task.status === 'PENDING') return 10
-  if (props.task.status === 'PROCESSING') return 60
-  if (props.task.status === 'COMPLETED') return 100
-  return 0
+  return getTaskProgress(props.task.status)
 })
 
-const progressStatus = computed<'' | 'success' | 'warning' | 'exception'>(() => {
+const progressStatusValue = computed(() => {
   if (!props.task) return ''
-  if (props.task.status === 'COMPLETED') return 'success'
-  if (props.task.status === 'FAILED') return 'exception'
-  if (props.task.status === 'AI_UNAVAILABLE') return 'warning'
-  return ''
-})
-
-const canRetry = computed(() => {
-  return props.task && ['FAILED', 'AI_UNAVAILABLE'].includes(props.task.status)
-})
-
-const canSkip = computed(() => {
-  return props.task && ['FAILED', 'AI_UNAVAILABLE', 'PENDING'].includes(props.task.status)
+  return getProgressStatus(props.task.status)
 })
 </script>
 
@@ -119,10 +77,5 @@ const canSkip = computed(() => {
 
 .task-error {
   margin-bottom: 8px;
-}
-
-.task-actions {
-  display: flex;
-  gap: 8px;
 }
 </style>

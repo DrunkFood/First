@@ -42,13 +42,6 @@ export function useTaskPolling(taskId: Ref<number | null>, interval = 3000) {
     isPolling.value = false
   }
 
-  const retry = async () => {
-    if (!taskId.value) return
-    await aiTaskApi.retry(taskId.value)
-    task.value = null
-    startPolling()
-  }
-
   const skip = async () => {
     if (!taskId.value) return
     await aiTaskApi.skip(taskId.value)
@@ -74,7 +67,6 @@ export function useTaskPolling(taskId: Ref<number | null>, interval = 3000) {
     error,
     startPolling,
     stopPolling,
-    retry,
     skip,
   }
 }

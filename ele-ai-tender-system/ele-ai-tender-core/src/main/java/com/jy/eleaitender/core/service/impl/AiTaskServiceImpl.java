@@ -1,6 +1,5 @@
 package com.jy.eleaitender.core.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
@@ -15,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * AI任务服务实现
@@ -75,39 +72,6 @@ public class AiTaskServiceImpl implements IAiTaskService {
     }
 
     @Override
-    public List<AiTaskVO> getTasksByProject(Long projectId) {
-        LambdaQueryWrapper<AiTask> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiTask::getProjectId, projectId)
-                .orderByDesc(AiTask::getCreateTime);
-        return aiTaskMapper.selectList(wrapper).stream()
-                .map(this::toVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public void retryTask(Long taskId) {
-        AiTask task = aiTaskMapper.selectById(taskId);
-        if (task == null) {
-            throw new BusinessException(ResponseCode.TASK_NOT_FOUND);
-        }
-
-        AiTaskStatus currentStatus = AiTaskStatus.fromCode(task.getStatus());
-        if (!currentStatus.isRetryable()) {
-            throw new BusinessException(ResponseCode.TASK_NOT_RETRYABLE,
-                    "当前状态[" + currentStatus.getLabel() + "]不支持重试");
-        }
-
-        task.setStatus(AiTaskStatus.PENDING.getCode());
-        task.setRetryCount(task.getRetryCount() + 1);
-        task.setErrorMsg(null);
-        task.setStartedAt(null);
-        task.setCompletedAt(null);
-        aiTaskMapper.updateById(task);
-        log.info("重试AI任务: id={}, retryCount={}", taskId, task.getRetryCount());
-    }
-
-    @Override
     @Transactional
     public void skipTask(Long taskId) {
         AiTask task = aiTaskMapper.selectById(taskId);
@@ -136,15 +100,9 @@ public class AiTaskServiceImpl implements IAiTaskService {
     }
 
     @Override
-    public AiTaskVO getActiveTask(String taskType, Long bizId, String bizType) {
-        AiTask task = aiTaskMapper.selectActiveTask(taskType, bizId, bizType);
+    public AiTaskVO getLatestTask(String taskType, Long bizId, String bizType) {
+        AiTask task = aiTaskMapper.selectLatestTask(taskType, bizId, bizType);
         return task != null ? toVO(task) : null;
-    }
-
-    @Override
-    public List<AiTaskVO> getActiveTasksByProject(Long projectId) {
-        List<AiTask> tasks = aiTaskMapper.selectActiveTasksByProject(projectId);
-        return tasks.stream().map(this::toVO).collect(Collectors.toList());
     }
 
     private AiTaskVO toVO(AiTask task) {

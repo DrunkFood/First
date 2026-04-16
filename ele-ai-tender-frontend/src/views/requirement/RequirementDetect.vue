@@ -23,7 +23,7 @@
           <div class="card-header">
             <span class="card-title">检测进度</span>
             <el-button
-              v-if="allCompleted"
+              v-if="allCompleted && canReDetect"
               :icon="RefreshRight"
               size="small"
               :loading="reDetecting"
@@ -157,14 +157,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Loading, RefreshRight, CircleCheck } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { aiTaskApi } from '@/api/ai-task'
+import { useTaskPolling } from '@/composables/useTaskPolling'
+import { getTaskProgress, TERMINAL_STATUSES } from '@/types/ai-task'
 import type { AiTaskVO, AiTaskStatus } from '@/types/ai-task'
 import type { DetectionType, DetectionIssueVO } from '@/types/detection'
+
+/**
+ * 检测类型到后端AI任务类型的映射
+ * 前端 DetectionType: FAIRNESS, COMPLIANCE, TYPO, SENSITIVE_WORD
+ * 后端 AiTaskType: DETECTION_POLICY_REVIEW, DETECTION_FORMAT_CHECK, DETECTION_TYPO, DETECTION_SENSITIVE_WORD
+ */
+const DETECTION_TASK_TYPE_MAP: Record<string, string> = {
+  FAIRNESS: 'DETECTION_POLICY_REVIEW',
+  COMPLIANCE: 'DETECTION_FORMAT_CHECK',
+  TYPO: 'DETECTION_TYPO',
+  SENSITIVE_WORD: 'DETECTION_SENSITIVE_WORD',
+}
+
+const DETECT_TYPE_CONFIG: Record<string, { label: string; icon: string }> = {
+  FAIRNESS: { label: '公平竞争检测', icon: 'ScaleToOriginal' },
+  COMPLIANCE: { label: '合规性检查', icon: 'DocumentChecked' },
+  TYPO: { label: '错别字检查', icon: 'EditPen' },
+  SENSITIVE_WORD: { label: '敏感词检测', icon: 'Warning' },
+}
 
 interface DetectCard {
   type: DetectionType
@@ -175,13 +196,6 @@ interface DetectCard {
   issueCount: number
   completed: boolean
   failed: boolean
-}
-
-const DETECT_TYPE_CONFIG: Record<string, { label: string; icon: string }> = {
-  FAIRNESS: { label: '公平竞争检测', icon: 'ScaleToOriginal' },
-  COMPLIANCE: { label: '合规性检查', icon: 'DocumentChecked' },
-  TYPO: { label: '错别字检查', icon: 'EditPen' },
-  SENSITIVE_WORD: { label: '敏感词检测', icon: 'Warning' },
 }
 
 const router = useRouter()
@@ -199,6 +213,19 @@ const detectCards = ref<DetectCard[]>([
   { type: 'SENSITIVE_WORD', label: '敏感词检测', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
 ])
 
+// ---- 为每个卡片创建独立的轮询实例 ----
+const cardTaskIds = detectCards.value.map(() => ref<number | null>(null))
+const cardPollings = cardTaskIds.map(idRef => useTaskPolling(idRef))
+
+// 同步轮询结果到卡片
+cardPollings.forEach((polling, index) => {
+  watch(polling.task, (task) => {
+    if (task) {
+      updateCardFromTask(index, task)
+    }
+  })
+})
+
 // ---- 检测问题 ----
 const issues = ref<DetectionIssueVO[]>([])
 
@@ -207,10 +234,14 @@ const submitting = ref(false)
 const reDetecting = ref(false)
 const originalVisible = ref(false)
 const currentOriginal = ref<DetectionIssueVO | null>(null)
-let pollingTimer: ReturnType<typeof setInterval> | null = null
 
 // ---- 计算属性 ----
 const allCompleted = computed(() => detectCards.value.every(c => c.completed || c.failed))
+
+const canReDetect = computed(() => {
+  // 所有卡片的任务都处于终态，才允许重新检测
+  return detectCards.value.every(c => !c.taskId || TERMINAL_STATUSES.includes(c.status as AiTaskStatus) || c.completed || c.failed)
+})
 
 const overallProgress = computed(() => {
   if (detectCards.value.length === 0) return 0
@@ -241,86 +272,90 @@ onMounted(async () => {
     return
   }
 
-  // 先检查是否有活跃检测任务，有则恢复轮询
-  await restoreActiveDetection()
+  // 先恢复各检测类型的最新任务状态
+  await restoreDetectionState()
 })
 
-onBeforeUnmount(() => {
-  stopPolling()
-})
+// ---- 恢复检测任务状态 ----
+async function restoreDetectionState() {
+  const cards = detectCards.value
+  const results = await Promise.allSettled(
+    cards.map(card => {
+      const taskType = DETECTION_TASK_TYPE_MAP[card.type]!
+      return aiTaskApi.getLatestTask(taskType, requirementId.value, 'REQUIREMENT')
+    })
+  )
 
-// ---- 恢复活跃检测任务 ----
-async function restoreActiveDetection() {
-  try {
-    // 检查两种检测类型的活跃任务
-    const [sensitiveTask, typoTask] = await Promise.all([
-      aiTaskApi.getActiveTask('DETECTION_SENSITIVE_WORD', requirementId.value, 'REQUIREMENT'),
-      aiTaskApi.getActiveTask('DETECTION_TYPO', requirementId.value, 'REQUIREMENT'),
-    ])
-
-    let hasActive = false
-    for (const card of detectCards.value) {
-      const activeTask: AiTaskVO | null =
-        card.type === 'SENSITIVE_WORD' ? sensitiveTask :
-        card.type === 'TYPO' ? typoTask : null
-
-      if (activeTask && activeTask.id) {
-        card.taskId = activeTask.id
-        card.status = activeTask.status
-        // 根据状态设置进度
-        if (activeTask.status === 'COMPLETED') {
-          card.completed = true
-          card.percentage = 100
-          parseTaskResult(card, activeTask.result)
-        } else if (activeTask.status === 'FAILED' || activeTask.status === 'AI_UNAVAILABLE') {
-          card.failed = true
-          card.percentage = 100
-        } else if (activeTask.status === 'PROCESSING') {
-          card.percentage = 60
-          hasActive = true
-        } else if (activeTask.status === 'PENDING') {
-          card.percentage = 10
-          hasActive = true
-        }
+  let hasActive = false
+  for (let i = 0; i < cards.length; i++) {
+    const r = results[i]
+    if (r?.status === 'fulfilled' && r.value && r.value.id) {
+      const task = r.value
+      cards[i]!.taskId = task.id
+      cardTaskIds[i]!.value = task.id
+      updateCardFromTask(i, task)
+      if (!TERMINAL_STATUSES.includes(task.status)) {
+        hasActive = true
       }
     }
+  }
 
-    if (hasActive || allCompleted.value) {
-      startPolling()
-    } else if (!allCompleted.value) {
-      // 没有活跃任务且未全部完成，需要新提交
-      await startDetection()
-    }
-  } catch {
-    // 查询失败则走正常提交流程
+  // 没有活跃任务且未全部完成，需要新提交
+  if (!hasActive && !allCompleted.value) {
     await startDetection()
+  }
+}
+
+// ---- 更新卡片状态 ----
+function updateCardFromTask(index: number, task: AiTaskVO) {
+  const card = detectCards.value[index]
+  if (!card) return
+  card.status = task.status
+
+  if (task.status === 'COMPLETED') {
+    card.completed = true
+    card.percentage = 100
+    parseTaskResult(card, task.result)
+  } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
+    card.failed = true
+    card.percentage = 100
+  } else if (task.status === 'SKIPPED') {
+    card.completed = true
+    card.percentage = 100
+  } else {
+    card.percentage = getTaskProgress(task.status)
   }
 }
 
 // ---- 提交检测 ----
 async function startDetection() {
+  // 提交前校验：刷新每个检测类型的最新任务状态
+  if (!canReDetect.value) {
+    ElMessage.warning('检测任务正在处理中，请稍候')
+    return
+  }
   submitting.value = true
   try {
     const taskMap = await requirementApi.detect(requirementId.value)
     submitting.value = false
 
-    for (const card of detectCards.value) {
+    const cards = detectCards.value
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i]!
       const taskId = taskMap[card.type]
       if (taskId) {
         card.taskId = taskId
+        cardTaskIds[i]!.value = taskId  // 触发 useTaskPolling 自动开始轮询
       } else {
         card.completed = true
         card.percentage = 100
       }
     }
-
-    startPolling()
   } catch (e: any) {
     submitting.value = false
     if (e?.code === 8084) {
-      // 检测任务正在处理中，尝试恢复
       ElMessage.warning('检测任务正在处理中，正在恢复进度...')
-      await restoreActiveDetection()
+      await restoreDetectionState()
     } else {
       ElMessage.error('提交检测失败')
     }
@@ -329,6 +364,10 @@ async function startDetection() {
 
 // ---- 重新检测 ----
 async function handleReDetect() {
+  if (!canReDetect.value) {
+    ElMessage.warning('检测任务正在处理中，请稍候')
+    return
+  }
   reDetecting.value = true
   try {
     // 重置状态
@@ -340,6 +379,9 @@ async function handleReDetect() {
       card.completed = false
       card.failed = false
     }
+    for (const idRef of cardTaskIds) {
+      idRef.value = null
+    }
     issues.value = []
 
     await startDetection()
@@ -349,56 +391,6 @@ async function handleReDetect() {
     }
   } finally {
     reDetecting.value = false
-  }
-}
-
-// ---- 轮询逻辑 ----
-function startPolling() {
-  pollingTimer = setInterval(pollTaskStatus, 3000)
-  pollTaskStatus()
-}
-
-function stopPolling() {
-  if (pollingTimer) {
-    clearInterval(pollingTimer)
-    pollingTimer = null
-  }
-}
-
-async function pollTaskStatus() {
-  const pendingCards = detectCards.value.filter(c => c.taskId && !c.completed && !c.failed)
-  if (pendingCards.length === 0) {
-    if (allCompleted.value) stopPolling()
-    return
-  }
-
-  for (const card of pendingCards) {
-    try {
-      const task = await aiTaskApi.getStatus(card.taskId!)
-      card.status = task.status
-
-      if (task.status === 'COMPLETED') {
-        card.completed = true
-        card.percentage = 100
-        parseTaskResult(card, task.result)
-      } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
-        card.failed = true
-        card.percentage = 100
-      } else if (task.status === 'PROCESSING') {
-        card.percentage = 60
-      } else if (task.status === 'PENDING') {
-        card.percentage = 10
-      } else if (task.status === 'SKIPPED') {
-        card.completed = true
-        card.percentage = 100
-      }
-    } catch {
-      // 单个任务轮询失败不影响其他
-    }
-  }
-
-  if (allCompleted.value) {
-    stopPolling()
   }
 }
 

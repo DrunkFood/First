@@ -1,11 +1,5 @@
 <template>
   <div class="phase-review-item">
-    <AiUnavailableAlert
-      :visible="isAiUnavailable"
-      @retry="handleRetry"
-      @skip="handleSkipAi"
-    />
-
     <!-- 评分摘要栏 -->
     <div class="score-summary">
       <div class="score-item compliance">
@@ -47,16 +41,10 @@
 
     <!-- 工具栏 -->
     <div class="review-toolbar">
-      <el-button type="primary" :loading="isGenerating" @click="handleGenerate">
+      <el-button type="primary" :disabled="!canCreateNew" :loading="!canCreateNew" @click="handleGenerate">
         AI 生成评审项
       </el-button>
-      <AiTaskStatus
-        v-if="task"
-        :task="task"
-        :show-actions="true"
-        @retry="handleRetry"
-        @skip="handleSkipAi"
-      />
+      <AiTaskStatus :task="latestTask" />
     </div>
 
     <!-- 评审类型Tabs -->
@@ -176,7 +164,7 @@
     <!-- 底部操作 -->
     <div class="phase-actions">
       <el-button @click="$emit('prev')">上一步</el-button>
-      <el-button type="warning" plain @click="handleGenerate">重新生成</el-button>
+      <el-button type="warning" plain :disabled="!canCreateNew" @click="handleGenerate">重新生成</el-button>
       <div style="flex: 1" />
       <el-button type="primary" @click="handleNext">确认评审项</el-button>
     </div>
@@ -188,9 +176,8 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { reviewApi } from '@/api/review'
-import { useTaskPolling } from '@/composables/useTaskPolling'
+import { useLatestTask } from '@/composables/useLatestTask'
 import AiTaskStatus from '@/components/AiTaskStatus.vue'
-import AiUnavailableAlert from '@/components/AiUnavailableAlert.vue'
 
 type ReviewCategory = 'COMPLIANCE' | 'TECHNICAL' | 'CREDIT' | 'COMMERCIAL'
 
@@ -210,12 +197,15 @@ const props = defineProps<{ projectId: number }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const reviewItems = ref<ReviewItemData[]>([])
-const taskId = ref<number | null>(null)
-const isGenerating = ref(false)
 const activeReviewType = ref<ReviewCategory>('COMPLIANCE')
 
-const { task, retry: retryTask, skip: skipTask } = useTaskPolling(taskId)
-const isAiUnavailable = computed(() => task.value?.status === 'AI_UNAVAILABLE')
+// 使用 useLatestTask 查询最新任务状态
+const projectIdRef = computed(() => props.projectId)
+const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
+  'REVIEW_ITEM_GENERATE',
+  projectIdRef,
+  'PROJECT',
+)
 
 // 按类型分组
 const complianceItems = computed(() => reviewItems.value.filter(i => i.reviewType === 'COMPLIANCE'))
@@ -246,14 +236,22 @@ const loadReviewItems = async () => {
 }
 
 const handleGenerate = async () => {
-  isGenerating.value = true
+  // 提交前刷新最新任务状态，确保校验是最新的
+  await refresh()
+  if (!canCreateNew.value) {
+    ElMessage.warning('AI生成任务正在处理中，请稍候')
+    return
+  }
   try {
     const res = await reviewApi.generate(props.projectId, {})
-    taskId.value = res.id
-  } catch {
+    setActive(res.id)
+  } catch (e: any) {
+    if (e?.code === 8084) {
+      ElMessage.warning('AI生成任务正在处理中，请稍候')
+      refresh()
+      return
+    }
     ElMessage.error('提交AI生成失败')
-  } finally {
-    isGenerating.value = false
   }
 }
 
@@ -293,9 +291,6 @@ const handleDeleteItem = async (type: ReviewCategory, index: number) => {
   ElMessage.success('删除成功')
   await loadReviewItems()
 }
-
-const handleRetry = () => retryTask()
-const handleSkipAi = () => skipTask()
 
 const handleNext = async () => {
   // 校验100分

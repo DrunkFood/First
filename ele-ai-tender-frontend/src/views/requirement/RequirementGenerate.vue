@@ -7,193 +7,223 @@
         <el-divider direction="vertical" />
         <span class="toolbar-title">业务需求生成</span>
       </div>
-      <div class="toolbar-right">
-        <el-button :loading="saving" @click="handleSave">保存</el-button>
-        <el-button :type="editMode ? 'default' : 'primary'" @click="editMode = !editMode">
-          {{ editMode ? '切换预览' : '编辑' }}
-        </el-button>
-        <el-button :loading="exporting" @click="handleExport">导出</el-button>
-      </div>
     </div>
 
     <!-- 主内容区 -->
     <div class="gen-body">
       <div class="gen-main">
         <!-- 生成进度 -->
-        <div class="progress-section">
+        <div class="progress-container">
           <div class="progress-header">
             <span class="progress-title">生成进度</span>
-            <el-tag v-if="generating" type="" size="small" class="is-pulse">
-              {{ isActive ? '任务排队中' : '生成中' }}
+            <el-tag v-if="sseGenerating" type="" size="small" class="is-pulse">生成中</el-tag>
+            <el-tag v-else-if="latestTask && !canCreateNew" type="" size="small" class="is-pulse">
+              {{ latestTask.status === 'PENDING' ? '任务排队中' : '处理中' }}
             </el-tag>
-            <el-tag v-else-if="content" type="success" size="small">已完成</el-tag>
+            <el-tag v-else-if="latestTask?.status === 'COMPLETED' || content" type="success" size="small">已完成</el-tag>
+            <el-tag v-else-if="latestTask?.status === 'FAILED'" type="danger" size="small">失败</el-tag>
+            <el-tag v-else-if="latestTask?.status === 'AI_UNAVAILABLE'" type="warning" size="small">服务不可用</el-tag>
             <el-tag v-else type="info" size="small">未开始</el-tag>
           </div>
           <el-progress
             :percentage="progressPercent"
             :stroke-width="8"
-            :status="generating ? '' : content ? 'success' : ''"
+            :status="progressStatus"
           />
           <span class="progress-text">{{ progressPercent }}% 完成</span>
         </div>
 
-        <!-- 项目基本信息 -->
-        <el-card class="content-card" shadow="never">
-          <template #header>
-            <span class="card-title">项目基本信息</span>
-          </template>
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="需求名称">{{ requirementName }}</el-descriptions-item>
-            <el-descriptions-item label="项目类型">
-              <StatusBadge v-if="requirementData.projectType" :status="requirementData.projectType" :type-map="PROJECT_TYPE_MAP" />
-            </el-descriptions-item>
-            <el-descriptions-item label="项目预算">{{ formatBudget(requirementData.budget) }}</el-descriptions-item>
-            <el-descriptions-item label="需求类型">
-              {{ REQUIREMENT_TYPE_MAP[requirementData.requirementType || 'NEW']?.label || '-' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="需求描述" :span="2">
-              {{ requirementData.requirementDescription || '-' }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-
-        <!-- 参考文件 -->
-        <el-card v-if="referenceFiles.length > 0" class="content-card" shadow="never">
-          <template #header>
-            <span class="card-title">参考文件</span>
-          </template>
-          <div class="ref-file-list">
-            <div v-for="file in referenceFiles" :key="file.id" class="ref-file-item">
-              <el-icon><Document /></el-icon>
-              <span class="ref-file-name">{{ file.fileName }}</span>
-              <el-tag size="small">{{ file.fileType }}</el-tag>
-              <span class="ref-file-budget">{{ formatBudget(file.budget) }}</span>
-              <span class="ref-file-time">{{ file.uploadTime }}</span>
-              <el-button size="small" link type="primary">预览</el-button>
+        <!-- 内容容器 -->
+        <div class="content-container">
+          <!-- 内容头部 -->
+          <div class="content-header">
+            <h3>业务需求内容</h3>
+            <div class="content-actions">
+              <el-tooltip content="保存" placement="top">
+                <button class="primary-action-btn" :disabled="saving" @click="handleSave">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
+                </button>
+              </el-tooltip>
+              <el-tooltip :content="editMode ? '切换预览' : '编辑'" placement="top">
+                <button class="primary-action-btn" @click="editMode = !editMode">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="导出" placement="top">
+                <button class="primary-action-btn" :disabled="exporting" @click="handleExport">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </button>
+              </el-tooltip>
             </div>
           </div>
-        </el-card>
 
-        <!-- 业务需求详情 -->
-        <el-card class="content-card" shadow="never">
-          <template #header>
-            <div class="card-title-row">
-              <span class="card-title">业务需求详情</span>
-              <el-button
-                v-if="!generating && !content"
-                type="success"
-                @click="handleGenerate"
-              >
-                AI生成
-              </el-button>
-              <el-button
-                v-if="isActive && !content"
-                type="warning"
-                loading
-                disabled
-              >
-                AI生成中...
-              </el-button>
-              <el-button
-                v-if="sseGenerating"
-                type="danger"
-                @click="stopGenerate"
-              >
-                停止生成
-              </el-button>
+          <!-- 内容主体 -->
+          <div class="content-body">
+            <!-- 项目基本信息 -->
+            <div class="content-section">
+              <h4 class="section-title">项目基本信息</h4>
+              <div class="section-content">
+                <p><strong>需求名称：</strong>{{ requirementName }}</p>
+                <p><strong>项目类型：</strong>
+                  <StatusBadge v-if="requirementData.projectType" :status="requirementData.projectType" :type-map="PROJECT_TYPE_MAP" />
+                  <span v-else>-</span>
+                </p>
+                <p><strong>项目预算：</strong>{{ formatBudget(requirementData.budget) }}</p>
+                <p><strong>需求类型：</strong>{{ REQUIREMENT_TYPE_MAP[requirementData.requirementType || 'NEW']?.label || '-' }}</p>
+                <p><strong>需求描述：</strong>{{ requirementData.requirementDescription || '-' }}</p>
+              </div>
             </div>
-          </template>
 
-          <div class="content-area">
-            <MarkdownEditor v-if="editMode" v-model="content" class="content-editor" />
-            <MdPreview v-else :model-value="content" class="content-preview" />
-          </div>
+            <!-- 参考文件 -->
+            <div v-if="referenceFiles.length > 0" class="content-section">
+              <h4 class="section-title">参考文件</h4>
+              <div class="reference-files">
+                <div v-for="file in referenceFiles" :key="file.id" class="file-item">
+                  <div class="file-info">
+                    <div class="file-name">{{ file.fileName }}</div>
+                    <div class="file-meta">项目类型：{{ file.fileType }} | 预算：{{ formatBudget(file.budget) }} | 完成时间：{{ file.uploadTime }}</div>
+                  </div>
+                  <el-button size="small" link type="primary" class="preview-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    预览
+                  </el-button>
+                </div>
+              </div>
+            </div>
 
-          <!-- AI反馈 -->
-          <div v-if="content && !generating" class="ai-feedback">
-            <span class="feedback-label">帮助我们改进AI生成质量</span>
-            <div class="feedback-buttons">
-              <el-button
-                :type="feedbackType === 'like' ? 'success' : 'default'"
-                size="small"
-                @click="handleFeedback('like')"
-              >
-                赞
-              </el-button>
-              <el-button
-                :type="feedbackType === 'dislike' ? 'danger' : 'default'"
-                size="small"
-                @click="handleFeedback('dislike')"
-              >
-                不行
-              </el-button>
+            <!-- 业务需求详情 -->
+            <div class="content-section">
+              <div class="section-title-row">
+                <h4 class="section-title">业务需求详情</h4>
+                <div class="section-actions">
+                  <el-button
+                    v-if="canCreateNew && !sseGenerating"
+                    type="success"
+                    size="small"
+                    @click="handleGenerate"
+                  >
+                    AI生成
+                  </el-button>
+                  <el-button
+                    v-if="!canCreateNew && !sseGenerating"
+                    type="warning"
+                    size="small"
+                    loading
+                    disabled
+                  >
+                    AI生成中...
+                  </el-button>
+                  <el-button
+                    v-if="sseGenerating"
+                    type="danger"
+                    size="small"
+                    @click="stopGenerate"
+                  >
+                    停止生成
+                  </el-button>
+                </div>
+              </div>
+              <div class="content-area">
+                <MarkdownEditor v-if="editMode" v-model="content" class="content-editor" />
+                <MdPreview v-else :model-value="content" class="content-preview" />
+              </div>
+
+              <!-- AI反馈 -->
+              <div v-if="content && !sseGenerating && canCreateNew" class="ai-feedback">
+                <span class="feedback-label">帮助我们改进AI生成质量</span>
+                <div class="feedback-buttons">
+                  <el-button
+                    :type="feedbackType === 'like' ? 'success' : 'default'"
+                    size="small"
+                    @click="handleFeedback('like')"
+                  >
+                    赞
+                  </el-button>
+                  <el-button
+                    :type="feedbackType === 'dislike' ? 'danger' : 'default'"
+                    size="small"
+                    @click="handleFeedback('dislike')"
+                  >
+                    不行
+                  </el-button>
+                </div>
+              </div>
+
+              <!-- 任务失败提示 -->
+              <div v-if="latestTask?.errorMsg" class="ai-feedback error-feedback">
+                <span class="feedback-label" style="color: var(--app-color-danger)">{{ latestTask.errorMsg }}</span>
+              </div>
+            </div>
+
+            <!-- 关键标签 -->
+            <div v-if="tags.length > 0" class="content-section">
+              <h4 class="section-title">关键标签</h4>
+              <div class="tags-area">
+                <span
+                  v-for="tag in tags"
+                  :key="tag.text"
+                  class="custom-tag"
+                  :class="'tag-' + getTagClass(tag.type)"
+                >
+                  {{ tag.text }}
+                </span>
+              </div>
             </div>
           </div>
-        </el-card>
 
-        <!-- 关键标签 -->
-        <el-card v-if="tags.length > 0" class="content-card" shadow="never">
-          <template #header>
-            <span class="card-title">关键标签</span>
-          </template>
-          <div class="tags-area">
-            <el-tag
-              v-for="tag in tags"
-              :key="tag.text"
-              :type="tag.type"
-              size="default"
-              class="tag-item"
-            >
-              {{ tag.text }}
-            </el-tag>
+          <!-- 底部操作栏 -->
+          <div class="form-actions">
+            <el-button @click="router.back()">返回修改</el-button>
+            <el-button type="primary" @click="handleNextStep">
+              下一步：智能检测
+            </el-button>
           </div>
-        </el-card>
-
-        <!-- 底部导航 -->
-        <div class="bottom-nav">
-          <el-button @click="router.back()">返回修改</el-button>
-          <div style="flex: 1" />
-          <el-button type="primary" @click="handleNextStep">
-            下一步：智能检测
-          </el-button>
         </div>
       </div>
     </div>
 
-    <!-- AI助手浮动面板 -->
-    <transition name="slide-float">
-      <div v-if="chatVisible" class="ai-assistant-panel">
-        <div class="panel-header">
-          <span class="panel-title">AI助手</span>
-          <el-button :icon="Close" size="small" link @click="chatVisible = false" />
-        </div>
-        <div class="panel-warning">
-          AI助手接入互联网，若有涉密信息请勿发送
-        </div>
-        <div class="panel-body">
-          <AiChatPanel
-            :context="content"
-            :requirement-id="requirementId"
-            v-model:messages="chatMessages"
-            @close="chatVisible = false"
-            @feedback="handleChatFeedback"
-            @message="handleAiMessage"
-          />
-        </div>
+    <!-- AI助手侧边栏 -->
+    <div :class="['ai-sidebar', { collapsed: !chatVisible }]">
+      <button class="ai-toggle-btn" @click="chatVisible = !chatVisible" :title="chatVisible ? '收起AI助手' : '展开AI助手'">
+        <el-icon :size="18">
+          <component :is="chatVisible ? Close : ChatDotRound" />
+        </el-icon>
+      </button>
+      <div v-if="chatVisible" class="ai-sidebar-content">
+        <AiChatPanel
+          show-close
+          greeting="您好！我是您的AI助手，可以帮助您修改业务需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
+          :context="content"
+          :requirement-id="requirementId"
+          v-model:messages="chatMessages"
+          @close="chatVisible = false"
+          @feedback="handleChatFeedback"
+          @message="handleAiMessage"
+        >
+          <template #quick-actions>
+            <div class="quick-actions">
+              <button class="quick-action-btn" @click="sendQuickAction('修改项目概况')">修改项目概况</button>
+              <button class="quick-action-btn" @click="sendQuickAction('修改项目目标')">修改项目目标</button>
+              <button class="quick-action-btn" @click="sendQuickAction('修改技术要求')">修改技术要求</button>
+            </div>
+          </template>
+        </AiChatPanel>
       </div>
-    </transition>
-
-    <!-- AI助手浮动按钮 -->
-    <transition name="fade">
-      <el-button
-        v-if="!chatVisible"
-        class="chat-fab"
-        type="primary"
-        :icon="ChatDotRound"
-        circle
-        @click="chatVisible = true"
-      />
-    </transition>
+    </div>
   </div>
 </template>
 
@@ -201,12 +231,13 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, ChatDotRound, Close, Document } from '@element-plus/icons-vue'
+import { ArrowLeft, ChatDotRound, Close } from '@element-plus/icons-vue'
 import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
 import { requirementApi } from '@/api/requirement'
 import { createSSEConnection } from '@/api/ai'
-import { useActiveTask } from '@/composables/useActiveTask'
+import { useLatestTask } from '@/composables/useLatestTask'
+import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -234,22 +265,35 @@ const editMode = ref(false)
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
 const feedbackType = ref<'like' | 'dislike' | null>(null)
-const progressPercent = ref(0)
 
-// ---- 活跃任务检测 ----
-const { isActive, activeTask, checkActiveTask } = useActiveTask(
+// ---- 最新任务 ----
+const { latestTask, canCreateNew, refresh } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
 )
 
-// generating = SSE生成中 或 异步任务活跃中
-const generating = computed(() => isActive.value || sseGenerating.value)
-
-const sseGenerating = ref(false)
-
 // ---- SSE ----
+const sseGenerating = ref(false)
 let closeGenerateSSE: (() => void) | null = null
+let sseProgress = ref(0)
+
+// ---- 进度计算 ----
+const progressPercent = computed(() => {
+  // SSE 正在流式输出
+  if (sseGenerating.value) return sseProgress.value
+  // 有任务状态
+  if (latestTask.value) return getTaskProgress(latestTask.value.status)
+  // 有内容但无任务 = 历史已完成
+  if (content.value) return 100
+  return 0
+})
+
+const progressStatus = computed(() => {
+  if (sseGenerating.value) return ''
+  if (latestTask.value) return getProgressStatus(latestTask.value.status)
+  return ''
+})
 
 // ---- 初始化 ----
 onMounted(async () => {
@@ -267,16 +311,6 @@ onMounted(async () => {
     requirementData.value = data
     content.value = data.content || ''
 
-    if (content.value) {
-      progressPercent.value = 100
-    }
-
-    // 检查是否有活跃的AI生成任务
-    await checkActiveTask()
-    if (isActive.value && !content.value) {
-      progressPercent.value = activeTask.value?.status === 'PROCESSING' ? 65 : 10
-    }
-
     // 加载参考文件
     try {
       referenceFiles.value = await requirementApi.getMatchFiles({ requirementId: id }) || []
@@ -284,7 +318,7 @@ onMounted(async () => {
       referenceFiles.value = []
     }
 
-    // 生成标签（基于项目信息）
+    // 生成标签
     generateTags(data)
   } catch {
     ElMessage.error('加载需求失败')
@@ -314,13 +348,18 @@ function generateTags(data: RequirementInfo) {
   tags.value = result
 }
 
+function getTagClass(type: string): string {
+  if (!type) return 'primary'
+  return type
+}
+
 // ---- AI生成 ----
 async function handleGenerate() {
-  if (generating.value) return
+  if (!canCreateNew.value) return
 
-  // 先检查是否有活跃任务
-  await checkActiveTask()
-  if (isActive.value) {
+  // 先刷新任务状态，确保没有活跃任务
+  await refresh()
+  if (!canCreateNew.value) {
     ElMessage.warning('AI生成任务正在处理中，请稍候')
     return
   }
@@ -328,12 +367,12 @@ async function handleGenerate() {
   sseGenerating.value = true
   editMode.value = false
   content.value = ''
-  progressPercent.value = 0
+  sseProgress.value = 0
 
   // 模拟进度
   const progressTimer = setInterval(() => {
-    if (progressPercent.value < 90) {
-      progressPercent.value += Math.floor(Math.random() * 5) + 1
+    if (sseProgress.value < 90) {
+      sseProgress.value += Math.floor(Math.random() * 5) + 1
     }
   }, 300)
 
@@ -348,13 +387,15 @@ async function handleGenerate() {
       ElMessage.error('AI生成失败，请稍后重试')
       sseGenerating.value = false
       closeGenerateSSE = null
+      refresh()
     },
     () => {
       clearInterval(progressTimer)
-      progressPercent.value = 100
+      sseProgress.value = 100
       ElMessage.success('AI生成完成')
       sseGenerating.value = false
       closeGenerateSSE = null
+      refresh()
     },
   )
 }
@@ -421,6 +462,12 @@ function handleChatFeedback(type: 'like' | 'dislike', _index: number) {
   ElMessage.success(type === 'like' ? '感谢您的反馈' : '我们会持续改进')
 }
 
+// ---- 快捷操作 ----
+function sendQuickAction(action: string) {
+  const userMsg: AiChatMessage = { role: 'user', content: action, timestamp: Date.now() }
+  chatMessages.value.push(userMsg)
+}
+
 function handleAiMessage(msg: string) {
   if (!msg.trim()) return
   content.value += '\n\n' + msg
@@ -464,12 +511,6 @@ function formatBudget(yuan?: number): string {
   color: var(--app-text-primary);
 }
 
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* ---- 主内容区 ---- */
 .gen-body {
   flex: 1;
@@ -483,29 +524,31 @@ function formatBudget(yuan?: number): string {
 }
 
 /* ---- 生成进度 ---- */
-.progress-section {
-  background: var(--app-bg-elevated);
-  border: 1px solid var(--app-border-medium);
-  border-radius: var(--app-radius-sm);
-  padding: 16px 20px;
-  margin-bottom: 16px;
+.progress-container {
+  background: var(--app-bg-elevated, var(--app-card-bg));
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
 .progress-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
 }
 
 .progress-title {
+  font-size: 16px;
   font-weight: 600;
   color: var(--app-text-primary);
 }
 
 .progress-text {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--app-text-secondary);
+  text-align: right;
   margin-top: 4px;
 }
 
@@ -518,54 +561,171 @@ function formatBudget(yuan?: number): string {
   50% { opacity: 0.5; }
 }
 
-/* ---- 内容卡片 ---- */
-.content-card {
-  margin-bottom: 16px;
+/* ---- 内容容器 ---- */
+.content-container {
+  background: var(--app-bg-elevated, var(--app-card-bg));
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+  overflow: hidden;
+  margin-bottom: 24px;
 }
 
-.card-title {
+/* ---- 内容头部 ---- */
+.content-header {
+  padding: 16px 24px;
+  background: var(--app-bg-tertiary);
+  border-bottom: 1px solid var(--app-border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content-header h3 {
+  font-size: 16px;
   font-weight: 600;
-  font-size: 15px;
   color: var(--app-text-primary);
+  margin: 0;
 }
 
-.card-title-row {
+.content-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.primary-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--app-brand-color);
+  border: 2px solid rgba(51, 108, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(51, 108, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  padding: 0;
+}
+
+.primary-action-btn:hover {
+  background: #2855d9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(51, 108, 255, 0.45);
+  border-color: rgba(51, 108, 255, 0.5);
+}
+
+.primary-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primary-action-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- 内容主体 ---- */
+.content-body {
+  padding: 24px;
+}
+
+/* ---- 内容区块 ---- */
+.content-section {
+  margin-bottom: 24px;
+}
+
+.content-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--app-border-light);
+}
+
+.section-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--app-border-light);
+}
+
+.section-title-row .section-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.section-content {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  line-height: 1.6;
+}
+
+.section-content p {
+  margin: 0 0 6px 0;
+}
+
+.section-content p:last-child {
+  margin-bottom: 0;
+}
+
+.section-content strong {
+  color: var(--app-text-primary);
 }
 
 /* ---- 参考文件 ---- */
-.ref-file-list {
+.reference-files {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.ref-file-item {
+.file-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--app-bg-secondary);
-  border-radius: var(--app-radius-sm);
+  gap: 12px;
+  padding: 12px;
+  background: var(--app-input-bg, var(--app-bg-secondary));
+  border-radius: 6px;
 }
 
-.ref-file-name {
+.file-info {
   flex: 1;
-  font-size: 14px;
-  color: var(--app-text-primary);
 }
 
-.ref-file-budget,
-.ref-file-time {
+.file-name {
   font-size: 13px;
-  color: var(--app-text-secondary);
+  color: var(--app-text-primary);
+  margin-bottom: 4px;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: var(--app-text-tertiary);
+}
+
+.preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ---- 内容区域 ---- */
 .content-area {
-  min-height: 300px;
+  min-height: 400px;
+  border: 1px solid var(--app-border-light);
+  border-radius: 6px;
+  background: var(--app-input-bg, var(--app-bg-secondary));
+  overflow: hidden;
 }
 
 .content-preview {
@@ -573,22 +733,29 @@ function formatBudget(yuan?: number): string {
 }
 
 .content-editor {
-  min-height: 300px;
+  min-height: 400px;
 }
 
 /* ---- AI反馈 ---- */
 .ai-feedback {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--app-bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--app-border-light);
+}
+
+.error-feedback {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .feedback-label {
   font-size: 13px;
-  color: var(--app-text-tertiary);
+  color: var(--app-text-secondary);
 }
 
 .feedback-buttons {
@@ -600,98 +767,127 @@ function formatBudget(yuan?: number): string {
 .tags-area {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0;
 }
 
-.tag-item {
-  font-size: 13px;
+.custom-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-right: 8px;
+  margin-bottom: 8px;
 }
 
-/* ---- 底部导航 ---- */
-.bottom-nav {
+.tag-primary {
+  background: rgba(51, 108, 255, 0.15);
+  color: var(--app-brand-color);
+}
+
+.tag-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--app-color-success, #10B981);
+}
+
+.tag-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--app-color-warning, #F59E0B);
+}
+
+.tag-info {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--app-text-tertiary);
+}
+
+.tag-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--app-color-danger, #EF4444);
+}
+
+/* ---- 底部操作栏 ---- */
+.form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 24px;
   background: var(--app-bg-tertiary);
   border-top: 1px solid var(--app-border-light);
-  border-radius: 0 0 var(--app-radius-sm, 8px) var(--app-radius-sm, 8px);
-  margin: 16px -20px -20px;
 }
 
-/* ---- AI助手浮动面板 ---- */
-.ai-assistant-panel {
+/* ---- AI助手侧边栏 ---- */
+.ai-sidebar {
   position: fixed;
-  right: 24px;
+  right: 0;
   top: 80px;
   width: 340px;
-  height: 600px;
-  background: var(--app-bg-elevated);
-  border: 1px solid var(--app-border-medium);
-  border-radius: var(--app-radius-sm);
-  box-shadow: var(--app-shadow-lg);
+  height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
   z-index: 100;
-  overflow: hidden;
+  transition: transform 0.3s ease;
 }
 
-.panel-header {
+.ai-sidebar.collapsed {
+  transform: translateX(100%);
+}
+
+.ai-toggle-btn {
+  position: absolute;
+  left: -44px;
+  top: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--app-brand-color);
+  color: white;
+  border: none;
+  border-radius: 8px 0 0 8px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--app-border-light);
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.panel-title {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--app-text-primary);
+.ai-toggle-btn:hover {
+  background: #2855d9;
 }
 
-.panel-warning {
-  padding: 8px 16px;
-  font-size: 12px;
-  color: var(--app-color-warning);
-  background: var(--app-color-warning-light, rgba(230, 162, 60, 0.1));
-}
-
-.panel-body {
+.ai-sidebar-content {
   flex: 1;
   overflow: hidden;
+  background: var(--app-bg-secondary);
+  border-left: 1px solid var(--app-border-light);
+  border-top: 1px solid var(--app-border-light);
+  border-bottom: 1px solid var(--app-border-light);
+  border-radius: 8px 0 0 8px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
 }
 
-/* ---- 浮动面板动画 ---- */
-.slide-float-enter-active,
-.slide-float-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
+/* ---- 快捷操作按钮 ---- */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.slide-float-enter-from,
-.slide-float-leave-to {
-  transform: translateX(100%);
-  opacity: 0;
+.quick-action-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--app-bg-elevated);
+  border: 1px solid var(--app-border-light);
+  border-radius: 6px;
+  color: var(--app-text-primary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* ---- AI助手浮动按钮 ---- */
-.chat-fab {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 48px;
-  height: 48px;
-  box-shadow: var(--app-shadow-md);
-  z-index: 100;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.quick-action-btn:hover {
+  background: var(--app-hover-state, rgba(51, 108, 255, 0.12));
+  border-color: var(--app-brand-color);
+  color: var(--app-brand-color);
 }
 </style>

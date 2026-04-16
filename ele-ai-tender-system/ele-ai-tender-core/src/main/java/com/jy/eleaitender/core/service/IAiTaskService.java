@@ -4,7 +4,6 @@ import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,16 +23,6 @@ public interface IAiTaskService {
     AiTaskVO getTaskStatus(Long taskId);
 
     /**
-     * 查询项目的所有任务
-     */
-    List<AiTaskVO> getTasksByProject(Long projectId);
-
-    /**
-     * 用户重试任务
-     */
-    void retryTask(Long taskId);
-
-    /**
      * 用户跳过任务（降级为手动模式）
      */
     void skipTask(Long taskId);
@@ -44,12 +33,7 @@ public interface IAiTaskService {
     int markTimeoutTasks();
 
     /**
-     * 查询业务实体的活跃任务（PENDING/PROCESSING），用于防重复提交和前端状态联动
+     * 查询业务实体的最新任务（不限状态），用于页面加载时展示上次任务状态
      */
-    AiTaskVO getActiveTask(String taskType, Long bizId, String bizType);
-
-    /**
-     * 查询项目的活跃任务（按项目维度，PENDING/PROCESSING）
-     */
-    List<AiTaskVO> getActiveTasksByProject(Long projectId);
+    AiTaskVO getLatestTask(String taskType, Long bizId, String bizType);
 }

@@ -11,6 +11,7 @@ export interface AiChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: number
+  error?: boolean
 }
 
 /** AI优化请求 */

@@ -37,3 +37,29 @@ export interface AiTaskVO {
   completedAt?: string
   createTime: string
 }
+
+/** 标准化任务进度百分比 */
+export function getTaskProgress(status: AiTaskStatus): number {
+  switch (status) {
+    case 'PENDING': return 10
+    case 'PROCESSING': return 60
+    case 'COMPLETED': return 100
+    default: return 0
+  }
+}
+
+/** 标准化进度条样式 */
+export function getProgressStatus(status: AiTaskStatus): '' | 'success' | 'warning' | 'exception' {
+  switch (status) {
+    case 'COMPLETED': return 'success'
+    case 'FAILED': return 'exception'
+    case 'AI_UNAVAILABLE': return 'warning'
+    default: return ''
+  }
+}
+
+/** 是否可发起新任务（上一个任务已结束或不存在） */
+export function canCreateNewTask(latestTask: AiTaskVO | null): boolean {
+  if (!latestTask) return true
+  return TERMINAL_STATUSES.includes(latestTask.status)
+}

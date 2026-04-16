@@ -25,7 +25,7 @@
 
     <!-- 主内容区 -->
     <div class="editor-body">
-      <!-- 左侧编辑区 -->
+      <!-- 编辑区 -->
       <div class="editor-main">
         <div class="editor-name-row">
           <el-input
@@ -36,21 +36,36 @@
         </div>
         <MarkdownEditor v-model="content" class="editor-content" />
       </div>
+    </div>
 
-      <!-- 右侧AI对话面板 -->
-      <transition name="slide">
-        <div v-show="chatVisible" class="editor-chat">
-          <AiChatPanel
-            :context="content"
-            :project-id="projectId"
-            :requirement-id="requirementId"
-            v-model:messages="chatMessages"
-            @close="chatVisible = false"
-            @feedback="handleChatFeedback"
-            @message="handleChatMessage"
-          />
-        </div>
-      </transition>
+    <!-- AI助手侧边栏 -->
+    <div :class="['ai-sidebar', { collapsed: !chatVisible }]">
+      <button class="ai-toggle-btn" @click="chatVisible = !chatVisible" :title="chatVisible ? '收起AI助手' : '展开AI助手'">
+        <el-icon :size="18">
+          <component :is="chatVisible ? Close : ChatDotRound" />
+        </el-icon>
+      </button>
+      <div v-if="chatVisible" class="ai-sidebar-content">
+        <AiChatPanel
+          show-close
+          greeting="您好！我是您的AI助手，可以帮助您优化和修改业务需求内容。请选择快捷操作或输入您的需求。"
+          :context="content"
+          :project-id="projectId"
+          :requirement-id="requirementId"
+          v-model:messages="chatMessages"
+          @close="chatVisible = false"
+          @feedback="handleChatFeedback"
+          @message="handleChatMessage"
+        >
+          <template #quick-actions>
+            <div class="quick-actions">
+              <button class="quick-action-btn" @click="sendQuickAction('优化需求描述')">优化需求描述</button>
+              <button class="quick-action-btn" @click="sendQuickAction('补充技术要求')">补充技术要求</button>
+              <button class="quick-action-btn" @click="sendQuickAction('修改资格条件')">修改资格条件</button>
+            </div>
+          </template>
+        </AiChatPanel>
+      </div>
     </div>
 
     <!-- 底部状态栏 -->
@@ -68,15 +83,6 @@
         <span v-else class="status-idle">
           自动保存: 未启用
         </span>
-      </div>
-      <div class="statusbar-right">
-        <el-button
-          text
-          :icon="chatVisible ? Close : ChatDotRound"
-          @click="chatVisible = !chatVisible"
-        >
-          {{ chatVisible ? '关闭AI对话' : 'AI对话' }}
-        </el-button>
       </div>
     </div>
   </div>
@@ -260,6 +266,14 @@ function handleChatMessage(_msg: string) {
   // 消息已通过 v-model 同步到 chatMessages
 }
 
+function sendQuickAction(action: string) {
+  chatMessages.value.push({
+    role: 'user',
+    content: action,
+    timestamp: Date.now(),
+  })
+}
+
 // ---- 自动保存 ----
 function startAutoSave() {
   stopAutoSave()
@@ -379,25 +393,80 @@ async function checkAutoSaveDraft(id: number) {
   overflow: hidden;
 }
 
-/* ---- 右侧AI对话面板 ---- */
-.editor-chat {
-  width: 400px;
-  flex-shrink: 0;
-  border-left: 1px solid var(--app-border-medium);
-  background: var(--app-bg-elevated);
+/* ---- AI助手侧边栏 ---- */
+.ai-sidebar {
+  position: fixed;
+  right: 0;
+  top: 80px;
+  width: 340px;
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.ai-sidebar.collapsed {
+  transform: translateX(100%);
+}
+
+.ai-toggle-btn {
+  position: absolute;
+  left: -44px;
+  top: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--app-brand-color);
+  color: white;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ai-toggle-btn:hover {
+  background: #2855d9;
+}
+
+.ai-sidebar-content {
+  flex: 1;
   overflow: hidden;
+  background: var(--app-bg-secondary);
+  border-left: 1px solid var(--app-border-light);
+  border-top: 1px solid var(--app-border-light);
+  border-bottom: 1px solid var(--app-border-light);
+  border-radius: 8px 0 0 8px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
 }
 
-/* 折叠动画 */
-.slide-enter-active,
-.slide-leave-active {
-  transition: width 0.3s ease, opacity 0.3s ease;
+/* ---- 快捷操作按钮 ---- */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.slide-enter-from,
-.slide-leave-to {
-  width: 0;
-  opacity: 0;
+.quick-action-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--app-bg-elevated);
+  border: 1px solid var(--app-border-light);
+  border-radius: 6px;
+  color: var(--app-text-primary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+  background: var(--app-hover-state, rgba(51, 108, 255, 0.12));
+  border-color: var(--app-brand-color);
+  color: var(--app-brand-color);
 }
 
 /* ---- 底部状态栏 ---- */

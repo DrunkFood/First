@@ -58,10 +58,13 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
                              @Param("bizType") String bizType);
 
     /**
-     * 查询项目的活跃任务列表（PENDING/PROCESSING），用于前端状态联动
+     * 查询业务实体的最新任务（不限状态），用于页面加载时展示上次任务状态
      */
     @DataScope(skip = true)
-    @Select("SELECT * FROM ai_task WHERE project_id = #{projectId} " +
-            "AND status IN ('PENDING','PROCESSING') AND is_delete = 0")
-    List<AiTask> selectActiveTasksByProject(@Param("projectId") Long projectId);
+    @Select("SELECT * FROM ai_task WHERE task_type = #{taskType} AND biz_id = #{bizId} " +
+            "AND biz_type = #{bizType} AND is_delete = 0 " +
+            "ORDER BY create_time DESC LIMIT 1")
+    AiTask selectLatestTask(@Param("taskType") String taskType,
+                            @Param("bizId") Long bizId,
+                            @Param("bizType") String bizType);
 }

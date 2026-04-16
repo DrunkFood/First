@@ -1,60 +1,41 @@
 <template>
   <div class="phase-requirement">
-    <AiUnavailableAlert
-      :visible="isAiUnavailable"
-      @retry="handleRetry"
-      @skip="handleSkipAi"
-    />
-
     <!-- 生成状态卡片 -->
-    <div v-if="isGenerating || task" class="generation-status-card">
+    <div v-if="latestTask" class="generation-status-card">
       <div class="status-left">
-        <el-icon v-if="isGenerating" size="32" class="spinning" color="var(--app-brand-color)"><Loading /></el-icon>
-        <el-icon v-else-if="task?.status === 'COMPLETED'" size="32" color="var(--app-color-success)"><CircleCheck /></el-icon>
+        <el-icon v-if="!canCreateNew" size="32" class="spinning" color="var(--app-brand-color)"><Loading /></el-icon>
+        <el-icon v-else-if="latestTask.status === 'COMPLETED'" size="32" color="var(--app-color-success)"><CircleCheck /></el-icon>
         <el-icon v-else size="32" color="var(--app-brand-color)"><Document /></el-icon>
       </div>
       <div class="status-right">
-        <h4>{{ isGenerating ? '正在生成中...' : task?.status === 'COMPLETED' ? '生成完成' : 'AI生成需求' }}</h4>
+        <h4>{{ getStatusTitle }}</h4>
         <el-progress
-          :percentage="generationProgress"
+          :percentage="progressPercent"
           :stroke-width="8"
-          :status="isGenerating ? '' : 'success'"
+          :status="progressStatus"
           style="width: 300px"
         />
-        <span v-if="isGenerating" class="status-hint">AI正在生成招标需求内容，请稍候...</span>
+        <span v-if="latestTask.errorMsg" class="status-hint error-hint">{{ latestTask.errorMsg }}</span>
+        <span v-else-if="!canCreateNew" class="status-hint">AI正在生成招标需求内容，请稍候...</span>
       </div>
     </div>
 
     <!-- 工具栏 -->
     <div class="requirement-toolbar">
-      <el-button type="primary" :loading="isGenerating" @click="handleGenerate">
+      <el-button type="primary" :disabled="!canCreateNew" :loading="!canCreateNew" @click="handleGenerate">
         AI 生成需求
       </el-button>
       <el-button type="warning" :loading="isOptimizing" @click="handleOptimize">
         文本优化
       </el-button>
-      <AiTaskStatus
-        v-if="task"
-        :task="task"
-        :show-actions="true"
-        @retry="handleRetry"
-        @skip="handleSkipAi"
-      />
+      <div style="flex: 1" />
       <span v-if="isSaving" class="auto-save-hint">自动保存中...</span>
       <span v-else-if="lastSaveTime" class="auto-save-hint">上次自动保存: {{ lastSaveTime }}</span>
-
-      <el-button
-        :type="chatVisible ? 'primary' : 'default'"
-        @click="chatVisible = !chatVisible"
-        class="chat-toggle-btn"
-      >
-        AI助手
-      </el-button>
     </div>
 
-    <!-- 编辑器+AI助手 -->
+    <!-- 编辑器 -->
     <div class="requirement-body">
-      <div class="editor-area" :class="{ 'editor-shrink': chatVisible }">
+      <div class="editor-area">
         <MarkdownEditor v-model="content" />
 
         <!-- AI内容反馈 -->
@@ -78,38 +59,42 @@
           </el-button>
         </div>
       </div>
-
-      <!-- AI对话面板 -->
-      <transition name="slide">
-        <div v-if="chatVisible" class="chat-panel-wrapper">
-          <AiChatPanel
-            :context="content"
-            :project-id="projectId"
-            :requirement-id="requirementId"
-            v-model:messages="chatMessages"
-            @close="chatVisible = false"
-          >
-            <template #quick-actions>
-              <div class="quick-actions">
-                <el-button size="small" round @click="sendQuickAction('修改工程范围')">修改工程范围</el-button>
-                <el-button size="small" round @click="sendQuickAction('修改技术要求')">修改技术要求</el-button>
-                <el-button size="small" round @click="sendQuickAction('修改质量标准')">修改质量标准</el-button>
-              </div>
-            </template>
-          </AiChatPanel>
-        </div>
-      </transition>
     </div>
 
-    <!-- 浮动切换按钮 -->
-    <div v-if="!chatVisible" class="chat-fab" @click="chatVisible = true">
-      AI助手
+    <!-- AI助手侧边栏 -->
+    <div :class="['ai-sidebar', { collapsed: !chatVisible }]">
+      <button class="ai-toggle-btn" @click="chatVisible = !chatVisible" :title="chatVisible ? '收起AI助手' : '展开AI助手'">
+        <el-icon :size="18">
+          <component :is="chatVisible ? Close : ChatDotRound" />
+        </el-icon>
+      </button>
+      <div v-if="chatVisible" class="ai-sidebar-content">
+        <AiChatPanel
+          show-close
+          greeting="您好！我是您的AI助手，可以帮助您修改招标需求内容。请选择快捷操作或输入您的修改需求。"
+          :context="content"
+          :project-id="projectId"
+          :requirement-id="requirementId"
+          v-model:messages="chatMessages"
+          @close="chatVisible = false"
+          @feedback="handleChatFeedback"
+          @message="handleChatMessage"
+        >
+          <template #quick-actions>
+            <div class="quick-actions">
+              <button class="quick-action-btn" @click="sendQuickAction('修改工程范围')">修改工程范围</button>
+              <button class="quick-action-btn" @click="sendQuickAction('修改技术要求')">修改技术要求</button>
+              <button class="quick-action-btn" @click="sendQuickAction('修改质量标准')">修改质量标准</button>
+            </div>
+          </template>
+        </AiChatPanel>
+      </div>
     </div>
 
     <!-- 底部操作 -->
     <div class="phase-actions">
       <el-button @click="$emit('prev')">上一步</el-button>
-      <el-button type="warning" plain @click="handleGenerate">重新生成章节</el-button>
+      <el-button type="warning" plain :disabled="!canCreateNew" @click="handleGenerate">重新生成章节</el-button>
       <div style="flex: 1" />
       <el-button @click="handleSave">保存编辑</el-button>
       <el-button type="primary" @click="handleSaveAndNext">确认需求</el-button>
@@ -120,14 +105,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Loading, CircleCheck, Document } from '@element-plus/icons-vue'
+import { Loading, CircleCheck, Document, ChatDotRound, Close } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
-import { useActiveTask } from '@/composables/useActiveTask'
+import { useLatestTask } from '@/composables/useLatestTask'
 import { useAutoSave } from '@/composables/useAutoSave'
-import AiTaskStatus from '@/components/AiTaskStatus.vue'
-import AiUnavailableAlert from '@/components/AiUnavailableAlert.vue'
+import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import type { AiChatMessage } from '@/types/ai'
@@ -144,7 +128,7 @@ const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
 let closeOptimizeSSE: (() => void) | null = null
 
-const { isActive: isGenerating, activeTask: task, setActive, retry: retryTask, skip: skipTask } = useActiveTask(
+const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
@@ -158,13 +142,26 @@ const { isSaving, lastSaveTime, startAutoSave, recoverDraft } = useAutoSave(
   (id) => requirementApi.clearAutoSave(id),
 )
 
-const isAiUnavailable = computed(() => task.value?.status === 'AI_UNAVAILABLE')
+const getStatusTitle = computed(() => {
+  if (!latestTask.value) return 'AI生成需求'
+  const status = latestTask.value.status
+  if (status === 'PENDING') return '任务排队中...'
+  if (status === 'PROCESSING') return '正在生成中...'
+  if (status === 'COMPLETED') return '生成完成'
+  if (status === 'FAILED') return '生成失败'
+  if (status === 'AI_UNAVAILABLE') return 'AI服务不可用'
+  if (status === 'SKIPPED') return '已跳过'
+  return 'AI生成需求'
+})
 
-const generationProgress = computed(() => {
-  if (task.value?.status === 'COMPLETED') return 100
-  if (isGenerating.value) return 65
-  if (task.value?.status === 'PROCESSING') return 65
-  return 0
+const progressPercent = computed(() => {
+  if (!latestTask.value) return 0
+  return getTaskProgress(latestTask.value.status)
+})
+
+const progressStatus = computed(() => {
+  if (!latestTask.value) return ''
+  return getProgressStatus(latestTask.value.status)
 })
 
 const loadData = async () => {
@@ -179,14 +176,20 @@ const loadData = async () => {
 }
 
 const handleGenerate = async () => {
-  if (!requirementId.value || isGenerating.value) return
+  if (!requirementId.value) return
+  // 提交前刷新最新任务状态，确保校验是最新的
+  await refresh()
+  if (!canCreateNew.value) {
+    ElMessage.warning('AI生成任务正在处理中，请稍候')
+    return
+  }
   try {
     const res = await requirementApi.generate(requirementId.value, {})
     setActive(res.id)
   } catch (e: any) {
-    // 8084 = 任务正在处理中，可能是重复提交
     if (e?.code === 8084) {
       ElMessage.warning('AI生成任务正在处理中，请稍候')
+      refresh()
       return
     }
     ElMessage.error('提交AI生成失败')
@@ -229,9 +232,6 @@ const handleOptimize = async () => {
   )
 }
 
-const handleRetry = () => retryTask()
-const handleSkipAi = () => skipTask()
-
 const handleFeedback = (type: 'like' | 'dislike') => {
   aiFeedbackType.value = aiFeedbackType.value === type ? null : type
   ElMessage.success(type === 'like' ? '感谢反馈！' : '我们会持续改进AI生成质量')
@@ -243,6 +243,14 @@ const sendQuickAction = (action: string) => {
     content: action,
     timestamp: Date.now(),
   })
+}
+
+const handleChatFeedback = (type: 'like' | 'dislike', _index: number) => {
+  ElMessage.success(type === 'like' ? '感谢反馈！' : '我们会持续改进AI生成质量')
+}
+
+const handleChatMessage = (_msg: string) => {
+  // 消息已通过 v-model 同步到 chatMessages
 }
 
 const handleSave = async () => {
@@ -305,6 +313,10 @@ onMounted(loadData)
   color: var(--app-text-tertiary);
 }
 
+.error-hint {
+  color: var(--app-color-danger);
+}
+
 // 工具栏
 .requirement-toolbar {
   display: flex;
@@ -318,33 +330,17 @@ onMounted(loadData)
   font-size: 12px;
 }
 
-.chat-toggle-btn {
-  margin-left: auto;
-}
-
 // 编辑器
 .requirement-body {
-  display: flex;
-  gap: 0;
+  flex: 1;
   min-height: 400px;
 }
 
 .editor-area {
   flex: 1;
   min-width: 0;
-  transition: flex 0.3s ease;
   border: 1px solid var(--app-border-light);
   border-radius: var(--app-radius-sm);
-}
-
-.chat-panel-wrapper {
-  width: 380px;
-  flex-shrink: 0;
-  border: 1px solid var(--app-border-light);
-  border-left: none;
-  border-radius: 0 var(--app-radius-sm) var(--app-radius-sm) 0;
-  height: 500px;
-  overflow: hidden;
 }
 
 // AI反馈
@@ -366,47 +362,77 @@ onMounted(loadData)
 // 快速操作
 .quick-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
-  padding: 8px 0;
 }
 
-// 侧滑动画
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  width: 0;
-  opacity: 0;
-}
-
-// 浮动切换按钮
-.chat-fab {
-  position: fixed;
-  right: 24px;
-  bottom: 80px;
-  width: 48px;
-  padding: 12px 0;
-  text-align: center;
-  background: var(--app-brand-color);
-  color: #fff;
-  border-radius: 8px;
+.quick-action-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--app-bg-elevated);
+  border: 1px solid var(--app-border-light);
+  border-radius: 6px;
+  color: var(--app-text-primary);
+  font-size: 13px;
+  text-align: left;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  writing-mode: vertical-rl;
-  box-shadow: var(--app-shadow-md);
   transition: all 0.2s;
-  z-index: 100;
-  user-select: none;
 
   &:hover {
-    background: var(--app-brand-color-dark-2);
-    transform: scale(1.05);
+    background: var(--app-hover-state, rgba(51, 108, 255, 0.12));
+    border-color: var(--app-brand-color);
+    color: var(--app-brand-color);
   }
+}
+
+// AI助手侧边栏
+.ai-sidebar {
+  position: fixed;
+  right: 0;
+  top: 80px;
+  width: 340px;
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.3s ease;
+
+  &.collapsed {
+    transform: translateX(100%);
+  }
+}
+
+.ai-toggle-btn {
+  position: absolute;
+  left: -44px;
+  top: 20px;
+  width: 44px;
+  height: 44px;
+  background: var(--app-brand-color);
+  color: white;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    background: #2855d9;
+  }
+}
+
+.ai-sidebar-content {
+  flex: 1;
+  overflow: hidden;
+  background: var(--app-bg-secondary);
+  border-left: 1px solid var(--app-border-light);
+  border-top: 1px solid var(--app-border-light);
+  border-bottom: 1px solid var(--app-border-light);
+  border-radius: 8px 0 0 8px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
 }
 
 // 底部操作

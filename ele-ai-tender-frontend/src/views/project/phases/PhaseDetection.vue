@@ -1,11 +1,5 @@
 <template>
   <div class="phase-detection">
-    <AiUnavailableAlert
-      :visible="hasUnavailable"
-      @retry="handleRetry"
-      @skip="handleSkip"
-    />
-
     <!-- 提交检测 -->
     <div v-if="!submitted" class="detection-submit">
       <!-- 检测类型选择 -->
@@ -63,9 +57,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { detectionApi } from '@/api/detection'
-import { aiTaskApi } from '@/api/ai-task'
 import { projectApi } from '@/api/project'
-import AiUnavailableAlert from '@/components/AiUnavailableAlert.vue'
 import PolicyFileSelect from '@/components/detection/PolicyFileSelect.vue'
 import DetectionProgress from '@/components/detection/DetectionProgress.vue'
 import DetectionReport from '@/components/detection/DetectionReport.vue'
@@ -77,7 +69,6 @@ defineEmits<{ prev: []; finish: [] }>()
 const submitted = ref(false)
 const isSubmitting = ref(false)
 const showReport = ref(false)
-const hasUnavailable = ref(false)
 const hasActiveDetection = ref(false)
 const selectedPolicyFileIds = ref<number[]>([])
 const selectedDetectionTypes = ref<DetectionType[]>([
@@ -99,14 +90,8 @@ const loadProject = async () => {
       showReport.value = true
     }
   }
-
-  // 检查是否有活跃检测任务
-  try {
-    const activeTasks = await aiTaskApi.getActiveTasksByProject(props.projectId)
-    hasActiveDetection.value = activeTasks && activeTasks.length > 0
-  } catch {
-    hasActiveDetection.value = false
-  }
+  // 项目状态 DETECTING = 有活跃检测任务
+  hasActiveDetection.value = project.status === 'DETECTING'
 }
 
 const handleSubmit = async () => {
@@ -132,17 +117,6 @@ const handleSubmit = async () => {
   } finally {
     isSubmitting.value = false
   }
-}
-
-const handleRetry = async () => {
-  await detectionApi.retry(props.projectId)
-  ElMessage.success('已重新提交检测')
-}
-
-const handleSkip = async () => {
-  await detectionApi.skip(props.projectId)
-  ElMessage.success('已跳过检测')
-  submitted.value = true
 }
 
 const handleAcceptIssue = async (recordId: number, issueIndex: number) => {
