@@ -1,7 +1,7 @@
 <template>
   <div class="phase-detection">
     <!-- 提交检测 -->
-    <div v-if="!submitted" class="detection-submit">
+    <div v-if="!submitted && !readonly" class="detection-submit">
       <!-- 检测类型选择 -->
       <div class="section-title">选择检测类型</div>
       <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
@@ -46,7 +46,7 @@
       <el-button @click="$emit('prev')">上一步</el-button>
       <div style="flex: 1" />
       <el-button v-if="showReport" @click="$emit('prev')">返回修改</el-button>
-      <el-button type="success" :disabled="!canFinish" @click="$emit('finish')">
+      <el-button v-if="!readonly" type="success" :disabled="!canFinish" @click="$emit('finish')">
         完成编制
       </el-button>
     </div>
@@ -63,7 +63,7 @@ import DetectionProgress from '@/components/detection/DetectionProgress.vue'
 import DetectionReport from '@/components/detection/DetectionReport.vue'
 import type { DetectionType } from '@/types/detection'
 
-const props = defineProps<{ projectId: number }>()
+const props = defineProps<{ projectId: number; readonly?: boolean }>()
 defineEmits<{ prev: []; finish: [] }>()
 
 const submitted = ref(false)

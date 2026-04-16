@@ -2,7 +2,7 @@
   <div class="phase-basic-info">
     <!-- 项目基本信息 -->
     <div class="section-title">项目基本信息</div>
-    <el-form :model="form" label-width="120px" :rules="rules" ref="formRef">
+    <el-form :model="form" label-width="120px" :rules="rules" ref="formRef" :disabled="readonly">
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="项目名称" prop="projectName">
@@ -82,8 +82,8 @@
         v-for="tpl in templateList"
         :key="tpl.id"
         class="template-card"
-        :class="{ selected: form.templateId === tpl.id }"
-        @click="form.templateId = tpl.id"
+        :class="{ selected: form.templateId === tpl.id, readonly: readonly }"
+        @click="!readonly && (form.templateId = tpl.id)"
       >
         <div class="tpl-card-header">
           <span class="tpl-name">{{ tpl.templateName }}</span>
@@ -99,15 +99,15 @@
           <span>v{{ tpl.versionNo || '1' }}</span>
           <span>{{ formatTime(tpl.createTime) }}</span>
         </div>
-        <el-button text size="small" @click.stop="handlePreviewTemplate(tpl)">预览</el-button>
+        <el-button v-if="!readonly" text size="small" @click.stop="handlePreviewTemplate(tpl)">预览</el-button>
       </div>
       <el-empty v-if="!templateLoading && !templateList.length" description="暂无可用模板" :image-size="60" />
     </div>
 
     <!-- 历史招标文件匹配 -->
     <div class="section-title">历史招标文件匹配</div>
-    <div class="match-section">
-      <el-radio-group v-model="matchMode" class="match-mode-group">
+    <div class="match-section" :class="{ 'match-readonly': readonly }">
+      <el-radio-group v-model="matchMode" class="match-mode-group" :disabled="readonly">
         <el-radio-button value="auto">系统自动匹配</el-radio-button>
         <el-radio-button value="manual">手动选择</el-radio-button>
         <el-radio-button value="upload">上传文件</el-radio-button>
@@ -116,17 +116,19 @@
       <!-- 自动匹配模式 -->
       <div v-if="matchMode === 'auto'" class="match-content">
         <p class="match-desc">系统将根据项目名称和描述自动匹配历史招标文件</p>
-        <el-button type="primary" :loading="autoMatching" @click="handleAutoMatch">
-          开始自动匹配
-        </el-button>
-        <el-button type="success" :loading="suggesting" @click="handleSuggest">
-          AI推荐
-        </el-button>
+        <template v-if="!readonly">
+          <el-button type="primary" :loading="autoMatching" @click="handleAutoMatch">
+            开始自动匹配
+          </el-button>
+          <el-button type="success" :loading="suggesting" @click="handleSuggest">
+            AI推荐
+          </el-button>
+        </template>
       </div>
 
       <!-- 手动选择模式 -->
       <div v-if="matchMode === 'manual'" class="match-content">
-        <div class="manual-search-bar">
+        <div v-if="!readonly" class="manual-search-bar">
           <el-input
             v-model="manualKeyword"
             placeholder="输入关键词搜索"
@@ -155,7 +157,7 @@
                 style="width: 120px"
               />
             </div>
-            <div class="match-file-actions">
+            <div v-if="!readonly" class="match-file-actions">
               <el-button text size="small" @click.stop="handlePreviewMatch(item)">预览</el-button>
               <el-button text size="small" type="primary" @click.stop="selectedMatchId = item.requirementId">选择</el-button>
             </div>
@@ -165,7 +167,7 @@
       </div>
 
       <!-- 上传模式 -->
-      <div v-if="matchMode === 'upload'" class="match-content">
+      <div v-if="matchMode === 'upload' && !readonly" class="match-content">
         <el-upload
           drag
           :auto-upload="false"
@@ -196,7 +198,7 @@
 
     <!-- 底部操作 -->
     <div class="phase-actions">
-      <el-button type="primary" @click="handleSaveAndNext">保存并继续</el-button>
+      <el-button v-if="!readonly" type="primary" @click="handleSaveAndNext">保存并继续</el-button>
     </div>
   </div>
 </template>
@@ -212,7 +214,7 @@ import { toWanYuan, toYuan } from '@/utils/budget'
 import type { TemplateInfo } from '@/types/template'
 import type { AiMatchResult } from '@/types/ai'
 
-const props = defineProps<{ projectId: number }>()
+const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: [] }>()
 
 const formRef = ref<FormInstance>()
@@ -462,6 +464,14 @@ onMounted(() => {
   &.selected {
     border-color: var(--app-brand-color);
     background: var(--app-hover-state);
+  }
+
+  &.readonly {
+    cursor: default;
+
+    &:hover {
+      border-color: var(--app-border-light);
+    }
   }
 }
 

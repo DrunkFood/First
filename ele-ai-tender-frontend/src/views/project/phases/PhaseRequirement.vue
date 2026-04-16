@@ -62,7 +62,7 @@
               <div class="status-title">AI生成需求</div>
               <div class="status-desc">点击下方按钮开始AI生成招标需求内容</div>
             </div>
-            <button class="btn btn-primary generate-btn" :disabled="!requirementId" @click="handleGenerate">
+            <button v-if="!readonly" class="btn btn-primary generate-btn" :disabled="!requirementId" @click="handleGenerate">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
@@ -77,12 +77,12 @@
         <!-- 编辑器区域 -->
         <div class="editor-container">
           <div class="editor-area">
-            <MarkdownEditor v-model="content" :preview="false" :toolbars-exclude="excludeToolbars" />
+            <MarkdownEditor v-model="content" :preview="readonly" :toolbars-exclude="excludeToolbars" :disabled="readonly" />
           </div>
         </div>
 
         <!-- AI内容反馈 -->
-        <div v-if="content" class="ai-feedback">
+        <div v-if="content && !readonly" class="ai-feedback">
           <h4 class="feedback-title">对AI生成内容的反馈</h4>
           <div class="feedback-actions">
             <button
@@ -120,7 +120,7 @@
             </svg>
             上一步
           </button>
-          <button class="btn btn-warning" :disabled="!canCreateNew" @click="handleGenerate">
+          <button v-if="!readonly" class="btn btn-warning" :disabled="!canCreateNew" @click="handleGenerate">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23 4 23 10 17 10" />
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
@@ -128,7 +128,7 @@
             重新生成章节
           </button>
         </div>
-        <div class="form-actions-right">
+        <div v-if="!readonly" class="form-actions-right">
           <button class="btn btn-secondary" @click="handleSave">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
@@ -149,7 +149,7 @@
     </div>
 
     <!-- AI助手侧边栏 -->
-    <div :class="['ai-sidebar', { collapsed: !chatVisible }]">
+    <div v-if="!readonly" :class="['ai-sidebar', { collapsed: !chatVisible }]">
       <button class="ai-toggle-btn" @click="chatVisible = !chatVisible" :title="chatVisible ? '收起AI助手' : '展开AI助手'">
         <el-icon :size="18">
           <component :is="chatVisible ? Close : ChatDotRound" />
@@ -195,7 +195,7 @@ import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import type { AiChatMessage } from '@/types/ai'
 import type { ToolbarNames } from 'md-editor-v3'
 
-const props = defineProps<{ projectId: number }>()
+const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 // 排除不需要的工具栏项，只保留原型中的：加粗/斜体/下划线/列表/插入图片

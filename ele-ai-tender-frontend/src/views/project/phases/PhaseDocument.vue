@@ -57,7 +57,7 @@
               <div class="status-title">待执行文档集成</div>
               <div class="status-desc">请先选择政策文件，然后执行文档集成</div>
             </div>
-            <button class="btn btn-primary generate-btn" :loading="isIntegrating" @click="handleIntegrate">
+            <button v-if="!readonly" class="btn btn-primary generate-btn" :loading="isIntegrating" @click="handleIntegrate">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
@@ -171,7 +171,7 @@
         <div v-else class="empty-state">
           <el-icon :size="48" color="var(--app-text-tertiary)"><Document /></el-icon>
           <p>请先执行文档集成</p>
-          <button class="btn btn-secondary" @click="policyModalVisible = true">选择政策文件</button>
+          <button v-if="!readonly" class="btn btn-secondary" @click="policyModalVisible = true">选择政策文件</button>
         </div>
       </div>
 
@@ -186,7 +186,7 @@
             上一步
           </button>
         </div>
-        <div class="form-actions-right">
+        <div v-if="!readonly" class="form-actions-right">
           <button class="btn btn-secondary" @click="handleSaveDraft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
@@ -269,7 +269,7 @@ import type { DocumentPreviewVO } from '@/types/document'
 import type { PolicyFileVO } from '@/types/policy-file'
 import type { ProjectInfo } from '@/types/project'
 
-const props = defineProps<{ projectId: number }>()
+const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const preview = ref<DocumentPreviewVO | null>(null)

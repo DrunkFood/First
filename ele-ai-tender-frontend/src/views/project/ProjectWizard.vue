@@ -5,8 +5,8 @@
       <el-page-header @back="$router.push('/project')" :content="project?.projectName || '项目编制'" />
     </div>
 
-    <!-- 5步进度指示器 -->
-    <el-steps :active="currentStep" finish-status="success" class="wizard-steps">
+    <!-- 5步进度指示器（基于项目实际进度） -->
+    <el-steps :active="phaseStep" finish-status="success" class="wizard-steps">
       <el-step title="基础信息" description="模板选择与项目信息" />
       <el-step title="详细需求" description="AI生成/手动编辑" />
       <el-step title="评审项设置" description="评审标准配置" />
@@ -24,13 +24,13 @@
           class="step-item"
           :class="{
             active: index === currentStep,
-            completed: index < currentStep,
-            disabled: index > currentStep,
+            completed: index < phaseStep,
+            disabled: index > phaseStep,
           }"
           @click="handleStepClick(index)"
         >
           <div class="step-icon">
-            <el-icon v-if="index < currentStep" color="var(--app-color-success)"><CircleCheck /></el-icon>
+            <el-icon v-if="index < phaseStep" color="var(--app-color-success)"><CircleCheck /></el-icon>
             <span v-else class="step-number">{{ index + 1 }}</span>
           </div>
           <div class="step-text">
@@ -45,29 +45,34 @@
         <PhaseBasicInfo
           v-if="currentStep === 0"
           :project-id="projectId"
+          :readonly="0 < phaseStep"
           @next="handleNext"
         />
         <PhaseRequirement
           v-else-if="currentStep === 1"
           :project-id="projectId"
+          :readonly="1 < phaseStep"
           @next="handleNext"
           @prev="handlePrev"
         />
         <PhaseReviewItem
           v-else-if="currentStep === 2"
           :project-id="projectId"
+          :readonly="2 < phaseStep"
           @next="handleNext"
           @prev="handlePrev"
         />
         <PhaseDocument
           v-else-if="currentStep === 3"
           :project-id="projectId"
+          :readonly="3 < phaseStep"
           @next="handleNext"
           @prev="handlePrev"
         />
         <PhaseDetection
           v-else-if="currentStep === 4"
           :project-id="projectId"
+          :readonly="4 < phaseStep"
           @prev="handlePrev"
           @finish="handleFinish"
         />
@@ -94,6 +99,7 @@ const projectId = computed(() => Number(route.params.id))
 const project = ref<ProjectInfo | null>(null)
 
 const currentStep = ref(0)
+const phaseStep = ref(0) // 项目实际进度（从后端 currentPhase 转换，0-based）
 
 const steps = [
   { title: '基础信息录入', desc: '模板选择与项目信息' },
@@ -122,8 +128,9 @@ const initStepFromRoute = () => {
 
 const loadProject = async () => {
   project.value = await projectApi.getById(projectId.value)
+  phaseStep.value = getStepFromPhase(project.value?.currentPhase)
   if (!initStepFromRoute()) {
-    currentStep.value = getStepFromPhase(project.value?.currentPhase)
+    currentStep.value = phaseStep.value
   }
 }
 
@@ -138,13 +145,14 @@ watch(() => route.query.step, (newStep) => {
 
 function handleStepClick(index: number) {
   // 只允许跳到已完成步骤或当前步骤
-  if (index <= currentStep.value) {
+  if (index <= phaseStep.value) {
     currentStep.value = index
   }
 }
 
 const handleNext = async () => {
   await loadProject()
+  phaseStep.value = getStepFromPhase(project.value?.currentPhase)
   if (currentStep.value < 4) {
     currentStep.value++
   }
@@ -152,6 +160,7 @@ const handleNext = async () => {
 
 const handlePrev = async () => {
   await loadProject()
+  phaseStep.value = getStepFromPhase(project.value?.currentPhase)
   if (currentStep.value > 0) {
     currentStep.value--
   }

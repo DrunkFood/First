@@ -52,10 +52,11 @@
                     :rows="2"
                     placeholder="请输入评审标准"
                     class="table-textarea"
+                    :disabled="readonly"
                   />
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="70" align="center">
+              <el-table-column v-if="!readonly" label="操作" width="70" align="center">
                 <template #default="{ $index }">
                   <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('COMPLIANCE', $index)">
                     <el-icon :size="16"><Delete /></el-icon>
@@ -64,7 +65,7 @@
               </el-table-column>
             </el-table>
           </div>
-          <div class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
+          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
             <el-icon><Plus /></el-icon> 添加评审项
           </div>
         </el-tab-pane>
@@ -76,18 +77,12 @@
               <el-table-column type="index" label="序号" width="60" align="center" />
               <el-table-column label="评审标准" min-width="300">
                 <template #default="{ row }">
-                  <el-input
-                    v-model="row.itemName"
-                    type="textarea"
-                    :rows="2"
-                    placeholder="请输入评审标准"
-                    class="table-textarea"
-                  />
+                  <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
                 </template>
               </el-table-column>
               <el-table-column label="主观/客观" width="120" align="center">
                 <template #default="{ row }">
-                  <el-select v-model="row.subjective" size="small" class="subjective-select">
+                  <el-select v-model="row.subjective" size="small" class="subjective-select" :disabled="readonly">
                     <el-option :value="false" label="客观" />
                     <el-option :value="true" label="主观" />
                   </el-select>
@@ -95,18 +90,10 @@
               </el-table-column>
               <el-table-column label="分值" width="100" align="center">
                 <template #default="{ row }">
-                  <el-input-number
-                    v-model="row.score"
-                    :min="0"
-                    :max="100"
-                    :precision="1"
-                    size="small"
-                    class="score-input"
-                    controls-position="right"
-                  />
+                  <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" class="score-input" controls-position="right" :disabled="readonly" />
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="70" align="center">
+              <el-table-column v-if="!readonly" label="操作" width="70" align="center">
                 <template #default="{ $index }">
                   <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('CREDIT', $index)">
                     <el-icon :size="16"><Delete /></el-icon>
@@ -115,7 +102,7 @@
               </el-table-column>
             </el-table>
           </div>
-          <div class="add-item-btn" @click="handleAddItem('CREDIT')">
+          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('CREDIT')">
             <el-icon><Plus /></el-icon> 添加评审项
           </div>
         </el-tab-pane>
@@ -127,18 +114,12 @@
               <el-table-column type="index" label="序号" width="60" align="center" />
               <el-table-column label="评审标准" min-width="300">
                 <template #default="{ row }">
-                  <el-input
-                    v-model="row.itemName"
-                    type="textarea"
-                    :rows="2"
-                    placeholder="请输入评审标准"
-                    class="table-textarea"
-                  />
+                  <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
                 </template>
               </el-table-column>
               <el-table-column label="主观/客观" width="120" align="center">
                 <template #default="{ row }">
-                  <el-select v-model="row.subjective" size="small" class="subjective-select">
+                  <el-select v-model="row.subjective" size="small" class="subjective-select" :disabled="readonly">
                     <el-option :value="false" label="客观" />
                     <el-option :value="true" label="主观" />
                   </el-select>
@@ -146,18 +127,10 @@
               </el-table-column>
               <el-table-column label="分值" width="100" align="center">
                 <template #default="{ row }">
-                  <el-input-number
-                    v-model="row.score"
-                    :min="0"
-                    :max="100"
-                    :precision="1"
-                    size="small"
-                    class="score-input"
-                    controls-position="right"
-                  />
+                  <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" class="score-input" controls-position="right" :disabled="readonly" />
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="70" align="center">
+              <el-table-column v-if="!readonly" label="操作" width="70" align="center">
                 <template #default="{ $index }">
                   <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('TECHNICAL', $index)">
                     <el-icon :size="16"><Delete /></el-icon>
@@ -166,7 +139,7 @@
               </el-table-column>
             </el-table>
           </div>
-          <div class="add-item-btn" @click="handleAddItem('TECHNICAL')">
+          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('TECHNICAL')">
             <el-icon><Plus /></el-icon> 添加评审项
           </div>
         </el-tab-pane>
@@ -178,29 +151,15 @@
               <el-table-column type="index" label="序号" width="60" align="center" />
               <el-table-column label="评审标准" min-width="400">
                 <template #default="{ row }">
-                  <el-input
-                    v-model="row.itemName"
-                    type="textarea"
-                    :rows="2"
-                    placeholder="请输入评审标准"
-                    class="table-textarea"
-                  />
+                  <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
                 </template>
               </el-table-column>
               <el-table-column label="分值" width="100" align="center">
                 <template #default="{ row }">
-                  <el-input-number
-                    v-model="row.score"
-                    :min="0"
-                    :max="100"
-                    :precision="1"
-                    size="small"
-                    class="score-input"
-                    controls-position="right"
-                  />
+                  <el-input-number v-model="row.score" :min="0" :max="100" :precision="1" size="small" class="score-input" controls-position="right" :disabled="readonly" />
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="70" align="center">
+              <el-table-column v-if="!readonly" label="操作" width="70" align="center">
                 <template #default="{ $index }">
                   <el-button link type="danger" class="delete-btn" @click="handleDeleteItem('COMMERCIAL', $index)">
                     <el-icon :size="16"><Delete /></el-icon>
@@ -209,7 +168,7 @@
               </el-table-column>
             </el-table>
           </div>
-          <div class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
+          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
             <el-icon><Plus /></el-icon> 添加评审项
           </div>
         </el-tab-pane>
@@ -222,12 +181,12 @@
         <el-button @click="$emit('prev')">
           <el-icon><ArrowLeft /></el-icon> 上一步
         </el-button>
-        <el-button type="warning" :disabled="!canCreateNew" @click="handleGenerate">
+        <el-button v-if="!readonly" type="warning" :disabled="!canCreateNew" @click="handleGenerate">
           <el-icon><RefreshRight /></el-icon> 重新生成
         </el-button>
         <AiTaskStatus v-if="latestTask" :task="latestTask" class="task-status-inline" />
       </div>
-      <div class="actions-right">
+      <div v-if="!readonly" class="actions-right">
         <el-button type="primary" @click="handleNext">
           确认评审项 <el-icon><ArrowRight /></el-icon>
         </el-button>
@@ -259,7 +218,7 @@ interface ReviewItemData {
   sortOrder: number
 }
 
-const props = defineProps<{ projectId: number }>()
+const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const reviewItems = ref<ReviewItemData[]>([])
