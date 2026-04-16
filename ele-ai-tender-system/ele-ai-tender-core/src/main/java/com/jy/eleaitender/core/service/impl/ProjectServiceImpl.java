@@ -11,7 +11,13 @@ import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.service.IProjectService;
+import com.jy.eleaitender.core.statemachine.PhaseFlowController;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
+import com.jy.eleaitender.core.statemachine.trigger.BasicInfoTrigger;
+import com.jy.eleaitender.core.statemachine.trigger.DetectionPhaseTrigger;
+import com.jy.eleaitender.core.statemachine.trigger.DocumentTrigger;
+import com.jy.eleaitender.core.statemachine.trigger.RequirementTrigger;
+import com.jy.eleaitender.core.statemachine.trigger.ReviewItemTrigger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +28,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import jakarta.annotation.PostConstruct;
+
 /**
  * 项目服务实现
  */
@@ -30,6 +38,36 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Autowired
     private AiProjectMapper projectMapper;
+
+    @Autowired
+    private PhaseFlowController phaseFlowController;
+
+    @Autowired
+    private BasicInfoTrigger basicInfoTrigger;
+
+    @Autowired
+    private RequirementTrigger requirementTrigger;
+
+    @Autowired
+    private ReviewItemTrigger reviewItemTrigger;
+
+    @Autowired
+    private DocumentTrigger documentTrigger;
+
+    @Autowired
+    private DetectionPhaseTrigger detectionPhaseTrigger;
+
+    /**
+     * 注册所有阶段触发器
+     */
+    @PostConstruct
+    public void initPhaseTriggers() {
+        phaseFlowController.registerTrigger(ProjectPhase.BASIC_INFO, basicInfoTrigger);
+        phaseFlowController.registerTrigger(ProjectPhase.REQUIREMENT, requirementTrigger);
+        phaseFlowController.registerTrigger(ProjectPhase.REVIEW_ITEM, reviewItemTrigger);
+        phaseFlowController.registerTrigger(ProjectPhase.DOCUMENT, documentTrigger);
+        phaseFlowController.registerTrigger(ProjectPhase.DETECTION, detectionPhaseTrigger);
+    }
 
     @Override
     public Page<AiProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory) {
@@ -149,8 +187,7 @@ public class ProjectServiceImpl implements IProjectService {
     public void advancePhase(Long projectId, Integer targetPhase) {
         AiProject project = getById(projectId); // 内部已做归属校验
         ProjectPhase target = ProjectPhase.fromCode(targetPhase);
-        project.setCurrentPhase(target.getCode());
-        project.setProgress(target.getProgressPercent());
+        phaseFlowController.advancePhase(project, target);
         projectMapper.updateById(project);
     }
 

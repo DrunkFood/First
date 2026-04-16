@@ -78,6 +78,7 @@ public enum ResponseCode {
     PROJECT_EXISTS(8002, "项目已存在"),
     PROJECT_STATUS_ERROR(8003, "项目状态错误"),
     PROJECT_CODE_GENERATE_ERROR(8004, "项目编号生成失败"),
+    PROJECT_PHASE_ERROR(8005, "项目阶段错误"),
 
     // 需求相关 8011-8019
     REQUIREMENT_NOT_FOUND(8011, "需求不存在"),

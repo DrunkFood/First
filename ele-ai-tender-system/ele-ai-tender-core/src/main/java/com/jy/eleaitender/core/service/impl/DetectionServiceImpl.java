@@ -16,6 +16,7 @@ import com.jy.eleaitender.core.mapper.AiDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
+import com.jy.eleaitender.core.statemachine.PhaseFlowController;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.util.DetectionResultParser;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,9 @@ public class DetectionServiceImpl implements IDetectionService {
 
     @Autowired
     private MessageHelper messageHelper;
+
+    @Autowired
+    private PhaseFlowController phaseFlowController;
 
     private static final DetectionType[] ALL_DETECTION_TYPES = {
             DetectionType.SENSITIVE_WORD,
@@ -111,6 +115,13 @@ public class DetectionServiceImpl implements IDetectionService {
         // 状态转换: → DETECTING
         ProjectStateMachine.transition(project, ProjectStatus.DETECTING);
         projectMapper.updateById(project);
+
+        // 同步推进阶段到 DETECTION
+        if (project.getCurrentPhase() < ProjectPhase.DETECTION.getCode()) {
+            project.setCurrentPhase(ProjectPhase.DETECTION.getCode());
+            project.setProgress(ProjectPhase.DETECTION.getProgressPercent());
+            projectMapper.updateById(project);
+        }
 
         log.info("提交文档检测，项目ID: {}, 创建4个检测任务", projectId);
         return taskIds;
@@ -274,11 +285,11 @@ public class DetectionServiceImpl implements IDetectionService {
     public Map<String, Long> retry(Long projectId) {
         AiProject project = getProjectOrThrow(projectId);
 
-        // 重置状态为 DETECTING
-        project.setStatus(ProjectStatus.DETECTING.getCode());
+        // 修复：走状态机，DETECTION_FAILED → IN_PROGRESS
+        ProjectStateMachine.transition(project, ProjectStatus.IN_PROGRESS);
         projectMapper.updateById(project);
 
-        // 找到失败的记录重新提交
+        // 重试失败的检测记录
         List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
         Map<String, Long> taskIds = new LinkedHashMap<>();
 
@@ -309,6 +320,11 @@ public class DetectionServiceImpl implements IDetectionService {
                 taskIds.put(record.getDetectionType(), task.getId());
             }
         }
+
+        // 走状态机回到 DETECTING
+        ProjectStateMachine.transition(project, ProjectStatus.PENDING_DETECTION);
+        ProjectStateMachine.transition(project, ProjectStatus.DETECTING);
+        projectMapper.updateById(project);
 
         log.info("重新检测，项目ID: {}, 重试任务数: {}", projectId, taskIds.size());
         return taskIds;

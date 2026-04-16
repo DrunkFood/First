@@ -9,39 +9,75 @@
 
       <!-- 卡片内容区 -->
       <div class="form-section">
-        <!-- AI生成状态卡片 -->
-        <div v-if="latestTask" class="generation-status">
-          <div :class="['status-icon', { completed: canCreateNew && latestTask.status === 'COMPLETED' }]">
-            <el-icon v-if="!canCreateNew" :size="24"><Loading /></el-icon>
-            <el-icon v-else-if="latestTask.status === 'COMPLETED'" :size="24"><CircleCheck /></el-icon>
-            <el-icon v-else :size="24"><Document /></el-icon>
-          </div>
-          <div class="status-info">
-            <div class="status-title">{{ getStatusTitle }}</div>
-            <div class="status-desc">
-              <template v-if="latestTask.errorMsg">{{ latestTask.errorMsg }}</template>
-              <template v-else-if="!canCreateNew">AI正在生成招标需求内容，请稍候...</template>
-              <template v-else-if="latestTask.status === 'COMPLETED'">所有章节已生成完成</template>
+        <!-- AI生成状态卡片（始终可见） -->
+        <div class="generation-status">
+          <!-- 有任务且进行中 -->
+          <template v-if="latestTask && !canCreateNew">
+            <div class="status-icon spinning">
+              <el-icon :size="24"><Loading /></el-icon>
             </div>
-            <div class="progress-bar-container">
-              <div class="progress-bar">
-                <div
-                  class="progress-fill"
-                  :style="{ width: progressPercent + '%' }"
-                />
+            <div class="status-info">
+              <div class="status-title">正在生成中</div>
+              <div class="status-desc">AI正在生成招标需求内容，请稍候...</div>
+              <div class="progress-bar-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: progressPercent + '%' }" />
+                </div>
+                <div class="progress-text">{{ progressPercent }}%</div>
               </div>
-              <div class="progress-text">{{ progressPercent }}%</div>
             </div>
-          </div>
+          </template>
+          <!-- 有任务且已完成 -->
+          <template v-else-if="latestTask && latestTask.status === 'COMPLETED'">
+            <div class="status-icon completed">
+              <el-icon :size="24"><CircleCheck /></el-icon>
+            </div>
+            <div class="status-info">
+              <div class="status-title">生成完成</div>
+              <div class="status-desc">所有章节已生成完成，您可以在编辑器中查看和修改内容</div>
+              <div class="progress-bar-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 100%" />
+                </div>
+                <div class="progress-text">100%</div>
+              </div>
+            </div>
+          </template>
+          <!-- 有任务但失败 -->
+          <template v-else-if="latestTask && latestTask.status === 'FAILED'">
+            <div class="status-icon failed">
+              <el-icon :size="24"><CircleClose /></el-icon>
+            </div>
+            <div class="status-info">
+              <div class="status-title">生成失败</div>
+              <div class="status-desc">{{ latestTask.errorMsg || 'AI生成过程出现异常，请重新尝试' }}</div>
+            </div>
+          </template>
+          <!-- 无任务：待生成状态 -->
+          <template v-else>
+            <div class="status-icon idle">
+              <el-icon :size="24"><Document /></el-icon>
+            </div>
+            <div class="status-info">
+              <div class="status-title">AI生成需求</div>
+              <div class="status-desc">点击下方按钮开始AI生成招标需求内容</div>
+            </div>
+            <button class="btn btn-primary generate-btn" :disabled="!requirementId" @click="handleGenerate">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              AI生成需求
+            </button>
+          </template>
         </div>
 
         <!-- 章节标题 -->
-        <h4 class="section-title">招标/采购需求</h4>
+        <h4 class="section-title">第三章 招标/采购需求</h4>
 
         <!-- 编辑器区域 -->
         <div class="editor-container">
           <div class="editor-area">
-            <MarkdownEditor v-model="content" />
+            <MarkdownEditor v-model="content" :preview="false" :toolbars-exclude="excludeToolbars" />
           </div>
         </div>
 
@@ -147,7 +183,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Loading, CircleCheck, Document, ChatDotRound, Close } from '@element-plus/icons-vue'
+import { Loading, CircleCheck, CircleClose, Document, ChatDotRound, Close } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
@@ -157,9 +193,18 @@ import { getTaskProgress } from '@/types/ai-task'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import type { AiChatMessage } from '@/types/ai'
+import type { ToolbarNames } from 'md-editor-v3'
 
 const props = defineProps<{ projectId: number }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
+
+// 排除不需要的工具栏项，只保留原型中的：加粗/斜体/下划线/列表/插入图片
+const excludeToolbars: ToolbarNames[] = [
+  'strikeThrough', 'title', 'sub', 'sup', 'quote', 'task', 'codeRow', 'code',
+  'link', 'table', 'mermaid', 'katex', 'save',
+  'prettier', 'pageFullscreen', 'fullscreen', 'preview', 'htmlPreview', 'catalog',
+  'github',
+]
 
 const content = ref('')
 const requirementId = ref(0)
@@ -174,6 +219,21 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
+  (task) => {
+    // AI任务完成后，延迟等待后端同步结果，再重新加载需求数据
+    if (task.status === 'COMPLETED' && requirementId.value) {
+      setTimeout(async () => {
+        try {
+          const req = await requirementApi.getById(requirementId.value)
+          if (req.content) {
+            content.value = req.content
+          }
+        } catch {
+          // 忽略刷新失败，用户可手动刷新
+        }
+      }, 1500)
+    }
+  },
 )
 
 const { startAutoSave, recoverDraft } = useAutoSave(
@@ -183,18 +243,6 @@ const { startAutoSave, recoverDraft } = useAutoSave(
   (id) => requirementApi.getAutoSave(id),
   (id) => requirementApi.clearAutoSave(id),
 )
-
-const getStatusTitle = computed(() => {
-  if (!latestTask.value) return 'AI生成需求'
-  const status = latestTask.value.status
-  if (status === 'PENDING') return '任务排队中...'
-  if (status === 'PROCESSING') return '正在生成中'
-  if (status === 'COMPLETED') return '生成完成'
-  if (status === 'FAILED') return '生成失败'
-  if (status === 'AI_UNAVAILABLE') return 'AI服务不可用'
-  if (status === 'SKIPPED') return '已跳过'
-  return 'AI生成需求'
-})
 
 const progressPercent = computed(() => {
   if (!latestTask.value) return 0
@@ -366,11 +414,21 @@ onMounted(loadData)
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  animation: spin 1s linear infinite;
+
+  &.spinning {
+    animation: spin 1s linear infinite;
+  }
 
   &.completed {
     background: var(--app-color-success);
-    animation: none;
+  }
+
+  &.failed {
+    background: var(--app-color-danger);
+  }
+
+  &.idle {
+    background: var(--app-brand-color);
   }
 }
 
@@ -512,6 +570,13 @@ onMounted(loadData)
   font-size: 13px;
   color: var(--app-text-secondary);
   margin-left: 12px;
+}
+
+.generate-btn {
+  flex-shrink: 0;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 // ========================================

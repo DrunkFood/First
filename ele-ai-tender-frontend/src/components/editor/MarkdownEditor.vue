@@ -3,19 +3,28 @@
     <MdEditor
       v-model="modelValue"
       :theme="themeStore.mode"
-      :preview="true"
-      :toolbarsExclude="['github']"
+      :preview="preview"
+      :toolbarsExclude="toolbarsExclude"
       @onChange="handleChange"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { MdEditor } from 'md-editor-v3'
+import { MdEditor, type ToolbarNames } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { useThemeStore } from '@/store/theme'
 
 const modelValue = defineModel<string>({ default: '' })
+
+withDefaults(defineProps<{
+  preview?: boolean
+  toolbarsExclude?: ToolbarNames[]
+}>(), {
+  preview: true,
+  toolbarsExclude: () => ['github'] as ToolbarNames[],
+})
+
 const themeStore = useThemeStore()
 
 const handleChange = (val: string) => {

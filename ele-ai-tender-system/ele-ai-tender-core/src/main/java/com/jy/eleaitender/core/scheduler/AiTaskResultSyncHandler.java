@@ -9,6 +9,7 @@ import com.jy.eleaitender.common.entity.core.AiRequirement;
 import com.jy.eleaitender.common.entity.core.AiReviewItem;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.ProjectPhase;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.helper.MessageHelper;
 import com.jy.eleaitender.core.mapper.AiDetectionRecordMapper;
@@ -269,6 +270,16 @@ public class AiTaskResultSyncHandler {
                 ProjectStateMachine.transition(project, ProjectStatus.DETECTION_PASSED);
             }
             projectMapper.updateById(project);
+
+            // 联动阶段推进：检测通过时，标记检测阶段完成
+            if (ProjectStatus.DETECTION_PASSED.getCode().equals(project.getStatus())
+                    || ProjectStatus.DETECTION_SKIPPED.getCode().equals(project.getStatus())) {
+                if (project.getCurrentPhase() < ProjectPhase.DETECTION.getCode()) {
+                    project.setCurrentPhase(ProjectPhase.DETECTION.getCode());
+                    project.setProgress(ProjectPhase.DETECTION.getProgressPercent());
+                    projectMapper.updateById(project);
+                }
+            }
 
             // 发送检测完成通知
             Long userId = project.getCreateId();
