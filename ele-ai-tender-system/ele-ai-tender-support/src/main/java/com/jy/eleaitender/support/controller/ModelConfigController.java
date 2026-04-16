@@ -38,6 +38,13 @@ public class ModelConfigController {
         return Result.success(modelConfigService.getPage(pageNum, pageSize, modelType, provider, usageScenario, modelName, isActive));
     }
 
+    @GetMapping("/active-list")
+    @Operation(summary = "获取所有启用的模型配置列表（下拉选择用）")
+    @RequireLogin
+    public Result<List<ModelConfigVO>> activeList() {
+        return Result.success(modelConfigService.getActiveList());
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "获取模型配置详情")
     @RequireLogin

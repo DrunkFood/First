@@ -71,6 +71,15 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     }
 
     @Override
+    public List<ModelConfigVO> getActiveList() {
+        LambdaQueryWrapper<AiModelConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AiModelConfig::getIsActive, 1);
+        wrapper.eq(AiModelConfig::getIsDelete, 0);
+        wrapper.orderByAsc(AiModelConfig::getModelName);
+        return modelConfigMapper.selectList(wrapper).stream().map(this::toVO).toList();
+    }
+
+    @Override
     public ModelConfigVO getDetailById(Long id) {
         AiModelConfig config = modelConfigMapper.selectById(id);
         if (config == null) {

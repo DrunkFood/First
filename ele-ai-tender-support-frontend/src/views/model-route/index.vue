@@ -89,11 +89,25 @@
             <el-option label="智能检测" value="DETECTION" />
           </el-select>
         </el-form-item>
-        <el-form-item label="优先模型ID" required>
-          <el-input-number v-model="form.primaryModelId" :min="1" controls-position="right" style="width: 100%" />
+        <el-form-item label="优先模型" required>
+          <el-select v-model="form.primaryModelId" placeholder="请选择优先模型" filterable style="width: 100%">
+            <el-option
+              v-for="m in activeModelList"
+              :key="m.id"
+              :label="`${m.modelName}${m.provider === 'ZHIPU' ? ' [智谱]' : ''}`"
+              :value="m.id"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="降级模型ID">
-          <el-input-number v-model="form.fallbackModelId" :min="0" controls-position="right" style="width: 100%" />
+        <el-form-item label="降级模型">
+          <el-select v-model="form.fallbackModelId" placeholder="请选择降级模型（可选）" filterable clearable style="width: 100%">
+            <el-option
+              v-for="m in activeModelList"
+              :key="m.id"
+              :label="`${m.modelName}${m.provider === 'ZHIPU' ? ' [智谱]' : ''}`"
+              :value="m.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="优先级">
           <el-input-number v-model="form.priority" :min="0" controls-position="right" />
@@ -115,11 +129,14 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import type { ModelRouteRuleInfo } from '@/types/model-route'
+import type { ModelConfigInfo } from '@/types/model-config'
 import { modelRouteApi } from '@/api/model-route'
+import { modelConfigApi } from '@/api/model-config'
 
 const loading = ref(false)
 const submitting = ref(false)
 const tableData = ref<ModelRouteRuleInfo[]>([])
+const activeModelList = ref<ModelConfigInfo[]>([])
 const total = ref(0)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -133,7 +150,7 @@ const queryParams = reactive({
 
 const form = reactive({
   usageScenario: '',
-  primaryModelId: 1,
+  primaryModelId: undefined as number | undefined,
   fallbackModelId: undefined as number | undefined,
   priority: 0,
   description: '',
@@ -169,7 +186,7 @@ const handleCreate = () => {
   isEdit.value = false
   editId.value = null
   form.usageScenario = ''
-  form.primaryModelId = 1
+  form.primaryModelId = undefined
   form.fallbackModelId = undefined
   form.priority = 0
   form.description = ''
@@ -233,7 +250,17 @@ const handleDelete = (row: ModelRouteRuleInfo) => {
   }).catch(() => {})
 }
 
+const fetchActiveModels = async () => {
+  try {
+    const res = await modelConfigApi.getActiveList()
+    activeModelList.value = res.data || []
+  } catch (error) {
+    console.error('Fetch active models failed:', error)
+  }
+}
+
 onMounted(() => {
   fetchData()
+  fetchActiveModels()
 })
 </script>

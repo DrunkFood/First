@@ -9,7 +9,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * AI编制系统AI服务模块启动类
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        org.springframework.ai.autoconfigure.zhipuai.ZhiPuAiAutoConfiguration.class
+})
 @MapperScan({"com.jy.eleaitender.ai.mapper", "com.jy.eleaitender.common.mapper"})
 @ComponentScan(basePackages = {"com.jy.eleaitender.ai", "com.jy.eleaitender.common"})
 @EnableScheduling

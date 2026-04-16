@@ -14,6 +14,11 @@ export const modelConfigApi = {
     return request.get<PageResult<ModelConfigInfo>>('/v1/model-configs', { params })
   },
 
+  // 获取所有启用的模型配置（下拉选择用）
+  getActiveList(): Promise<ApiResponse<ModelConfigInfo[]>> {
+    return request.get<ModelConfigInfo[]>('/v1/model-configs/active-list')
+  },
+
   // 获取模型配置详情
   getById(id: number): Promise<ApiResponse<ModelConfigInfo>> {
     return request.get<ModelConfigInfo>(`/v1/model-configs/${id}`)
