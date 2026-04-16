@@ -169,7 +169,7 @@ import type { AiTaskVO, AiTaskStatus } from '@/types/ai-task'
 import type { DetectionType, DetectionIssueVO } from '@/types/detection'
 
 /**
- * 检测类型到后端AI任务类型的映射
+ * 检测类型到后端AI任务类型的映射（用于查询最新任务）
  * 前端 DetectionType: FAIRNESS, COMPLIANCE, TYPO, SENSITIVE_WORD
  * 后端 AiTaskType: DETECTION_POLICY_REVIEW, DETECTION_FORMAT_CHECK, DETECTION_TYPO, DETECTION_SENSITIVE_WORD
  */
@@ -178,6 +178,17 @@ const DETECTION_TASK_TYPE_MAP: Record<string, string> = {
   COMPLIANCE: 'DETECTION_FORMAT_CHECK',
   TYPO: 'DETECTION_TYPO',
   SENSITIVE_WORD: 'DETECTION_SENSITIVE_WORD',
+}
+
+/**
+ * 前端检测类型到后端taskMap返回key的映射（用于匹配提交检测后的返回值）
+ * 后端 submitDetection 返回 key: SENSITIVE_WORD, TYPO, POLICY_REVIEW, FORMAT_CHECK
+ */
+const TASK_MAP_KEY: Record<string, string> = {
+  FAIRNESS: 'POLICY_REVIEW',
+  COMPLIANCE: 'FORMAT_CHECK',
+  TYPO: 'TYPO',
+  SENSITIVE_WORD: 'SENSITIVE_WORD',
 }
 
 const DETECT_TYPE_CONFIG: Record<string, { label: string; icon: string }> = {
@@ -287,10 +298,12 @@ async function restoreDetectionState() {
   )
 
   let hasActive = false
+  let hasAnyTask = false
   for (let i = 0; i < cards.length; i++) {
     const r = results[i]
     if (r?.status === 'fulfilled' && r.value && r.value.id) {
       const task = r.value
+      hasAnyTask = true
       cards[i]!.taskId = task.id
       cardTaskIds[i]!.value = task.id
       updateCardFromTask(i, task)
@@ -300,8 +313,8 @@ async function restoreDetectionState() {
     }
   }
 
-  // 没有活跃任务且未全部完成，需要新提交
-  if (!hasActive && !allCompleted.value) {
+  // 仅在从未提交过检测时自动触发（所有类型均无任何任务记录）
+  if (!hasAnyTask) {
     await startDetection()
   }
 }
@@ -339,10 +352,13 @@ async function startDetection() {
     const taskMap = await requirementApi.detect(requirementId.value)
     submitting.value = false
 
+    // 后端返回 key 为 SENSITIVE_WORD/TYPO/POLICY_REVIEW/FORMAT_CHECK
+    // 需要通过 TASK_MAP_KEY 映射到前端卡片类型 FAIRNESS/COMPLIANCE/TYPO/SENSITIVE_WORD
     const cards = detectCards.value
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i]!
-      const taskId = taskMap[card.type]
+      const mapKey = TASK_MAP_KEY[card.type]
+      const taskId = mapKey ? taskMap[mapKey] : undefined
       if (taskId) {
         card.taskId = taskId
         cardTaskIds[i]!.value = taskId  // 触发 useTaskPolling 自动开始轮询

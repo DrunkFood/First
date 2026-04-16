@@ -1,23 +1,24 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { feedbackApi } from '@/api/feedback'
-import type { FeedbackType, FeedbackScene, FeedbackVO } from '@/types/feedback'
+import type { FeedbackScene, FeedbackVO } from '@/types/feedback'
 
 /**
  * AI内容反馈组合式函数
- * 统一所有组件的反馈行为: 提交反馈（不可撤销，可切换类型） + dislike原因收集
+ * 统一所有组件的反馈行为: 提交反馈（不可撤销，不可修改） + dislike原因收集
  *
  * @param scene 反馈场景
  * @param getTaskId 获取当前AI任务ID的函数
- * @param getProjectId 获取当前项目ID的函数
  */
 export function useFeedback(
   scene: FeedbackScene,
   getTaskId: () => number | undefined,
-  getProjectId: () => number | undefined,
 ) {
   const submitting = ref(false)
   const currentFeedback = ref<FeedbackVO | null>(null)
+
+  /** 是否已反馈（用于 UI 判断按钮是否可点击） */
+  const hasFeedback = computed(() => currentFeedback.value !== null)
 
   /**
    * 查询当前用户对目标的反馈状态（页面加载时调用）
@@ -38,9 +39,8 @@ export function useFeedback(
   }
 
   /**
-   * 提交反馈
-   * - 已有同类型反馈 → 幂等，不重复提交
-   * - 已有不同类型反馈 → 更新为新类型
+   * 提交反馈（每个目标只能反馈一次，不可修改）
+   * - 已反馈 → 提示已反馈，不重复提交
    * - 无反馈 → 新增
    */
   async function submitFeedback(
@@ -50,11 +50,9 @@ export function useFeedback(
       chatContent?: string
     },
   ) {
-    const feedbackType: FeedbackType = type === 'like' ? 'LIKE' : 'DISLIKE'
-
-    // 已有同类型反馈，幂等返回
-    if (currentFeedback.value && currentFeedback.value.feedbackType === feedbackType) {
-      ElMessage.info('已反馈')
+    // 已反馈，不可再提交
+    if (currentFeedback.value) {
+      ElMessage.info('已反馈，不可修改')
       return
     }
 
@@ -78,15 +76,13 @@ export function useFeedback(
     }
 
     const taskId = getTaskId()
-    const projectId = getProjectId()
 
     try {
       submitting.value = true
       const result = await feedbackApi.submit({
-        feedbackType,
+        feedbackType: type === 'like' ? 'LIKE' : 'DISLIKE',
         feedbackScene: scene,
         taskId,
-        projectId,
         chatMessageId: options?.chatMessageId,
         chatContent: options?.chatContent,
         reason,
@@ -103,6 +99,7 @@ export function useFeedback(
   return {
     submitting,
     currentFeedback,
+    hasFeedback,
     loadFeedback,
     submitFeedback,
   }

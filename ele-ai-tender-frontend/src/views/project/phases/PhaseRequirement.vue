@@ -47,6 +47,7 @@
           <div class="feedback-actions">
             <button
               :class="['feedback-btn', 'btn-like', { active: genFeedback?.feedbackType === 'LIKE' }]"
+              :disabled="hasGenFeedback"
               @click="handleFeedback('like')"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -57,6 +58,7 @@
             </button>
             <button
               :class="['feedback-btn', 'btn-dislike', { active: genFeedback?.feedbackType === 'DISLIKE' }]"
+              :disabled="hasGenFeedback"
               @click="handleFeedback('dislike')"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -65,7 +67,10 @@
               </svg>
               <span>不行</span>
             </button>
-            <span class="feedback-hint">帮助我们改进AI生成质量</span>
+            <span v-if="genFeedback" class="feedback-status">
+              {{ genFeedback.feedbackType === 'LIKE' ? '已赞' : '已反馈不满意' }}
+            </span>
+            <span v-else class="feedback-hint">帮助我们改进AI生成质量</span>
           </div>
         </div>
       </div>
@@ -206,12 +211,12 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
 // ---- 反馈 ----
 const {
   currentFeedback: genFeedback,
+  hasFeedback: hasGenFeedback,
   loadFeedback: loadGenFeedback,
   submitFeedback: submitGenFeedback,
 } = useFeedback(
   'GENERATION_CONTENT',
   () => latestTask.value?.id,
-  () => props.projectId,
 )
 
 const {
@@ -219,7 +224,6 @@ const {
 } = useFeedback(
   'CHAT_MESSAGE',
   () => latestTask.value?.id,
-  () => props.projectId,
 )
 
 // 任务终态时加载反馈状态
@@ -475,10 +479,15 @@ onMounted(loadData)
   transition: all 0.2s;
   color: white;
 
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   &.btn-like {
     background: var(--app-color-success);
 
-    &:hover,
+    &:hover:not(:disabled),
     &.active {
       background: #4db87a;
       box-shadow: 0 2px 8px rgba(103, 194, 58, 0.3);
@@ -488,12 +497,19 @@ onMounted(loadData)
   &.btn-dislike {
     background: var(--app-color-danger);
 
-    &:hover,
+    &:hover:not(:disabled),
     &.active {
       background: #f78989;
       box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
     }
   }
+}
+
+.feedback-status {
+  font-size: 13px;
+  color: var(--app-brand-color);
+  margin-left: 12px;
+  font-weight: 500;
 }
 
 .feedback-hint {

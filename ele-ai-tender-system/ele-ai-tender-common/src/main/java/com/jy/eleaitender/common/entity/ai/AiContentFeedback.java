@@ -19,9 +19,6 @@ public class AiContentFeedback extends BaseEntity {
     @Schema(description = "关联AI任务ID, 聊天反馈无任务时为NULL")
     private Long taskId;
 
-    @Schema(description = "关联项目ID")
-    private Long projectId;
-
     @Schema(description = "反馈类型: LIKE/DISLIKE")
     private String feedbackType;
 

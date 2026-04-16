@@ -77,6 +77,11 @@
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
             <version>${spring-ai.version}</version>
         </dependency>
+        <dependency>
+            <groupId>group.springframework.ai</groupId>
+            <artifactId>spring-ai-zhipuai-spring-boot-starter</artifactId>
+            <version>${spring-ai.version}</version>
+        </dependency>
 
         <!-- Milvus SDK -->
         <dependency>

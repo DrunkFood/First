@@ -31,10 +31,11 @@ public class ModelConfigController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String modelType,
+            @RequestParam(required = false) String provider,
             @RequestParam(required = false) String usageScenario,
             @RequestParam(required = false) String modelName,
             @RequestParam(required = false) Integer isActive) {
-        return Result.success(modelConfigService.getPage(pageNum, pageSize, modelType, usageScenario, modelName, isActive));
+        return Result.success(modelConfigService.getPage(pageNum, pageSize, modelType, provider, usageScenario, modelName, isActive));
     }
 
     @GetMapping("/{id}")

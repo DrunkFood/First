@@ -36,7 +36,7 @@ public class AiReviewItem extends BaseEntity {
     @Schema(description = "排序号")
     private Integer sortOrder;
 
-    @Schema(description = "评审类型: CONFORMITY/TECHNICAL/QUALIFICATION/COMMERCIAL")
+    @Schema(description = "评审类型: COMPLIANCE/TECHNICAL/CREDIT/COMMERCIAL")
     private String reviewType;
 
     @Schema(description = "分值(评审分值)")

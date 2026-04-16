@@ -22,6 +22,9 @@ public class ModelConfigCreateDTO {
     @Schema(description = "模型类型: LOCAL/CLOUD/PRIVATE")
     private String modelType;
 
+    @Schema(description = "模型供应商: OPENAI/ZHIPU，默认OPENAI")
+    private String provider;
+
     @NotBlank(message = "模型代码不能为空")
     @Schema(description = "模型代码(如deepseek-chat)")
     private String modelCode;

@@ -257,13 +257,13 @@ public class AiTaskResultSyncHandler {
      */
     private String mapCategoryToReviewType(String categoryName) {
         if (categoryName == null) {
-            return "CONFORMITY";
+            return "COMPLIANCE";
         }
         if (categoryName.contains("符合") || categoryName.contains("资格") || categoryName.contains("合规")) {
-            return "CONFORMITY";
+            return "COMPLIANCE";
         }
         if (categoryName.contains("资信") || categoryName.contains("资质") || categoryName.contains("信")) {
-            return "QUALIFICATION";
+            return "CREDIT";
         }
         if (categoryName.contains("技术")) {
             return "TECHNICAL";
@@ -271,7 +271,7 @@ public class AiTaskResultSyncHandler {
         if (categoryName.contains("商务") || categoryName.contains("价格") || categoryName.contains("报价")) {
             return "COMMERCIAL";
         }
-        return "CONFORMITY";
+        return "COMPLIANCE";
     }
 
     // ========== 检测任务同步 ==========

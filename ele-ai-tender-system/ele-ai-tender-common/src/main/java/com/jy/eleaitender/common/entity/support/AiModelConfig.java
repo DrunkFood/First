@@ -17,6 +17,8 @@ public class AiModelConfig extends BaseEntity {
     private String modelName;
     @Schema(description = "模型类型")
     private String modelType;
+    @Schema(description = "模型供应商: OPENAI/ZHIPU，默认OPENAI")
+    private String provider;
     @Schema(description = "API端点")
     private String apiEndpoint;
     @Schema(description = "API密钥(加密)")

@@ -3,6 +3,7 @@ export interface ModelConfigInfo {
   id: number
   modelName: string
   modelType: string
+  provider?: string       // 模型供应商: OPENAI/ZHIPU
   endpoint: string
   apiKey?: string        // 脱敏后的密钥（如 sk-****1234）
   modelCode: string
@@ -29,6 +30,7 @@ export interface ModelConfigQueryParams {
   pageSize: number
   modelName?: string
   modelType?: string
+  provider?: string
   usageScenario?: string
 }
 
@@ -36,6 +38,7 @@ export interface ModelConfigQueryParams {
 export interface ModelConfigCreateParams {
   modelName: string
   modelType: string
+  provider?: string       // 模型供应商: OPENAI/ZHIPU，默认OPENAI
   endpoint: string
   apiKey?: string         // RSA加密后的密文
   keyId?: string          // RSA密钥ID
@@ -55,6 +58,7 @@ export interface ModelConfigUpdateParams {
   id: number
   modelName?: string
   modelType?: string
+  provider?: string       // 模型供应商: OPENAI/ZHIPU
   endpoint?: string
   apiKey?: string         // RSA加密后的密文（为空则不更新）
   keyId?: string          // RSA密钥ID

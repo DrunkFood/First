@@ -41,11 +41,14 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     private ObjectMapper objectMapper;
 
     @Override
-    public Page<ModelConfigVO> getPage(Integer pageNum, Integer pageSize, String modelType, String usageScenario, String modelName, Integer isActive) {
+    public Page<ModelConfigVO> getPage(Integer pageNum, Integer pageSize, String modelType, String provider, String usageScenario, String modelName, Integer isActive) {
         Page<AiModelConfig> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<AiModelConfig> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(modelType)) {
             wrapper.eq(AiModelConfig::getModelType, modelType);
+        }
+        if (StringUtils.hasText(provider)) {
+            wrapper.eq(AiModelConfig::getProvider, provider);
         }
         if (StringUtils.hasText(usageScenario)) {
             wrapper.eq(AiModelConfig::getUsageScenario, usageScenario);
@@ -151,6 +154,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
         vo.setId(entity.getId());
         vo.setModelName(entity.getModelName());
         vo.setModelType(entity.getModelType());
+        vo.setProvider(entity.getProvider());
         vo.setEndpoint(entity.getApiEndpoint());
 
         // apiKey脱敏：先AES解密再mask
@@ -193,6 +197,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
         AiModelConfig config = new AiModelConfig();
         config.setModelName(dto.getModelName());
         config.setModelType(dto.getModelType());
+        config.setProvider(StringUtils.hasText(dto.getProvider()) ? dto.getProvider() : "OPENAI");
         config.setApiEndpoint(dto.getEndpoint());
         config.setUsageScenario(dto.getUsageScenario());
         config.setIsActive(1);
@@ -214,6 +219,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     private void mergeDtoToEntity(ModelConfigUpdateDTO dto, AiModelConfig entity) {
         if (dto.getModelName() != null) entity.setModelName(dto.getModelName());
         if (dto.getModelType() != null) entity.setModelType(dto.getModelType());
+        if (dto.getProvider() != null) entity.setProvider(dto.getProvider());
         if (dto.getEndpoint() != null) entity.setApiEndpoint(dto.getEndpoint());
         if (dto.getUsageScenario() != null) entity.setUsageScenario(dto.getUsageScenario());
         if (dto.getRemark() != null) entity.setRemark(dto.getRemark());

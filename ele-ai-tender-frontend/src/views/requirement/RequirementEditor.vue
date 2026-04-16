@@ -126,7 +126,6 @@ const {
 } = useFeedback(
   'CHAT_MESSAGE',
   () => latestTaskId.value,
-  () => projectId.value,
 )
 
 // ---- 自动保存 ----

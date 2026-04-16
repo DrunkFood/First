@@ -20,6 +20,12 @@
               <el-option label="私有化部署" value="PRIVATE" />
             </el-select>
           </el-form-item>
+          <el-form-item label="供应商">
+            <el-select v-model="queryParams.provider" placeholder="请选择供应商" clearable>
+              <el-option label="OpenAI兼容" value="OPENAI" />
+              <el-option label="智谱AI" value="ZHIPU" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="状态">
             <el-select v-model="queryParams.isActive" placeholder="请选择状态" clearable>
               <el-option label="启用" :value="1" />
@@ -69,6 +75,12 @@
             <el-tag v-if="row.modelType === 'LOCAL'" type="info">本地微调</el-tag>
             <el-tag v-else-if="row.modelType === 'CLOUD'" type="primary">云端大模型</el-tag>
             <el-tag v-else-if="row.modelType === 'PRIVATE'" type="warning">私有化部署</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="provider" label="供应商" width="110">
+          <template #default="{ row }">
+            <el-tag v-if="row.provider === 'ZHIPU'" color="#4f46e5" style="color: #fff; border: none;">智谱AI</el-tag>
+            <el-tag v-else type="success">OpenAI兼容</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="modelCode" label="模型代码" width="130" />
@@ -146,6 +158,12 @@
             <el-option label="本地微调" value="LOCAL" />
             <el-option label="云端大模型" value="CLOUD" />
             <el-option label="私有化部署" value="PRIVATE" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="模型供应商" prop="provider">
+          <el-select v-model="formData.provider" placeholder="请选择模型供应商" style="width: 100%">
+            <el-option label="OpenAI兼容协议" value="OPENAI" />
+            <el-option label="智谱AI" value="ZHIPU" />
           </el-select>
         </el-form-item>
         <el-form-item label="模型代码" prop="modelCode">
@@ -277,6 +295,7 @@ const formRef = ref<FormInstance>()
 const formData = reactive<ModelConfigCreateParams & { id?: number }>({
   modelName: '',
   modelType: 'CLOUD',
+  provider: 'OPENAI',
   endpoint: '',
   apiKey: '',
   modelCode: '',
@@ -319,6 +338,7 @@ const handleSearch = () => {
 const handleReset = () => {
   queryParams.modelName = undefined
   queryParams.modelType = undefined
+  queryParams.provider = undefined
   queryParams.usageScenario = undefined
   queryParams.pageNum = 1
   fetchList()
@@ -337,6 +357,7 @@ const handleEdit = (row: ModelConfigInfo) => {
     id: row.id,
     modelName: row.modelName,
     modelType: row.modelType,
+    provider: row.provider || 'OPENAI',
     modelCode: row.modelCode,
     endpoint: row.endpoint,
     apiKey: '',  // 编辑时不回显密钥，用户需要重新输入
@@ -424,6 +445,7 @@ const handleSubmit = async () => {
           id: formData.id,
           modelName: formData.modelName,
           modelType: formData.modelType,
+          provider: formData.provider,
           modelCode: formData.modelCode,
           endpoint: formData.endpoint,
           maxTokens: formData.maxTokens,
@@ -460,6 +482,7 @@ const handleDialogClosed = () => {
     id: undefined,
     modelName: '',
     modelType: 'CLOUD',
+    provider: 'OPENAI',
     endpoint: '',
     apiKey: '',
     modelCode: '',

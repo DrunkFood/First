@@ -133,6 +133,7 @@ public enum ResponseCode {
     // 反馈相关 8091-8099
     FEEDBACK_NOT_FOUND(8091, "反馈不存在"),
     FEEDBACK_TARGET_NOT_FOUND(8092, "反馈目标不存在"),
+    FEEDBACK_ALREADY_EXISTS(8093, "已反馈，不可修改"),
 
     // 消息相关 9021-9029
     MESSAGE_NOT_FOUND(9021, "消息不存在"),

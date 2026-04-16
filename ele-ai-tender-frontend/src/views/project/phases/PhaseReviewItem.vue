@@ -244,11 +244,21 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'PROJECT',
   (task) => {
     // AI任务完成后，延迟等待后端同步结果，再重新加载评审项
+    // 后端AiTaskResultSyncScheduler间隔10秒，需带重试确保数据已同步
     if (task.status === 'COMPLETED') {
-      setTimeout(() => loadReviewItems(), 1500)
+      loadReviewItemsWithRetry()
     }
   },
 )
+
+/** 带重试的评审项加载：AI任务完成后后端同步可能有延迟，最多重试3次 */
+const loadReviewItemsWithRetry = async (retries = 3, delayMs = 2000) => {
+  for (let i = 0; i < retries; i++) {
+    await new Promise(r => setTimeout(r, delayMs))
+    await loadReviewItems()
+    if (reviewItems.value.length > 0) return
+  }
+}
 
 // 按类型分组
 const complianceItems = computed(() => reviewItems.value.filter(i => i.reviewType === 'COMPLIANCE'))

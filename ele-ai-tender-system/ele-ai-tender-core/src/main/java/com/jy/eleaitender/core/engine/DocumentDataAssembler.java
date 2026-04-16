@@ -61,14 +61,14 @@ public class DocumentDataAssembler {
         List<AiReviewItem> reviewItems = reviewItemMapper.selectByProjectId(projectId);
         Map<String, List<AiReviewItem>> grouped = reviewItems.stream()
                 .collect(Collectors.groupingBy(
-                        item -> item.getReviewType() != null ? item.getReviewType() : "CONFORMITY",
+                        item -> item.getReviewType() != null ? item.getReviewType() : "COMPLIANCE",
                         LinkedHashMap::new,
                         Collectors.toList()
                 ));
 
-        data.put("conformityItems", grouped.getOrDefault("CONFORMITY", Collections.emptyList()));
+        data.put("complianceItems", grouped.getOrDefault("COMPLIANCE", Collections.emptyList()));
         data.put("technicalItems", grouped.getOrDefault("TECHNICAL", Collections.emptyList()));
-        data.put("qualificationItems", grouped.getOrDefault("QUALIFICATION", Collections.emptyList()));
+        data.put("creditItems", grouped.getOrDefault("CREDIT", Collections.emptyList()));
         data.put("commercialItems", grouped.getOrDefault("COMMERCIAL", Collections.emptyList()));
         data.put("reviewType", project.getReviewType());
 

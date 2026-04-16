@@ -280,7 +280,7 @@ CREATE TABLE `ai_review_item`  (
   `item_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评审项名称',
   `item_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '评审项内容',
   `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序号',
-  `review_type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '评审类型: CONFORMITY/TECHNICAL/QUALIFICATION/COMMERCIAL',
+  `review_type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '评审类型: COMPLIANCE/TECHNICAL/CREDIT/COMMERCIAL',
   `score` decimal(10, 2) NULL DEFAULT NULL COMMENT '分值(评审分值)',
   `max_score` decimal(10, 2) NULL DEFAULT NULL COMMENT '满分值(商务评审专用)',
   `weight` decimal(5, 2) NULL DEFAULT NULL COMMENT '权重(百分比)',

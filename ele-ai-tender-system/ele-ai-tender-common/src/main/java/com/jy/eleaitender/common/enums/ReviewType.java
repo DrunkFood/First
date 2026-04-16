@@ -10,9 +10,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ReviewType {
 
-    CONFORMITY("CONFORMITY", "符合性审查"),
+    COMPLIANCE("COMPLIANCE", "符合性审查"),
     TECHNICAL("TECHNICAL", "技术标评审"),
-    QUALIFICATION("QUALIFICATION", "资信标评审"),
+    CREDIT("CREDIT", "资信标评审"),
     COMMERCIAL("COMMERCIAL", "商务评审");
 
     private final String code;

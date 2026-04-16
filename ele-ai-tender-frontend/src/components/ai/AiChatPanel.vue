@@ -50,18 +50,25 @@
           </div>
           <!-- AI消息反馈按钮（非发送中且有内容时才显示） -->
           <div v-if="msg.role === 'assistant' && msg.content && !sending" class="message-actions">
-            <el-button
-              :icon="CircleCheck"
-              text
-              size="small"
-              @click="emit('feedback', 'like', msg)"
-            />
-            <el-button
-              :icon="CircleClose"
-              text
-              size="small"
-              @click="emit('feedback', 'dislike', msg)"
-            />
+            <template v-if="chatFeedbackMap[msg.uid]">
+              <span class="feedback-indicator">
+                {{ chatFeedbackMap[msg.uid] === 'LIKE' ? '已赞' : '已反馈不满意' }}
+              </span>
+            </template>
+            <template v-else>
+              <el-button
+                :icon="CircleCheck"
+                text
+                size="small"
+                @click="handleFeedback('like', msg)"
+              />
+              <el-button
+                :icon="CircleClose"
+                text
+                size="small"
+                @click="handleFeedback('dislike', msg)"
+              />
+            </template>
           </div>
         </div>
       </div>
@@ -92,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onBeforeUnmount } from 'vue'
+import { ref, reactive, nextTick, onBeforeUnmount } from 'vue'
 import { Close, CircleCheck, CircleClose, Promotion } from '@element-plus/icons-vue'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import type { AiChatMessage } from '@/types/ai'
@@ -118,6 +125,9 @@ const sending = ref(false)
 const messageListRef = ref<HTMLDivElement>()
 let closeSSE: (() => void) | null = null
 
+/** 每条聊天消息的反馈状态：uid → LIKE/DISLIKE */
+const chatFeedbackMap = reactive<Record<string, 'LIKE' | 'DISLIKE'>>({})
+
 /** 生成消息唯一标识 */
 function generateUid(role: string, timestamp: number, content?: string): string {
   const raw = `${role}-${timestamp}-${(content || '').substring(0, 50)}`
@@ -127,6 +137,13 @@ function generateUid(role: string, timestamp: number, content?: string): string 
     hash |= 0
   }
   return Math.abs(hash).toString(36)
+}
+
+/** 处理聊天消息反馈（记录状态后冒泡给父组件） */
+function handleFeedback(type: 'like' | 'dislike', msg: AiChatMessage) {
+  if (chatFeedbackMap[msg.uid]) return
+  chatFeedbackMap[msg.uid] = type === 'like' ? 'LIKE' : 'DISLIKE'
+  emit('feedback', type, msg)
 }
 
 /** 滚动到底部 */
@@ -287,6 +304,13 @@ onBeforeUnmount(() => {
   gap: 4px;
   margin-top: 6px;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.feedback-indicator {
+  font-size: 12px;
+  color: var(--app-brand-color);
+  font-weight: 500;
 }
 
 .message-assistant .message-actions :deep(.el-button) {

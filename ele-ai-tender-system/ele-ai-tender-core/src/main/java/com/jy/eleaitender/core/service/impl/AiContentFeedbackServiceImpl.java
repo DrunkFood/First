@@ -45,21 +45,16 @@ public class AiContentFeedbackServiceImpl implements IAiContentFeedbackService {
                 userId, request.getTaskId(), request.getFeedbackScene(), chatMessageId);
 
         if (existing != null) {
-            // 已有同类型反馈，幂等返回
+            // 已反馈，不可修改（幂等返回同类型，拒绝不同类型）
             if (existing.getFeedbackType().equals(request.getFeedbackType())) {
                 return toVO(existing);
             }
-            // 已有不同类型反馈，更新类型和原因
-            existing.setFeedbackType(request.getFeedbackType());
-            existing.setReason(request.getReason());
-            feedbackMapper.updateById(existing);
-            return toVO(existing);
+            throw new BusinessException(ResponseCode.FEEDBACK_ALREADY_EXISTS);
         }
 
         // 新增反馈
         AiContentFeedback feedback = new AiContentFeedback();
         feedback.setTaskId(request.getTaskId());
-        feedback.setProjectId(request.getProjectId());
         feedback.setFeedbackType(request.getFeedbackType());
         feedback.setFeedbackScene(request.getFeedbackScene());
         feedback.setChatMessageId(chatMessageId);

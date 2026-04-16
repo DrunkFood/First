@@ -144,11 +144,15 @@
 
               <!-- AI反馈 -->
               <div v-if="content && !sseGenerating && canCreateNew" class="ai-feedback">
-                <span class="feedback-label">帮助我们改进AI生成质量</span>
+                <span v-if="genFeedback" class="feedback-label">
+                  {{ genFeedback.feedbackType === 'LIKE' ? '已赞' : '已反馈不满意' }}
+                </span>
+                <span v-else class="feedback-label">帮助我们改进AI生成质量</span>
                 <div class="feedback-buttons">
                   <el-button
                     :type="genFeedback?.feedbackType === 'LIKE' ? 'success' : 'default'"
                     size="small"
+                    :disabled="hasGenFeedback"
                     @click="handleFeedback('like')"
                   >
                     赞
@@ -156,6 +160,7 @@
                   <el-button
                     :type="genFeedback?.feedbackType === 'DISLIKE' ? 'danger' : 'default'"
                     size="small"
+                    :disabled="hasGenFeedback"
                     @click="handleFeedback('dislike')"
                   >
                     不行
@@ -291,12 +296,12 @@ const { latestTask, canCreateNew, refresh } = useLatestTask(
 // ---- 反馈 ----
 const {
   currentFeedback: genFeedback,
+  hasFeedback: hasGenFeedback,
   loadFeedback: loadGenFeedback,
   submitFeedback: submitGenFeedback,
 } = useFeedback(
   'GENERATION_CONTENT',
   () => latestTask.value?.id,
-  () => requirementData.value.projectId,
 )
 
 const {
@@ -304,7 +309,6 @@ const {
 } = useFeedback(
   'CHAT_MESSAGE',
   () => latestTask.value?.id,
-  () => requirementData.value.projectId,
 )
 
 // 任务终态时加载反馈状态

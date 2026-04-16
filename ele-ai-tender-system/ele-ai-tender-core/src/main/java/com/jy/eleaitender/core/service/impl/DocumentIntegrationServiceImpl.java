@@ -165,9 +165,9 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
 
         // 评审项
         sb.append("## 评审项\n\n");
-        appendReviewSection(sb, "### 符合性审查\n\n", data.get("conformityItems"));
+        appendReviewSection(sb, "### 符合性审查\n\n", data.get("complianceItems"));
         appendReviewSection(sb, "### 技术标评审\n\n", data.get("technicalItems"));
-        appendReviewSection(sb, "### 资信标评审\n\n", data.get("qualificationItems"));
+        appendReviewSection(sb, "### 资信标评审\n\n", data.get("creditItems"));
         appendReviewSection(sb, "### 商务评审\n\n", data.get("commercialItems"));
 
         return sb.toString();

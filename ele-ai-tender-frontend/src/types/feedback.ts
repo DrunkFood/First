@@ -9,7 +9,6 @@ export interface FeedbackSubmitRequest {
   feedbackType: FeedbackType
   feedbackScene: FeedbackScene
   taskId?: number
-  projectId?: number
   chatMessageId?: string
   chatContent?: string
   reason?: string

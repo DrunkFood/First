@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `ai_model_config` (
     `id`              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '配置ID',
     `model_name`      VARCHAR(100) NOT NULL COMMENT '模型名称',
     `model_type`      VARCHAR(20)  NOT NULL COMMENT '模型类型: LOCAL(本地微调)/CLOUD(云端大模型)/PRIVATE(私有化部署)',
+    `provider`        VARCHAR(20)  NOT NULL DEFAULT 'OPENAI' COMMENT '模型供应商: OPENAI(兼容协议)/ZHIPU(智谱AI)',
     `api_endpoint`    VARCHAR(500) DEFAULT NULL COMMENT 'API端点地址',
     `api_key`         VARCHAR(500) DEFAULT NULL COMMENT 'API密钥(AES加密存储)',
     `model_params`    JSON         DEFAULT NULL COMMENT '模型参数(temperature/maxTokens/topP/model等)',
@@ -39,10 +40,10 @@ CREATE TABLE IF NOT EXISTS `ai_model_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型配置表';
 
 -- 初始化默认模型配置
-INSERT INTO `ai_model_config` (`model_name`, `model_type`, `api_endpoint`, `api_key`, `model_params`, `usage_scenario`, `is_active`, `create_time`, `modify_time`) VALUES
-('DeepSeek-Chat', 'CLOUD', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.7, "maxTokens": 4096, "topP": 0.9, "model": "deepseek-chat"}', 'GENERATION', 1, NOW(), NOW()),
-('DeepSeek-Chat', 'CLOUD', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.3, "maxTokens": 2048, "topP": 0.85, "model": "deepseek-chat"}', 'OPTIMIZATION', 1, NOW(), NOW()),
-('DeepSeek-Chat', 'CLOUD', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.1, "maxTokens": 4096, "topP": 0.8, "model": "deepseek-chat"}', 'DETECTION', 1, NOW(), NOW());
+INSERT INTO `ai_model_config` (`model_name`, `model_type`, `provider`, `api_endpoint`, `api_key`, `model_params`, `usage_scenario`, `is_active`, `create_time`, `modify_time`) VALUES
+('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.7, "maxTokens": 4096, "topP": 0.9, "model": "deepseek-chat"}', 'GENERATION', 1, NOW(), NOW()),
+('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.3, "maxTokens": 2048, "topP": 0.85, "model": "deepseek-chat"}', 'OPTIMIZATION', 1, NOW(), NOW()),
+('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.1, "maxTokens": 4096, "topP": 0.8, "model": "deepseek-chat"}', 'DETECTION', 1, NOW(), NOW());
 
 -- =============================================
 -- 2. AI任务队列表

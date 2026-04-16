@@ -9,6 +9,9 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.zhipuai.ZhiPuAiChatModel;
+import org.springframework.ai.zhipuai.ZhiPuAiChatOptions;
+import org.springframework.ai.zhipuai.api.ZhiPuAiApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -18,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 动态ChatClient工厂
  * 根据数据库中的模型配置动态创建ChatClient实例
- * 所有模型类型(CLOUD/LOCAL/PRIVATE)均使用OpenAI兼容协议
+ * 支持多种模型供应商：OPENAI兼容协议 / 智谱AI
  */
 @Slf4j
 @Component
@@ -49,24 +52,30 @@ public class DynamicChatClientFactory {
     }
 
     /**
-     * 根据模型配置构建ChatClient
+     * 根据模型配置的供应商类型分发构建ChatClient
      */
     private ChatClient buildChatClient(AiModelConfig config) {
-        log.info("创建ChatClient: model={}, type={}, endpoint={}",
+        String provider = config.getProvider();
+        if ("ZHIPU".equals(provider)) {
+            return buildZhiPuChatClient(config);
+        }
+        return buildOpenAiChatClient(config);
+    }
+
+    /**
+     * 使用OpenAI兼容协议构建ChatClient
+     * 适用于DeepSeek、GPT、本地vLLM/Ollama等
+     */
+    private ChatClient buildOpenAiChatClient(AiModelConfig config) {
+        log.info("创建OpenAI兼容ChatClient: model={}, type={}, endpoint={}",
                 config.getModelName(), config.getModelType(), config.getApiEndpoint());
 
-        // 解析模型参数
         ModelParams params = parseModelParams(config.getModelParams());
-
-        // 确定模型名称：优先从modelParams中获取，其次用modelName字段
         String modelName = params.model != null ? params.model : config.getModelName();
-
-        // 创建OpenAI兼容的API客户端（适用于DeepSeek、GPT、本地vLLM/Ollama等）
-        // apiKey存储时AES加密，使用前需解密
         String plainApiKey = decryptApiKey(config.getApiKey());
+
         OpenAiApi api = new OpenAiApi(config.getApiEndpoint(), plainApiKey);
 
-        // 构建ChatOptions
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
                 .withModel(modelName);
 
@@ -80,10 +89,42 @@ public class DynamicChatClientFactory {
             optionsBuilder.withTopP(params.topP.floatValue());
         }
 
-        // 创建ChatModel
         OpenAiChatModel chatModel = new OpenAiChatModel(api, optionsBuilder.build());
+        return ChatClient.builder(chatModel).build();
+    }
 
-        // 构建ChatClient
+    /**
+     * 使用智谱AI SDK构建ChatClient
+     * 智谱API不兼容OpenAI协议，需使用专属SDK
+     */
+    private ChatClient buildZhiPuChatClient(AiModelConfig config) {
+        log.info("创建智谱AI ChatClient: model={}, type={}, endpoint={}",
+                config.getModelName(), config.getModelType(), config.getApiEndpoint());
+
+        ModelParams params = parseModelParams(config.getModelParams());
+        String modelName = params.model != null ? params.model : config.getModelName();
+        String plainApiKey = decryptApiKey(config.getApiKey());
+
+        // 智谱API客户端：支持自定义baseUrl（私有化部署场景）
+        ZhiPuAiApi api = StringUtils.hasText(config.getApiEndpoint())
+                ? new ZhiPuAiApi(config.getApiEndpoint(), plainApiKey)
+                : new ZhiPuAiApi(plainApiKey);
+
+        // 构建智谱ChatOptions
+        ZhiPuAiChatOptions.Builder optionsBuilder = ZhiPuAiChatOptions.builder()
+                .withModel(modelName);
+
+        if (params.temperature != null) {
+            optionsBuilder.withTemperature(params.temperature.floatValue());
+        }
+        if (params.maxTokens != null) {
+            optionsBuilder.withMaxTokens(params.maxTokens);
+        }
+        if (params.topP != null) {
+            optionsBuilder.withTopP(params.topP.floatValue());
+        }
+
+        ZhiPuAiChatModel chatModel = new ZhiPuAiChatModel(api, optionsBuilder.build());
         return ChatClient.builder(chatModel).build();
     }
 

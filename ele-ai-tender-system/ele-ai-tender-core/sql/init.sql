@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS `ai_review_item` (
     `item_name`    VARCHAR(200)  NOT NULL COMMENT '评审项名称',
     `item_content` TEXT          DEFAULT NULL COMMENT '评审项内容',
     `sort_order`   INT           NOT NULL DEFAULT 0 COMMENT '排序号',
-    `review_type`  VARCHAR(30)   DEFAULT NULL COMMENT '评审类型: CONFORMITY/TECHNICAL/QUALIFICATION/COMMERCIAL',
+    `review_type`  VARCHAR(30)   DEFAULT NULL COMMENT '评审类型: COMPLIANCE/TECHNICAL/CREDIT/COMMERCIAL',
     `score`        DECIMAL(10,2) DEFAULT NULL COMMENT '分值(评审分值)',
     `max_score`    DECIMAL(10,2) DEFAULT NULL COMMENT '满分值(商务评审专用)',
     `weight`       DECIMAL(5,2)  DEFAULT NULL COMMENT '权重(百分比)',

@@ -19,6 +19,9 @@ public class ModelConfigUpdateDTO {
     @Schema(description = "模型类型: LOCAL/CLOUD/PRIVATE")
     private String modelType;
 
+    @Schema(description = "模型供应商: OPENAI/ZHIPU")
+    private String provider;
+
     @Schema(description = "模型代码(如deepseek-chat)")
     private String modelCode;
 

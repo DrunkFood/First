@@ -2,7 +2,6 @@
 CREATE TABLE IF NOT EXISTS `ai_content_feedback` (
     `id`              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '反馈ID',
     `task_id`         BIGINT       DEFAULT NULL COMMENT '关联AI任务ID(ai_task.id), 聊天反馈无任务时为NULL',
-    `project_id`      BIGINT       NOT NULL COMMENT '关联项目ID',
     `feedback_type`   VARCHAR(20)  NOT NULL COMMENT '反馈类型: LIKE/DISLIKE',
     `feedback_scene`  VARCHAR(30)  NOT NULL COMMENT '反馈场景: GENERATION_CONTENT/CHAT_MESSAGE',
     `chat_message_id` VARCHAR(64)  NOT NULL DEFAULT '' COMMENT '聊天消息标识, 生成内容反馈时为空字符串',
@@ -18,6 +17,5 @@ CREATE TABLE IF NOT EXISTS `ai_content_feedback` (
     `is_delete`       TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除:0未删除/1已删除',
     PRIMARY KEY (`id`),
     UNIQUE INDEX `uk_user_target` (`create_id`, `task_id`, `feedback_scene`, `chat_message_id`, `is_delete`),
-    INDEX `idx_task_id` (`task_id`),
-    INDEX `idx_project_id` (`project_id`)
+    INDEX `idx_task_id` (`task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI内容反馈表';
