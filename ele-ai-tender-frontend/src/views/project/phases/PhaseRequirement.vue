@@ -432,6 +432,10 @@ onMounted(loadData)
   :deep(.markdown-editor) {
     min-height: 500px;
   }
+
+  :deep(.md-editor-preview-wrapper) {
+    padding: 24px;
+  }
 }
 
 // ========================================
