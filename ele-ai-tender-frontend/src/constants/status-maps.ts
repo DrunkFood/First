@@ -32,4 +32,9 @@ export const PROJECT_TYPE_MAP: Record<string, { label: string; type?: '' | 'succ
   ENGINEERING: { label: '工程', color: '#336CFF' },
   GOODS: { label: '货物', color: '#31E3FD' },
   SERVICE: { label: '服务', color: '#FF8D3B' },
+  // 服务子类型
+  PROPERTY: { label: '物业', color: '#FF8D3B' },
+  IT_SERVICE: { label: 'IT服务', color: '#FF8D3B' },
+  CONSULTING: { label: '咨询服务', color: '#FF8D3B' },
+  MAINTENANCE: { label: '维保服务', color: '#FF8D3B' },
 }

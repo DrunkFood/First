@@ -48,7 +48,9 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="170" />
+      <el-table-column prop="createTime" label="创建时间" width="170">
+        <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="160">
         <template #default="{ row }">
           <el-button text type="primary" size="small" @click="handleView(row)">查看</el-button>
@@ -138,7 +140,7 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="描述">{{ currentDetail.description || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="上传时间">{{ currentDetail.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="上传时间">{{ formatTime(currentDetail.createTime) }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <el-button @click="showDetailDialog = false">关闭</el-button>
@@ -309,6 +311,15 @@ const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+/** 格式化ISO时间为友好显示 */
+function formatTime(value: string): string {
+  if (!value) return '-'
+  const d = new Date(value)
+  if (isNaN(d.getTime())) return value
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
 onMounted(loadData)

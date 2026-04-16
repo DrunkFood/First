@@ -240,7 +240,6 @@ import { ArrowLeft, ChatDotRound, Close } from '@element-plus/icons-vue'
 import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
 import { requirementApi } from '@/api/requirement'
-import { createSSEConnection } from '@/api/ai'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
@@ -272,23 +271,48 @@ const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
 
 // ---- 最新任务 ----
-const { latestTask, canCreateNew, refresh } = useLatestTask(
+const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
   (task) => {
-    // AI任务完成后，延迟等待后端同步结果，再重新加载需求数据
+    // AI任务完成后，重试读取需求内容（后端定时同步可能有延迟）
     if (task.status === 'COMPLETED' && requirementId.value) {
-      setTimeout(async () => {
+      // 清除进度模拟计时器
+      if (generateProgressTimer) {
+        clearInterval(generateProgressTimer)
+        generateProgressTimer = null
+      }
+      sseProgress.value = 100
+      ElMessage.success('AI生成完成')
+      sseGenerating.value = false
+
+      // 重试读取内容，最多5次，间隔3秒
+      const retryLoadContent = async (retries = 0) => {
         try {
-          const req = await requirementApi.getById(requirementId.value)
+          const req = await requirementApi.getById(requirementId.value!)
           if (req.content) {
             content.value = req.content
+            return
           }
         } catch {
-          // 忽略刷新失败，用户可手动刷新
+          // 忽略单次失败
         }
-      }, 1500)
+        if (retries < 5) {
+          setTimeout(() => retryLoadContent(retries + 1), 3000)
+        } else {
+          ElMessage.warning('内容加载超时，请刷新页面重试')
+        }
+      }
+      setTimeout(retryLoadContent, 2000)
+    } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
+      // 任务失败
+      if (generateProgressTimer) {
+        clearInterval(generateProgressTimer)
+        generateProgressTimer = null
+      }
+      ElMessage.error('AI生成失败，请稍后重试')
+      sseGenerating.value = false
     }
   },
 )
@@ -318,9 +342,8 @@ watch(latestTask, (task) => {
   }
 })
 
-// ---- SSE ----
+// ---- 生成状态 ----
 const sseGenerating = ref(false)
-let closeGenerateSSE: (() => void) | null = null
 let sseProgress = ref(0)
 
 // ---- 进度计算 ----
@@ -372,7 +395,10 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  closeGenerateSSE?.()
+  if (generateProgressTimer) {
+    clearInterval(generateProgressTimer)
+    generateProgressTimer = null
+  }
   // 清空内容，防止md-editor-v3在DOM销毁后报querySelectorAll/MutationObserver错误
   content.value = ''
 })
@@ -416,41 +442,38 @@ async function handleGenerate() {
   content.value = ''
   sseProgress.value = 0
 
-  // 模拟进度
-  const progressTimer = setInterval(() => {
-    if (sseProgress.value < 90) {
-      sseProgress.value += Math.floor(Math.random() * 5) + 1
+  try {
+    // 调用后端创建AI生成任务（普通POST，非SSE）
+    const task = await requirementApi.generate(requirementId.value!, {})
+    // 启动任务轮询
+    if (task?.id) {
+      setActive(task.id)
     }
-  }, 300)
 
-  closeGenerateSSE = createSSEConnection(
-    `/core-api/v1/requirements/${requirementId.value}/generate`,
-    {},
-    (data: string) => {
-      content.value += data
-    },
-    () => {
-      clearInterval(progressTimer)
-      ElMessage.error('AI生成失败，请稍后重试')
-      sseGenerating.value = false
-      closeGenerateSSE = null
-      refresh()
-    },
-    () => {
-      clearInterval(progressTimer)
-      sseProgress.value = 100
-      ElMessage.success('AI生成完成')
-      sseGenerating.value = false
-      closeGenerateSSE = null
-      refresh()
-    },
-  )
+    // 模拟进度（等待后端异步任务执行期间）
+    const progressTimer = setInterval(() => {
+      if (sseProgress.value < 90) {
+        sseProgress.value += Math.floor(Math.random() * 3) + 1
+      }
+    }, 1000)
+
+    // 保存timer以便停止时清除
+    generateProgressTimer = progressTimer
+  } catch (e: any) {
+    ElMessage.error(e?.message || 'AI生成任务创建失败')
+    sseGenerating.value = false
+  }
 }
 
+// 模拟进度计时器引用
+let generateProgressTimer: ReturnType<typeof setInterval> | null = null
+
 function stopGenerate() {
-  closeGenerateSSE?.()
+  if (generateProgressTimer) {
+    clearInterval(generateProgressTimer)
+    generateProgressTimer = null
+  }
   sseGenerating.value = false
-  closeGenerateSSE = null
 }
 
 // ---- 保存 ----

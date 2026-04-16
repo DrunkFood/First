@@ -30,7 +30,9 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="时间" width="170" />
+      <el-table-column prop="createTime" label="时间" width="170">
+        <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+      </el-table-column>
       <el-table-column label="状态" width="80">
         <template #default="{ row }">
           <el-tag :type="row.isRead === 1 ? 'info' : 'danger'" size="small">
@@ -69,7 +71,7 @@
               {{ getMessageTypeLabel(currentMessage.messageType) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="时间">{{ currentMessage.createTime }}</el-descriptions-item>
+          <el-descriptions-item label="时间">{{ formatTime(currentMessage.createTime) }}</el-descriptions-item>
           <el-descriptions-item label="内容">
             <div class="message-content">{{ currentMessage.content }}</div>
           </el-descriptions-item>
@@ -164,6 +166,15 @@ const getMessageTagType = (type: string): '' | 'success' | 'warning' | 'info' | 
     PROJECT: 'success',
   }
   return map[type] ?? 'info'
+}
+
+/** 格式化ISO时间为友好显示 */
+function formatTime(value: string): string {
+  if (!value) return '-'
+  const d = new Date(value)
+  if (isNaN(d.getTime())) return value
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
 onMounted(loadData)

@@ -76,7 +76,9 @@
                 <StatusBadge :status="row.status" :typeMap="PROJECT_STATUS_MAP" />
               </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="160" />
+            <el-table-column prop="createTime" label="创建时间" width="160">
+              <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+            </el-table-column>
           </el-table>
           <el-empty v-if="!loading && recentProjects.length === 0" description="暂无项目" :image-size="60" />
         </el-card>
@@ -144,6 +146,15 @@ const stats = ref({
 const recentProjects = ref<ProjectInfo[]>([])
 
 const todoItems = ref<{ label: string; count: number }[]>([])
+
+/** 格式化ISO时间为友好显示 */
+function formatTime(value: string): string {
+  if (!value) return '-'
+  const d = new Date(value)
+  if (isNaN(d.getTime())) return value
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
 
 onMounted(async () => {
   loading.value = true

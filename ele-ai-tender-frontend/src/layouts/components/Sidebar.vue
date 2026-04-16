@@ -26,18 +26,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { messageApi } from '@/api/message'
 
 const route = useRoute()
 const unreadCount = ref(0)
 
-onMounted(async () => {
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
+async function loadUnreadCount() {
   try {
     const res = await messageApi.getUnreadCount()
     unreadCount.value = res as number
   } catch { /* ignore */ }
+}
+
+onMounted(() => {
+  loadUnreadCount()
+  // 每30秒刷新未读数，保持角标同步
+  pollTimer = setInterval(loadUnreadCount, 30000)
+})
+
+onBeforeUnmount(() => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
 })
 </script>
 

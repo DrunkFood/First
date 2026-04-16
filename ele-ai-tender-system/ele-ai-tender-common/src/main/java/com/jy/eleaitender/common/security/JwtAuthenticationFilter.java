@@ -100,6 +100,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (CommonConstant.TOKEN_TYPE_INTERNAL.equals(tokenType)) {
             loginUser.setUserId(getInternalUserId(claims));
             loginUser.setUsername(claims.get("username", String.class));
+            // JWT中未单独存储realName，使用username作为回退
+            loginUser.setRealName(loginUser.getUsername());
             // 从 Redis 加载角色缓存（数据隔离需要判断管理员）
             loadRolesFromRedis(loginUser);
             return loginUser;
