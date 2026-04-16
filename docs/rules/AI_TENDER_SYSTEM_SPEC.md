@@ -42,6 +42,7 @@
 - `GET /projects/{id}/versions/compare` — 版本对比
 - `POST /projects/{id}/export` — 导出Word文档
 - `POST /projects/{id}/publish` — 发布项目
+- `PUT /projects/{id}/phase` — 推进项目阶段（RequestBody: targetPhase + context）
 
 **业务需求**:
 - `POST /requirements` — 创建业务需求
@@ -110,6 +111,19 @@ DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED /
 
 - 状态流转必须在 Service 层进行校验，不允许跳过中间状态
 - 每次状态变更需记录操作日志
+
+### 5.1.1 编制阶段流转
+
+项目编制分为5个阶段，由 PhaseFlowController 统一管控推进规则和触发器执行：
+
+```
+BASIC_INFO(1) → REQUIREMENT(2) → REVIEW_ITEM(3) → DOCUMENT(4) → DETECTION(5)
+```
+
+- 阶段只能顺序推进，不能跳跃或倒退
+- 每个阶段有独立的 PhaseTrigger（onEnter/onExit/canComplete），进入新阶段时自动触发AI任务
+- Phase 与 Status 联动：进入编制阶段→IN_PROGRESS，进入检测阶段→DETECTING
+- 详细规范见 [PHASE_FLOW_SPEC.md](PHASE_FLOW_SPEC.md)
 
 ### 5.2 评审项三级结构
 
@@ -180,6 +194,7 @@ Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.doc
 ## 9. 排障原则
 
 - **项目状态异常** → 查 `ai_project.status` 字段，检查状态流转是否合法
+- **阶段推进失败** → 查 PhaseFlowController 日志，检查 canComplete 和转换规则，详见 [PHASE_FLOW_SPEC.md](PHASE_FLOW_SPEC.md)
 - **AI生成失败** → 查 `ai_model_config` 配置是否正确，检查 Token 用量是否超限
 - **检测结果异常** → 查 `ai_detection_record.result` JSON，确认检测类型和输入内容
 - **知识库检索不准** → 查 `ai_knowledge_document.vector_ids`，确认向量化是否完成

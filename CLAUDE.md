@@ -45,6 +45,8 @@
 
 **项目状态流转**: DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED / DETECTION_FAILED → PUBLISHED → ARCHIVED / CANCELLED
 
+**编制阶段流转**: BASIC_INFO(1) → REQUIREMENT(2) → REVIEW_ITEM(3) → DOCUMENT(4) → DETECTION(5)，由 PhaseFlowController 管控，详见 [PHASE_FLOW_SPEC.md](docs/rules/PHASE_FLOW_SPEC.md)
+
 **检测类型**: FAIRNESS(公平性) / COMPLIANCE(合规性) / TYPO(错别字) / SENSITIVE_WORD(敏感词)
 
 ## 启动命令
@@ -181,6 +183,7 @@ Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.doc
 | **编码规范**（数据库字段、接口格式、分层、异常、安全） | [CODE_CONVENTIONS.md](docs/rules/CODE_CONVENTIONS.md) | 写代码时参考 |
 | **全局项目规范**（模块、端口、安全、日志、文档治理） | [PROJECT_SPEC_FINAL.md](docs/rules/PROJECT_SPEC_FINAL.md) | 了解项目整体约束时参考 |
 | **AI编制系统规范**（项目、需求、模板、评审项、检测） | [AI_TENDER_SYSTEM_SPEC.md](docs/rules/AI_TENDER_SYSTEM_SPEC.md) | 开发AI编制业务功能时参考 |
+| **阶段流程控制器规范**（PhaseTrigger/PhaseFlowController/触发器/Phase-Status联动/前端集成） | [PHASE_FLOW_SPEC.md](docs/rules/PHASE_FLOW_SPEC.md) | 开发编制阶段流转、阶段触发器、AI任务自动触发时参考 |
 | **文件服务规范** | [FILE_SERVICE_SPEC.md](docs/rules/FILE_SERVICE_SPEC.md) | 开发文件相关功能时参考 |
 | **支撑中心规范** | [SUPPORT_SYSTEM_SPEC.md](docs/rules/SUPPORT_SYSTEM_SPEC.md) | 开发认证、权限、用户管理时参考 |
 | **交互集成规范** | [INTERACTION_INTEGRATION_SPEC.md](docs/rules/INTERACTION_INTEGRATION_SPEC.md) | 开发第三方系统接入时参考 |
