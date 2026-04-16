@@ -54,13 +54,13 @@
               :icon="CircleCheck"
               text
               size="small"
-              @click="emit('feedback', 'like', index)"
+              @click="emit('feedback', 'like', msg)"
             />
             <el-button
               :icon="CircleClose"
               text
               size="small"
-              @click="emit('feedback', 'dislike', index)"
+              @click="emit('feedback', 'dislike', msg)"
             />
           </div>
         </div>
@@ -109,7 +109,7 @@ const messages = defineModel<AiChatMessage[]>('messages', { default: () => [] })
 
 const emit = defineEmits<{
   close: []
-  feedback: [type: 'like' | 'dislike', index: number]
+  feedback: [type: 'like' | 'dislike', msg: AiChatMessage]
   message: [content: string]
 }>()
 
@@ -117,6 +117,17 @@ const inputText = ref('')
 const sending = ref(false)
 const messageListRef = ref<HTMLDivElement>()
 let closeSSE: (() => void) | null = null
+
+/** 生成消息唯一标识 */
+function generateUid(role: string, timestamp: number, content?: string): string {
+  const raw = `${role}-${timestamp}-${(content || '').substring(0, 50)}`
+  let hash = 0
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) - hash) + raw.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash).toString(36)
+}
 
 /** 滚动到底部 */
 function scrollToBottom() {
@@ -133,13 +144,14 @@ function handleSend() {
   if (!text || sending.value) return
 
   // 添加用户消息
-  const userMsg: AiChatMessage = { role: 'user', content: text, timestamp: Date.now() }
+  const userMsg: AiChatMessage = { role: 'user', content: text, timestamp: Date.now(), uid: generateUid('user', Date.now(), text) }
   messages.value.push(userMsg)
   inputText.value = ''
   scrollToBottom()
 
   // 准备AI占位消息
-  const aiMsg: AiChatMessage = { role: 'assistant', content: '', timestamp: Date.now() }
+  const aiMsgTimestamp = Date.now()
+  const aiMsg: AiChatMessage = { role: 'assistant', content: '', timestamp: aiMsgTimestamp, uid: generateUid('assistant', aiMsgTimestamp) }
   messages.value.push(aiMsg)
   const aiIndex = messages.value.length - 1
 
@@ -158,10 +170,12 @@ function handleSend() {
     (data: string) => {
       // 流式追加内容
       const current = messages.value[aiIndex]!
+      const newContent = current.content + data
       messages.value.splice(aiIndex, 1, {
         role: current.role,
-        content: current.content + data,
+        content: newContent,
         timestamp: current.timestamp,
+        uid: generateUid('assistant', current.timestamp, newContent),
       })
       scrollToBottom()
     },
@@ -173,6 +187,7 @@ function handleSend() {
           role: current.role,
           content: current.content || '',
           timestamp: current.timestamp,
+          uid: generateUid('assistant', current.timestamp, current.content),
           error: true,
         })
       }

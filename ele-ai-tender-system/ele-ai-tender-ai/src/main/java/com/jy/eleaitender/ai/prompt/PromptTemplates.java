@@ -3,6 +3,11 @@ package com.jy.eleaitender.ai.prompt;
 /**
  * Prompt模板常量
  * 集中管理各AI场景的System Prompt和User Prompt模板
+ *
+ * 注意：Spring AI 的 ChatClient.prompt().system() / .user() 会通过 PromptTemplate 处理字符串，
+ * PromptTemplate 使用 {variableName} 语法做变量占位。如果模板内容包含字面量花括号（如 JSON 示例），
+ * 必须使用双花括号转义：{ → {{，} → }}，否则 PromptTemplate 构造时会抛出
+ * IllegalArgumentException: The template string is not valid.
  */
 public final class PromptTemplates {
 
@@ -67,23 +72,23 @@ public final class PromptTemplates {
      */
     public static final String REVIEW_ITEM_GENERATE = """
             你是评标专家。根据项目信息和业务需求，生成完整的评审标准体系。
-            
+
             生成要求：
             1. 输出JSON格式的评审项树形结构
             2. 包含符合性审查、技术标评审、商务评审等一级分类
             3. 每个评审项需包含评分标准和分值
             4. 区分客观评审项和主观评审项
             5. 总分值必须为100分
-            
+
             输出JSON格式：
             ```json
-            {
+            {{
               "reviewItems": [
-                {
+                {{
                   "name": "评审项名称",
                   "level": 1,
                   "children": [
-                    {
+                    {{
                       "name": "子评审项",
                       "level": 2,
                       "content": "评审内容描述",
@@ -91,11 +96,11 @@ public final class PromptTemplates {
                       "subjectivity": "OBJECTIVE|SUBJECTIVE",
                       "isRequired": false,
                       "children": []
-                    }
+                    }}
                   ]
-                }
+                }}
               ]
-            }
+            }}
             ```
             """;
 
@@ -104,27 +109,27 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_SENSITIVE_WORD = """
             你是招标文件合规审查专家。分析以下招标文件内容，检测其中的敏感词汇和不当表述。
-            
+
             检测范围：
             1. 歧视性表述（地域歧视、品牌指定、规模限制等）
             2. 限制性条款（不合理的资质要求、业绩门槛等）
             3. 排他性表述（指定品牌、唯一供应商暗示等）
             4. 倾向性表述（暗示特定投标人的表述）
-            
+
             输出JSON格式：
             ```json
-            {
+            {{
               "issues": [
-                {
+                {{
                   "position": "问题位置描述",
                   "original": "原文内容",
                   "suggestion": "修改建议",
                   "reason": "问题原因",
                   "severity": "HIGH|MEDIUM|LOW"
-                }
+                }}
               ],
               "score": 85
-            }
+            }}
             ```
             评分规则：满分100分，每个HIGH问题-10分，MEDIUM问题-5分，LOW问题-2分。
             """;
@@ -134,26 +139,26 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_TYPO = """
             你是文字校对专家。检查以下文本中的错别字、语法错误和标点符号错误。
-            
+
             检测范围：
             1. 错别字（同音字、形近字错误）
             2. 语法错误（搭配不当、成分残缺等）
             3. 标点符号错误
             4. 专业术语拼写错误
-            
+
             输出JSON格式：
             ```json
-            {
+            {{
               "issues": [
-                {
+                {{
                   "position": "问题位置描述",
                   "original": "原文错误内容",
                   "suggestion": "正确写法",
                   "reason": "错误类型说明"
-                }
+                }}
               ],
               "score": 95
-            }
+            }}
             ```
             评分规则：满分100分，每个错误-3分。
             """;
@@ -163,28 +168,28 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_POLICY_REVIEW = """
             你是招投标政策法规审查专家。对照提供的政策文件内容，检查招标文件的合规性。
-            
+
             审查要点：
             1. 是否符合最新的招投标法律法规
             2. 是否违反公平竞争原则
             3. 评标方法是否合规
             4. 投标人资格条件是否合法
             5. 招标程序是否完整
-            
+
             输出JSON格式：
             ```json
-            {
+            {{
               "issues": [
-                {
+                {{
                   "position": "问题位置描述",
                   "original": "原文内容",
                   "suggestion": "合规修改建议",
                   "policyReference": "相关政策条款引用",
                   "severity": "HIGH|MEDIUM|LOW"
-                }
+                }}
               ],
               "score": 80
-            }
+            }}
             ```
             评分规则：满分100分，HIGH问题-15分，MEDIUM问题-8分，LOW问题-3分。
             """;
@@ -194,27 +199,27 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_FORMAT_CHECK = """
             你是文档格式规范审查专家。检查招标文件的格式规范性。
-            
+
             检查范围：
             1. 标题层级规范（一级、二级、三级标题层次）
             2. 编号格式规范（统一使用阿拉伯数字或中文数字）
             3. 必要章节完整性（封面、目录、投标邀请、须知、技术要求、评标办法等）
             4. 表格格式规范
             5. 附件引用完整性
-            
+
             输出JSON格式：
             ```json
-            {
+            {{
               "issues": [
-                {
+                {{
                   "position": "问题位置描述",
                   "original": "原文内容",
                   "suggestion": "格式修改建议",
                   "ruleViolated": "违反的格式规则"
-                }
+                }}
               ],
               "score": 90
-            }
+            }}
             ```
             评分规则：满分100分，每个格式问题-5分。
             """;

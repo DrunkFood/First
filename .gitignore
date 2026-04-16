@@ -64,4 +64,6 @@ ele-tender-demo-business-system/
 .classpath
 .settings/
 
+# Playwright 截图
 .playwright-mcp/
+**/test-screenshots/

@@ -36,7 +36,8 @@
         <!-- 编辑器区域 -->
         <div class="editor-container">
           <div class="editor-area">
-            <MarkdownEditor v-model="content" :preview="readonly" :toolbars-exclude="excludeToolbars" :disabled="readonly" />
+            <MdPreview v-if="readonly" :model-value="content" :theme="themeStore.mode" />
+            <MarkdownEditor v-else v-model="content" :toolbars-exclude="excludeToolbars" />
           </div>
         </div>
 
@@ -45,7 +46,7 @@
           <h4 class="feedback-title">对AI生成内容的反馈</h4>
           <div class="feedback-actions">
             <button
-              :class="['feedback-btn', 'btn-like', { active: aiFeedbackType === 'like' }]"
+              :class="['feedback-btn', 'btn-like', { active: genFeedback?.feedbackType === 'LIKE' }]"
               @click="handleFeedback('like')"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -55,7 +56,7 @@
               <span>赞</span>
             </button>
             <button
-              :class="['feedback-btn', 'btn-dislike', { active: aiFeedbackType === 'dislike' }]"
+              :class="['feedback-btn', 'btn-dislike', { active: genFeedback?.feedbackType === 'DISLIKE' }]"
               @click="handleFeedback('dislike')"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -140,15 +141,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ChatDotRound, Close } from '@element-plus/icons-vue'
+import { MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/preview.css'
 import { requirementApi } from '@/api/requirement'
 import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useAutoSave } from '@/composables/useAutoSave'
+import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress } from '@/types/ai-task'
+import { useThemeStore } from '@/store/theme'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
@@ -157,6 +162,7 @@ import type { ToolbarNames } from 'md-editor-v3'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
+const themeStore = useThemeStore()
 
 // 排除不需要的工具栏项，只保留原型中的：加粗/斜体/下划线/列表/插入图片
 const excludeToolbars: ToolbarNames[] = [
@@ -169,7 +175,6 @@ const excludeToolbars: ToolbarNames[] = [
 const content = ref('')
 const requirementId = ref(0)
 const isOptimizing = ref(false)
-const aiFeedbackType = ref<'like' | 'dislike' | null>(null)
 
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
@@ -187,6 +192,8 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
           const req = await requirementApi.getById(requirementId.value)
           if (req.content) {
             content.value = req.content
+            // AI生成完成后清除残留草稿，避免下次进入时弹出恢复提示
+            try { await requirementApi.clearAutoSave(requirementId.value) } catch {}
           }
         } catch {
           // 忽略刷新失败，用户可手动刷新
@@ -195,6 +202,32 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
     }
   },
 )
+
+// ---- 反馈 ----
+const {
+  currentFeedback: genFeedback,
+  loadFeedback: loadGenFeedback,
+  submitFeedback: submitGenFeedback,
+} = useFeedback(
+  'GENERATION_CONTENT',
+  () => latestTask.value?.id,
+  () => props.projectId,
+)
+
+const {
+  submitFeedback: submitChatFeedback,
+} = useFeedback(
+  'CHAT_MESSAGE',
+  () => latestTask.value?.id,
+  () => props.projectId,
+)
+
+// 任务终态时加载反馈状态
+watch(latestTask, (task) => {
+  if (task && ['COMPLETED', 'FAILED', 'AI_UNAVAILABLE', 'SKIPPED'].includes(task.status)) {
+    loadGenFeedback()
+  }
+})
 
 const { startAutoSave, recoverDraft } = useAutoSave(
   requirementId,
@@ -215,8 +248,18 @@ const loadData = async () => {
     requirementId.value = project.requirementId
     const req = await requirementApi.getById(project.requirementId)
     content.value = req.content || ''
-    await recoverDraft()
-    startAutoSave()
+
+    // 已有内容说明已持久化，静默清除残留草稿避免弹框；否则尝试恢复草稿
+    if (content.value) {
+      try { await requirementApi.clearAutoSave(requirementId.value) } catch { /* 清除失败不影响主流程 */ }
+    } else {
+      await recoverDraft()
+    }
+
+    // 只在非只读模式下启动自动保存
+    if (!props.readonly) {
+      startAutoSave()
+    }
   }
 }
 
@@ -280,9 +323,8 @@ const handleOptimize = async () => {
 // 暴露给AI助手调用
 defineExpose({ handleOptimize })
 
-const handleFeedback = (type: 'like' | 'dislike') => {
-  aiFeedbackType.value = aiFeedbackType.value === type ? null : type
-  ElMessage.success(type === 'like' ? '感谢反馈！我们会继续努力提供更好的AI生成内容。' : '感谢反馈！我们会根据您的意见进行改进。')
+const handleFeedback = async (type: 'like' | 'dislike') => {
+  await submitGenFeedback(type)
 }
 
 const sendQuickAction = (action: string) => {
@@ -293,8 +335,11 @@ const sendQuickAction = (action: string) => {
   })
 }
 
-const handleChatFeedback = (type: 'like' | 'dislike', _index: number) => {
-  ElMessage.success(type === 'like' ? '感谢反馈！' : '我们会持续改进AI生成质量')
+const handleChatFeedback = async (type: 'like' | 'dislike', msg: AiChatMessage) => {
+  await submitChatFeedback(type, {
+    chatMessageId: msg.uid,
+    chatContent: msg.content?.substring(0, 200),
+  })
 }
 
 const handleChatMessage = (_msg: string) => {
@@ -326,6 +371,8 @@ onBeforeUnmount(() => {
     closeOptimizeSSE()
     closeOptimizeSSE = null
   }
+  // 清空内容，防止md-editor-v3在DOM销毁后报querySelectorAll/MutationObserver错误
+  content.value = ''
 })
 
 onMounted(loadData)

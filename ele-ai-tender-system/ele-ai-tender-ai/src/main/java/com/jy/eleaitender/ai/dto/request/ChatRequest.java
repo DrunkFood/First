@@ -23,6 +23,9 @@ public class ChatRequest {
     @Schema(description = "上下文内容（选中的文本等）")
     private String context;
 
+    @Schema(description = "对话ID, 发起聊天时前端随机生成的UUID")
+    private String conversationId;
+
     @Schema(description = "对话历史（最近N轮）")
     private List<ChatMessage> history;
 

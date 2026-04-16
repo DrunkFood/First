@@ -138,8 +138,8 @@
                 </div>
               </div>
               <div class="content-area">
-                <MarkdownEditor v-if="editMode" v-model="content" class="content-editor" />
-                <MdPreview v-else :model-value="content" class="content-preview" />
+                <MarkdownEditor v-show="editMode" v-model="content" class="content-editor" />
+                <MdPreview v-show="!editMode" :model-value="content" class="content-preview" />
               </div>
 
               <!-- AI反馈 -->
@@ -147,14 +147,14 @@
                 <span class="feedback-label">帮助我们改进AI生成质量</span>
                 <div class="feedback-buttons">
                   <el-button
-                    :type="feedbackType === 'like' ? 'success' : 'default'"
+                    :type="genFeedback?.feedbackType === 'LIKE' ? 'success' : 'default'"
                     size="small"
                     @click="handleFeedback('like')"
                   >
                     赞
                   </el-button>
                   <el-button
-                    :type="feedbackType === 'dislike' ? 'danger' : 'default'"
+                    :type="genFeedback?.feedbackType === 'DISLIKE' ? 'danger' : 'default'"
                     size="small"
                     @click="handleFeedback('dislike')"
                   >
@@ -228,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, ChatDotRound, Close } from '@element-plus/icons-vue'
@@ -237,6 +237,7 @@ import 'md-editor-v3/lib/preview.css'
 import { requirementApi } from '@/api/requirement'
 import { createSSEConnection } from '@/api/ai'
 import { useLatestTask } from '@/composables/useLatestTask'
+import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
@@ -264,14 +265,54 @@ const exporting = ref(false)
 const editMode = ref(false)
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
-const feedbackType = ref<'like' | 'dislike' | null>(null)
 
 // ---- 最新任务 ----
 const { latestTask, canCreateNew, refresh } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
+  (task) => {
+    // AI任务完成后，延迟等待后端同步结果，再重新加载需求数据
+    if (task.status === 'COMPLETED' && requirementId.value) {
+      setTimeout(async () => {
+        try {
+          const req = await requirementApi.getById(requirementId.value)
+          if (req.content) {
+            content.value = req.content
+          }
+        } catch {
+          // 忽略刷新失败，用户可手动刷新
+        }
+      }, 1500)
+    }
+  },
 )
+
+// ---- 反馈 ----
+const {
+  currentFeedback: genFeedback,
+  loadFeedback: loadGenFeedback,
+  submitFeedback: submitGenFeedback,
+} = useFeedback(
+  'GENERATION_CONTENT',
+  () => latestTask.value?.id,
+  () => requirementData.value.projectId,
+)
+
+const {
+  submitFeedback: submitChatFeedback,
+} = useFeedback(
+  'CHAT_MESSAGE',
+  () => latestTask.value?.id,
+  () => requirementData.value.projectId,
+)
+
+// 任务终态时加载反馈状态
+watch(latestTask, (task) => {
+  if (task && ['COMPLETED', 'FAILED', 'AI_UNAVAILABLE', 'SKIPPED'].includes(task.status)) {
+    loadGenFeedback()
+  }
+})
 
 // ---- SSE ----
 const sseGenerating = ref(false)
@@ -328,6 +369,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   closeGenerateSSE?.()
+  // 清空内容，防止md-editor-v3在DOM销毁后报querySelectorAll/MutationObserver错误
+  content.value = ''
 })
 
 function generateTags(data: RequirementInfo) {
@@ -448,18 +491,16 @@ function handleNextStep() {
 }
 
 // ---- AI反馈 ----
-function handleFeedback(type: 'like' | 'dislike') {
-  if (type === 'dislike') {
-    const reason = prompt('请说明不满意的原因，帮助我们改进：')
-    if (!reason) return
-  }
-  feedbackType.value = type
-  ElMessage.success(type === 'like' ? '感谢您的反馈' : '我们会持续改进')
+async function handleFeedback(type: 'like' | 'dislike') {
+  await submitGenFeedback(type)
 }
 
 // ---- AI对话回调 ----
-function handleChatFeedback(type: 'like' | 'dislike', _index: number) {
-  ElMessage.success(type === 'like' ? '感谢您的反馈' : '我们会持续改进')
+async function handleChatFeedback(type: 'like' | 'dislike', msg: AiChatMessage) {
+  await submitChatFeedback(type, {
+    chatMessageId: msg.uid,
+    chatContent: msg.content?.substring(0, 200),
+  })
 }
 
 // ---- 快捷操作 ----

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.dto.response.DetectionIssueVO;
 import com.jy.eleaitender.ai.generator.GenerateResultParser;
 import com.jy.eleaitender.ai.model.ModelRouter;
+import com.jy.eleaitender.ai.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.enums.AiUsageScenario;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 检测器基类
@@ -31,25 +33,28 @@ public abstract class BaseDetector {
     @Autowired
     protected ObjectMapper objectMapper;
 
+    @Autowired
+    protected AiCallRecorder aiCallRecorder;
+
     /**
-     * 执行检测
+     * 执行检测（带任务ID和用户ID，用于响应记录）
      *
      * @param content 待检测文本
      * @param params  额外参数（如政策文件内容等）
+     * @param taskId  关联AI任务ID
+     * @param userId  用户ID（取自ai_task.create_id）
      * @return 检测结果
      */
-    public DetectionResult detect(String content, java.util.Map<String, Object> params) {
+    public DetectionResult detect(String content, Map<String, Object> params,
+                                  Long taskId, Long userId) {
         try {
             String systemPrompt = getSystemPrompt();
             String userPrompt = buildUserPrompt(content, params);
 
             ChatClient client = modelRouter.route(AiUsageScenario.DETECTION);
 
-            String aiOutput = client.prompt()
-                    .system(systemPrompt)
-                    .user(userPrompt)
-                    .call()
-                    .content();
+            String aiOutput = aiCallRecorder.callAndRecord(client, systemPrompt, userPrompt,
+                    "DETECTION", taskId, userId);
 
             return parseDetectionResult(aiOutput);
         } catch (Exception e) {
@@ -60,6 +65,13 @@ public abstract class BaseDetector {
             result.setError(e.getMessage());
             return result;
         }
+    }
+
+    /**
+     * 执行检测（兼容旧接口，不记录响应日志）
+     */
+    public DetectionResult detect(String content, Map<String, Object> params) {
+        return detect(content, params, null, null);
     }
 
     /**
@@ -75,7 +87,7 @@ public abstract class BaseDetector {
     /**
      * 构建User Prompt
      */
-    protected abstract String buildUserPrompt(String content, java.util.Map<String, Object> params);
+    protected abstract String buildUserPrompt(String content, Map<String, Object> params);
 
     /**
      * 解析AI返回的检测结果

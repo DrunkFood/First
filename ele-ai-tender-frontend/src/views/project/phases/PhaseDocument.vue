@@ -210,7 +210,7 @@
     <el-dialog v-model="policyModalVisible" title="政策文件匹配" width="560px" destroy-on-close>
       <div class="policy-modal-content">
         <div class="policy-group">
-          <div class="policy-group-label">项目类别：<span class="highlight">{{ project?.projectCategory || '-' }}</span></div>
+          <div class="policy-group-label">项目类别：<span class="highlight">{{ PROJECT_CATEGORY_MAP[project?.projectCategory || '']?.label || project?.projectCategory || '-' }}</span></div>
           <p class="policy-group-hint">系统根据项目类别匹配到以下政策文件，请选择需要应用的文件。</p>
         </div>
         <div class="policy-group">
@@ -265,6 +265,7 @@ import { policyFileApi } from '@/api/policy-file'
 import { aiApi } from '@/api/ai'
 import { projectApi } from '@/api/project'
 import { toWanYuan } from '@/utils/budget'
+import { PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import type { DocumentPreviewVO } from '@/types/document'
 import type { PolicyFileVO } from '@/types/policy-file'
 import type { ProjectInfo } from '@/types/project'
@@ -369,10 +370,7 @@ const handleConfirmPolicyFiles = async () => {
   const selectedIds = Object.entries(selectedPolicyMap)
     .filter(([, checked]) => checked)
     .map(([id]) => Number(id))
-  if (!selectedIds.length) {
-    ElMessage.warning('请至少选择一个政策文件')
-    return
-  }
+  // 允许不选政策文件直接提交检测（政策文件列表可能为空）
   policyModalVisible.value = false
 
   // 推进阶段到"智能检测"，后端会自动提交检测并携带政策文件ID
@@ -393,8 +391,8 @@ const initVariables = () => {
   if (!project.value) return
   variables.value = [
     { key: 'projectName', label: '项目名称', value: project.value.projectName || '' },
-    { key: 'projectCategory', label: '项目类别', value: project.value.projectCategory || '' },
-    { key: 'projectType', label: '项目类型', value: project.value.projectType || '' },
+    { key: 'projectCategory', label: '项目类别', value: PROJECT_CATEGORY_MAP[project.value.projectCategory || '']?.label || project.value.projectCategory || '' },
+    { key: 'projectType', label: '项目类型', value: PROJECT_TYPE_MAP[project.value.projectType || '']?.label || project.value.projectType || '' },
     { key: 'budget', label: '预算金额(万元)', value: project.value.budget ? String(toWanYuan(project.value.budget)) : '' },
     { key: 'tenderUnit', label: '招标单位', value: project.value.tenderUnit || '' },
     { key: 'contactPerson', label: '联系人', value: project.value.contactPerson || '' },

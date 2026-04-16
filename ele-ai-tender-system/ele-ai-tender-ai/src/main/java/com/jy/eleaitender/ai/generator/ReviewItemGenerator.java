@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.model.ModelRouter;
 import com.jy.eleaitender.ai.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,9 @@ public class ReviewItemGenerator {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AiCallRecorder aiCallRecorder;
+
     /**
      * 执行评审项生成
      *
@@ -54,12 +58,9 @@ public class ReviewItemGenerator {
         // 路由到合适的模型
         ChatClient client = modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE);
 
-        // 同步调用
-        String aiOutput = client.prompt()
-                .system(PromptTemplates.REVIEW_ITEM_GENERATE)
-                .user(userPrompt)
-                .call()
-                .content();
+        // 同步调用并记录响应
+        String aiOutput = aiCallRecorder.callAndRecord(client, PromptTemplates.REVIEW_ITEM_GENERATE,
+                userPrompt, "GENERATION", task.getId(), task.getCreateId());
 
         // 提取JSON内容
         String jsonResult = resultParser.extractJson(aiOutput);

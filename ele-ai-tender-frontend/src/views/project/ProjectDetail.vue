@@ -295,7 +295,16 @@ async function loadVersions() {
 }
 
 function handleTimelineClick(index: number) {
-  router.push(`/project/${projectId.value}/wizard?step=${index}`)
+  // Timeline有7个节点(index 0-6)，向导有5个步骤(index 0-4)
+  // 映射: Timeline[0]=项目创建(无向导步骤) -> 跳转步骤0
+  //       Timeline[1]=基础信息录入 -> 向导步骤0
+  //       Timeline[2]=招标需求生成 -> 向导步骤1
+  //       Timeline[3]=评审项设置   -> 向导步骤2
+  //       Timeline[4]=文档集成     -> 向导步骤3
+  //       Timeline[5]=智能检测     -> 向导步骤4
+  //       Timeline[6]=检测通过     -> 向导步骤4(同检测步骤)
+  const wizardStep = index <= 0 ? 0 : index >= 6 ? 4 : index - 1
+  router.push(`/project/${projectId.value}/wizard?step=${wizardStep}`)
 }
 
 function handleEditProject() {

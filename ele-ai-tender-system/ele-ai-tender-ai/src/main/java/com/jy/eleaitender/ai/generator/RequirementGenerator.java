@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.model.ModelRouter;
 import com.jy.eleaitender.ai.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,9 @@ public class RequirementGenerator {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AiCallRecorder aiCallRecorder;
+
     /**
      * 执行需求生成
      *
@@ -54,12 +58,9 @@ public class RequirementGenerator {
         // 路由到合适的模型
         ChatClient client = modelRouter.route(AiTaskType.REQUIREMENT_GENERATE);
 
-        // 同步调用
-        String aiOutput = client.prompt()
-                .system(PromptTemplates.REQUIREMENT_GENERATE)
-                .user(userPrompt)
-                .call()
-                .content();
+        // 同步调用并记录响应
+        String aiOutput = aiCallRecorder.callAndRecord(client, PromptTemplates.REQUIREMENT_GENERATE,
+                userPrompt, "GENERATION", task.getId(), task.getCreateId());
 
         // 提取Markdown内容
         String content = resultParser.extractMarkdown(aiOutput);

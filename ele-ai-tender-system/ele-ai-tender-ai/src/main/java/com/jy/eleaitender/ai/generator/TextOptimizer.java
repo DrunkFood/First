@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.model.ModelRouter;
 import com.jy.eleaitender.ai.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,9 @@ public class TextOptimizer {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private AiCallRecorder aiCallRecorder;
+
     /**
      * 执行文本优化（任务队列模式，用于批量文本优化）
      *
@@ -47,12 +51,9 @@ public class TextOptimizer {
         // 路由到合适的模型
         ChatClient client = modelRouter.route(AiTaskType.TEXT_OPTIMIZE);
 
-        // 同步调用
-        String optimized = client.prompt()
-                .system(PromptTemplates.TEXT_OPTIMIZE)
-                .user(userPrompt)
-                .call()
-                .content();
+        // 同步调用并记录响应
+        String optimized = aiCallRecorder.callAndRecord(client, PromptTemplates.TEXT_OPTIMIZE,
+                userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId());
 
         log.info("文本优化完成: taskId={}", task.getId());
         return toJsonResult("optimizedContent", optimized != null ? optimized : "");

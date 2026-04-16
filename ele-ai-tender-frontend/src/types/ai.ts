@@ -12,6 +12,8 @@ export interface AiChatMessage {
   content: string
   timestamp: number
   error?: boolean
+  /** 消息唯一标识，用于反馈关联 */
+  uid?: string
 }
 
 /** AI优化请求 */

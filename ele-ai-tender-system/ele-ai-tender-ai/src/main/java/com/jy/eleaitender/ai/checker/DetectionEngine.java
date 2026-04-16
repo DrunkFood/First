@@ -47,9 +47,10 @@ public class DetectionEngine {
         Map<String, Object> params = parseParams(task.getRequestParams());
         String content = getString(params, "content");
 
-        // 分发到具体检测器
+        // 分发到具体检测器，传递任务ID和用户ID用于响应记录
         BaseDetector detector = resolveDetector(taskType);
-        BaseDetector.DetectionResult result = detector.detect(content, params);
+        BaseDetector.DetectionResult result = detector.detect(content, params,
+                task.getId(), task.getCreateId());
 
         log.info("检测完成: taskId={}, type={}, issueCount={}, score={}",
                 task.getId(), taskType.getLabel(), result.getIssues().size(), result.getScore());

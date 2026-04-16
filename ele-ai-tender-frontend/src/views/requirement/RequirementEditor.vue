@@ -95,6 +95,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Close, ChatDotRound } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { aiApi, createSSEConnection } from '@/api/ai'
+import { aiTaskApi } from '@/api/ai-task'
+import { useFeedback } from '@/composables/useFeedback'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import type { AiChatMessage } from '@/types/ai'
@@ -116,6 +118,16 @@ const generating = ref(false)
 const optimizing = ref(false)
 const chatVisible = ref(true)
 const chatMessages = ref<AiChatMessage[]>([])
+const latestTaskId = ref<number | undefined>(undefined)
+
+// ---- 反馈（仅聊天场景） ----
+const {
+  submitFeedback: submitChatFeedback,
+} = useFeedback(
+  'CHAT_MESSAGE',
+  () => latestTaskId.value,
+  () => projectId.value,
+)
 
 // ---- 自动保存 ----
 type AutoSaveStatus = 'idle' | 'saved' | 'saving' | 'error'
@@ -145,6 +157,16 @@ onMounted(async () => {
     projectId.value = data.projectId
     originalContent.value = content.value
     originalName.value = requirementName.value
+
+    // 获取最新AI任务ID，用于聊天反馈关联
+    try {
+      const task = await aiTaskApi.getLatestTask('REQUIREMENT_GENERATE', id, 'REQUIREMENT')
+      if (task && task.id) {
+        latestTaskId.value = task.id
+      }
+    } catch {
+      // 忽略，反馈功能可选
+    }
   } catch {
     ElMessage.error('加载需求失败')
     router.back()
@@ -258,8 +280,11 @@ function handleDetect() {
 }
 
 // ---- AI对话回调 ----
-function handleChatFeedback(type: 'like' | 'dislike', _index: number) {
-  ElMessage.success(type === 'like' ? '感谢您的反馈' : '我们会持续改进')
+async function handleChatFeedback(type: 'like' | 'dislike', msg: AiChatMessage) {
+  await submitChatFeedback(type, {
+    chatMessageId: msg.uid,
+    chatContent: msg.content?.substring(0, 200),
+  })
 }
 
 function handleChatMessage(_msg: string) {

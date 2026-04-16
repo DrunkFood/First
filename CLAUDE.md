@@ -77,7 +77,8 @@ mvn -pl ele-ai-tender-support -am package               # 打包单模块
 > 1. 后端启动必须在**子模块目录**下执行 `mvn spring-boot:run`，不能在父POM目录用 `-pl` 启动（会因父POM无main类而报错）。
 > 2. 首次启动前须先 `mvn install` 安装公共模块到本地仓库。
 > 3. **common 模块变更后必须重新 install**：修改了 `ele-ai-tender-common` 中的实体、枚举、工具类等，必须先执行 `mvn install -pl ele-ai-tender-common -am`，否则依赖它的 core/ai/support 模块会编译报"找不到符号"。这是 Maven 多模块本地仓库不同步导致的常见问题。
-> 4. **重启所有服务的可靠流程**：先 kill 全部进程 → 重新 install common → 按顺序启动(support/file 可并行，core/ai 可并行)。
+> 4. **重启所有服务的可靠流程**：先 kill 全部进程 → 重新 install common → 各模块 `mvn clean compile` → 按顺序启动(support/file 可并行，core/ai 可并行)。
+> 5. **common 变更后各模块需 clean compile**：仅 install common 不够，依赖模块的 `target/` 中可能缓存了旧版编译产物，导致运行时抛 `Unresolved compilation problems`。重启前需对每个依赖模块执行 `mvn clean compile`。
 
 **提交前检查**: 前端 `npm run build`；后端 `mvn clean test`
 

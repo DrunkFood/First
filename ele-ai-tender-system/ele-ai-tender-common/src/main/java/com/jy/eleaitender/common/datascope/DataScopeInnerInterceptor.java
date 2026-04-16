@@ -17,9 +17,13 @@ import java.sql.SQLException;
 /**
  * 数据隔离拦截器
  * 基于 MyBatis-Plus TenantLineInnerInterceptor 实现
- * 对隔离表自动追加 WHERE create_id = 当前用户ID
+ * 对隔离表的 SELECT 查询自动追加 WHERE create_id = 当前用户ID
  *
  * 跳过条件：管理员 / 无用户上下文 / 非隔离表 / @DataScope(skip=true)
+ *
+ * 重要：ignoreTable() 同时检查用户上下文，确保 beforePrepare() 处理
+ * INSERT/UPDATE 时也能正确跳过。否则无用户上下文时 getTenantId() 返回
+ * NullValue，SQL 变为 create_id IS NULL，导致后台调度器的 UPDATE 静默失败。
  */
 public class DataScopeInnerInterceptor extends TenantLineInnerInterceptor {
 
@@ -84,7 +88,16 @@ public class DataScopeInnerInterceptor extends TenantLineInnerInterceptor {
 
         @Override
         public boolean ignoreTable(String tableName) {
-            // 非隔离表忽略（使用 DataScopeHelper 确保 null 安全）
+            // 无用户上下文时跳过（后台调度线程等）
+            // 否则 beforePrepare 会追加 create_id IS NULL 条件，导致 UPDATE 静默失败
+            if (SecurityContextHolder.getUserId() == null) {
+                return true;
+            }
+            // 管理员跳过
+            if (SecurityContextHolder.isAdmin()) {
+                return true;
+            }
+            // 非隔离表忽略
             return !DataScopeHelper.isDataScopeTable(tableName);
         }
     }

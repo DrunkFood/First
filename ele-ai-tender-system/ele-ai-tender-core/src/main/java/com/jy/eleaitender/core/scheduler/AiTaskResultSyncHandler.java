@@ -26,6 +26,8 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 /**
@@ -56,7 +58,9 @@ public class AiTaskResultSyncHandler {
 
     /**
      * 按任务类型分发同步逻辑
+     * 事务注解在此public方法上，确保各类型同步操作的事务性
      */
+    @Transactional
     public void sync(AiTask task) {
         // SKIPPED 任务不需要同步业务数据
         if (AiTaskStatus.SKIPPED.getCode().equals(task.getStatus())) {
@@ -128,7 +132,9 @@ public class AiTaskResultSyncHandler {
 
     // ========== 评审项生成同步 ==========
 
-    @Transactional
+    /** 子→父映射，用于插入时回填parentId */
+    private final IdentityHashMap<AiReviewItem, AiReviewItem> parentMap = new IdentityHashMap<>();
+
     private void syncReviewItems(AiTask task) {
         Long projectId = task.getBizId();
 
@@ -138,6 +144,7 @@ public class AiTaskResultSyncHandler {
             return;
         }
 
+        parentMap.clear();
         List<AiReviewItem> items = parseReviewItemsFromResult(task.getResult(), projectId);
         if (items.isEmpty()) {
             log.warn("评审项生成结果为空，跳过同步: projectId={}", projectId);
@@ -158,9 +165,15 @@ public class AiTaskResultSyncHandler {
         });
 
         for (AiReviewItem item : items) {
+            // 从映射中获取父节点，回填parentId
+            AiReviewItem parent = parentMap.get(item);
+            if (parent != null && parent.getId() != null) {
+                item.setParentId(parent.getId());
+            }
             reviewItemMapper.insert(item);
         }
 
+        parentMap.clear();
         log.info("同步评审项成功: projectId={}, count={}", projectId, items.size());
     }
 
@@ -175,28 +188,90 @@ public class AiTaskResultSyncHandler {
                 return List.of();
             }
 
-            java.util.List<AiReviewItem> items = new java.util.ArrayList<>();
-            int sortOrder = 0;
+            List<AiReviewItem> items = new ArrayList<>();
+            int[] sortOrder = {0}; // 用数组实现可变引用
+
             for (JsonNode itemNode : itemsNode) {
-                AiReviewItem item = new AiReviewItem();
-                item.setProjectId(projectId);
-                item.setItemName(getText(itemNode, "itemName"));
-                item.setItemContent(getText(itemNode, "itemContent"));
-                item.setLevel(getInt(itemNode, "level", 1));
-                item.setSortOrder(sortOrder++);
-                item.setReviewType(getText(itemNode, "reviewType"));
-                item.setScore(getDecimal(itemNode, "score"));
-                item.setMaxScore(getDecimal(itemNode, "maxScore"));
-                item.setWeight(getDecimal(itemNode, "weight"));
-                item.setSubjectivity(getText(itemNode, "subjectivity"));
-                item.setIsRequired(getInt(itemNode, "isRequired", 1));
-                items.add(item);
+                // 一级分类：映射reviewType
+                String categoryName = getText(itemNode, "name");
+                String reviewType = mapCategoryToReviewType(categoryName);
+                int level = getInt(itemNode, "level", 1);
+
+                // 创建一级分类节点
+                AiReviewItem categoryItem = new AiReviewItem();
+                categoryItem.setProjectId(projectId);
+                categoryItem.setItemName(categoryName);
+                categoryItem.setLevel(level);
+                categoryItem.setSortOrder(sortOrder[0]++);
+                categoryItem.setReviewType(reviewType);
+                items.add(categoryItem);
+
+                // 递归解析children
+                parseChildren(itemNode.get("children"), projectId, categoryItem,
+                        reviewType, level + 1, items, sortOrder);
             }
             return items;
         } catch (Exception e) {
             log.error("解析评审项结果失败", e);
             return List.of();
         }
+    }
+
+    /**
+     * 递归解析子评审项
+     * 通过 parentMap 记录父子关系，插入时按level排序确保父节点先入库获得ID
+     */
+    private void parseChildren(JsonNode childrenNode, Long projectId,
+                               AiReviewItem parentItem, String reviewType,
+                               int childLevel, List<AiReviewItem> items,
+                               int[] sortOrder) {
+        if (childrenNode == null || !childrenNode.isArray()) {
+            return;
+        }
+
+        for (JsonNode childNode : childrenNode) {
+            AiReviewItem item = new AiReviewItem();
+            item.setProjectId(projectId);
+            parentMap.put(item, parentItem); // 记录父子关系
+            item.setItemName(getText(childNode, "name"));
+            item.setItemContent(getText(childNode, "content"));
+            item.setLevel(getInt(childNode, "level", childLevel));
+            item.setSortOrder(sortOrder[0]++);
+            item.setReviewType(reviewType);
+            item.setScore(getDecimal(childNode, "score"));
+            item.setMaxScore(getDecimal(childNode, "maxScore"));
+            item.setWeight(getDecimal(childNode, "weight"));
+            item.setSubjectivity(getText(childNode, "subjectivity"));
+            item.setIsRequired(getBooleanAsInt(childNode, "isRequired", 1));
+            items.add(item);
+
+            // 递归处理更深层的children
+            parseChildren(childNode.get("children"), projectId, item,
+                    reviewType, childLevel + 1, items, sortOrder);
+        }
+    }
+
+    /**
+     * 一级分类名称 → reviewType 枚举值映射
+     * AI返回中文分类名，需映射为数据库存储的英文枚举值
+     */
+    private String mapCategoryToReviewType(String categoryName) {
+        if (categoryName == null) {
+            return "CONFORMITY";
+        }
+        if (categoryName.contains("符合") || categoryName.contains("资格") || categoryName.contains("合规")) {
+            return "CONFORMITY";
+        }
+        if (categoryName.contains("资信") || categoryName.contains("资质") || categoryName.contains("信")) {
+            return "QUALIFICATION";
+        }
+        if (categoryName.contains("技术")) {
+            return "TECHNICAL";
+        }
+        if (categoryName.contains("商务") || categoryName.contains("价格") || categoryName.contains("报价")) {
+            return "COMMERCIAL";
+        }
+        return "CONFORMITY";
     }
 
     // ========== 检测任务同步 ==========
@@ -316,5 +391,23 @@ public class AiTaskResultSyncHandler {
             return fieldNode.decimalValue();
         }
         return null;
+    }
+
+    /**
+     * 读取布尔/数值字段并转为int（0/1）
+     * AI返回的isRequired可能是boolean(true/false)或int(0/1)
+     */
+    private int getBooleanAsInt(JsonNode node, String field, int defaultValue) {
+        JsonNode fieldNode = node.get(field);
+        if (fieldNode == null || fieldNode.isNull()) {
+            return defaultValue;
+        }
+        if (fieldNode.isBoolean()) {
+            return fieldNode.asBoolean() ? 1 : 0;
+        }
+        if (fieldNode.isNumber()) {
+            return fieldNode.asInt();
+        }
+        return defaultValue;
     }
 }

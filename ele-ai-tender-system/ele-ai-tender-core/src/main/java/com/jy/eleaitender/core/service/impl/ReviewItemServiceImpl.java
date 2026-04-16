@@ -3,19 +3,24 @@ package com.jy.eleaitender.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.AiRequirement;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.entity.core.AiReviewItem;
+import com.jy.eleaitender.core.mapper.AiRequirementMapper;
 import com.jy.eleaitender.core.mapper.AiReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IReviewItemService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,6 +28,7 @@ import java.util.stream.Collectors;
 /**
  * 评审项服务实现
  */
+@Slf4j
 @Service
 public class ReviewItemServiceImpl implements IReviewItemService {
 
@@ -34,6 +40,9 @@ public class ReviewItemServiceImpl implements IReviewItemService {
 
     @Autowired
     private IProjectService projectService;
+
+    @Autowired
+    private AiRequirementMapper requirementMapper;
 
     @Override
     public List<AiReviewItem> getTreeByProjectId(Long projectId) {
@@ -147,9 +156,31 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     @Override
     @Transactional
     public AiTask submitGenerate(Long projectId, Map<String, Object> params) {
-        // 校验项目归属
-        projectService.getById(projectId);
+        // 校验项目归属并获取项目信息
+        AiProject project = projectService.getById(projectId);
+        if (params == null) {
+            params = new HashMap<>();
+        }
+
+        // 补全项目信息，确保AI生成器有足够的上下文
         params.put("projectId", projectId);
+        params.putIfAbsent("projectName", project.getProjectName());
+        params.putIfAbsent("projectType", project.getProjectType());
+        params.putIfAbsent("projectCategory", project.getProjectCategory());
+        params.putIfAbsent("budget", project.getBudget() != null ? project.getBudget().toPlainString() : null);
+        params.putIfAbsent("reviewMethod", project.getReviewType());
+
+        // 补全需求内容
+        if (!params.containsKey("requirementContent")) {
+            AiRequirement requirement = requirementMapper.selectByProjectId(projectId);
+            if (requirement != null && requirement.getContent() != null) {
+                params.put("requirementContent", requirement.getContent());
+            } else if (project.getRequirementContent() != null) {
+                params.put("requirementContent", project.getRequirementContent());
+            }
+        }
+
+        log.info("提交评审项生成: projectId={}, projectName={}", projectId, project.getProjectName());
         return aiTaskService.createTask(AiTaskType.REVIEW_ITEM_GENERATE,
                 projectId, projectId, "PROJECT", params, null);
     }

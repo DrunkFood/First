@@ -130,6 +130,10 @@ public enum ResponseCode {
     TASK_NOT_RETRYABLE(8083, "AI任务不可重试"),
     TASK_ALREADY_PROCESSING(8084, "AI任务正在处理中"),
 
+    // 反馈相关 8091-8099
+    FEEDBACK_NOT_FOUND(8091, "反馈不存在"),
+    FEEDBACK_TARGET_NOT_FOUND(8092, "反馈目标不存在"),
+
     // 消息相关 9021-9029
     MESSAGE_NOT_FOUND(9021, "消息不存在"),
 

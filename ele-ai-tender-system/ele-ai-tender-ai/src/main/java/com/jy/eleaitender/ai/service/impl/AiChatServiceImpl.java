@@ -5,19 +5,21 @@ import com.jy.eleaitender.ai.dto.request.OptimizeRequest;
 import com.jy.eleaitender.ai.model.ModelRouter;
 import com.jy.eleaitender.ai.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.recorder.AiCallRecorder;
 import com.jy.eleaitender.ai.service.IAiChatService;
 import com.jy.eleaitender.common.enums.AiUsageScenario;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * AI对话服务实现
@@ -29,6 +31,9 @@ public class AiChatServiceImpl implements IAiChatService {
 
     @Autowired
     private ModelRouter modelRouter;
+
+    @Autowired
+    private AiCallRecorder aiCallRecorder;
 
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -45,17 +50,34 @@ public class AiChatServiceImpl implements IAiChatService {
                 }
                 userPrompt.append(request.getMessage());
 
-                // 流式调用
-                Flux<String> stream = chatClient.prompt()
+                // 流式调用 - 使用chatResponse以获取token信息
+                StringBuilder contentBuilder = new StringBuilder();
+                AtomicReference<ChatResponse> lastResponseRef = new AtomicReference<>();
+
+                Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
                         .system(PromptTemplates.AI_ASSISTANT)
                         .user(userPrompt.toString())
                         .stream()
-                        .content();
+                        .chatResponse();
 
-                stream.subscribe(
-                        chunk -> sendSseEvent(emitter, chunk),
+                chatResponseFlux.subscribe(
+                        chatResponse -> {
+                            String chunk = extractChunk(chatResponse);
+                            if (chunk != null && !chunk.isEmpty()) {
+                                contentBuilder.append(chunk);
+                                sendSseEvent(emitter, chunk);
+                            }
+                            lastResponseRef.set(chatResponse);
+                        },
                         error -> completeSseWithError(emitter, error),
-                        () -> completeSse(emitter)
+                        () -> {
+                            // 流完成后记录响应日志
+                            aiCallRecorder.recordStreamResponse(
+                                    lastResponseRef.get(), contentBuilder.toString(),
+                                    PromptTemplates.AI_ASSISTANT, userPrompt.toString(),
+                                    "CHAT", null, request.getConversationId(), null);
+                            completeSse(emitter);
+                        }
                 );
             } catch (Exception e) {
                 log.error("AI对话流式调用失败", e);
@@ -73,16 +95,33 @@ public class AiChatServiceImpl implements IAiChatService {
                 String userPrompt = PromptBuilder.buildTextOptimize(
                         request.getContent(), request.getRequirement());
 
-                Flux<String> stream = chatClient.prompt()
+                // 流式调用 - 使用chatResponse以获取token信息
+                StringBuilder contentBuilder = new StringBuilder();
+                AtomicReference<ChatResponse> lastResponseRef = new AtomicReference<>();
+
+                Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
                         .system(PromptTemplates.TEXT_OPTIMIZE)
                         .user(userPrompt)
                         .stream()
-                        .content();
+                        .chatResponse();
 
-                stream.subscribe(
-                        chunk -> sendSseEvent(emitter, chunk),
+                chatResponseFlux.subscribe(
+                        chatResponse -> {
+                            String chunk = extractChunk(chatResponse);
+                            if (chunk != null && !chunk.isEmpty()) {
+                                contentBuilder.append(chunk);
+                                sendSseEvent(emitter, chunk);
+                            }
+                            lastResponseRef.set(chatResponse);
+                        },
                         error -> completeSseWithError(emitter, error),
-                        () -> completeSse(emitter)
+                        () -> {
+                            aiCallRecorder.recordStreamResponse(
+                                    lastResponseRef.get(), contentBuilder.toString(),
+                                    PromptTemplates.TEXT_OPTIMIZE, userPrompt,
+                                    "OPTIMIZATION", null, null, null);
+                            completeSse(emitter);
+                        }
                 );
             } catch (Exception e) {
                 log.error("文本优化流式调用失败", e);
@@ -101,11 +140,19 @@ public class AiChatServiceImpl implements IAiChatService {
         }
         userPrompt.append(request.getMessage());
 
-        return chatClient.prompt()
-                .system(PromptTemplates.AI_ASSISTANT)
-                .user(userPrompt.toString())
-                .call()
-                .content();
+        return aiCallRecorder.callAndRecord(chatClient, PromptTemplates.AI_ASSISTANT,
+                userPrompt.toString(), "CHAT", null, null);
+    }
+
+    /**
+     * 从流式ChatResponse中提取增量文本
+     */
+    private String extractChunk(ChatResponse chatResponse) {
+        if (chatResponse == null || chatResponse.getResult() == null
+                || chatResponse.getResult().getOutput() == null) {
+            return null;
+        }
+        return chatResponse.getResult().getOutput().getContent();
     }
 
     private void sendSseEvent(SseEmitter emitter, String chunk) {
