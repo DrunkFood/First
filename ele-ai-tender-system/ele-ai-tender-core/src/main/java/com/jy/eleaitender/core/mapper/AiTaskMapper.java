@@ -78,6 +78,14 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     List<AiTask> selectUnsyncedTasks(@Param("limit") int limit);
 
     /**
+     * 查询项目下是否存在活跃的AI任务（PENDING/PROCESSING）
+     */
+    @DataScope(skip = true)
+    @Select("SELECT COUNT(*) FROM ai_task WHERE project_id = #{projectId} " +
+            "AND status IN ('PENDING','PROCESSING') AND is_delete = 0")
+    int countActiveTasksByProjectId(@Param("projectId") Long projectId);
+
+    /**
      * 标记AI任务结果同步状态
      * 跳过数据隔离：后台定时任务无用户上下文
      */

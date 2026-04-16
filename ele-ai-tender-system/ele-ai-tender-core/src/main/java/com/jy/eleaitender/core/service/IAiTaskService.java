@@ -36,4 +36,9 @@ public interface IAiTaskService {
      * 查询业务实体的最新任务（不限状态），用于页面加载时展示上次任务状态
      */
     AiTaskVO getLatestTask(String taskType, Long bizId, String bizType);
+
+    /**
+     * 检查项目下是否存在活跃的AI任务（PENDING/PROCESSING）
+     */
+    boolean hasActiveTasks(Long projectId);
 }

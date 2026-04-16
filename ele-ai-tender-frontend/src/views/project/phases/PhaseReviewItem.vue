@@ -1,5 +1,10 @@
 <template>
   <div class="phase-review-item">
+    <!-- 评审项生成进度 -->
+    <div v-if="latestTask" class="task-status-top">
+      <AiTaskStatus :task="latestTask" />
+    </div>
+
     <!-- 评分摘要栏 -->
     <div class="score-summary">
       <div class="score-item">
@@ -184,10 +189,9 @@
         <el-button v-if="!readonly" type="warning" :disabled="!canCreateNew" @click="handleGenerate">
           <el-icon><RefreshRight /></el-icon> 重新生成
         </el-button>
-        <AiTaskStatus v-if="latestTask" :task="latestTask" class="task-status-inline" />
       </div>
       <div v-if="!readonly" class="actions-right">
-        <el-button type="primary" @click="handleNext">
+        <el-button type="primary" :disabled="!canCreateNew" @click="handleNext">
           确认评审项 <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
@@ -360,6 +364,22 @@ onMounted(loadReviewItems)
 </script>
 
 <style scoped lang="scss">
+// ============================================================
+// 评分摘要栏
+// ============================================================
+// ============================================================
+// 顶部生成进度
+// ============================================================
+.task-status-top {
+  margin-bottom: 16px;
+
+  :deep(.ai-task-status) {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+}
+
 // ============================================================
 // 评分摘要栏
 // ============================================================
@@ -638,12 +658,5 @@ onMounted(loadReviewItems)
 .actions-right {
   display: flex;
   gap: 12px;
-}
-
-.task-status-inline {
-  :deep(.ai-task-status) {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
 }
 </style>

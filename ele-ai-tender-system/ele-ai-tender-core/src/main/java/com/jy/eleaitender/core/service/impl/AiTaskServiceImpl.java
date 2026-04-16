@@ -105,6 +105,11 @@ public class AiTaskServiceImpl implements IAiTaskService {
         return task != null ? toVO(task) : null;
     }
 
+    @Override
+    public boolean hasActiveTasks(Long projectId) {
+        return aiTaskMapper.countActiveTasksByProjectId(projectId) > 0;
+    }
+
     private AiTaskVO toVO(AiTask task) {
         AiTaskVO vo = new AiTaskVO();
         vo.setId(task.getId());
