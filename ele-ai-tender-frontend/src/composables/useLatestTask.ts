@@ -67,6 +67,13 @@ export function useLatestTask(taskType: string, bizId: Ref<number>, bizType: str
     }
   })
 
+  // bizId 从 0 变为有效值时自动查询（解决异步加载数据后 bizId 延迟赋值的问题）
+  watch(bizId, (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      fetchLatest()
+    }
+  })
+
   onMounted(fetchLatest)
 
   return {
