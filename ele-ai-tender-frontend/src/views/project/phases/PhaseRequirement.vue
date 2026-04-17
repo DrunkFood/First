@@ -114,41 +114,32 @@
     </div>
 
     <!-- AI助手侧边栏 -->
-    <div v-if="!readonly" :class="['ai-sidebar', { collapsed: !chatVisible }]">
-      <button class="ai-toggle-btn" @click="chatVisible = !chatVisible" :title="chatVisible ? '收起AI助手' : '展开AI助手'">
-        <el-icon :size="18">
-          <component :is="chatVisible ? Close : ChatDotRound" />
-        </el-icon>
-      </button>
-      <div v-if="chatVisible" class="ai-sidebar-content">
-        <AiChatPanel
-          show-close
-          greeting="您好！我是您的AI助手，可以帮助您修改详细需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
-          :context="content"
-          :project-id="projectId"
-          :requirement-id="requirementId"
-          v-model:messages="chatMessages"
-          @close="chatVisible = false"
-          @feedback="handleChatFeedback"
-          @message="handleChatMessage"
-        >
-          <template #quick-actions>
-            <div class="quick-actions">
-              <button class="quick-action-btn" @click="sendQuickAction('修改工程范围')">修改工程范围</button>
-              <button class="quick-action-btn" @click="sendQuickAction('修改技术要求')">修改技术要求</button>
-              <button class="quick-action-btn" @click="sendQuickAction('修改质量标准')">修改质量标准</button>
-            </div>
-          </template>
-        </AiChatPanel>
-      </div>
-    </div>
+    <AiAssistantSidebar
+      v-if="!readonly"
+      v-model:visible="chatVisible"
+      v-model:messages="chatMessages"
+      greeting="您好！我是您的AI助手，可以帮助您修改详细需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
+      :context="content"
+      :project-id="projectId"
+      :requirement-id="requirementId"
+      @feedback="handleChatFeedback"
+      @message="handleChatMessage"
+    >
+      <template #quick-actions>
+        <div class="quick-actions">
+          <button class="quick-action-btn" @click="sendQuickAction('修改工程范围')">修改工程范围</button>
+          <button class="quick-action-btn" @click="sendQuickAction('修改技术要求')">修改技术要求</button>
+          <button class="quick-action-btn" @click="sendQuickAction('修改质量标准')">修改质量标准</button>
+        </div>
+      </template>
+    </AiAssistantSidebar>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ChatDotRound, Close } from '@element-plus/icons-vue'
+
 import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
 import { requirementApi } from '@/api/requirement'
@@ -160,7 +151,7 @@ import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress } from '@/types/ai-task'
 import { useThemeStore } from '@/store/theme'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
-import AiChatPanel from '@/components/ai/AiChatPanel.vue'
+import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
 import type { AiChatMessage } from '@/types/ai'
 import type { ToolbarNames } from 'md-editor-v3'
@@ -592,81 +583,6 @@ onMounted(loadData)
 
   &:hover:not(:disabled) {
     background: #cf8a2e;
-  }
-}
-
-// ========================================
-// AI助手侧边栏
-// ========================================
-.ai-sidebar {
-  position: fixed;
-  right: 20px;
-  top: 100px;
-  width: 320px;
-  height: 600px;
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  transition: transform 0.3s ease;
-
-  &.collapsed {
-    transform: translateX(calc(100% - 40px));
-  }
-}
-
-.ai-toggle-btn {
-  position: absolute;
-  left: -40px;
-  top: 20px;
-  width: 40px;
-  height: 40px;
-  background: var(--app-brand-color);
-  color: white;
-  border: none;
-  border-radius: 8px 0 0 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #2855d9;
-  }
-}
-
-.ai-sidebar-content {
-  flex: 1;
-  overflow: hidden;
-  background: var(--app-bg-secondary);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--app-radius-sm);
-  box-shadow: 0 4px 16px var(--app-shadow-color);
-}
-
-// ========================================
-// 快捷操作
-// ========================================
-.quick-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.quick-action-btn {
-  padding: 6px 12px;
-  background: var(--app-bg-elevated);
-  border: 1px solid var(--app-border-light);
-  border-radius: 16px;
-  color: var(--app-text-secondary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--app-hover-state);
-    color: var(--app-brand-color);
-    border-color: var(--app-brand-color);
   }
 }
 </style>

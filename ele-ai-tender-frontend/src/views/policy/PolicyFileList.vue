@@ -33,11 +33,15 @@
     <el-table :data="tableData" v-loading="loading" stripe>
       <el-table-column prop="fileName" label="文件名" />
       <el-table-column prop="fileCategory" label="文件分类" width="120" />
-      <el-table-column prop="applicableCategory" label="适用类别" width="120" />
+      <el-table-column prop="applicableCategory" label="适用类别" width="120">
+        <template #default="{ row }">
+          {{ applicableCategoryMap[row.applicableCategory] || row.applicableCategory }}
+        </template>
+      </el-table-column>
       <el-table-column prop="source" label="来源" width="80">
         <template #default="{ row }">
           <el-tag :type="row.source === 'SYSTEM' ? '' : 'success'" size="small">
-            {{ row.source === 'SYSTEM' ? '平台' : '用户' }}
+            {{ row.source === 'SYSTEM' ? '平台' : '用户上传' }}
           </el-tag>
         </template>
       </el-table-column>
@@ -55,7 +59,7 @@
         <template #default="{ row }">
           <el-button text type="primary" size="small" @click="handleView(row)">查看</el-button>
           <el-button
-            v-if="row.source === 'USER'"
+            v-if="row.source !== 'SYSTEM'"
             text
             type="danger"
             size="small"
@@ -100,7 +104,7 @@
             :on-success="handleUploadSuccess"
             :on-error="handleUploadError"
             :before-upload="beforeUpload"
-            :file-list="fileList"
+            v-model:file-list="fileList"
             :limit="1"
             :on-exceed="() => ElMessage.warning('只能上传一个文件')"
             accept=".pdf,.doc,.docx"
@@ -126,7 +130,7 @@
       <el-descriptions :column="1" border v-if="currentDetail">
         <el-descriptions-item label="文件名">{{ currentDetail.fileName }}</el-descriptions-item>
         <el-descriptions-item label="文件分类">{{ currentDetail.fileCategory }}</el-descriptions-item>
-        <el-descriptions-item label="适用类别">{{ currentDetail.applicableCategory }}</el-descriptions-item>
+        <el-descriptions-item label="适用类别">{{ applicableCategoryMap[currentDetail.applicableCategory] || currentDetail.applicableCategory }}</el-descriptions-item>
         <el-descriptions-item label="来源">
           <el-tag :type="currentDetail.source === 'SYSTEM' ? '' : 'success'" size="small">
             {{ currentDetail.source === 'SYSTEM' ? '平台' : '用户上传' }}
@@ -215,17 +219,24 @@ const uploadForm = ref({
   fileCategory: '',
   applicableCategory: '',
   fileId: 0,
+  fileName: '',
   fileSize: 0,
   fileType: '',
   description: '',
 })
+
+const applicableCategoryMap: Record<string, string> = {
+  LIMITED_BELOW: '限额以下',
+  PROPERTY_TRADE: '产权交易',
+  GOVERNMENT_PROCUREMENT: '政府采购',
+}
 
 const uploadRules: FormRules = {
   fileCategory: [{ required: true, message: '请选择文件分类', trigger: 'change' }],
   applicableCategory: [{ required: true, message: '请选择适用类别', trigger: 'change' }],
 }
 
-const uploadAction = '/file-api/file/upload'
+const uploadAction = '/file-api/file/upload?bizType=policy_file'
 const uploadHeaders = computed(() => {
   const token = localStorage.getItem('token')
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -244,6 +255,7 @@ const handleUploadSuccess = (response: any) => {
   if (response?.code === 200 && response.data) {
     const fileData = response.data
     uploadForm.value.fileId = fileData.id || fileData.fileId
+    uploadForm.value.fileName = fileData.fileName || fileData.name || ''
     uploadForm.value.fileSize = fileData.fileSize || fileData.size || 0
     uploadForm.value.fileType = fileData.fileType || fileData.contentType || ''
     ElMessage.success('文件上传成功')
@@ -261,6 +273,7 @@ const resetUploadForm = () => {
     fileCategory: '',
     applicableCategory: '',
     fileId: 0,
+    fileName: '',
     fileSize: 0,
     fileType: '',
     description: '',
@@ -281,7 +294,7 @@ const handleSubmitUpload = async () => {
   submitLoading.value = true
   try {
     await policyFileApi.create({
-      fileName: fileList.value[0]?.name || '',
+      fileName: uploadForm.value.fileName || fileList.value[0]?.name || '',
       fileCategory: uploadForm.value.fileCategory,
       applicableCategory: uploadForm.value.applicableCategory,
       fileId: uploadForm.value.fileId,

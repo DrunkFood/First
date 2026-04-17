@@ -459,14 +459,15 @@ const handleSaveDraft = () => {
   ElMessage.success('草稿保存成功')
 }
 
-const handleSubmitReview = () => {
+const handleSubmitReview = async () => {
+  await handleSuggestPolicy()
   policyModalVisible.value = true
 }
 
 onMounted(async () => {
   project.value = await projectApi.getById(props.projectId)
   initVariables()
-  await Promise.all([loadPreview(), loadPolicyFiles(), handleSuggestPolicy()])
+  await Promise.all([loadPreview(), loadPolicyFiles()])
 })
 
 defineExpose({ handleSaveEdit, handleApplyVariables })

@@ -41,6 +41,8 @@ public class HttpRequestLogFilter extends OncePerRequestFilter {
     @Override
     /**
      * 统一拦截 HTTP 请求，补 traceId、生成访问日志并在响应返回前持久化。
+     * SSE 流式请求不使用 ContentCachingResponseWrapper 包装，
+     * 否则异步 SSE 事件会在 copyBodyToResponse() 时丢失。
      */
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -48,6 +50,27 @@ public class HttpRequestLogFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+
+        // SSE 流式请求：不包装响应，直接透传，避免异步事件被缓冲丢失
+        if (isSseRequest(request)) {
+            long start = System.currentTimeMillis();
+            Throwable error = null;
+            String traceId = TraceContext.initTraceId(request.getHeader(TraceConstants.TRACE_ID_HEADER));
+            response.setHeader(TraceConstants.TRACE_ID_HEADER, traceId);
+            try {
+                filterChain.doFilter(request, response);
+            } catch (Throwable ex) {
+                error = ex;
+                throw ex;
+            } finally {
+                long elapsed = System.currentTimeMillis() - start;
+                log.info("[SSE] {} {} {}ms traceId={}",
+                        request.getMethod(), request.getRequestURI(), elapsed, traceId);
+                TraceContext.clear();
+            }
+            return;
+        }
+
         long start = System.currentTimeMillis();
         Throwable error = null;
         String traceId = TraceContext.initTraceId(request.getHeader(TraceConstants.TRACE_ID_HEADER));
@@ -80,6 +103,15 @@ public class HttpRequestLogFilter extends OncePerRequestFilter {
             responseWrapper.copyBodyToResponse();
             TraceContext.clear();
         }
+    }
+
+    /**
+     * 判断是否为 SSE 流式请求。
+     * 通过 Accept 请求头或响应 Content-Type 检测。
+     */
+    private boolean isSseRequest(HttpServletRequest request) {
+        String accept = request.getHeader("Accept");
+        return accept != null && accept.contains("text/event-stream");
     }
 
     /**

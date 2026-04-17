@@ -2,7 +2,7 @@
   <div class="project-wizard">
     <!-- 顶部标题栏 -->
     <div class="wizard-header">
-      <el-page-header @back="$router.push('/project')" :content="project?.projectName || '项目编制'" />
+      <el-page-header @back="$router.back()" :content="project?.projectName || '项目编制'" />
     </div>
 
     <!-- 5步进度指示器（基于项目实际进度） -->
@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CircleCheck } from '@element-plus/icons-vue'
 import { projectApi } from '@/api/project'
@@ -114,30 +114,35 @@ const getStepFromPhase = (phase?: number) => {
   return Math.max(0, phase - 1)
 }
 
-const initStepFromRoute = () => {
-  const stepParam = route.query.step
-  if (stepParam !== undefined) {
-    const step = Number(stepParam)
-    if (!isNaN(step) && step >= 0 && step <= 4) {
-      currentStep.value = step
-      return true
-    }
-  }
-  return false
-}
-
 const loadProject = async () => {
   project.value = await projectApi.getById(projectId.value)
   phaseStep.value = getStepFromPhase(project.value?.currentPhase)
-  if (!initStepFromRoute()) {
+  // 优先使用URL step（用户从时间线点击指定步骤），若超出进度则回退到当前进度
+  const urlStep = Number(route.query.step)
+  if (!isNaN(urlStep) && urlStep >= 0 && urlStep <= phaseStep.value) {
+    currentStep.value = urlStep
+  } else {
     currentStep.value = phaseStep.value
+    internalStepChange = true
+    syncStepToUrl(phaseStep.value)
+    nextTick(() => { internalStepChange = false })
   }
 }
 
+/** 同步 currentStep 到 URL query（replace 不产生历史记录） */
+function syncStepToUrl(step: number) {
+  router.replace({ query: { step: String(step) } })
+}
+
+// 标记是否为内部主动切换（避免 watch 循环触发）
+let internalStepChange = false
+
 watch(() => route.query.step, (newStep) => {
+  if (internalStepChange) return  // 内部切换引起的 URL 变化，忽略
   if (newStep !== undefined) {
     const step = Number(newStep)
-    if (!isNaN(step) && step >= 0 && step <= 4) {
+    // 只允许跳到已完成步骤或当前步骤，不允许跳到未解锁步骤
+    if (!isNaN(step) && step >= 0 && step <= phaseStep.value) {
       currentStep.value = step
     }
   }
@@ -145,8 +150,11 @@ watch(() => route.query.step, (newStep) => {
 
 function handleStepClick(index: number) {
   // 只允许跳到已完成步骤或当前步骤
-  if (index <= phaseStep.value) {
+  if (index <= phaseStep.value && index !== currentStep.value) {
     currentStep.value = index
+    internalStepChange = true
+    syncStepToUrl(index)
+    nextTick(() => { internalStepChange = false })
   }
 }
 
@@ -155,6 +163,9 @@ const handleNext = async () => {
   phaseStep.value = getStepFromPhase(project.value?.currentPhase)
   if (currentStep.value < 4) {
     currentStep.value++
+    internalStepChange = true
+    syncStepToUrl(currentStep.value)
+    nextTick(() => { internalStepChange = false })
   }
 }
 
@@ -163,6 +174,9 @@ const handlePrev = async () => {
   phaseStep.value = getStepFromPhase(project.value?.currentPhase)
   if (currentStep.value > 0) {
     currentStep.value--
+    internalStepChange = true
+    syncStepToUrl(currentStep.value)
+    nextTick(() => { internalStepChange = false })
   }
 }
 

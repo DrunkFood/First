@@ -164,11 +164,21 @@ public class AiTaskResultSyncHandler {
             return Integer.compare(levelA, levelB);
         });
 
+        Long taskCreatorId = task.getCreateId();
+        String taskCreatorName = task.getCreateName();
+
         for (AiReviewItem item : items) {
             // 从映射中获取父节点，回填parentId
             AiReviewItem parent = parentMap.get(item);
             if (parent != null && parent.getId() != null) {
                 item.setParentId(parent.getId());
+            }
+            // 后台调度线程无用户上下文，需显式设置创建人，否则 createId=0 导致数据隔离查询不到
+            if (taskCreatorId != null) {
+                item.setCreateId(taskCreatorId);
+                item.setCreateName(taskCreatorName);
+                item.setModifyId(taskCreatorId);
+                item.setModifyName(taskCreatorName);
             }
             reviewItemMapper.insert(item);
         }

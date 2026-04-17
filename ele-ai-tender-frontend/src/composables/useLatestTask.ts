@@ -38,8 +38,9 @@ export function useLatestTask(
       if (result && result.id) {
         latestTaskId.value = result.id
         latestTask.value = result
-        // 非终态自动启动轮询
+        // 非终态自动启动轮询（任务进行中，后续变终态应通知用户）
         if (!TERMINAL_STATUSES.includes(result.status)) {
+          firstSync = false
           startPolling()
         }
       } else {
@@ -56,6 +57,7 @@ export function useLatestTask(
 
   /** 提交新任务成功后调用，设置活跃状态并启动轮询 */
   function setActive(taskId: number) {
+    firstSync = false  // 用户主动创建任务，后续轮询结果应正常触发回调
     latestTaskId.value = taskId
     startPolling()
   }
@@ -66,10 +68,18 @@ export function useLatestTask(
     fetchLatest()
   }
 
+  // 标记是否为首次同步（页面加载恢复场景），首次同步已完成任务不应触发回调
+  let firstSync = true
+
   // 同步轮询结果
   watch(task, (t, oldT) => {
     if (t) {
       latestTask.value = t
+      if (firstSync) {
+        // 首次同步：仅记录状态，不触发回调（页面加载恢复已终态的任务）
+        firstSync = false
+        return
+      }
       // 任务从非终态变为终态时触发回调
       if (TERMINAL_STATUSES.includes(t.status) &&
           (!oldT || !TERMINAL_STATUSES.includes(oldT.status))) {

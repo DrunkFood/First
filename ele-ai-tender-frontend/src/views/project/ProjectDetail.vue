@@ -295,6 +295,10 @@ async function loadVersions() {
 }
 
 function handleTimelineClick(index: number) {
+  // 未开始的节点禁止跳转
+  const currentPhase = project.value?.currentPhase ?? 0
+  if (index > currentPhase) return
+
   // Timeline有7个节点(index 0-6)，向导有5个步骤(index 0-4)
   // 映射: Timeline[0]=项目创建(无向导步骤) -> 跳转步骤0
   //       Timeline[1]=基础信息录入 -> 向导步骤0

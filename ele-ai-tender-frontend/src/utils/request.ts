@@ -11,6 +11,9 @@ interface CustomAxiosInstance extends AxiosInstance {
   delete<T = any, R = T>(url: string, config?: any): Promise<R>
 }
 
+// 防止多个 401 响应同时触发重复弹窗
+let isShowing401Dialog = false
+
 const request: CustomAxiosInstance = axios.create({
   baseURL: '',
   timeout: 30000,
@@ -38,16 +41,21 @@ request.interceptors.response.use(
     if (code === 200) {
       return data
     }
-    // 业务码 401：token 过期或无效，弹确认框后登出
+    // 业务码 401：token 过期或无效，弹确认框后登出（加锁防止重复弹窗）
     if (code === 401) {
-      ElMessageBox.confirm('登录状态已过期，请重新登录', '提示', {
-        confirmButtonText: '重新登录',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(() => {
-        const userStore = useUserStore()
-        userStore.logout()
-      })
+      if (!isShowing401Dialog) {
+        isShowing401Dialog = true
+        ElMessageBox.confirm('登录状态已过期，请重新登录', '提示', {
+          confirmButtonText: '重新登录',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }).finally(() => {
+          isShowing401Dialog = false
+        }).then(() => {
+          const userStore = useUserStore()
+          userStore.logout()
+        })
+      }
       return Promise.reject(new Error(message || '未授权'))
     }
     ElMessage.error(message || '请求失败')

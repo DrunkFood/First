@@ -326,6 +326,7 @@ function updateCardFromTask(index: number, task: AiTaskVO) {
   card.status = task.status
 
   if (task.status === 'COMPLETED') {
+    if (card.completed) return  // 已完成则跳过，避免重复解析issues
     card.completed = true
     card.percentage = 100
     parseTaskResult(card, task.result)

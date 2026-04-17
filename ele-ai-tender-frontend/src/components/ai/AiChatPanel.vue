@@ -1,19 +1,11 @@
 <template>
   <div class="ai-chat-panel">
-    <!-- 顶部标题栏 -->
+    <!-- 顶部标题栏（含安全提示） -->
     <div class="chat-header">
-      <span class="chat-title">AI助手</span>
+      <h3 class="chat-title">AI助手</h3>
       <el-button v-if="showClose" :icon="Close" text @click="emit('close')" />
+      <div class="chat-warning">AI助手接入互联网，若有涉密信息请勿发送</div>
     </div>
-
-    <!-- 安全提示 -->
-    <el-alert
-      title="AI助手接入互联网，若有涉密信息请勿发送"
-      type="warning"
-      :closable="false"
-      show-icon
-      class="chat-alert"
-    />
 
     <!-- 消息列表 -->
     <div ref="messageListRef" class="chat-messages">
@@ -230,38 +222,53 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .ai-chat-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--app-bg-elevated);
+  background: var(--app-bg-secondary);
 }
 
+// ========================================
+// 头部（标题 + 安全提示）
+// ========================================
 .chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--app-border-medium);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--app-border-light);
+  background: var(--app-bg-tertiary);
   flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .chat-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--app-text-primary);
+  margin: 0;
+  flex: 1;
 }
 
-.chat-alert {
-  flex-shrink: 0;
-  margin: 8px 12px 0;
+.chat-warning {
+  width: 100%;
+  font-size: 11px;
+  color: var(--app-color-warning, #F59E0B);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
+// ========================================
+// 消息区
+// ========================================
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 16px;
+  padding: 16px 20px;
 }
 
 .chat-message {
@@ -278,9 +285,9 @@ onBeforeUnmount(() => {
 }
 
 .message-bubble {
-  max-width: 75%;
-  border-radius: var(--app-radius-sm);
-  padding: 10px 14px;
+  max-width: 85%;
+  border-radius: 8px;
+  padding: 12px 16px;
   word-break: break-word;
 }
 
@@ -290,7 +297,7 @@ onBeforeUnmount(() => {
 }
 
 .message-assistant .message-bubble {
-  background: var(--app-bg-tertiary);
+  background: var(--app-bg-elevated);
   color: var(--app-text-primary);
 }
 
@@ -322,12 +329,16 @@ onBeforeUnmount(() => {
   color: var(--app-brand-color);
 }
 
+// ========================================
+// 输入区
+// ========================================
 .chat-input {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--app-border-medium);
+  padding: 16px 20px;
+  border-top: 1px solid var(--app-border-light);
+  background: var(--app-bg-tertiary);
   flex-shrink: 0;
 }
 
@@ -336,7 +347,9 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-/* ---- 打字动画指示器 ---- */
+// ========================================
+// 打字动画指示器
+// ========================================
 .typing-indicator {
   display: flex;
   align-items: center;
@@ -365,7 +378,9 @@ onBeforeUnmount(() => {
   30% { transform: translateY(-6px); opacity: 1; }
 }
 
-/* ---- 输出光标 ---- */
+// ========================================
+// 输出光标
+// ========================================
 .output-cursor {
   color: var(--app-brand-color);
   animation: cursor-blink 1s step-end infinite;
@@ -376,14 +391,18 @@ onBeforeUnmount(() => {
   50% { opacity: 0; }
 }
 
-/* ---- 失败消息 ---- */
+// ========================================
+// 失败消息
+// ========================================
 .message-error {
   font-size: 12px;
   color: var(--app-color-danger, #EF4444);
   margin-top: 4px;
 }
 
-/* ---- 禁用快捷操作 ---- */
+// ========================================
+// 禁用快捷操作
+// ========================================
 .is-disabled {
   pointer-events: none;
   opacity: 0.5;

@@ -9,7 +9,11 @@
         :timestamp="node.label"
         placement="top"
       >
-        <el-card shadow="hover" :class="{ clickable: true }" @click="$emit('click', index)">
+        <el-card
+          shadow="hover"
+          :class="{ clickable: isNodeAccessible(index), disabled: !isNodeAccessible(index) }"
+          @click="handleNodeClick(index)"
+        >
           <div class="node-content">
             <el-icon v-if="getNodeStatus(index).completed" :style="{ color: 'var(--app-color-success)' }"><CircleCheck /></el-icon>
             <span>{{ node.title }}</span>
@@ -33,7 +37,7 @@ const props = defineProps<{
   currentPhase: number
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   click: [index: number]
 }>()
 
@@ -56,6 +60,17 @@ function getNodeStatus(index: number): NodeStatus {
   }
   return { type: 'info', hollow: true, completed: false }
 }
+
+/** 节点是否可点击（已完成或当前进行中） */
+function isNodeAccessible(index: number): boolean {
+  return index <= props.currentPhase
+}
+
+function handleNodeClick(index: number) {
+  if (isNodeAccessible(index)) {
+    emit('click', index)
+  }
+}
 </script>
 
 <style scoped>
@@ -68,6 +83,13 @@ function getNodeStatus(index: number): NodeStatus {
 }
 .clickable:hover {
   transform: translateX(4px);
+}
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.disabled:hover {
+  transform: none;
 }
 .node-content {
   display: flex;

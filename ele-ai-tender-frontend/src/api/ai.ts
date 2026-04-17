@@ -72,6 +72,7 @@ export function createSSEConnection(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
+      'Accept': 'text/event-stream',
     },
     body: JSON.stringify(body),
     signal: controller.signal,
@@ -84,23 +85,35 @@ export function createSSEConnection(
       if (!reader) return
       const decoder = new TextDecoder()
 
+      let buffer = ''       // 跨 chunk 行缓冲，防止行被截断
+      let currentEvent = '' // 当前 SSE 事件名
+
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        const text = decoder.decode(value, { stream: true })
-        // 解析SSE格式: data: xxx\n\n
-        const lines = text.split('\n')
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') {
-              onComplete?.()
-              return
+        buffer += decoder.decode(value, { stream: true })
+
+        // SSE 协议以 \n\n 分隔事件块
+        let boundary: number
+        while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+          const eventBlock = buffer.slice(0, boundary)
+          buffer = buffer.slice(boundary + 2)
+
+          // 解析事件块中的每一行
+          for (const line of eventBlock.split('\n')) {
+            if (line.startsWith('event:')) {
+              currentEvent = line.slice(6).trim()
+            } else if (line.startsWith('data:')) {
+              // 兼容 data:value 和 data: value 两种格式
+              const raw = line.slice(5).trimStart()
+              handleSseData(currentEvent, raw, onMessage, onError, onComplete)
+              if (currentEvent === 'done') return
             }
-            onMessage(data)
           }
+          currentEvent = '' // 重置事件名
         }
       }
+      // 流正常结束（非 [DONE] 信号）
       onComplete?.()
     })
     .catch((err) => {
@@ -110,4 +123,58 @@ export function createSSEConnection(
     })
 
   return () => controller.abort()
+}
+
+/**
+ * 解析 SSE data 行，提取实际内容
+ * 后端格式：event:message → data:{"content":"..."}
+ *           event:done    → data:{"content":"[DONE]"}
+ *           event:error   → data:{"error":"..."}
+ * 同时兼容纯文本格式：data: xxx
+ */
+function handleSseData(
+  eventName: string,
+  rawData: string,
+  onMessage: (data: string) => void,
+  onError?: (error: Event) => void,
+  onComplete?: () => void,
+) {
+  // 完成信号
+  if (eventName === 'done' || rawData === '[DONE]') {
+    onComplete?.()
+    return
+  }
+
+  // 错误信号
+  if (eventName === 'error') {
+    const errorMsg = tryExtractJsonField(rawData, 'error') || rawData
+    onError?.(new Event(errorMsg))
+    return
+  }
+
+  // 消息内容：尝试从 JSON 中提取 content 字段，非 JSON 则当纯文本
+  const content = tryExtractJsonField(rawData, 'content')
+  if (content === '[DONE]') {
+    onComplete?.()
+    return
+  }
+  if (content != null) {
+    onMessage(content)
+  } else {
+    onMessage(rawData)
+  }
+}
+
+/**
+ * 尝试从 JSON 字符串中提取指定字段，失败返回 null
+ */
+function tryExtractJsonField(jsonStr: string, field: string): string | null {
+  if (!jsonStr.startsWith('{')) return null
+  try {
+    const obj = JSON.parse(jsonStr)
+    const value = obj[field]
+    return typeof value === 'string' ? value : null
+  } catch {
+    return null
+  }
 }

@@ -50,7 +50,7 @@ mybatis-plus:
 # 文件存储配置
 file:
   storage:
-    base-path: ${FILE_STORAGE_BASE_PATH:/data/ele-ai-tender/files}
+    base-path: ${FILE_STORAGE_BASE_PATH:E:\java\filestore\ele-ai-tender\files}
     allowed-types: .doc,.docx,.pdf,.txt,.md,.jar,.war,.zip,.tar.gz
     max-size: 500
 
