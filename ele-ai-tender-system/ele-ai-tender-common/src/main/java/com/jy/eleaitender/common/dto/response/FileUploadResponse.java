@@ -26,12 +26,16 @@ public class FileUploadResponse implements Serializable {
     @Schema(description = "文件SHA-256")
     private String fileSha256;
 
+    @Schema(description = "文件类型(MIME或扩展名)")
+    private String fileType;
+
     public FileUploadResponse() {}
 
-    public FileUploadResponse(Long fileId, String fileName, Long fileSize, String fileSha256) {
+    public FileUploadResponse(Long fileId, String fileName, Long fileSize, String fileSha256, String fileType) {
         this.fileId = fileId;
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.fileSha256 = fileSha256;
+        this.fileType = fileType;
     }
 }

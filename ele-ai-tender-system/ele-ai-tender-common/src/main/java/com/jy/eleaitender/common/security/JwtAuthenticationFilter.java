@@ -114,6 +114,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         loginUser.setEnterpriseId(claims.get("enterpriseId", String.class));
         loginUser.setEnterpriseName(claims.get("enterpriseName", String.class));
         loginUser.setEnterpriseCode(claims.get("enterpriseCode", String.class));
+        // 外部Token用户：将外部用户名映射为realName，避免MetaObjectHandler兜底为"system"
+        loginUser.setRealName(loginUser.getExternalUserName());
         return loginUser;
     }
 

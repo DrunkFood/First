@@ -391,7 +391,7 @@ const loadProject = async () => {
     projectType: project.projectType || '',
     serviceSubType: project.serviceSubType || '',
     budget: toWanYuan(project.budget) ?? 0,
-    reviewType: project.reviewType || 'INTELLIGENT',
+    reviewType: project.reviewType ?? 'INTELLIGENT',
     projectDescription: project.projectDescription || '',
     tenderUnit: project.tenderUnit || '',
     contactPerson: project.contactPerson || '',

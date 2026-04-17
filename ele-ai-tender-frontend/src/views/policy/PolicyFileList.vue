@@ -257,7 +257,7 @@ const handleUploadSuccess = (response: any) => {
     uploadForm.value.fileId = fileData.id || fileData.fileId
     uploadForm.value.fileName = fileData.fileName || fileData.name || ''
     uploadForm.value.fileSize = fileData.fileSize || fileData.size || 0
-    uploadForm.value.fileType = fileData.fileType || fileData.contentType || ''
+    uploadForm.value.fileType = fileData.fileType || fileData.contentType || extractFileExt(uploadForm.value.fileName)
     ElMessage.success('文件上传成功')
   } else {
     ElMessage.error(response?.message || '上传失败')
@@ -266,6 +266,11 @@ const handleUploadSuccess = (response: any) => {
 
 const handleUploadError = () => {
   ElMessage.error('文件上传失败，请重试')
+}
+
+function extractFileExt(fileName: string): string {
+  if (!fileName || !fileName.includes('.')) return ''
+  return fileName.substring(fileName.lastIndexOf('.') + 1).toUpperCase()
 }
 
 const resetUploadForm = () => {

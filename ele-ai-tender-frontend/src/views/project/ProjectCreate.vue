@@ -279,7 +279,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { projectApi } from '@/api/project'
 import { requirementApi } from '@/api/requirement'
@@ -304,6 +304,7 @@ const requirementList = ref<RequirementInfo[]>([])
 const templateList = ref<TemplateInfo[]>([])
 const requirementPreviewContent = ref('')
 const autoRecommended = ref(false)
+const isDataLoading = ref(false)
 const qualificationRequirements = ref('')
 const projectDetail = ref<ProjectInfo | null>(null)
 
@@ -355,7 +356,10 @@ function computeAutoReviewType() {
   autoRecommended.value = true
 }
 
-watch(() => [form.budget, form.projectType], computeAutoReviewType)
+watch(() => [form.budget, form.projectType], () => {
+  if (isDataLoading.value) return
+  computeAutoReviewType()
+})
 
 async function loadRequirements() {
   try {
@@ -385,6 +389,7 @@ async function loadTemplates() {
 
 async function loadProjectDetail(id: number) {
   pageLoading.value = true
+  isDataLoading.value = true
   try {
     const data = await projectApi.getById(id)
     projectDetail.value = data
@@ -404,10 +409,13 @@ async function loadProjectDetail(id: number) {
       contactPhone: data.contactPhone,
       projectDescription: data.projectDescription,
     })
+    // 根据当前值判断是否为自动推荐
+    autoRecommended.value = false
   } catch {
     ElMessage.error('加载项目详情失败')
   } finally {
     pageLoading.value = false
+    nextTick(() => { isDataLoading.value = false })
   }
 }
 

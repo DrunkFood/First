@@ -59,7 +59,7 @@ public class LocalFileStorageServiceImpl implements IFileStorageService {
             if (existingFile != null) {
                 log.info("文件秒传成功, sha256: {}, fileId: {}", fileSha256, existingFile.getId());
                 return new FileUploadResponse(existingFile.getId(), originalFilename,
-                        existingFile.getFileSize(), fileSha256);
+                        existingFile.getFileSize(), fileSha256, extractFileType(originalFilename));
             }
 
             // 生成存储路径
@@ -85,7 +85,7 @@ public class LocalFileStorageServiceImpl implements IFileStorageService {
             log.info("文件上传成功, fileId: {}, fileName: {}, path: {}", 
                     fileInfo.getId(), originalFilename, relativePath);
 
-            return new FileUploadResponse(fileInfo.getId(), originalFilename, fileSize, fileSha256);
+            return new FileUploadResponse(fileInfo.getId(), originalFilename, fileSize, fileSha256, extractFileType(originalFilename));
 
         } catch (IOException e) {
             log.error("文件上传失败", e);
@@ -172,5 +172,15 @@ public class LocalFileStorageServiceImpl implements IFileStorageService {
         String dateDir = LocalDateTime.now().format(DATE_FORMATTER);
         String newFilename = System.currentTimeMillis() + "_" + originalFilename;
         return bizType + File.separator + dateDir + File.separator + newFilename;
+    }
+
+    /**
+     * 从文件名提取扩展名作为文件类型
+     */
+    private String extractFileType(String fileName) {
+        if (StringUtils.isBlank(fileName) || !fileName.contains(".")) {
+            return "";
+        }
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toUpperCase();
     }
 }

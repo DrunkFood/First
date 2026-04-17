@@ -66,4 +66,8 @@ ele-tender-demo-business-system/
 
 # Playwright 截图
 .playwright-mcp/
+**/screenshots/
 **/test-screenshots/
+
+# Added by code-review-graph
+.code-review-graph/
