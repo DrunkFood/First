@@ -1,5 +1,7 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.jy.eleaitender.common.client.InternalFileServiceClient;
+import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
@@ -24,6 +26,8 @@ import java.util.Map;
 @Service
 public class DocumentIntegrationServiceImpl implements IDocumentIntegrationService {
 
+    private static final String BIZ_TYPE_TENDER_DOC = "tender-document";
+
     @Autowired
     private AiProjectMapper projectMapper;
 
@@ -35,6 +39,9 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
 
     @Autowired
     private WordDocumentGenerator wordGenerator;
+
+    @Autowired
+    private InternalFileServiceClient fileServiceClient;
 
     @Override
     @Transactional
@@ -50,11 +57,15 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         // 3. 转换为HTML预览
         String html = markdownEngine.markdownToHtml(markdown);
 
-        // 4. 将Markdown内容存入项目的requirementContent字段（作为集成后的文档内容）
+        // 4. 生成Word文档并上传到文件服务
+        Long generatedFileId = generateAndUploadWord(project, data, html);
+
+        // 5. 更新项目：存储Markdown内容 + generatedFileId
         project.setRequirementContent(markdown);
+        project.setGeneratedFileId(generatedFileId);
         projectMapper.updateById(project);
 
-        log.info("文档集成完成，项目ID: {}", projectId);
+        log.info("文档集成完成，项目ID: {}, 生成文件ID: {}", projectId, generatedFileId);
 
         DocumentPreviewVO vo = new DocumentPreviewVO();
         vo.setProjectId(projectId);
@@ -62,6 +73,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         vo.setHtmlContent(html);
         vo.setMarkdownContent(markdown);
         vo.setIntegrated(true);
+        vo.setGeneratedFileId(generatedFileId);
         return vo;
     }
 
@@ -71,13 +83,13 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
 
         String markdown = project.getRequirementContent();
         if (!StringUtils.hasText(markdown)) {
-            // 未集成过，返回空预览
             DocumentPreviewVO vo = new DocumentPreviewVO();
             vo.setProjectId(projectId);
             vo.setProjectName(project.getProjectName());
             vo.setHtmlContent("");
             vo.setMarkdownContent("");
             vo.setIntegrated(false);
+            vo.setGeneratedFileId(null);
             return vo;
         }
 
@@ -88,6 +100,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         vo.setHtmlContent(html);
         vo.setMarkdownContent(markdown);
         vo.setIntegrated(true);
+        vo.setGeneratedFileId(project.getGeneratedFileId());
         return vo;
     }
 
@@ -116,7 +129,30 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     public void editContent(Long projectId, String markdownContent) {
         AiProject project = getProjectOrThrow(projectId);
         project.setRequirementContent(markdownContent);
+
+        // 内容变更后重新生成Word并上传
+        if (StringUtils.hasText(markdownContent)) {
+            Map<String, Object> data = dataAssembler.assemble(projectId);
+            String html = markdownEngine.markdownToHtml(markdownContent);
+            Long generatedFileId = generateAndUploadWord(project, data, html);
+            project.setGeneratedFileId(generatedFileId);
+        }
+
         projectMapper.updateById(project);
+    }
+
+    /**
+     * 生成Word文档并上传到文件服务
+     *
+     * @return 上传后的文件ID
+     */
+    private Long generateAndUploadWord(AiProject project, Map<String, Object> data, String html) {
+        byte[] wordBytes = wordGenerator.generate(data, html);
+        String fileName = project.getProjectName() + ".docx";
+
+        FileUploadResponse uploadResponse = fileServiceClient.upload(wordBytes, fileName, BIZ_TYPE_TENDER_DOC);
+        log.info("Word文档已上传，文件ID: {}, 文件名: {}", uploadResponse.getFileId(), fileName);
+        return uploadResponse.getFileId();
     }
 
     private AiProject getProjectOrThrow(Long projectId) {

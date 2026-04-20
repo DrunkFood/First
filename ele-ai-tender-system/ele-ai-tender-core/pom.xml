@@ -85,6 +85,13 @@
             <version>${poi-tl.version}</version>
         </dependency>
 
+        <!-- jsoup: poi-tl HtmlRenderPolicy 需要 -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.17.2</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

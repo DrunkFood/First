@@ -1,11 +1,15 @@
 package com.jy.eleaitender.core.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
 import com.jy.eleaitender.common.entity.core.AiPolicyFile;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.request.PolicyFileRequest;
+import com.jy.eleaitender.core.dto.response.KnowledgeDocumentPolicyVO;
 import com.jy.eleaitender.core.dto.response.PolicyFileVO;
+import com.jy.eleaitender.core.mapper.AiKnowledgeDocumentMapper;
 import com.jy.eleaitender.core.service.IPolicyFileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +17,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,6 +30,9 @@ public class PolicyFileController {
 
     @Autowired
     private IPolicyFileService policyFileService;
+
+    @Autowired
+    private AiKnowledgeDocumentMapper knowledgeDocumentMapper;
 
     @GetMapping
     @RequireLogin
@@ -75,5 +83,28 @@ public class PolicyFileController {
     public Result<List<PolicyFileVO>> getAllAvailable(
             @RequestParam(required = false) String applicableCategory) {
         return Result.success(policyFileService.getAllAvailable(applicableCategory));
+    }
+
+    @GetMapping("/knowledge-policy")
+    @RequireLogin
+    @Operation(summary = "获取知识库中所有政策类文档(docCategory=POLICY)")
+    public Result<List<KnowledgeDocumentPolicyVO>> getKnowledgePolicyDocuments() {
+        LambdaQueryWrapper<AiKnowledgeDocument> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AiKnowledgeDocument::getDocCategory, "POLICY")
+                .eq(AiKnowledgeDocument::getStatus, "ACTIVE")
+                .orderByDesc(AiKnowledgeDocument::getCreateTime);
+        List<AiKnowledgeDocument> docs = knowledgeDocumentMapper.selectList(wrapper);
+        List<KnowledgeDocumentPolicyVO> result = new ArrayList<>(docs.size());
+        for (AiKnowledgeDocument doc : docs) {
+            KnowledgeDocumentPolicyVO vo = new KnowledgeDocumentPolicyVO();
+            vo.setId(doc.getId());
+            vo.setDocName(doc.getDocName());
+            vo.setFileId(doc.getFileId());
+            vo.setFileType(doc.getFileType());
+            vo.setStatus(doc.getStatus());
+            vo.setCreateTime(doc.getCreateTime());
+            result.add(vo);
+        }
+        return Result.success(result);
     }
 }

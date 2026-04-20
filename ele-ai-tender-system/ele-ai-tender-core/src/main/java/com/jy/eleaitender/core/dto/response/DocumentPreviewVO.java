@@ -24,4 +24,7 @@ public class DocumentPreviewVO {
 
     @Schema(description = "是否已集成")
     private Boolean integrated;
+
+    @Schema(description = "生成的Word文件ID(关联file_info)")
+    private Long generatedFileId;
 }
