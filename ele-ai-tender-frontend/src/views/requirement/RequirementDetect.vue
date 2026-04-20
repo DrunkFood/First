@@ -18,8 +18,21 @@
       </div>
 
       <template v-else>
+        <!-- 初始状态：跳过检测 / 开始智能检测 -->
+        <div v-if="notStarted" class="detect-card start-card">
+          <div class="start-icon">
+            <el-icon :size="48" color="var(--app-brand-color)"><CircleCheck /></el-icon>
+          </div>
+          <h3 class="start-title">业务需求智能检测</h3>
+          <p class="start-desc">对需求内容进行敏感词检测和错别字检查，帮助发现潜在问题</p>
+          <div class="start-actions">
+            <el-button @click="handleSkip">跳过检测</el-button>
+            <el-button type="primary" @click="startDetection">开始智能检测</el-button>
+          </div>
+        </div>
+
         <!-- 卡片1：检测进度 -->
-        <div class="detect-card progress-card">
+        <div v-if="!notStarted" class="detect-card progress-card">
           <div class="card-header">
             <span class="card-title">检测进度</span>
             <el-button
@@ -139,7 +152,8 @@
             <el-button @click="router.push(`/requirement/generate/${requirementId}`)">
               上一步
             </el-button>
-            <el-button type="primary" :disabled="totalUnhandledIssues > 0" @click="handleFinish">
+            <el-button v-if="!isRequirementCompleted" @click="handleSkip">跳过检测</el-button>
+            <el-button v-if="!isRequirementCompleted" type="primary" @click="handleFinish">
               完成检测
             </el-button>
           </div>
@@ -195,6 +209,7 @@ const route = useRoute()
 // ---- 基础数据 ----
 const requirementId = ref(0)
 const requirementName = ref('')
+const requirementStatus = ref('')
 
 // ---- 检测卡片（只有2项） ----
 const detectCards = ref<DetectCard[]>([
@@ -227,10 +242,6 @@ const currentOriginal = ref<DetectionIssueVO | null>(null)
 // ---- 计算属性 ----
 const allCompleted = computed(() => detectCards.value.every(c => c.completed || c.failed))
 
-const canReDetect = computed(() => {
-  return detectCards.value.every(c => !c.taskId || TERMINAL_STATUSES.includes(c.status as AiTaskStatus) || c.completed || c.failed)
-})
-
 const overallProgress = computed(() => {
   if (detectCards.value.length === 0) return 0
   const total = detectCards.value.reduce((sum, c) => sum + c.percentage, 0)
@@ -240,6 +251,20 @@ const overallProgress = computed(() => {
 const totalUnhandledIssues = computed(() =>
   issues.value.filter(i => i.handleStatus === 0).length
 )
+
+/** 是否从未提交过检测（初始状态） */
+const notStarted = computed(() =>
+  !submitting.value && detectCards.value.every(c => !c.taskId && !c.completed && !c.failed)
+)
+
+/** 需求是否已完成（COMPLETED状态下隐藏重新检测） */
+const isRequirementCompleted = computed(() => requirementStatus.value === 'COMPLETED')
+
+/** 是否可以重新检测（需求未完成 + 所有任务终态） */
+const canReDetect = computed(() => {
+  if (isRequirementCompleted.value) return false
+  return detectCards.value.every(c => !c.taskId || TERMINAL_STATUSES.includes(c.status as AiTaskStatus) || c.completed || c.failed)
+})
 
 /** 查看原文高亮内容 */
 const highlightedContent = computed(() => {
@@ -279,6 +304,7 @@ onMounted(async () => {
   try {
     const data = await requirementApi.getById(id)
     requirementName.value = data.requirementName || ''
+    requirementStatus.value = data.status || ''
   } catch {
     ElMessage.error('加载需求失败')
     router.back()
@@ -294,7 +320,7 @@ async function restoreDetectionState() {
     const records = await requirementApi.getDetectionRecords(requirementId.value)
 
     if (!records || records.length === 0) {
-      await startDetection()
+      // 从未提交过检测，显示初始按钮（跳过检测 / 开始智能检测）
       return
     }
 
@@ -322,7 +348,7 @@ async function restoreDetectionState() {
       }
     }
   } catch {
-    await startDetection()
+    // 查询失败，不做任何操作，显示初始按钮
   }
 }
 
@@ -479,11 +505,23 @@ function handleViewOriginal(issue: DetectionIssueVO) {
 async function handleFinish() {
   try {
     await requirementApi.finishDetection(requirementId.value)
+    requirementStatus.value = 'COMPLETED'
     ElMessage.success('检测完成')
     router.push('/requirement')
   } catch {
     ElMessage.error('操作失败')
   }
+}
+
+/** 跳过检测 = 完成检测 */
+function handleSkip() {
+  ElMessageBox.confirm('确定跳过智能检测吗？跳过后将直接完成需求。', '跳过确认', {
+    confirmButtonText: '确定跳过',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    handleFinish()
+  }).catch(() => {})
 }
 
 // ---- 辅助函数 ----
@@ -549,6 +587,38 @@ function getIssueClass(issue: DetectionIssueVO): string {
   justify-content: center;
   padding: 80px 0;
   color: var(--app-text-tertiary);
+  gap: 12px;
+}
+
+/* ---- 初始状态卡片 ---- */
+.start-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.start-icon {
+  margin-bottom: 16px;
+}
+
+.start-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.start-desc {
+  font-size: 14px;
+  color: var(--app-text-secondary);
+  margin: 0 0 24px 0;
+  max-width: 400px;
+}
+
+.start-actions {
+  display: flex;
   gap: 12px;
 }
 

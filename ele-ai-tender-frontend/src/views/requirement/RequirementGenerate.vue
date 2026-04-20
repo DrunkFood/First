@@ -3,7 +3,7 @@
     <!-- 顶部工具栏 -->
     <div class="gen-toolbar">
       <div class="toolbar-left">
-        <el-button :icon="ArrowLeft" @click="router.back()">返回列表</el-button>
+        <el-button :icon="ArrowLeft" @click="router.push('/requirement')">返回列表</el-button>
         <el-divider direction="vertical" />
         <span class="toolbar-title">业务需求生成</span>
       </div>
@@ -109,7 +109,7 @@
             <div class="content-section">
               <div class="section-title-row">
                 <h4 class="section-title">业务需求详情</h4>
-                <div class="section-actions">
+                <div v-if="!isRequirementCompleted" class="section-actions">
                   <el-button
                     v-if="canCreateNew && !sseGenerating"
                     type="success"
@@ -143,7 +143,7 @@
               </div>
 
               <!-- AI反馈 -->
-              <div v-if="content && !sseGenerating && canCreateNew" class="ai-feedback">
+              <div v-if="content && !sseGenerating && canCreateNew && !isRequirementCompleted" class="ai-feedback">
                 <span v-if="genFeedback" class="feedback-label">
                   {{ genFeedback.feedbackType === 'LIKE' ? '已赞' : '已反馈不满意' }}
                 </span>
@@ -334,6 +334,7 @@ watch(latestTask, (task) => {
 
 // ---- 生成状态 ----
 const sseGenerating = ref(false)
+const isRequirementCompleted = computed(() => requirementData.value.status === 'COMPLETED')
 let sseProgress = ref(0)
 
 // ---- 进度计算 ----

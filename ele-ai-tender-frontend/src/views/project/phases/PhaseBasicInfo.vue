@@ -77,6 +77,7 @@
 
     <!-- 选择招标文件模板 -->
     <div class="section-title">选择招标文件模板</div>
+    <div class="tpl-hint">新建项目选择模板，引用项目显示当前项目的招标文件</div>
     <div class="template-grid" v-loading="templateLoading">
       <div
         v-for="tpl in templateList"
@@ -87,87 +88,99 @@
       >
         <div class="tpl-card-header">
           <span class="tpl-name">{{ tpl.templateName }}</span>
-          <el-tag
-            v-if="isDefaultTemplate(tpl)"
-            type="success"
-            size="small"
-            effect="dark"
-          >推荐</el-tag>
+          <span v-if="isDefaultTemplate(tpl)" class="tpl-badge">推荐</span>
         </div>
-        <p class="tpl-desc">{{ tpl.structureDefinition || '标准招标文件模板' }}</p>
+        <p class="tpl-desc">{{ tpl.description || '暂无描述' }}</p>
         <div class="tpl-meta">
-          <span>v{{ tpl.versionNo || '1' }}</span>
-          <span>{{ formatTime(tpl.createTime) }}</span>
+          <span class="tpl-meta-item">
+            <el-icon :size="12"><Document /></el-icon>
+            约{{ estimatePageCount(tpl.content) }}页
+          </span>
+          <span class="tpl-meta-item">
+            <el-icon :size="12"><Calendar /></el-icon>
+            {{ formatTime(tpl.modifyTime || tpl.createTime) }} 更新
+          </span>
         </div>
-        <el-button v-if="!readonly" text size="small" @click.stop="handlePreviewTemplate(tpl)">预览</el-button>
+        <div class="tpl-card-footer">
+          <el-button size="small" @click.stop="handlePreviewTemplate(tpl)">
+            <el-icon><View /></el-icon>预览
+          </el-button>
+        </div>
       </div>
       <el-empty v-if="!templateLoading && !templateList.length" description="暂无可用模板" :image-size="60" />
     </div>
 
+    <!-- 模板详情预览弹窗 -->
+    <el-dialog
+      v-model="previewDialogVisible"
+      :title="previewTemplate?.templateName || '模板预览'"
+      width="70%"
+      top="5vh"
+      destroy-on-close
+      class="template-preview-dialog"
+    >
+      <div class="template-preview-content">
+        <MdPreview v-if="previewTemplate?.content" :model-value="previewTemplate.content" :theme="themeStore.mode" />
+        <el-empty v-else description="该模板暂无内容" />
+      </div>
+      <template #footer>
+        <el-button @click="previewDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 历史招标文件匹配 -->
     <div class="section-title">历史招标文件匹配</div>
     <div class="match-section" :class="{ 'match-readonly': readonly }">
-      <el-radio-group v-model="matchMode" class="match-mode-group" :disabled="readonly">
-        <el-radio-button value="auto">系统自动匹配</el-radio-button>
-        <el-radio-button value="manual">手动选择</el-radio-button>
-        <el-radio-button value="upload">上传文件</el-radio-button>
+      <div class="match-mode-label">匹配模式<span class="required-star">*</span></div>
+      <el-radio-group v-model="matchMode" class="match-radio-group" :disabled="readonly">
+        <el-radio value="auto">1. 系统自动匹配</el-radio>
+        <el-radio value="manual">2. 手动选择</el-radio>
+        <el-radio value="upload">3. 上传</el-radio>
       </el-radio-group>
 
       <!-- 自动匹配模式 -->
       <div v-if="matchMode === 'auto'" class="match-content">
-        <p class="match-desc">系统将根据项目名称和描述自动匹配历史招标文件</p>
-        <template v-if="!readonly">
-          <el-button type="primary" :loading="autoMatching" @click="handleAutoMatch">
-            开始自动匹配
-          </el-button>
-          <el-button type="success" :loading="suggesting" @click="handleSuggest">
-            AI推荐
-          </el-button>
-        </template>
+        <div class="auto-match-box">
+          <div class="auto-match-title">系统自动匹配</div>
+          <div class="auto-match-desc">系统将根据项目信息自动匹配历史招标文件，生成招标需求。</div>
+        </div>
       </div>
 
       <!-- 手动选择模式 -->
       <div v-if="matchMode === 'manual'" class="match-content">
-        <div v-if="!readonly" class="manual-search-bar">
-          <el-input
-            v-model="manualKeyword"
-            placeholder="输入关键词搜索"
-            clearable
-            @keyup.enter="handleManualMatch"
-          >
-            <template #append>
-              <el-button :loading="manualMatching" @click="handleManualMatch">搜索</el-button>
-            </template>
-          </el-input>
-        </div>
+        <div class="manual-title">选择历史招标文件</div>
         <div v-if="matchResults.length" class="match-file-list">
           <div
             v-for="item in matchResults"
             :key="item.requirementId"
             class="match-file-card"
             :class="{ selected: selectedMatchId === item.requirementId }"
-            @click="selectedMatchId = item.requirementId"
+            @click="!readonly && (selectedMatchId = item.requirementId)"
           >
-            <div class="match-file-info">
+            <div class="match-file-header">
               <span class="match-file-name">{{ item.requirementName }}</span>
-              <el-progress
-                :percentage="Math.round(item.similarity * 100)"
-                :stroke-width="10"
-                :format="() => Math.round(item.similarity * 100) + '%'"
-                style="width: 120px"
-              />
+              <span class="match-file-type">工程类</span>
             </div>
-            <div v-if="!readonly" class="match-file-actions">
-              <el-button text size="small" @click.stop="handlePreviewMatch(item)">预览</el-button>
-              <el-button text size="small" type="primary" @click.stop="selectedMatchId = item.requirementId">选择</el-button>
+            <div class="match-file-similarity">
+              匹配度：{{ Math.round(item.similarity * 100) }}% - 与当前需求相似度较高
+            </div>
+            <div class="match-file-actions">
+              <el-button size="small" @click.stop="handlePreviewMatch(item)">预览</el-button>
+              <el-button
+                size="small"
+                :type="selectedMatchId === item.requirementId ? 'primary' : ''"
+                @click.stop="selectedMatchId = item.requirementId"
+              >选择</el-button>
             </div>
           </div>
         </div>
-        <el-empty v-else-if="!manualMatching" description="暂无匹配结果，请输入关键词搜索" :image-size="60" />
+        <el-empty v-else description="暂无匹配结果" :image-size="60" />
+        <div class="manual-hint">展示历史文件库中匹配度高的文件，仅可单选</div>
       </div>
 
       <!-- 上传模式 -->
-      <div v-if="matchMode === 'upload' && !readonly" class="match-content">
+      <div v-if="matchMode === 'upload'" class="match-content">
+        <div class="upload-title">上传招标文件</div>
         <el-upload
           drag
           :auto-upload="false"
@@ -177,22 +190,11 @@
           class="upload-area"
         >
           <el-icon size="48"><UploadFilled /></el-icon>
-          <div>将文件拖到此处，或<em>点击上传</em></div>
+          <div>点击或拖拽文件到此处上传</div>
           <template #tip>
-            <div class="upload-tip">仅支持.doc/.docx格式，最大50MB</div>
+            <div class="upload-tip">支持word格式，文件大小不超过50M，上传1份文件</div>
           </template>
         </el-upload>
-      </div>
-
-      <!-- AI推荐结果 -->
-      <div v-if="suggestResults.length" class="suggest-section">
-        <h4>AI推荐</h4>
-        <el-tag
-          v-for="(s, idx) in suggestResults"
-          :key="idx"
-          class="suggest-tag"
-          effect="plain"
-        >{{ s }}</el-tag>
       </div>
     </div>
 
@@ -209,13 +211,17 @@ import { projectApi } from '@/api/project'
 import { templateApi } from '@/api/template'
 import { aiApi } from '@/api/ai'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
+import { UploadFilled, Document, Calendar, View } from '@element-plus/icons-vue'
 import { toWanYuan, toYuan } from '@/utils/budget'
+import { MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/preview.css'
+import { useThemeStore } from '@/store/theme'
 import type { TemplateInfo } from '@/types/template'
 import type { AiMatchResult } from '@/types/ai'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: [] }>()
+const themeStore = useThemeStore()
 
 const formRef = ref<FormInstance>()
 const form = ref({
@@ -246,6 +252,21 @@ const templateLoading = ref(false)
 const defaultTemplateId = ref<number | null>(null)
 
 const isDefaultTemplate = (tpl: TemplateInfo) => tpl.id === defaultTemplateId.value
+
+function estimatePageCount(content?: string): number {
+  if (!content) return 0
+  const text = content
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*|__|\*|_|~~/g, '')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]*)\]\(.*?\)/g, '$1')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/`{1,3}[^`]*`{1,3}/g, '')
+    .replace(/---|\*\*\*|___/g, '')
+  const charCount = text.replace(/\s/g, '').length
+  return Math.max(1, Math.ceil(charCount / 800))
+}
 
 const loadTemplates = async () => {
   templateLoading.value = true
@@ -290,65 +311,18 @@ const handleAutoSelectDefaultTemplate = async () => {
   }
 }
 
+const previewDialogVisible = ref(false)
+const previewTemplate = ref<TemplateInfo | null>(null)
+
 const handlePreviewTemplate = (tpl: TemplateInfo) => {
-  ElMessage.info(`预览模板：${tpl.templateName}`)
+  previewTemplate.value = tpl
+  previewDialogVisible.value = true
 }
 
 // --- 历史匹配 ---
 const matchMode = ref<'auto' | 'manual' | 'upload'>('auto')
 const matchResults = ref<AiMatchResult[]>([])
-const autoMatching = ref(false)
-const manualMatching = ref(false)
-const manualKeyword = ref('')
 const selectedMatchId = ref<number | null>(null)
-
-const handleAutoMatch = async () => {
-  if (!form.value.projectName && !form.value.projectDescription) {
-    ElMessage.warning('请先填写项目名称或项目描述')
-    return
-  }
-  autoMatching.value = true
-  try {
-    matchResults.value = await aiApi.matchAuto({
-      content: form.value.projectDescription || form.value.projectName,
-      projectCategory: form.value.projectCategory,
-      projectType: form.value.projectType,
-    })
-    if (matchResults.value.length) {
-      ElMessage.success(`匹配到 ${matchResults.value.length} 条历史需求`)
-    } else {
-      ElMessage.info('未匹配到相关历史需求')
-    }
-  } catch {
-    ElMessage.error('自动匹配失败')
-  } finally {
-    autoMatching.value = false
-  }
-}
-
-const handleManualMatch = async () => {
-  if (!manualKeyword.value.trim()) {
-    ElMessage.warning('请输入搜索关键词')
-    return
-  }
-  manualMatching.value = true
-  try {
-    matchResults.value = await aiApi.matchManual({
-      projectCategory: form.value.projectCategory,
-      projectType: form.value.projectType,
-      keyword: manualKeyword.value.trim(),
-    })
-    if (matchResults.value.length) {
-      ElMessage.success(`搜索到 ${matchResults.value.length} 条结果`)
-    } else {
-      ElMessage.info('未搜索到相关结果')
-    }
-  } catch {
-    ElMessage.error('手动搜索失败')
-  } finally {
-    manualMatching.value = false
-  }
-}
 
 const handlePreviewMatch = (item: AiMatchResult) => {
   ElMessage.info(`预览：${item.requirementName}`)
@@ -356,30 +330,6 @@ const handlePreviewMatch = (item: AiMatchResult) => {
 
 const handleFileChange = () => {
   ElMessage.info('文件已选择')
-}
-
-// --- AI推荐 ---
-const suggestResults = ref<string[]>([])
-const suggesting = ref(false)
-
-const handleSuggest = async () => {
-  if (!form.value.projectCategory && !form.value.projectType) {
-    ElMessage.warning('请先选择项目类别和类型')
-    return
-  }
-  suggesting.value = true
-  try {
-    const res = await aiApi.suggest({
-      content: form.value.projectDescription || form.value.projectName,
-      type: 'template',
-      projectId: props.projectId,
-    })
-    suggestResults.value = res.suggestions || []
-  } catch {
-    ElMessage.error('AI推荐失败')
-  } finally {
-    suggesting.value = false
-  }
 }
 
 // --- 保存 ---
@@ -441,24 +391,32 @@ onMounted(() => {
   }
 }
 
+// 模板提示文字
+.tpl-hint {
+  font-size: 13px;
+  color: var(--app-text-tertiary);
+  margin-bottom: 16px;
+}
+
 // 模板卡片网格
 .template-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
 .template-card {
   background: var(--app-bg-secondary);
   border: 2px solid var(--app-border-light);
-  border-radius: var(--app-radius-sm);
-  padding: 16px;
+  border-radius: 8px;
+  padding: 20px;
   cursor: pointer;
   transition: var(--app-transition-base);
 
   &:hover {
-    border-color: var(--app-brand-color-light-5);
+    border-color: var(--app-brand-color);
+    background: var(--app-hover-state);
   }
 
   &.selected {
@@ -478,8 +436,8 @@ onMounted(() => {
 .tpl-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
 .tpl-name {
@@ -488,11 +446,20 @@ onMounted(() => {
   font-size: 14px;
 }
 
+.tpl-badge {
+  padding: 2px 8px;
+  background: rgba(51, 108, 255, 0.15);
+  color: var(--app-brand-color);
+  border-radius: 4px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
 .tpl-desc {
-  font-size: 13px;
-  color: var(--app-text-tertiary);
-  margin: 0 0 8px;
-  line-height: 1.4;
+  font-size: 12px;
+  color: var(--app-text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.5;
 }
 
 .tpl-meta {
@@ -500,7 +467,18 @@ onMounted(() => {
   gap: 16px;
   font-size: 12px;
   color: var(--app-text-tertiary);
-  margin-bottom: 4px;
+}
+
+.tpl-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tpl-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 // 匹配区
@@ -508,39 +486,72 @@ onMounted(() => {
   padding: 0;
 }
 
-.match-mode-group {
-  margin-bottom: 16px;
+.match-mode-label {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  margin-bottom: 12px;
+}
+
+.required-star {
+  color: var(--el-color-danger);
+  margin-left: 2px;
+}
+
+.match-radio-group {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
 }
 
 .match-content {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
-.match-desc {
-  color: var(--app-text-secondary);
+// 自动匹配
+.auto-match-box {
+  padding: 16px;
+  background: var(--app-bg-tertiary, var(--app-bg-secondary));
+  border-radius: 6px;
+}
+
+.auto-match-title {
   font-size: 14px;
-  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin-bottom: 8px;
 }
 
-.manual-search-bar {
-  max-width: 400px;
-  margin-bottom: 12px;
+.auto-match-desc {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  line-height: 1.5;
+}
+
+// 手动选择
+.manual-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin-bottom: 16px;
+}
+
+.manual-hint {
+  font-size: 12px;
+  color: var(--app-text-tertiary);
+  margin-top: 12px;
 }
 
 .match-file-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .match-file-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--app-bg-secondary);
-  border: 2px solid var(--app-border-light);
-  border-radius: 6px;
+  padding: 16px;
+  background: var(--app-bg-tertiary, var(--app-bg-secondary));
+  border: 1px solid var(--app-border-light);
+  border-radius: 8px;
   cursor: pointer;
   transition: var(--app-transition-base);
 
@@ -550,30 +561,50 @@ onMounted(() => {
 
   &.selected {
     border-color: var(--app-brand-color);
-    background: var(--app-hover-state);
+    background: rgba(51, 108, 255, 0.05);
   }
 }
 
-.match-file-info {
+.match-file-header {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
 }
 
 .match-file-name {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--app-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.match-file-type {
+  background: rgba(51, 108, 255, 0.15);
+  color: var(--app-brand-color);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.match-file-similarity {
+  font-size: 12px;
+  color: var(--app-text-secondary);
+  margin: 8px 0;
 }
 
 .match-file-actions {
   display: flex;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+// 上传
+.upload-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin-bottom: 16px;
 }
 
 .upload-area {
@@ -591,23 +622,20 @@ onMounted(() => {
   margin-top: 4px;
 }
 
-.suggest-section {
-  margin-top: 16px;
-
-  h4 {
-    margin-bottom: 8px;
-    color: var(--app-text-secondary);
-  }
-}
-
-.suggest-tag {
-  margin: 0 8px 8px 0;
-}
-
 .phase-actions {
   margin-top: 24px;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+// 模板预览弹窗
+.template-preview-content {
+  max-height: 70vh;
+  overflow-y: auto;
+
+  :deep(.md-editor-preview-wrapper) {
+    padding: 0;
+  }
 }
 </style>
