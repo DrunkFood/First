@@ -117,7 +117,11 @@ public class RequirementServiceImpl implements IRequirementService {
         params.put("requirementId", requirementId);
         params.put("requirementName", requirement.getRequirementName());
         params.put("projectType", requirement.getProjectType());
+        params.put("projectCategory", requirement.getProjectCategory());
         params.put("budget", requirement.getBudget());
+        params.put("description", requirement.getRequirementDescription());
+        // TODO 参考文档内容 从 匹配的历史文件/上传的文件 中获取
+        params.put("referenceContent", "");
         return aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE,
                 requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
     }

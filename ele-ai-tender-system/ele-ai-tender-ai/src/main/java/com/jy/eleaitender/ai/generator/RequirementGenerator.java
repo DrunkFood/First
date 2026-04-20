@@ -47,7 +47,7 @@ public class RequirementGenerator {
 
         // 构建Prompt
         String userPrompt = PromptBuilder.buildRequirementGenerate(
-                getString(params, "projectName"),
+                getString(params, "requirementName"),
                 getString(params, "projectType"),
                 getString(params, "projectCategory"),
                 getString(params, "budget"),
