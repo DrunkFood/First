@@ -49,8 +49,8 @@ public class FileContentService {
                     continue;
                 }
                 contentList.add(String.format("\n\n【%s】\n%s", fileInfo.getFileName(), content));
-            } catch (NumberFormatException e) {
-                log.warn("无效的文件ID格式: {}", fileIdStr);
+            } catch (Exception e) {
+                log.error("文件内容获取失败: {}", fileIdStr, e);
             }
         }
         if (contentList.isEmpty()) {
