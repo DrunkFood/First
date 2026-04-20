@@ -28,6 +28,9 @@ public class AiTemplate extends BaseEntity {
     @Schema(description = "适用项目类型")
     private String projectType;
 
+    @Schema(description = "模板描述")
+    private String description;
+
     @Schema(description = "模板内容(Markdown)")
     private String content;
 

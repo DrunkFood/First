@@ -57,6 +57,11 @@ jwt:
   expiration: ${APP_JWT_EXPIRATION:7200}
   external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
 
+# 文件存储配置
+file:
+  storage:
+    base-path: ${FILE_STORAGE_BASE_PATH:E:\java\filestore\ele-ai-tender\files}
+
 logging:
   pattern:
     level: "%5p [traceId:%X{traceId:-}]"
