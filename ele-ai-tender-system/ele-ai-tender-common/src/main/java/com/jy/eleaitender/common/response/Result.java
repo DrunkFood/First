@@ -1,5 +1,6 @@
 package com.jy.eleaitender.common.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import lombok.Data;
 
@@ -96,6 +97,7 @@ public class Result<T> implements Serializable {
     /**
      * 判断是否成功
      */
+    @JsonIgnore
     public boolean isSuccess() {
         return this.code == ResponseCode.SUCCESS.getCode();
     }
