@@ -116,6 +116,7 @@ const inputText = ref('')
 const sending = ref(false)
 const messageListRef = ref<HTMLDivElement>()
 let closeSSE: (() => void) | null = null
+const conversationId = crypto.randomUUID()
 
 /** 每条聊天消息的反馈状态：uid → LIKE/DISLIKE */
 const chatFeedbackMap = reactive<Record<string, 'LIKE' | 'DISLIKE'>>({})
@@ -152,6 +153,12 @@ function handleSend() {
   const text = inputText.value.trim()
   if (!text || sending.value) return
 
+  // 构建对话历史（发送前构建，不包含当前消息）
+  const history = messages.value
+    .filter(msg => msg.content && !msg.error)
+    .map(msg => ({ role: msg.role, content: msg.content }))
+    .slice(-10)
+
   // 添加用户消息
   const userMsg: AiChatMessage = { role: 'user', content: text, timestamp: Date.now(), uid: generateUid('user', Date.now(), text) }
   messages.value.push(userMsg)
@@ -175,6 +182,8 @@ function handleSend() {
       context: props.context,
       projectId: props.projectId,
       requirementId: props.requirementId,
+      conversationId,
+      history,
     },
     (data: string) => {
       // 流式追加内容

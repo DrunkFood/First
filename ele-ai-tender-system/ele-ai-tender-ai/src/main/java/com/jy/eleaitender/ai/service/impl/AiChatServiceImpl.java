@@ -17,9 +17,15 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 
 /**
  * AI对话服务实现
@@ -43,6 +49,18 @@ public class AiChatServiceImpl implements IAiChatService {
             try {
                 ChatClient chatClient = modelRouter.route(AiUsageScenario.OPTIMIZATION);
 
+                // 构建对话历史
+                List<Message> chatMessages = new ArrayList<>();
+                if (request.getHistory() != null && !request.getHistory().isEmpty()) {
+                    for (ChatRequest.ChatMessage histMsg : request.getHistory()) {
+                        if ("user".equals(histMsg.getRole())) {
+                            chatMessages.add(new UserMessage(histMsg.getContent()));
+                        } else if ("assistant".equals(histMsg.getRole())) {
+                            chatMessages.add(new AssistantMessage(histMsg.getContent()));
+                        }
+                    }
+                }
+
                 // 构建用户消息
                 StringBuilder userPrompt = new StringBuilder();
                 if (request.getContext() != null && !request.getContext().isBlank()) {
@@ -56,6 +74,7 @@ public class AiChatServiceImpl implements IAiChatService {
 
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
                         .system(PromptTemplates.AI_ASSISTANT)
+                        .messages(chatMessages)
                         .user(userPrompt.toString())
                         .stream()
                         .chatResponse();

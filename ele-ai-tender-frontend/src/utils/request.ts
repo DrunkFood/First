@@ -37,6 +37,10 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   (response: AxiosResponse) => {
+    // blob 响应（文件下载等）直接返回原始数据，不做 JSON 解构
+    if (response.config.responseType === 'blob') {
+      return response.data
+    }
     const { code, message, data } = response.data
     if (code === 200) {
       return data
