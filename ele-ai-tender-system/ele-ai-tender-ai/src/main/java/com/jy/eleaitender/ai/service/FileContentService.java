@@ -1,33 +1,28 @@
 package com.jy.eleaitender.ai.service;
 
-import com.jy.eleaitender.ai.mapper.FileInfoMapper;
+import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.entity.file.FileInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 文件内容服务
- * 根据文件ID获取文件元数据和内容，供AI调用使用
+ * 通过 InternalFileServiceClient 获取文件元数据和内容，供AI调用使用
  */
 @Slf4j
 @Service
 public class FileContentService {
 
-    private final FileInfoMapper fileInfoMapper;
+    private final InternalFileServiceClient fileServiceClient;
 
-    @Value("${file.storage.base-path:/data/ele-ai-tender/files}")
-    private String basePath;
-
-    public FileContentService(FileInfoMapper fileInfoMapper) {
-        this.fileInfoMapper = fileInfoMapper;
+    public FileContentService(InternalFileServiceClient fileServiceClient) {
+        this.fileServiceClient = fileServiceClient;
     }
 
     /**
@@ -45,17 +40,17 @@ public class FileContentService {
         for (String fileIdStr : fileIds) {
             try {
                 Long fileId = Long.parseLong(fileIdStr);
-                FileInfo fileInfo = fileInfoMapper.selectById(fileId);
+                FileInfo fileInfo = fileServiceClient.info(fileId);
                 if (fileInfo == null) {
-                    // contentList.add(String.format("\n\n【文件ID:%s】\n文件不存在", fileIdStr));
                     continue;
                 }
-
-                String content = extractContent(fileInfo);
+                String content = extractContent(fileId);
+                if (content == null) {
+                    continue;
+                }
                 contentList.add(String.format("\n\n【%s】\n%s", fileInfo.getFileName(), content));
             } catch (NumberFormatException e) {
                 log.warn("无效的文件ID格式: {}", fileIdStr);
-                //contentList.add(String.format("\n\n【文件ID:%s】\n文件ID格式无效", fileIdStr));
             }
         }
         if (contentList.isEmpty()) {
@@ -67,32 +62,35 @@ public class FileContentService {
     }
 
     /**
-     * 从磁盘读取文件并用Tika解析文本内容
+     * 通过文件服务下载文件并用Tika解析文本内容
      */
-    private String extractContent(FileInfo fileInfo) {
-        File file = new File(basePath, fileInfo.getFilePath());
-        if (!file.exists()) {
-            log.warn("文件不存在: {}", file.getAbsolutePath());
-            return "[文件不存在: " + fileInfo.getFileName() + "]";
-        }
-
+    private String extractContent(Long fileId) {
         try {
-            FileSystemResource resource = new FileSystemResource(file);
+            byte[] fileBytes = fileServiceClient.download(fileId);
+            if (fileBytes == null || fileBytes.length == 0) {
+                log.warn("文件内容为空: fileId={}", fileId);
+                return null;
+            }
+
+            ByteArrayResource resource = new ByteArrayResource(fileBytes);
             TikaDocumentReader reader = new TikaDocumentReader(resource);
             List<Document> documents = reader.get();
             return documents.stream()
                     .map(Document::getContent)
                     .collect(StringBuilder::new, (sb, s) -> {
-                        if (!sb.isEmpty()) sb.append("\n\n");
+                        if (!sb.isEmpty()) {
+                            sb.append("\n\n");
+                        }
                         sb.append(s);
                     }, (sb1, sb2) -> {
-                        if (!sb1.isEmpty() && !sb2.isEmpty()) sb1.append("\n\n");
+                        if (!sb1.isEmpty() && !sb2.isEmpty()) {
+                            sb1.append("\n\n");
+                        }
                         sb1.append(sb2);
-                    })
-                    .toString();
+                    }).toString();
         } catch (Exception e) {
-            log.error("文件解析失败: fileId={}, fileName={}", fileInfo.getId(), fileInfo.getFileName(), e);
-            return "[" + fileInfo.getFileName() + ": 解析失败 - " + e.getMessage() + "]";
+            log.error("文件解析失败: fileId={}", fileId, e);
+            return null;
         }
     }
 }
