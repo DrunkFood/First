@@ -386,6 +386,7 @@ const renderDocxPreview = async (fileId: number) => {
     const blob = await fileApi.download(fileId) as unknown as Blob
     await nextTick()
     if (docxPreviewContainer.value) {
+      docxPreviewContainer.value.innerHTML = ''
       await renderAsync(blob, docxPreviewContainer.value, undefined, {
         className: 'docx-preview-wrapper',
         inWrapper: true,
