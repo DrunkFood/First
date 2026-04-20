@@ -66,4 +66,8 @@ export const requirementApi = {
   getDetectionRecords(id: number) {
     return request.get<any, RequirementDetectionRecord[]>(`/core-api/v1/requirements/${id}/detect/records`)
   },
+  /** 完成需求检测 */
+  finishDetection(id: number) {
+    return request.post(`/core-api/v1/requirements/${id}/detect/finish`)
+  },
 }

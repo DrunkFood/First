@@ -476,9 +476,14 @@ function handleViewOriginal(issue: DetectionIssueVO) {
   originalVisible.value = true
 }
 
-function handleFinish() {
-  ElMessage.success('检测完成')
-  router.push('/requirement')
+async function handleFinish() {
+  try {
+    await requirementApi.finishDetection(requirementId.value)
+    ElMessage.success('检测完成')
+    router.push('/requirement')
+  } catch {
+    ElMessage.error('操作失败')
+  }
 }
 
 // ---- 辅助函数 ----

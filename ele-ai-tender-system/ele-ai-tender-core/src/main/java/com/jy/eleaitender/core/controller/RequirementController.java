@@ -151,4 +151,12 @@ public class RequirementController {
     public Result<List<AiDetectionRecord>> getDetectionRecords(@PathVariable Long id) {
         return Result.success(requirementService.getDetectionRecords(id));
     }
+
+    @PostMapping("/{id}/detect/finish")
+    @RequireLogin
+    @Operation(summary = "完成需求检测")
+    public Result<Void> finishDetection(@PathVariable Long id) {
+        requirementService.finishDetection(id);
+        return Result.success();
+    }
 }

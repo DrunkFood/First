@@ -276,6 +276,15 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
+    @Transactional
+    public void finishDetection(Long requirementId) {
+        AiRequirement requirement = getById(requirementId);
+        requirement.setStatus("COMPLETED");
+        requirement.setProgress(100);
+        requirementMapper.updateById(requirement);
+    }
+
+    @Override
     public List<MatchFileVO> getMatchFiles(Long requirementId, String keyword) {
         // 获取当前需求的项目类型信息，用于匹配
         String projectType = null;

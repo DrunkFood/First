@@ -110,8 +110,7 @@ public class AiTaskResultSyncHandler {
         }
 
         requirement.setContent(content);
-        requirement.setStatus("COMPLETED");
-        requirement.setProgress(100);
+        requirement.setProgress(90);
         requirementMapper.updateById(requirement);
         log.info("同步需求内容成功: requirementId={}", requirementId);
     }

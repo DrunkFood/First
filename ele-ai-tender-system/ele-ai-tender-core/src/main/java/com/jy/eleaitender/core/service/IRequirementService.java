@@ -85,6 +85,11 @@ public interface IRequirementService {
     List<AiDetectionRecord> getDetectionRecords(Long requirementId);
 
     /**
+     * 完成需求检测（更新状态为COMPLETED）
+     */
+    void finishDetection(Long requirementId);
+
+    /**
      * 获取匹配文件列表
      */
     List<MatchFileVO> getMatchFiles(Long requirementId, String keyword);
