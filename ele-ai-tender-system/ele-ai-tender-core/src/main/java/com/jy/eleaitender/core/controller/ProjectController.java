@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.request.AdvancePhaseRequest;
+import com.jy.eleaitender.core.dto.request.BatchDeleteRequest;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.common.entity.core.AiProjectVersion;
@@ -67,8 +68,8 @@ public class ProjectController {
     @DeleteMapping
     @RequireLogin
     @Operation(summary = "批量删除项目")
-    public Result<Void> deleteByIds(@RequestBody List<Long> ids) {
-        projectService.deleteByIds(ids);
+    public Result<Void> deleteByIds(@RequestBody BatchDeleteRequest request) {
+        projectService.deleteByIds(request.getIds());
         return Result.success();
     }
 
