@@ -297,9 +297,10 @@ public class AiTaskResultSyncHandler {
         // 同步状态
         record.setStatus(task.getStatus());
 
-        // COMPLETED: 同步结果和完成时间
+        // COMPLETED: 同步结果和完成时间，注入recordId供前端使用
         if (AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
-            record.setResult(task.getResult());
+            String enrichedResult = enrichResultWithRecordId(task.getResult(), record.getId());
+            record.setResult(enrichedResult);
             record.setCompletedAt(LocalDateTime.now());
         } else if (AiTaskStatus.FAILED.getCode().equals(task.getStatus())
                 || AiTaskStatus.AI_UNAVAILABLE.getCode().equals(task.getStatus())
@@ -310,8 +311,36 @@ public class AiTaskResultSyncHandler {
         detectionRecordMapper.updateById(record);
         log.info("同步检测记录成功: recordId={}, status={}", recordId, task.getStatus());
 
-        // 检查该项目所有检测记录是否都已完成，若是则更新项目状态
-        checkAndUpdateProjectDetectionStatus(record.getProjectId());
+        // 区分需求级和项目级检测
+        if (record.getRequirementId() != null) {
+            log.info("需求级检测同步完成: requirementId={}", record.getRequirementId());
+        } else {
+            checkAndUpdateProjectDetectionStatus(record.getProjectId());
+        }
+    }
+
+    /**
+     * 在检测结果JSON中注入recordId，供前端逐条处理时使用
+     */
+    private String enrichResultWithRecordId(String resultJson, Long recordId) {
+        if (!StringUtils.hasText(resultJson)) {
+            return resultJson;
+        }
+        try {
+            com.fasterxml.jackson.databind.node.ObjectNode root =
+                    (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(resultJson);
+            root.put("recordId", recordId);
+            JsonNode issuesNode = root.get("issues");
+            if (issuesNode != null && issuesNode.isArray()) {
+                for (JsonNode issue : issuesNode) {
+                    ((com.fasterxml.jackson.databind.node.ObjectNode) issue).put("recordId", recordId);
+                }
+            }
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            log.error("注入recordId到检测结果失败", e);
+            return resultJson;
+        }
     }
 
     private void checkAndUpdateProjectDetectionStatus(Long projectId) {

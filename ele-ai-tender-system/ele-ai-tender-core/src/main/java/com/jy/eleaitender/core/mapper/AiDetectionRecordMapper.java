@@ -19,4 +19,7 @@ public interface AiDetectionRecordMapper extends BaseMapper<AiDetectionRecord> {
      */
     @Select("SELECT * FROM ai_detection_record WHERE project_id = #{projectId} AND is_delete = 0 ORDER BY id ASC")
     List<AiDetectionRecord> selectByProjectId(@Param("projectId") Long projectId);
+
+    @Select("SELECT * FROM ai_detection_record WHERE requirement_id = #{requirementId} AND is_delete = 0 ORDER BY id ASC")
+    List<AiDetectionRecord> selectByRequirementId(@Param("requirementId") Long requirementId);
 }

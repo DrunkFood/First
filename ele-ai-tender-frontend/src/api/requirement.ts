@@ -1,6 +1,7 @@
 import request from '@/utils/request'
 import type { PageResult } from '@/types'
 import type { RequirementInfo, RequirementQueryParams, RequirementCreateParams, RequirementEditParams, MatchFile } from '@/types/requirement'
+import type { RequirementDetectionRecord } from '@/types/detection'
 
 export const requirementApi = {
   getList(params: RequirementQueryParams) {
@@ -52,5 +53,17 @@ export const requirementApi = {
   /** 提交需求检测 */
   detect(id: number) {
     return request.post<any, Record<string, number>>(`/core-api/v1/requirements/${id}/detect`)
+  },
+  /** 接受需求检测建议 */
+  acceptDetection(id: number, recordId: number, issueIndex: number) {
+    return request.post(`/core-api/v1/requirements/${id}/detect/${recordId}/accept`, null, { params: { issueIndex } })
+  },
+  /** 拒绝需求检测建议 */
+  rejectDetection(id: number, recordId: number, issueIndex: number) {
+    return request.post(`/core-api/v1/requirements/${id}/detect/${recordId}/reject`, null, { params: { issueIndex } })
+  },
+  /** 获取需求检测记录列表 */
+  getDetectionRecords(id: number) {
+    return request.get<any, RequirementDetectionRecord[]>(`/core-api/v1/requirements/${id}/detect/records`)
   },
 }

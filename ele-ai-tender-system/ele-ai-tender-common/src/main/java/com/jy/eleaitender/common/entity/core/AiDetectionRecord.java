@@ -18,6 +18,9 @@ import java.time.LocalDateTime;
 @Schema(description = "检测记录")
 public class AiDetectionRecord extends BaseEntity {
 
+    @Schema(description = "关联的业务需求ID(需求级检测时非空)")
+    private Long requirementId;
+
     @Schema(description = "项目ID")
     private Long projectId;
 

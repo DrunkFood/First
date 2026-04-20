@@ -97,7 +97,7 @@
                   </el-button>
                 </template>
                 <el-tag v-else :type="issue.handleStatus === 1 ? 'success' : 'info'" size="small">
-                  {{ issue.handleStatus === 1 ? '已处理' : '已拒绝' }}
+                  {{ issue.handleStatus === 1 ? '已接受' : '已拒绝' }}
                 </el-tag>
                 <el-button size="small" @click="handleViewOriginal(issue)">
                   查看原文
@@ -148,9 +148,9 @@
     </div>
 
     <!-- 查看原文弹窗 -->
-    <el-dialog v-model="originalVisible" title="查看原文" width="500px">
+    <el-dialog v-model="originalVisible" title="查看原文" width="600px">
       <div v-if="currentOriginal" class="original-content">
-        <p class="original-text">{{ currentOriginal.location || currentOriginal.description }}</p>
+        <div class="original-context" v-html="highlightedContent"></div>
       </div>
     </el-dialog>
   </div>
@@ -162,45 +162,25 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Loading, RefreshRight, CircleCheck } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
-import { aiTaskApi } from '@/api/ai-task'
 import { useTaskPolling } from '@/composables/useTaskPolling'
 import { getTaskProgress, TERMINAL_STATUSES } from '@/types/ai-task'
 import type { AiTaskVO, AiTaskStatus } from '@/types/ai-task'
-import type { DetectionType, DetectionIssueVO } from '@/types/detection'
+import type { DetectionIssueVO } from '@/types/detection'
 
 /**
- * 检测类型到后端AI任务类型的映射（用于查询最新任务）
- * 前端 DetectionType: FAIRNESS, COMPLIANCE, TYPO, SENSITIVE_WORD
- * 后端 AiTaskType: DETECTION_POLICY_REVIEW, DETECTION_FORMAT_CHECK, DETECTION_TYPO, DETECTION_SENSITIVE_WORD
+ * 需求级检测只有2项：敏感词 + 错别字
+ * 后端AiTaskType: DETECTION_SENSITIVE_WORD, DETECTION_TYPO
+ * 后端DetectionType code: SENSITIVE_WORD, TYPO
  */
-const DETECTION_TASK_TYPE_MAP: Record<string, string> = {
-  FAIRNESS: 'DETECTION_POLICY_REVIEW',
-  COMPLIANCE: 'DETECTION_FORMAT_CHECK',
-  TYPO: 'DETECTION_TYPO',
-  SENSITIVE_WORD: 'DETECTION_SENSITIVE_WORD',
-}
-
-/**
- * 前端检测类型到后端taskMap返回key的映射（用于匹配提交检测后的返回值）
- * 后端 submitDetection 返回 key: SENSITIVE_WORD, TYPO, POLICY_REVIEW, FORMAT_CHECK
- */
-const TASK_MAP_KEY: Record<string, string> = {
-  FAIRNESS: 'POLICY_REVIEW',
-  COMPLIANCE: 'FORMAT_CHECK',
-  TYPO: 'TYPO',
-  SENSITIVE_WORD: 'SENSITIVE_WORD',
-}
-
-const DETECT_TYPE_CONFIG: Record<string, { label: string; icon: string }> = {
-  FAIRNESS: { label: '公平竞争检测', icon: 'ScaleToOriginal' },
-  COMPLIANCE: { label: '合规性检查', icon: 'DocumentChecked' },
-  TYPO: { label: '错别字检查', icon: 'EditPen' },
-  SENSITIVE_WORD: { label: '敏感词检测', icon: 'Warning' },
+const DETECT_TYPE_CONFIG: Record<string, { label: string }> = {
+  TYPO: { label: '错别字检查' },
+  SENSITIVE_WORD: { label: '敏感词检测' },
 }
 
 interface DetectCard {
-  type: DetectionType
+  type: string
   label: string
+  recordId: number | null
   taskId: number | null
   status: AiTaskStatus | ''
   percentage: number
@@ -216,12 +196,10 @@ const route = useRoute()
 const requirementId = ref(0)
 const requirementName = ref('')
 
-// ---- 检测卡片 ----
+// ---- 检测卡片（只有2项） ----
 const detectCards = ref<DetectCard[]>([
-  { type: 'FAIRNESS', label: '公平竞争检测', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
-  { type: 'COMPLIANCE', label: '合规性检查', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
-  { type: 'TYPO', label: '错别字检查', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
-  { type: 'SENSITIVE_WORD', label: '敏感词检测', taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
+  { type: 'TYPO', label: '错别字检查', recordId: null, taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
+  { type: 'SENSITIVE_WORD', label: '敏感词检测', recordId: null, taskId: null, status: '', percentage: 0, issueCount: 0, completed: false, failed: false },
 ])
 
 // ---- 为每个卡片创建独立的轮询实例 ----
@@ -250,7 +228,6 @@ const currentOriginal = ref<DetectionIssueVO | null>(null)
 const allCompleted = computed(() => detectCards.value.every(c => c.completed || c.failed))
 
 const canReDetect = computed(() => {
-  // 所有卡片的任务都处于终态，才允许重新检测
   return detectCards.value.every(c => !c.taskId || TERMINAL_STATUSES.includes(c.status as AiTaskStatus) || c.completed || c.failed)
 })
 
@@ -263,6 +240,31 @@ const overallProgress = computed(() => {
 const totalUnhandledIssues = computed(() =>
   issues.value.filter(i => i.handleStatus === 0).length
 )
+
+/** 查看原文高亮内容 */
+const highlightedContent = computed(() => {
+  if (!currentOriginal.value) return ''
+  const original = currentOriginal.value.original
+  const location = currentOriginal.value.location || ''
+
+  if (original) {
+    const context = location || original
+    const escapedOriginal = escapeHtml(original).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return escapeHtml(context).replace(
+      new RegExp(`(${escapedOriginal})`, 'g'),
+      '<mark class="highlight-issue">$1</mark>'
+    )
+  }
+  return escapeHtml(location || currentOriginal.value.description || '无原文信息')
+})
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
 
 // ---- 初始化 ----
 onMounted(async () => {
@@ -283,38 +285,43 @@ onMounted(async () => {
     return
   }
 
-  // 先恢复各检测类型的最新任务状态
   await restoreDetectionState()
 })
 
 // ---- 恢复检测任务状态 ----
 async function restoreDetectionState() {
-  const cards = detectCards.value
-  const results = await Promise.allSettled(
-    cards.map(card => {
-      const taskType = DETECTION_TASK_TYPE_MAP[card.type]!
-      return aiTaskApi.getLatestTask(taskType, requirementId.value, 'REQUIREMENT')
-    })
-  )
+  try {
+    const records = await requirementApi.getDetectionRecords(requirementId.value)
 
-  let hasActive = false
-  let hasAnyTask = false
-  for (let i = 0; i < cards.length; i++) {
-    const r = results[i]
-    if (r?.status === 'fulfilled' && r.value && r.value.id) {
-      const task = r.value
-      hasAnyTask = true
-      cards[i]!.taskId = task.id
-      cardTaskIds[i]!.value = task.id
-      updateCardFromTask(i, task)
-      if (!TERMINAL_STATUSES.includes(task.status)) {
-        hasActive = true
+    if (!records || records.length === 0) {
+      await startDetection()
+      return
+    }
+
+    const cards = detectCards.value
+    for (const record of records) {
+      const cardIndex = cards.findIndex(c => c.type === record.detectionType)
+      if (cardIndex < 0) continue
+      const card = cards[cardIndex]!
+
+      card.recordId = record.id
+      card.taskId = record.taskId
+
+      const isTerminal = ['COMPLETED', 'FAILED', 'AI_UNAVAILABLE', 'SKIPPED'].includes(record.status)
+      if (isTerminal) {
+        card.completed = record.status === 'COMPLETED'
+        card.failed = ['FAILED', 'AI_UNAVAILABLE'].includes(record.status)
+        card.percentage = 100
+        card.status = record.status as AiTaskStatus
+        if (record.result) {
+          parseTaskResult(card, record.result)
+        }
+      } else {
+        // 还在进行中，设置轮询
+        cardTaskIds[cardIndex]!.value = record.taskId
       }
     }
-  }
-
-  // 仅在从未提交过检测时自动触发（所有类型均无任何任务记录）
-  if (!hasAnyTask) {
+  } catch {
     await startDetection()
   }
 }
@@ -326,7 +333,7 @@ function updateCardFromTask(index: number, task: AiTaskVO) {
   card.status = task.status
 
   if (task.status === 'COMPLETED') {
-    if (card.completed) return  // 已完成则跳过，避免重复解析issues
+    if (card.completed) return
     card.completed = true
     card.percentage = 100
     parseTaskResult(card, task.result)
@@ -343,7 +350,6 @@ function updateCardFromTask(index: number, task: AiTaskVO) {
 
 // ---- 提交检测 ----
 async function startDetection() {
-  // 提交前校验：刷新每个检测类型的最新任务状态
   if (!canReDetect.value) {
     ElMessage.warning('检测任务正在处理中，请稍候')
     return
@@ -353,16 +359,14 @@ async function startDetection() {
     const taskMap = await requirementApi.detect(requirementId.value)
     submitting.value = false
 
-    // 后端返回 key 为 SENSITIVE_WORD/TYPO/POLICY_REVIEW/FORMAT_CHECK
-    // 需要通过 TASK_MAP_KEY 映射到前端卡片类型 FAIRNESS/COMPLIANCE/TYPO/SENSITIVE_WORD
+    // 后端返回 key 为 SENSITIVE_WORD / TYPO
     const cards = detectCards.value
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i]!
-      const mapKey = TASK_MAP_KEY[card.type]
-      const taskId = mapKey ? taskMap[mapKey] : undefined
+      const taskId = taskMap[card.type]
       if (taskId) {
         card.taskId = taskId
-        cardTaskIds[i]!.value = taskId  // 触发 useTaskPolling 自动开始轮询
+        cardTaskIds[i]!.value = taskId
       } else {
         card.completed = true
         card.percentage = 100
@@ -387,8 +391,8 @@ async function handleReDetect() {
   }
   reDetecting.value = true
   try {
-    // 重置状态
     for (const card of detectCards.value) {
+      card.recordId = null
       card.taskId = null
       card.status = ''
       card.percentage = 0
@@ -415,21 +419,20 @@ function parseTaskResult(card: DetectCard, resultJson?: string) {
   if (!resultJson) return
   try {
     const result = JSON.parse(resultJson)
-    if (typeof result.issueCount === 'number') {
-      card.issueCount = result.issueCount
-    }
     if (Array.isArray(result.issues)) {
-      for (const issue of result.issues) {
+      for (let i = 0; i < result.issues.length; i++) {
+        const issue = result.issues[i]
         issues.value.push({
-          recordId: issue.recordId || 0,
-          detectionType: card.type,
+          recordId: issue.recordId || result.recordId || card.recordId || 0,
+          detectionType: card.type as any,
           typeName: card.label,
-          description: issue.description || '',
-          location: issue.location || '',
+          description: issue.reason || issue.description || '',
+          location: issue.position || issue.location || '',
+          original: issue.original || '',
           suggestion: issue.suggestion || '',
           severity: issue.severity || 'MEDIUM',
           handleStatus: issue.handleStatus || 0,
-          issueIndex: issues.value.length,
+          issueIndex: i,
         })
       }
       card.issueCount = result.issues.length
@@ -439,29 +442,29 @@ function parseTaskResult(card: DetectCard, resultJson?: string) {
   }
 }
 
-// ---- 接受/拒绝建议 ----
-async function handleAccept(_issue: DetectionIssueVO, idx: number) {
+// ---- 接受建议（调用后端API + 自动修正内容） ----
+async function handleAccept(issue: DetectionIssueVO, idx: number) {
   try {
-    await requirementApi.update(requirementId.value, {} as any)
-    if (issues.value[idx]) {
-      issues.value[idx].handleStatus = 1
-    }
-    ElMessage.success('已接受建议')
+    await requirementApi.acceptDetection(requirementId.value, issue.recordId, issue.issueIndex)
+    const item = issues.value[idx]
+    if (item) item.handleStatus = 1
+    ElMessage.success('已接受建议，内容已自动修正')
   } catch {
     ElMessage.error('操作失败')
   }
 }
 
-async function handleReject(_issue: DetectionIssueVO, idx: number) {
+// ---- 拒绝建议（调用后端API） ----
+async function handleReject(issue: DetectionIssueVO, idx: number) {
   try {
     await ElMessageBox.confirm('确定拒绝该建议吗？', '拒绝确认', {
       confirmButtonText: '确定拒绝',
       cancelButtonText: '取消',
       type: 'warning',
     })
-    if (issues.value[idx]) {
-      issues.value[idx].handleStatus = 2
-    }
+    await requirementApi.rejectDetection(requirementId.value, issue.recordId, issue.issueIndex)
+    const item = issues.value[idx]
+    if (item) item.handleStatus = 2
     ElMessage.info('已拒绝建议')
   } catch {
     // 用户取消
@@ -479,7 +482,7 @@ function handleFinish() {
 }
 
 // ---- 辅助函数 ----
-function getTypeLabel(type: DetectionType): string {
+function getTypeLabel(type: string): string {
   return DETECT_TYPE_CONFIG[type]?.label || type
 }
 
@@ -758,12 +761,20 @@ function getIssueClass(issue: DetectionIssueVO): string {
   padding: 8px 0;
 }
 
-.original-text {
+.original-context {
   font-size: 14px;
   line-height: 1.8;
   color: var(--app-text-primary);
   background: var(--app-bg-secondary);
   padding: 12px 16px;
   border-radius: var(--app-radius-sm);
+}
+
+:deep(.highlight-issue) {
+  background-color: #fef08a;
+  color: #854d0e;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-weight: 600;
 }
 </style>

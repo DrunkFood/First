@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.common.entity.core.AiRequirement;
@@ -122,5 +123,32 @@ public class RequirementController {
     @Operation(summary = "提交需求检测（敏感词+错别字）")
     public Result<Map<String, Long>> detect(@PathVariable Long id) {
         return Result.success(requirementService.submitDetection(id));
+    }
+
+    @PostMapping("/{id}/detect/{recordId}/accept")
+    @RequireLogin
+    @Operation(summary = "接受需求检测建议（自动修正内容）")
+    public Result<Void> acceptDetectionIssue(@PathVariable Long id,
+                                              @PathVariable Long recordId,
+                                              @RequestParam Integer issueIndex) {
+        requirementService.acceptDetectionIssue(id, recordId, issueIndex);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/detect/{recordId}/reject")
+    @RequireLogin
+    @Operation(summary = "拒绝需求检测建议")
+    public Result<Void> rejectDetectionIssue(@PathVariable Long id,
+                                              @PathVariable Long recordId,
+                                              @RequestParam Integer issueIndex) {
+        requirementService.rejectDetectionIssue(id, recordId, issueIndex);
+        return Result.success();
+    }
+
+    @GetMapping("/{id}/detect/records")
+    @RequireLogin
+    @Operation(summary = "获取需求检测记录列表")
+    public Result<List<AiDetectionRecord>> getDetectionRecords(@PathVariable Long id) {
+        return Result.success(requirementService.getDetectionRecords(id));
     }
 }

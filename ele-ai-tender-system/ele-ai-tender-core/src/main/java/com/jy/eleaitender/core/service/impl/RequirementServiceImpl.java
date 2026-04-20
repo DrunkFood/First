@@ -5,20 +5,26 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
 import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.DetectionType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
+import com.jy.eleaitender.core.mapper.AiDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.AiKnowledgeDocumentMapper;
 import com.jy.eleaitender.core.mapper.AiRequirementMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IRequirementService;
+import com.jy.eleaitender.core.util.DetectionResultParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,6 +42,14 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Autowired
     private IAiTaskService aiTaskService;
+
+    @Autowired
+    private AiDetectionRecordMapper detectionRecordMapper;
+
+    private static final DetectionType[] ALL_DETECTION_TYPES = {
+            DetectionType.SENSITIVE_WORD,
+            DetectionType.TYPO
+    };
 
     @Override
     public Page<AiRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status, Long projectId) {
@@ -94,7 +108,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public void deleteById(Long id) {
-        AiRequirement requirement = getById(id); // 内部已做归属校验
+        getById(id); // 内部已做归属校验
         requirementMapper.deleteById(id);
     }
 
@@ -160,20 +174,100 @@ public class RequirementServiceImpl implements IRequirementService {
     @Transactional
     public Map<String, Long> submitDetection(Long requirementId) {
         AiRequirement requirement = getById(requirementId);
-        Map<String, Object> params = new HashMap<>();
-        params.put("requirementId", requirementId);
-        params.put("content", requirement.getContent());
 
-        Map<String, Long> taskIds = new HashMap<>();
-        AiTask sensitiveTask = aiTaskService.createTask(AiTaskType.DETECTION_SENSITIVE_WORD,
-                requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
-        taskIds.put("SENSITIVE_WORD", sensitiveTask.getId());
+        // 文档内容快照
+        String contentSnapshot = requirement.getContent();
 
-        AiTask typoTask = aiTaskService.createTask(AiTaskType.DETECTION_TYPO,
-                requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
-        taskIds.put("TYPO", typoTask.getId());
+        // 需求级检测只有2项：敏感词 + 错别字
+        Map<String, Long> taskIds = new LinkedHashMap<>();
+
+        // 为每种检测类型创建检测记录 + AI任务
+        for (DetectionType type : ALL_DETECTION_TYPES) {
+            // 创建检测记录
+            AiDetectionRecord record = new AiDetectionRecord();
+            record.setProjectId(requirement.getProjectId());
+            record.setRequirementId(requirementId);
+            record.setDetectionType(type.getCode());
+            record.setContentSnapshot(contentSnapshot);
+            record.setStatus(AiTaskStatus.PENDING.getCode());
+            record.setStartedAt(LocalDateTime.now());
+            detectionRecordMapper.insert(record);
+
+            // 构建AI任务参数
+            Map<String, Object> params = new HashMap<>();
+            params.put("requirementId", requirementId);
+            params.put("detectionRecordId", record.getId());
+            params.put("detectionType", type.getCode());
+            params.put("content", contentSnapshot);
+
+            AiTaskType taskType = AiTaskType.mapToTaskType(type);
+
+            // bizId=recordId, bizType=DETECTION，使syncDetection能找到record
+            AiTask task = aiTaskService.createTask(taskType, requirement.getProjectId(),
+                    record.getId(), "DETECTION", params, null);
+
+            record.setTaskId(task.getId());
+            detectionRecordMapper.updateById(record);
+
+            taskIds.put(type.getCode(), task.getId());
+        }
 
         return taskIds;
+    }
+
+    @Override
+    @Transactional
+    public void acceptDetectionIssue(Long requirementId, Long recordId, Integer issueIndex) {
+        AiRequirement requirement = getById(requirementId);
+
+        AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
+        if (record == null || !requirementId.equals(record.getRequirementId())) {
+            throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
+        }
+
+        // 提取original和suggestion用于自动修正
+        String original = DetectionResultParser.getIssueField(record.getResult(), issueIndex, "original");
+        String suggestion = DetectionResultParser.getIssueField(record.getResult(), issueIndex, "suggestion");
+
+        // 更新handleStatus为1（已接受）
+        String updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, 1);
+        if (updatedJson != null) {
+            record.setResult(updatedJson);
+            detectionRecordMapper.updateById(record);
+        }
+
+        // 自动修正：将original替换为suggestion
+        if (StringUtils.hasText(original) && StringUtils.hasText(suggestion) && !original.equals(suggestion)) {
+            String content = requirement.getContent();
+            if (content != null && content.contains(original)) {
+                content = content.replace(original, suggestion);
+                requirement.setContent(content);
+                requirementMapper.updateById(requirement);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void rejectDetectionIssue(Long requirementId, Long recordId, Integer issueIndex) {
+        getById(requirementId);
+
+        AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
+        if (record == null || !requirementId.equals(record.getRequirementId())) {
+            throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
+        }
+
+        String updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, 2);
+        if (updatedJson != null) {
+            record.setResult(updatedJson);
+            detectionRecordMapper.updateById(record);
+        }
+    }
+
+    @Override
+    public List<AiDetectionRecord> getDetectionRecords(Long requirementId) {
+        getById(requirementId); // 内部已做归属校验
+        return detectionRecordMapper.selectByRequirementId(requirementId);
     }
 
     @Override
@@ -249,4 +343,5 @@ public class RequirementServiceImpl implements IRequirementService {
         }
         return String.join("、", parts);
     }
+
 }

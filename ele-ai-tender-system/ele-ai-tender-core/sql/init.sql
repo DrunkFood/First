@@ -215,6 +215,7 @@ CREATE TABLE IF NOT EXISTS `ai_policy_file` (
 -- =============================================
 CREATE TABLE IF NOT EXISTS `ai_detection_record` (
     `id`               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '检测记录ID',
+    `requirement_id`   BIGINT       DEFAULT NULL COMMENT '关联的业务需求ID(需求级检测时非空)',
     `project_id`       BIGINT       NOT NULL COMMENT '项目ID',
     `detection_type`   VARCHAR(50)  DEFAULT NULL COMMENT '检测类型: SENSITIVE_WORD/TYPO/POLICY_REVIEW/FORMAT_CHECK',
     `content_snapshot` TEXT         DEFAULT NULL COMMENT '检测内容快照',
@@ -233,6 +234,7 @@ CREATE TABLE IF NOT EXISTS `ai_detection_record` (
     `ver`              INT          NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
     `is_delete`        TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除',
     PRIMARY KEY (`id`),
+    INDEX `idx_requirement` (`requirement_id`),
     INDEX `idx_project` (`project_id`),
     INDEX `idx_status` (`status`),
     INDEX `idx_detection_type` (`detection_type`),

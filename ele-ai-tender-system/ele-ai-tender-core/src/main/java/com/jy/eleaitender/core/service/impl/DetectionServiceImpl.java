@@ -102,7 +102,7 @@ public class DetectionServiceImpl implements IDetectionService {
                 params.put("policyFileIds", policyFileIdStr);
             }
 
-            AiTaskType taskType = mapToTaskType(type);
+            AiTaskType taskType = AiTaskType.mapToTaskType(type);
             AiTask task = aiTaskService.createTask(taskType, projectId,
                     record.getId(), "DETECTION", params, policyFileIdStr);
 
@@ -142,7 +142,7 @@ public class DetectionServiceImpl implements IDetectionService {
             item.setTaskStatus(record.getStatus());
 
             // 解析问题数
-            int issueCount = parseIssueCount(record.getResult());
+            int issueCount = DetectionResultParser.parseIssueCount(record.getResult());
             item.setIssueCount(issueCount);
             int score = DetectionResultParser.parseScore(record.getResult());
             item.setScore(java.math.BigDecimal.valueOf(score));
@@ -192,7 +192,7 @@ public class DetectionServiceImpl implements IDetectionService {
         int totalIssueCount = 0;
 
         for (AiDetectionRecord record : records) {
-            List<DetectionIssueVO> recordIssues = parseIssues(record);
+            List<DetectionIssueVO> recordIssues = DetectionResultParser.parseIssues(record);
             issues.addAll(recordIssues);
             totalIssueCount += recordIssues.size();
         }
@@ -304,7 +304,7 @@ public class DetectionServiceImpl implements IDetectionService {
                     params.put("policyFileIds", record.getPolicyFileIds());
                 }
 
-                AiTaskType taskType = mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
+                AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
                 AiTask task = aiTaskService.createTask(taskType, projectId,
                         record.getId(), "DETECTION", params, record.getPolicyFileIds());
                 record.setTaskId(task.getId());
@@ -332,15 +332,6 @@ public class DetectionServiceImpl implements IDetectionService {
         return project;
     }
 
-    private AiTaskType mapToTaskType(DetectionType detectionType) {
-        return switch (detectionType) {
-            case SENSITIVE_WORD -> AiTaskType.DETECTION_SENSITIVE_WORD;
-            case TYPO -> AiTaskType.DETECTION_TYPO;
-            case POLICY_REVIEW -> AiTaskType.DETECTION_POLICY_REVIEW;
-            case FORMAT_CHECK -> AiTaskType.DETECTION_FORMAT_CHECK;
-        };
-    }
-
     private String getDetectionTypeName(String code) {
         try {
             return DetectionType.fromCode(code).getLabel();
@@ -349,11 +340,4 @@ public class DetectionServiceImpl implements IDetectionService {
         }
     }
 
-    private int parseIssueCount(String resultJson) {
-        return DetectionResultParser.parseIssueCount(resultJson);
-    }
-
-    private List<DetectionIssueVO> parseIssues(AiDetectionRecord record) {
-        return DetectionResultParser.parseIssues(record);
-    }
 }

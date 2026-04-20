@@ -178,6 +178,27 @@ public class DetectionResultParser {
         return reason;
     }
 
+    /**
+     * 获取指定issue的指定字段值
+     */
+    public static String getIssueField(String resultJson, int issueIndex, String field) {
+        if (!StringUtils.hasText(resultJson)) {
+            return "";
+        }
+        try {
+            JsonNode root = MAPPER.readTree(resultJson);
+            JsonNode issuesNode = root.get("issues");
+            if (issuesNode != null && issuesNode.isArray()
+                    && issueIndex >= 0 && issueIndex < issuesNode.size()) {
+                return getStringValue(issuesNode.get(issueIndex), field, "");
+            }
+            return "";
+        } catch (Exception e) {
+            log.error("获取检测问题字段失败, issueIndex={}, field={}", issueIndex, field, e);
+            return "";
+        }
+    }
+
     private static String getStringValue(JsonNode node, String field, String defaultValue) {
         JsonNode fieldNode = node.get(field);
         return fieldNode != null && !fieldNode.isNull() ? fieldNode.asText(defaultValue) : defaultValue;

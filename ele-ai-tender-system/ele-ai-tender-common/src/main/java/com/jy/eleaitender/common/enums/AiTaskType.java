@@ -44,4 +44,14 @@ public enum AiTaskType {
     public boolean isRequirementDetection() {
         return this == DETECTION_SENSITIVE_WORD || this == DETECTION_TYPO;
     }
+
+    public static AiTaskType mapToTaskType(DetectionType detectionType) {
+        return switch (detectionType) {
+            case SENSITIVE_WORD -> AiTaskType.DETECTION_SENSITIVE_WORD;
+            case TYPO -> AiTaskType.DETECTION_TYPO;
+            case POLICY_REVIEW -> AiTaskType.DETECTION_POLICY_REVIEW;
+            case FORMAT_CHECK -> AiTaskType.DETECTION_FORMAT_CHECK;
+        };
+    }
+
 }

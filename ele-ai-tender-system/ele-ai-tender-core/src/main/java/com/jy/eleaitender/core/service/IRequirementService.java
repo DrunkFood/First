@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
 import com.jy.eleaitender.common.entity.core.AiRequirement;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
 
@@ -67,6 +68,21 @@ public interface IRequirementService {
      * 提交需求检测（敏感词+错别字，2项）
      */
     Map<String, Long> submitDetection(Long requirementId);
+
+    /**
+     * 接受需求检测建议（更新handleStatus + 自动修正内容）
+     */
+    void acceptDetectionIssue(Long requirementId, Long recordId, Integer issueIndex);
+
+    /**
+     * 拒绝需求检测建议（更新handleStatus）
+     */
+    void rejectDetectionIssue(Long requirementId, Long recordId, Integer issueIndex);
+
+    /**
+     * 获取需求检测记录列表
+     */
+    List<AiDetectionRecord> getDetectionRecords(Long requirementId);
 
     /**
      * 获取匹配文件列表
