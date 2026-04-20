@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.entity.core.AiRequirement;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
 import com.jy.eleaitender.core.mapper.AiKnowledgeDocumentMapper;
 import com.jy.eleaitender.core.mapper.AiRequirementMapper;
@@ -114,13 +114,19 @@ public class RequirementServiceImpl implements IRequirementService {
     @Transactional
     public AiTask submitGenerate(Long requirementId, Map<String, Object> params) {
         AiRequirement requirement = getById(requirementId);
+        // 清空需求内容
+        requirement.setContent("");
+        requirement.setProgress(0);
+        requirementMapper.updateById(requirement);
+
+        // 填充任务参数
         params.put("requirementId", requirementId);
         params.put("requirementName", requirement.getRequirementName());
         params.put("projectType", requirement.getProjectType());
         params.put("projectCategory", requirement.getProjectCategory());
         params.put("budget", requirement.getBudget());
         params.put("description", requirement.getRequirementDescription());
-        // TODO 参考文档内容 从 匹配的历史文件/上传的文件 中获取
+        // TODO 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
         params.put("referenceContent", "");
         return aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE,
                 requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
