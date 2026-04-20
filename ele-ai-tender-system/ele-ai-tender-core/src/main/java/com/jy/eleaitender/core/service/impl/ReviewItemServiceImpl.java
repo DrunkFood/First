@@ -19,11 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 评审项服务实现
@@ -48,14 +46,8 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     public List<AiReviewItem> getTreeByProjectId(Long projectId) {
         // 校验项目归属
         projectService.getById(projectId);
-        // 加载该项目下所有评审项
-        List<AiReviewItem> allItems = reviewItemMapper.selectByProjectId(projectId);
-        if (allItems.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        // 在内存中构建树形结构
-        return buildTree(allItems);
+        // 返回该项目下所有评审项（扁平列表），前端按reviewType分组显示
+        return reviewItemMapper.selectByProjectId(projectId);
     }
 
     @Override
@@ -115,43 +107,6 @@ public class ReviewItemServiceImpl implements IReviewItemService {
         }
     }
 
-    /**
-     * 在内存中构建树形结构
-     */
-    private List<AiReviewItem> buildTree(List<AiReviewItem> allItems) {
-        // 找出根节点（parentId 为 null）
-        List<AiReviewItem> rootItems = new ArrayList<>();
-
-        for (AiReviewItem item : allItems) {
-            if (item.getParentId() == null) {
-                rootItems.add(item);
-            }
-        }
-
-        // 对每个根节点递归构建子树
-        for (AiReviewItem root : rootItems) {
-            buildChildren(root, allItems);
-        }
-
-        return rootItems;
-    }
-
-    /**
-     * 递归构建子节点
-     */
-    private void buildChildren(AiReviewItem parent, List<AiReviewItem> allItems) {
-        List<AiReviewItem> children = allItems.stream()
-                .filter(item -> parent.getId().equals(item.getParentId()))
-                .collect(Collectors.toList());
-
-        if (!children.isEmpty()) {
-            // 注意：由于 AiReviewItem 实体没有 children 字段，这里仅返回扁平列表
-            // 实际前端树形展示依赖 parentId 关系在前端构建树
-            for (AiReviewItem child : children) {
-                buildChildren(child, allItems);
-            }
-        }
-    }
 
     @Override
     @Transactional
