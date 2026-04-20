@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import type { PageResult } from '@/types'
-import type { PolicyFileVO, PolicyFileRequest } from '@/types/policy-file'
+import type { PolicyFileVO, PolicyFileRequest, KnowledgeDocumentPolicyVO } from '@/types/policy-file'
 
 export const policyFileApi = {
   /** 分页查询政策文件 */
@@ -33,5 +33,10 @@ export const policyFileApi = {
     return request.get<any, PolicyFileVO[]>('/core-api/v1/policy-files/all', {
       params: { applicableCategory },
     })
+  },
+
+  /** 获取知识库中所有政策类文档 */
+  getKnowledgePolicyDocuments() {
+    return request.get<any, KnowledgeDocumentPolicyVO[]>('/core-api/v1/policy-files/knowledge-policy')
   },
 }

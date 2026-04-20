@@ -24,3 +24,13 @@ export interface PolicyFileRequest {
   fileType: string
   description?: string
 }
+
+/** 知识库政策文档 */
+export interface KnowledgeDocumentPolicyVO {
+  id: number
+  docName: string
+  fileId: number
+  fileType: string
+  status: string
+  createTime: string
+}

@@ -212,44 +212,27 @@
     </div>
 
     <!-- 政策文件选择弹窗 -->
-    <el-dialog v-model="policyModalVisible" title="政策文件匹配" width="560px" destroy-on-close>
+    <el-dialog v-model="policyModalVisible" title="政策文件选择" width="560px" destroy-on-close>
       <div class="policy-modal-content">
         <div class="policy-group">
           <div class="policy-group-label">项目类别：<span class="highlight">{{ PROJECT_CATEGORY_MAP[project?.projectCategory || '']?.label || project?.projectCategory || '-' }}</span></div>
-          <p class="policy-group-hint">系统根据项目类别匹配到以下政策文件，请选择需要应用的文件。</p>
+          <p class="policy-group-hint">以下是知识库中所有政策类文档，请选择需要应用的文件。</p>
         </div>
         <div class="policy-group">
-          <h4 class="policy-group-title">匹配的政策文件</h4>
+          <h4 class="policy-group-title">政策文件</h4>
           <div class="policy-file-list">
             <label
-              v-for="file in aiRecommendedFiles"
+              v-for="file in knowledgePolicyDocs"
               :key="file.id"
               class="policy-file-item"
             >
               <input v-model="selectedPolicyMap[file.id]" type="checkbox" class="policy-checkbox" />
               <div class="policy-file-info">
-                <div class="policy-file-name">{{ file.fileName }}</div>
+                <div class="policy-file-name">{{ file.docName }}</div>
                 <div class="policy-file-meta">政策文件 - {{ file.fileType || 'PDF' }}</div>
               </div>
             </label>
-            <div v-if="!aiRecommendedFiles.length" class="policy-empty">暂无推荐</div>
-          </div>
-        </div>
-        <div class="policy-group">
-          <h4 class="policy-group-title">本单位政策文件</h4>
-          <div class="policy-file-list">
-            <label
-              v-for="file in otherPolicyFiles"
-              :key="file.id"
-              class="policy-file-item"
-            >
-              <input v-model="selectedPolicyMap[file.id]" type="checkbox" class="policy-checkbox" />
-              <div class="policy-file-info">
-                <div class="policy-file-name">{{ file.fileName }}</div>
-                <div class="policy-file-meta">内部文件 - {{ file.fileType || 'DOCX' }}</div>
-              </div>
-            </label>
-            <div v-if="!otherPolicyFiles.length" class="policy-empty">暂无政策文件</div>
+            <div v-if="!knowledgePolicyDocs.length" class="policy-empty">暂无政策文件</div>
           </div>
         </div>
       </div>
@@ -269,12 +252,11 @@ import { renderAsync } from 'docx-preview'
 import { documentApi } from '@/api/document'
 import { fileApi } from '@/api/file'
 import { policyFileApi } from '@/api/policy-file'
-import { aiApi } from '@/api/ai'
 import { projectApi } from '@/api/project'
 import { toWanYuan } from '@/utils/budget'
 import { PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import type { DocumentPreviewVO } from '@/types/document'
-import type { PolicyFileVO } from '@/types/policy-file'
+import type { KnowledgeDocumentPolicyVO } from '@/types/policy-file'
 import type { ProjectInfo } from '@/types/project'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
@@ -324,67 +306,32 @@ const formatTime = (time?: string) => {
 }
 
 // --- 政策文件匹配 ---
-const policyFiles = ref<PolicyFileVO[]>([])
+const knowledgePolicyDocs = ref<KnowledgeDocumentPolicyVO[]>([])
 const selectedPolicyMap = reactive<Record<number, boolean>>({})
-const aiRecommendedIds = ref<number[]>([])
-const suggestingPolicy = ref(false)
 const project = ref<ProjectInfo | null>(null)
 
-const aiRecommendedFiles = computed(() => policyFiles.value.filter(f => aiRecommendedIds.value.includes(f.id)))
-const otherPolicyFiles = computed(() => policyFiles.value.filter(f => !aiRecommendedIds.value.includes(f.id)))
-
-const loadPolicyFiles = async () => {
+const loadKnowledgePolicyDocs = async () => {
   try {
-    policyFiles.value = await policyFileApi.getAllAvailable(project.value?.projectCategory)
-    for (const id of aiRecommendedIds.value) {
-      selectedPolicyMap[id] = true
-    }
+    knowledgePolicyDocs.value = await policyFileApi.getKnowledgePolicyDocuments()
   } catch {
-    ElMessage.error('获取政策文件列表失败')
-  }
-}
-
-const handleSuggestPolicy = async () => {
-  if (!project.value) {
-    ElMessage.warning('项目信息加载中，请稍候')
-    return
-  }
-  suggestingPolicy.value = true
-  try {
-    const res = await aiApi.suggest({
-      content: project.value.projectDescription || project.value.projectName,
-      type: 'policy',
-      projectId: props.projectId,
-    })
-    if (res.suggestions?.length) {
-      const suggestedIds = res.suggestions
-        .map(s => { const num = Number(s); return isNaN(num) ? null : num })
-        .filter((id): id is number => id !== null)
-      aiRecommendedIds.value = suggestedIds
-      for (const id of suggestedIds) {
-        selectedPolicyMap[id] = true
-      }
-      ElMessage.success(`AI推荐了 ${suggestedIds.length} 个政策文件`)
-    } else {
-      ElMessage.info('暂无推荐政策文件')
-    }
-  } catch {
-    ElMessage.error('AI推荐失败')
-  } finally {
-    suggestingPolicy.value = false
+    ElMessage.error('获取知识库政策文档列表失败')
   }
 }
 
 const handleConfirmPolicyFiles = async () => {
-  const selectedIds = Object.entries(selectedPolicyMap)
+  // 提取选中的知识库文档的 fileId
+  const selectedDocIds = Object.entries(selectedPolicyMap)
     .filter(([, checked]) => checked)
     .map(([id]) => Number(id))
+  const selectedFileIds = knowledgePolicyDocs.value
+    .filter(doc => selectedDocIds.includes(doc.id))
+    .map(doc => doc.fileId)
   // 允许不选政策文件直接提交检测（政策文件列表可能为空）
   policyModalVisible.value = false
 
   // 推进阶段到"智能检测"，后端会自动提交检测并携带政策文件ID
   try {
-    await projectApi.advancePhase(props.projectId, 5, { policyFileIds: selectedIds })
+    await projectApi.advancePhase(props.projectId, 5, { policyFileIds: selectedFileIds })
     ElMessage.success('已提交检测，正在进入智能检测阶段')
     emit('next')
   } catch (e: any) {
@@ -505,14 +452,13 @@ const handleSaveDraft = () => {
 }
 
 const handleSubmitReview = async () => {
-  await handleSuggestPolicy()
   policyModalVisible.value = true
 }
 
 onMounted(async () => {
   project.value = await projectApi.getById(props.projectId)
   initVariables()
-  await Promise.all([loadPreview(), loadPolicyFiles()])
+  await Promise.all([loadPreview(), loadKnowledgePolicyDocs()])
 })
 
 defineExpose({ handleSaveEdit, handleApplyVariables })
