@@ -17,8 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class InternalFileServiceClient {
 
-    private static final String SYSTEM_USER = "system";
-    private static final long SYSTEM_USER_ID = 0L;
+    private static final String SERVICE_NAME = "ele-ai-tender-core";
 
     private final RestTemplate restTemplate;
     private final InternalFileServiceProperties properties;
@@ -128,7 +127,7 @@ public class InternalFileServiceClient {
             return cachedToken;
         }
         String secret = properties.getJwtSecret();
-        cachedToken = JwtUtil.generateToken(SYSTEM_USER_ID, SYSTEM_USER, secret, properties.getTokenExpiration());
+        cachedToken = JwtUtil.generateServiceToken(SERVICE_NAME, secret, properties.getTokenExpiration());
         tokenExpireAt = now + properties.getTokenExpiration();
         return cachedToken;
     }

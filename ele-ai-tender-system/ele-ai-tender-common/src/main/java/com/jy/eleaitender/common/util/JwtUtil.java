@@ -105,6 +105,29 @@ public class JwtUtil {
     }
 
     /**
+     * 生成服务间调用Token（SERVICE类型，不依赖Redis校验）
+     *
+     * @param serviceName 服务名称
+     * @param secret      密钥
+     * @param expirationMillis 过期时间（毫秒）
+     * @return Token字符串
+     */
+    public static String generateServiceToken(String serviceName, String secret, long expirationMillis) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", CommonConstant.TOKEN_TYPE_SERVICE);
+        claims.put("serviceName", serviceName);
+        claims.put("username", serviceName);
+        return createToken(claims, secret, expirationMillis, null);
+    }
+
+    /**
+     * 生成服务间调用Token（使用默认密钥）
+     */
+    public static String generateServiceToken(String serviceName, long expirationMillis) {
+        return generateServiceToken(serviceName, runtimeSecret, expirationMillis);
+    }
+
+    /**
      * 生成外部系统用户Token
      *
      * @param appKey         应用Key

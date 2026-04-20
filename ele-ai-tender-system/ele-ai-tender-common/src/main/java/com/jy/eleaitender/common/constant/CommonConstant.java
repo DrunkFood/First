@@ -33,6 +33,11 @@ public class CommonConstant {
     public static final String TOKEN_TYPE_EXTERNAL = "EXTERNAL";
 
     /**
+     * Token类型 - 内部服务间调用
+     */
+    public static final String TOKEN_TYPE_SERVICE = "SERVICE";
+
+    /**
      * 默认管理员角色编码
      */
     public static final String ADMIN_ROLE_CODE = "ADMIN";

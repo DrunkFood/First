@@ -68,6 +68,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isTokenValid(String token, Claims claims, String tokenType) {
+        if (CommonConstant.TOKEN_TYPE_SERVICE.equals(tokenType)) {
+            // 服务间调用Token：仅校验JWT签名有效性，不查Redis
+            return true;
+        }
+
         if (CommonConstant.TOKEN_TYPE_INTERNAL.equals(tokenType)) {
             String redisKey = RedisKeyConstant.TOKEN_PREFIX + getInternalUserId(claims);
             String storedToken = redisTemplate.opsForValue().get(redisKey);
@@ -96,6 +101,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private LoginUser buildLoginUser(Claims claims, String tokenType) {
         LoginUser loginUser = new LoginUser();
         loginUser.setTokenType(tokenType);
+
+        if (CommonConstant.TOKEN_TYPE_SERVICE.equals(tokenType)) {
+            String serviceName = claims.get("serviceName", String.class);
+            loginUser.setUsername(serviceName != null ? serviceName : "system");
+            loginUser.setRealName(loginUser.getUsername());
+            // 服务间调用视为管理员，不受数据隔离限制
+            loginUser.setRoles(List.of(CommonConstant.ADMIN_ROLE_CODE));
+            return loginUser;
+        }
 
         if (CommonConstant.TOKEN_TYPE_INTERNAL.equals(tokenType)) {
             loginUser.setUserId(getInternalUserId(claims));

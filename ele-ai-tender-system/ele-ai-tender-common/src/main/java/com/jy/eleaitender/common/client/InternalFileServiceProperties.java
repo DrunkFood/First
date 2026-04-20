@@ -33,6 +33,6 @@ public class InternalFileServiceProperties {
     /** 服务间调用使用的JWT密钥（默认复用系统JWT密钥） */
     private String jwtSecret;
 
-    /** 服务间调用Token过期时间（毫秒），默认5分钟 */
-    private long tokenExpiration = 5 * 60 * 1000L;
+    /** 服务间调用Token过期时间（毫秒），默认30分钟 */
+    private long tokenExpiration = 30 * 60 * 1000L;
 }

@@ -62,12 +62,17 @@ public class DataScopeHelper {
 
     /**
      * 校验数据归属，非管理员只能操作自己创建的数据
+     * 系统创建的数据（createId=0或null）视为公共资源，不做归属限制
      *
      * @param dataCreateId 数据的 create_id 字段值
      * @throws BusinessException 如果无权访问
      */
     public static void checkOwnership(Long dataCreateId) {
         if (isAdmin()) {
+            return;
+        }
+        // 系统创建的数据（createId=0或null）视为公共资源
+        if (dataCreateId == null || dataCreateId == 0L) {
             return;
         }
         Long currentUserId = getCurrentUserId();
