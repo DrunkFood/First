@@ -83,18 +83,16 @@
         <div class="form-section">
           <h3 class="section-title">历史业务需求匹配</h3>
 
-          <el-form-item label="匹配模式">
-            <MatchModePanel
-              v-model="form.matchMode"
-              :match-files="matchFiles"
-              :selected-file-id="form.matchedFileId"
-              :upload-accept="'.doc,.docx'"
-              :upload-limit="1"
-              mode="create"
-              @update:selected-file-id="form.matchedFileId = $event"
-              @file-preview="handlePreviewFile"
-            />
-          </el-form-item>
+          <MatchModePanel
+            v-model="form.matchMode"
+            :match-files="matchFiles"
+            :selected-file-id="form.matchedFileId"
+            :upload-accept="'.doc,.docx'"
+            :upload-limit="1"
+            mode="create"
+            @update:selected-file-id="form.matchedFileId = $event"
+            @file-preview="handlePreviewFile"
+          />
         </div>
 
         <!-- 底部按钮 -->

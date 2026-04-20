@@ -1,5 +1,8 @@
 <template>
   <div class="match-mode-panel">
+    <label class="match-mode-label">
+      匹配模式<span class="required">*</span>
+    </label>
     <el-radio-group :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" class="mode-group">
       <el-radio label="AUTO_MATCH">系统自动匹配</el-radio>
       <el-radio :label="mode === 'create' ? 'MANUAL_SELECT' : 'SYSTEM_SELECT'">
@@ -9,11 +12,8 @@
     </el-radio-group>
 
     <!-- 自动匹配 -->
-    <div v-if="modelValue === 'AUTO_MATCH'" class="mode-content">
-      <div class="auto-match-desc">
-        <el-icon :size="16" color="var(--app-brand-color)"><InfoFilled /></el-icon>
-        <span>系统将根据历史信息匹配，生成业务需求</span>
-      </div>
+    <div v-if="modelValue === 'AUTO_MATCH'" class="mode-content auto-match-content">
+      <span class="auto-match-text">系统将根据历史信息匹配，生成业务需求</span>
       <el-button
         v-if="mode === 'edit'"
         type="primary"
@@ -81,7 +81,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage, type UploadFile, type UploadFiles, type UploadRawFile } from 'element-plus'
-import { InfoFilled, Loading, UploadFilled } from '@element-plus/icons-vue'
+import { Loading, UploadFilled } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/auth'
 import { requirementApi } from '@/api/requirement'
 import FileCard from './FileCard.vue'
@@ -215,30 +215,42 @@ function handleExceed() {
 
 <style scoped>
 .match-mode-panel {
-  margin-top: 12px;
+  margin-top: 0;
+}
+
+.match-mode-label {
+  display: block;
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  margin-bottom: 12px;
+}
+
+.match-mode-label .required {
+  color: var(--el-color-danger);
+  margin-left: 2px;
 }
 
 .mode-group {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  gap: 24px;
 }
 
 .mode-content {
   margin-top: 16px;
   padding: 16px;
-  background: var(--app-bg-secondary);
-  border-radius: var(--app-radius-sm);
-  border: 1px solid var(--app-border-light);
+  background: var(--app-bg-tertiary);
+  border-radius: 6px;
 }
 
-.auto-match-desc {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  font-size: 14px;
+.auto-match-content {
+  background: var(--app-bg-tertiary);
+}
+
+.auto-match-text {
+  font-size: 13px;
   color: var(--app-text-secondary);
+  line-height: 1.6;
 }
 
 .loading-tip {
