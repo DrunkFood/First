@@ -14,6 +14,11 @@ import java.util.Map;
 public class TypoDetector extends BaseDetector {
 
     @Override
+    protected Boolean needFileFlag() {
+        return false;
+    }
+
+    @Override
     protected String getDetectionType() {
         return "TYPO";
     }

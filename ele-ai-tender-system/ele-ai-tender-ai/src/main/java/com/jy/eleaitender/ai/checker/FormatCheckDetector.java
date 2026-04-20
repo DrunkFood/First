@@ -14,6 +14,11 @@ import java.util.Map;
 public class FormatCheckDetector extends BaseDetector {
 
     @Override
+    protected Boolean needFileFlag() {
+        return false;
+    }
+
+    @Override
     protected String getDetectionType() {
         return "FORMAT_CHECK";
     }

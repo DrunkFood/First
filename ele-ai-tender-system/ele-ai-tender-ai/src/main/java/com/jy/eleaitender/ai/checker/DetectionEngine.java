@@ -1,14 +1,12 @@
 package com.jy.eleaitender.ai.checker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jy.eleaitender.ai.dto.response.DetectionIssueVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +48,15 @@ public class DetectionEngine {
 
         // 分发到具体检测器，传递任务ID和用户ID用于响应记录
         BaseDetector detector = resolveDetector(taskType);
+
+        // 如果检测器需要文件ID列表，则从任务中获取
+        List<String> fileIdList = null;
+        if (detector.needFileFlag()) {
+            fileIdList = task.getFileIdList();
+        }
+
         BaseDetector.DetectionResult result = detector.detect(content, params,
-                task.getId(), task.getCreateId(), task.getFileIdList());
+                task.getId(), task.getCreateId(), fileIdList);
 
         log.info("检测完成: taskId={}, type={}, issueCount={}, score={}",
                 task.getId(), taskType.getLabel(), result.getIssues().size(), result.getScore());

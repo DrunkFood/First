@@ -14,6 +14,11 @@ import java.util.Map;
 public class PolicyReviewDetector extends BaseDetector {
 
     @Override
+    protected Boolean needFileFlag() {
+        return true;
+    }
+
+    @Override
     protected String getDetectionType() {
         return "POLICY_REVIEW";
     }

@@ -68,6 +68,8 @@ public abstract class BaseDetector {
         }
     }
 
+    protected abstract Boolean needFileFlag();
+
     /**
      * 获取检测类型名称
      */
