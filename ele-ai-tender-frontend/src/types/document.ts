@@ -5,4 +5,5 @@ export interface DocumentPreviewVO {
   htmlContent: string
   markdownContent: string
   integrated: boolean
+  generatedFileId: number | null
 }

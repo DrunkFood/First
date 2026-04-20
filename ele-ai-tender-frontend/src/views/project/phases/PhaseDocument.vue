@@ -159,12 +159,17 @@
             </div>
           </div>
 
-          <!-- 预览内容 -->
+          <!-- Word文档预览内容 -->
           <div
-            class="preview-content"
-            :style="{ fontSize: zoomLevel / 100 * 14 + 'px' }"
-            v-html="preview.htmlContent"
+            ref="docxPreviewContainer"
+            class="preview-content docx-preview-container"
+            :style="{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }"
           />
+          <!-- docx-preview渲染时的加载状态 -->
+          <div v-if="isDocxLoading" class="docx-loading">
+            <el-icon class="is-loading" :size="24"><Loading /></el-icon>
+            <span>文档加载中...</span>
+          </div>
         </div>
 
         <!-- 未集成时显示空状态 -->
@@ -257,10 +262,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Document } from '@element-plus/icons-vue'
+import { Document, Loading } from '@element-plus/icons-vue'
+import { renderAsync } from 'docx-preview'
 import { documentApi } from '@/api/document'
+import { fileApi } from '@/api/file'
 import { policyFileApi } from '@/api/policy-file'
 import { aiApi } from '@/api/ai'
 import { projectApi } from '@/api/project'
@@ -276,9 +283,11 @@ const emit = defineEmits<{ next: []; prev: [] }>()
 const preview = ref<DocumentPreviewVO | null>(null)
 const markdownContent = ref('')
 const isIntegrating = ref(false)
+const isDocxLoading = ref(false)
 const showTocPanel = ref(false)
 const zoomLevel = ref(100)
 const policyModalVisible = ref(false)
+const docxPreviewContainer = ref<HTMLElement | null>(null)
 
 // --- 文档目录 ---
 const tocData = [
@@ -417,6 +426,38 @@ const loadPreview = async () => {
   if (preview.value?.markdownContent) {
     markdownContent.value = preview.value.markdownContent
   }
+  // 如果已集成且有generatedFileId，渲染Word文档
+  if (preview.value?.integrated && preview.value?.generatedFileId) {
+    await renderDocxPreview(preview.value.generatedFileId)
+  }
+}
+
+/** 使用docx-preview渲染Word文档 */
+const renderDocxPreview = async (fileId: number) => {
+  isDocxLoading.value = true
+  try {
+    const blob = await fileApi.download(fileId) as unknown as Blob
+    await nextTick()
+    if (docxPreviewContainer.value) {
+      await renderAsync(blob, docxPreviewContainer.value, undefined, {
+        className: 'docx-preview-wrapper',
+        inWrapper: true,
+        ignoreWidth: false,
+        ignoreHeight: false,
+        ignoreFonts: false,
+        breakPages: true,
+        ignoreLastRenderedPageBreak: true,
+        experimental: false,
+        trimXmlDeclaration: true,
+        debug: false,
+      })
+    }
+  } catch (e) {
+    console.error('Word文档渲染失败:', e)
+    ElMessage.warning('Word文档渲染失败，请使用下载功能查看')
+  } finally {
+    isDocxLoading.value = false
+  }
 }
 
 const handleIntegrate = async () => {
@@ -425,6 +466,10 @@ const handleIntegrate = async () => {
     preview.value = await documentApi.integrate(props.projectId)
     if (preview.value?.markdownContent) {
       markdownContent.value = preview.value.markdownContent
+    }
+    // 集成完成后渲染Word文档
+    if (preview.value?.generatedFileId) {
+      await renderDocxPreview(preview.value.generatedFileId)
     }
     ElMessage.success('文档集成完成')
   } catch {
@@ -777,6 +822,41 @@ defineExpose({ handleSaveEdit, handleApplyVariables })
 // 预览内容
 // ========================================
 .preview-content {
+  padding: 40px;
+  background: white;
+  color: #1a1a1a;
+  min-height: 500px;
+  line-height: 1.8;
+  overflow-y: auto;
+}
+
+// docx-preview 容器样式
+.docx-preview-container {
+  :deep(.docx-wrapper) {
+    background: white;
+    padding: 0;
+
+    .docx-wrapper > section.docx {
+      box-shadow: none;
+      margin-bottom: 0;
+      padding: 0;
+    }
+  }
+}
+
+.docx-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: var(--app-text-secondary);
+  font-size: 14px;
+}
+
+// 保留HTML预览样式（兼容降级场景）
+.html-preview-content {
   padding: 40px;
   background: white;
   color: #1a1a1a;
