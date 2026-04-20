@@ -279,17 +279,19 @@ const progressPercent = computed(() => {
 
 const loadReviewItems = async () => {
   const data = await reviewApi.getTree(props.projectId)
-  reviewItems.value = (data || []).map((item: any) => ({
-    id: item.id,
-    parentId: item.parentId,
-    level: item.level ?? 1,
-    itemName: item.itemName || '',
-    itemContent: item.itemContent || '',
-    reviewType: item.reviewType || 'COMPLIANCE',
-    subjective: item.subjective ?? false,
-    score: item.score ?? 0,
-    sortOrder: item.sortOrder ?? 0,
-  }))
+  reviewItems.value = (data || [])
+    .filter((item: any) => (item.level ?? 1) > 1)
+    .map((item: any) => ({
+      id: item.id,
+      parentId: item.parentId,
+      level: item.level ?? 1,
+      itemName: item.itemName || '',
+      itemContent: item.itemContent || '',
+      reviewType: item.reviewType || 'COMPLIANCE',
+      subjective: item.subjectivity === 'SUBJECTIVE',
+      score: item.score ?? 0,
+      sortOrder: item.sortOrder ?? 0,
+    }))
 }
 
 const handleGenerate = async () => {
@@ -330,6 +332,7 @@ const handleAddItem = async (type: ReviewCategory) => {
       sortOrder: newItem.sortOrder,
       reviewType: newItem.reviewType,
       subjective: newItem.subjective,
+      subjectivity: newItem.subjective ? 'SUBJECTIVE' : 'OBJECTIVE',
       score: newItem.score,
     })
     await loadReviewItems()
@@ -365,6 +368,7 @@ const handleNext = async () => {
         itemContent: item.itemContent,
         reviewType: item.reviewType,
         subjective: item.subjective,
+        subjectivity: item.subjective ? 'SUBJECTIVE' : 'OBJECTIVE',
         score: item.score,
       })
     }
