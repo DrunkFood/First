@@ -25,7 +25,6 @@ public class PolicyReviewDetector extends BaseDetector {
 
     @Override
     protected String buildUserPrompt(String content, Map<String, Object> params) {
-        String policyContent = params != null ? (String) params.get("policyContent") : null;
-        return PromptBuilder.buildPolicyReview(content, policyContent);
+        return PromptBuilder.buildPolicyReview(content);
     }
 }

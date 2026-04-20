@@ -57,10 +57,9 @@ public final class PromptBuilder {
     /**
      * 构建政策审查的User Prompt
      */
-    public static String buildPolicyReview(String content, String policyContent) {
+    public static String buildPolicyReview(String content) {
         return String.format(PromptTemplates.DETECTION_POLICY_USER,
-                defaultStr(content),
-                defaultStr(policyContent, "暂无政策文件内容"));
+                defaultStr(content));
     }
 
     private static String defaultStr(String value) {

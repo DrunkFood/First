@@ -297,6 +297,5 @@ public final class PromptTemplates {
             %s
             
             政策文件内容：
-            %s
             """;
 }
