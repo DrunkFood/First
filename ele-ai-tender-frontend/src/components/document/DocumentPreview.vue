@@ -29,11 +29,13 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download, Printer, Close } from '@element-plus/icons-vue'
 import { documentApi } from '@/api/document'
+import { fileApi } from '@/api/file'
 import type { DocumentPreviewVO } from '@/types/document'
 
 const props = defineProps<{
   modelValue: boolean
   projectId: number
+  generatedFileId?: number | null
 }>()
 
 defineEmits<{
@@ -58,9 +60,13 @@ async function handleOpen() {
 }
 
 async function handleDownload() {
+  if (!props.generatedFileId) {
+    ElMessage.warning('文档尚未生成，无法下载')
+    return
+  }
   downloadLoading.value = true
   try {
-    const blob = await documentApi.exportWord(props.projectId)
+    const blob = await fileApi.download(props.generatedFileId)
     const url = window.URL.createObjectURL(blob as Blob)
     const link = document.createElement('a')
     link.href = url

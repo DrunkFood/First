@@ -12,13 +12,6 @@ export const documentApi = {
     return request.get<any, DocumentPreviewVO>(`/core-api/v1/documents/preview/${projectId}`)
   },
 
-  /** 导出Word文档 */
-  exportWord(projectId: number) {
-    return request.get(`/core-api/v1/documents/export/${projectId}`, {
-      responseType: 'blob',
-    })
-  },
-
   /** 编辑集成后的文档内容 */
   editContent(projectId: number, markdownContent: string) {
     return request.put(`/core-api/v1/documents/edit/${projectId}`, { markdownContent })

@@ -170,6 +170,7 @@
     <DocumentPreview
       v-model="showPreview"
       :project-id="projectId"
+      :generated-file-id="project?.generatedFileId"
     />
 
     <!-- 版本对比弹窗 -->
