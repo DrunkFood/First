@@ -43,10 +43,11 @@ public abstract class BaseDetector {
      * @param params  额外参数（如政策文件内容等）
      * @param taskId  关联AI任务ID
      * @param userId  用户ID（取自ai_task.create_id）
+     * @param fileIds 关联文件ID列表
      * @return 检测结果
      */
     public DetectionResult detect(String content, Map<String, Object> params,
-                                  Long taskId, Long userId) {
+                                  Long taskId, Long userId, List<String> fileIds) {
         try {
             String systemPrompt = getSystemPrompt();
             String userPrompt = buildUserPrompt(content, params);
@@ -54,7 +55,7 @@ public abstract class BaseDetector {
             ChatClient client = modelRouter.route(AiUsageScenario.DETECTION);
 
             String aiOutput = aiCallRecorder.callAndRecord(client, systemPrompt, userPrompt,
-                    "DETECTION", taskId, userId);
+                    "DETECTION", taskId, userId, fileIds);
 
             return parseDetectionResult(aiOutput);
         } catch (Exception e) {
@@ -65,13 +66,6 @@ public abstract class BaseDetector {
             result.setError(e.getMessage());
             return result;
         }
-    }
-
-    /**
-     * 执行检测（兼容旧接口，不记录响应日志）
-     */
-    public DetectionResult detect(String content, Map<String, Object> params) {
-        return detect(content, params, null, null);
     }
 
     /**

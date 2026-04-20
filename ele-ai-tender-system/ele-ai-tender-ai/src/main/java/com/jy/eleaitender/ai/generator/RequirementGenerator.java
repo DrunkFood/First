@@ -60,7 +60,7 @@ public class RequirementGenerator {
 
         // 同步调用并记录响应
         String aiOutput = aiCallRecorder.callAndRecord(client, PromptTemplates.REQUIREMENT_GENERATE,
-                userPrompt, "GENERATION", task.getId(), task.getCreateId());
+                userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
         // 提取Markdown内容
         String content = resultParser.extractMarkdown(aiOutput);

@@ -98,9 +98,6 @@ public class DetectionServiceImpl implements IDetectionService {
             params.put("detectionRecordId", record.getId());
             params.put("detectionType", type.getCode());
             params.put("content", contentSnapshot);
-            if (StringUtils.hasText(policyFileIdStr)) {
-                params.put("policyFileIds", policyFileIdStr);
-            }
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
             AiTask task = aiTaskService.createTask(taskType, projectId,

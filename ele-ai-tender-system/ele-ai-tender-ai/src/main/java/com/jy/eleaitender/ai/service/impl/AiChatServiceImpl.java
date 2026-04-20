@@ -141,7 +141,7 @@ public class AiChatServiceImpl implements IAiChatService {
         userPrompt.append(request.getMessage());
 
         return aiCallRecorder.callAndRecord(chatClient, PromptTemplates.AI_ASSISTANT,
-                userPrompt.toString(), "CHAT", null, null);
+                userPrompt.toString(), "CHAT", null, null, null);
     }
 
     /**

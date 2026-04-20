@@ -53,7 +53,7 @@ public class TextOptimizer {
 
         // 同步调用并记录响应
         String optimized = aiCallRecorder.callAndRecord(client, PromptTemplates.TEXT_OPTIMIZE,
-                userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId());
+                userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
         log.info("文本优化完成: taskId={}", task.getId());
         return toJsonResult("optimizedContent", optimized != null ? optimized : "");

@@ -2,11 +2,12 @@ package com.jy.eleaitender.ai.recorder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.service.IAiResponseLogService;
+import com.jy.eleaitender.ai.utils.FileUtils;
 import com.jy.eleaitender.common.entity.ai.AiResponseLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -38,13 +39,25 @@ public class AiCallRecorder {
      * @param role         对话角色: GENERATION/OPTIMIZATION/DETECTION/CHAT
      * @param taskId       关联AI任务ID（对话类调用传null）
      * @param userId       用户ID（任务类调用取task.createId，对话类传null由MetaObjectHandler填充）
+     * @param fileIds      关联文件ID列表
      * @return AI响应内容
      */
     public String callAndRecord(ChatClient client, String systemPrompt, String userPrompt,
-                                String role, Long taskId, Long userId) {
+                                String role, Long taskId, Long userId, List<String> fileIds) {
+        StringBuilder enrichedMessage = new StringBuilder();
+        if (fileIds != null && !fileIds.isEmpty()) {
+            enrichedMessage = new StringBuilder("\n\n【文档内容】\n");
+            for (String fileId : fileIds) {
+                // TODO 通过文件ID获取文件信息和文件内容
+                String fileName = "";
+                String documentContent = FileUtils.extractContent(fileId);
+                enrichedMessage.append(String.format("\n\n【%s】\n%s", fileName, documentContent));
+            }
+        }
+
         ChatResponse chatResponse = client.prompt()
                 .system(systemPrompt)
-                .user(userPrompt)
+                .user(userPrompt + enrichedMessage)
                 .call()
                 .chatResponse();
 

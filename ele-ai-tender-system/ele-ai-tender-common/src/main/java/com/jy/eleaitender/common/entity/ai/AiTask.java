@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * AI任务实体
@@ -62,4 +64,12 @@ public class AiTask extends BaseEntity {
 
     @Schema(description = "结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败")
     private Integer resultSynced;
+
+    public List<String> getFileIdList() {
+        if (fileIds == null) {
+            return null;
+        }
+        return Arrays.stream(fileIds.split(",")).toList();
+    }
+
 }

@@ -60,7 +60,7 @@ public class ReviewItemGenerator {
 
         // 同步调用并记录响应
         String aiOutput = aiCallRecorder.callAndRecord(client, PromptTemplates.REVIEW_ITEM_GENERATE,
-                userPrompt, "GENERATION", task.getId(), task.getCreateId());
+                userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
         // 提取JSON内容
         String jsonResult = resultParser.extractJson(aiOutput);
