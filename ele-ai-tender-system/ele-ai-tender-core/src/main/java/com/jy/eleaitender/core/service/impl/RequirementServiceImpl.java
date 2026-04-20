@@ -19,6 +19,7 @@ import com.jy.eleaitender.core.mapper.AiRequirementMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IRequirementService;
 import com.jy.eleaitender.core.util.DetectionResultParser;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 /**
  * 业务需求服务实现
  */
+@Slf4j
 @Service
 public class RequirementServiceImpl implements IRequirementService {
 
@@ -236,13 +238,16 @@ public class RequirementServiceImpl implements IRequirementService {
             detectionRecordMapper.updateById(record);
         }
 
-        // 自动修正：将original替换为suggestion
+        // 自动修正：将original替换为suggestion（仅替换首次出现，避免多处误替换）
         if (StringUtils.hasText(original) && StringUtils.hasText(suggestion) && !original.equals(suggestion)) {
             String content = requirement.getContent();
             if (content != null && content.contains(original)) {
-                content = content.replace(original, suggestion);
+                content = content.replaceFirst(java.util.regex.Pattern.quote(original),
+                        java.util.regex.Matcher.quoteReplacement(suggestion));
                 requirement.setContent(content);
                 requirementMapper.updateById(requirement);
+            } else {
+                log.warn("接受建议时原文已不存在，跳过自动修正: requirementId={}, issueIndex={}", requirementId, issueIndex);
             }
         }
     }
