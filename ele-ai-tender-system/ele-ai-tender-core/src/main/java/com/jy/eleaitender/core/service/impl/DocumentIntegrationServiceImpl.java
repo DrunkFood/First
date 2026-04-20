@@ -105,26 +105,6 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     }
 
     @Override
-    public byte[] exportWord(Long projectId) {
-        AiProject project = getProjectOrThrow(projectId);
-
-        String markdown = project.getRequirementContent();
-        if (!StringUtils.hasText(markdown)) {
-            throw new BusinessException(ResponseCode.DOCUMENT_INTEGRATE_ERROR, "请先执行文档集成");
-        }
-
-        Map<String, Object> data = dataAssembler.assemble(projectId);
-        String html = markdownEngine.markdownToHtml(markdown);
-
-        try {
-            return wordGenerator.generate(data, html);
-        } catch (Exception e) {
-            log.error("文档导出失败，项目ID: {}", projectId, e);
-            throw new BusinessException(ResponseCode.DOCUMENT_EXPORT_ERROR, "文档导出失败: " + e.getMessage());
-        }
-    }
-
-    @Override
     @Transactional
     public void editContent(Long projectId, String markdownContent) {
         AiProject project = getProjectOrThrow(projectId);

@@ -18,13 +18,6 @@ public interface IDocumentIntegrationService {
     DocumentPreviewVO getPreview(Long projectId);
 
     /**
-     * 导出Word文档
-     *
-     * @return 生成的文件字节数组
-     */
-    byte[] exportWord(Long projectId);
-
-    /**
      * 编辑集成后的文档内容
      */
     void editContent(Long projectId, String markdownContent);

@@ -41,20 +41,6 @@ public class DocumentIntegrationController {
         return Result.success(documentIntegrationService.getPreview(projectId));
     }
 
-    @GetMapping("/export/{projectId}")
-    @RequireLogin
-    @Operation(summary = "导出Word文档")
-    public ResponseEntity<byte[]> exportWord(@PathVariable Long projectId) {
-        byte[] docBytes = documentIntegrationService.exportWord(projectId);
-
-        String fileName = URLEncoder.encode("招标文件.docx", StandardCharsets.UTF_8);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .contentLength(docBytes.length)
-                .body(docBytes);
-    }
-
     @PutMapping("/edit/{projectId}")
     @RequireLogin
     @Operation(summary = "编辑集成后的文档内容")
