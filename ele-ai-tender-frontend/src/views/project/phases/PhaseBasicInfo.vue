@@ -209,7 +209,6 @@
 import { ref, onMounted } from 'vue'
 import { projectApi } from '@/api/project'
 import { templateApi } from '@/api/template'
-import { aiApi } from '@/api/ai'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { UploadFilled, Document, Calendar, View } from '@element-plus/icons-vue'
 import { toWanYuan, toYuan } from '@/utils/budget'

@@ -20,11 +20,11 @@
 |------|------|------|------|
 | `ele-ai-tender-common` | — | 公共实体、工具类、异常、统一响应 | JDK17+，依赖Spring Boot 3 |
 | `ele-ai-tender-common-interaction` | — | 交互协议 DTO/SPI/路径常量 | JDK8兼容，供第三方系统接入 |
-| `ele-ai-tender-interaction` | — | 业务系统接入 Starter | JDK8兼容，自动配置、过滤器、回调处理 |
-| `ele-ai-tender-support` | 8080 | 认证、用户、角色、菜单、模板管理、知识库管理、统计分析、AI服务配置、操作日志、消息中心 | 高度复用 ele-tender-support |
+| `ele-ai-tender-interaction` | — | 业务系统接入 Starter | 3个子模块(core/autoconfigure/starter)，JDK8兼容，Spring Boot 2.7.18编译 |
+| `ele-ai-tender-support` | 8080 | 认证(含外部系统对接)、用户、角色、菜单、模板配置、知识库配置、模型配置与路由、系统参数、政策文件、消息通知、统计分析、访问/操作日志、版本管理 | 高度复用 ele-tender-support |
 | `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除 | 高度复用 ele-tender-file |
-| `ele-ai-tender-core` | 8082 | 项目管理、业务需求编制、评审项管理、文档生成 | 核心业务模块 |
-| `ele-ai-tender-ai` | 8083 | AI助手、知识库检索、智能检测、模型路由 | 全新开发的AI能力模块 |
+| `ele-ai-tender-core` | 8082 | 项目管理、业务需求编制、AI编制任务、AI内容反馈、检测管理、评审项管理、文档生成、用户消息 | 核心业务模块 |
+| `ele-ai-tender-ai` | 8083 | AI对话、知识库管理、文档匹配 | 检测引擎(DetectionEngine)和模型路由(ModelRouter)在Service层 |
 
 ## 术语规范
 
@@ -92,7 +92,7 @@ mvn -pl ele-ai-tender-support -am package               # 打包单模块
 浏览器 → AI编制前端 (5173)
   /core-api/*      → rewrite(/api/*)    → 核心业务 :8082  → MySQL(db=6) + Redis(db=6)
   /ai-api/*        → rewrite(/api/*)    → AI服务   :8083  → MySQL(db=6) + Redis(db=6) + Milvus + 大模型API
-  /file-api/*      → 直接转发            → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
+  /file-api/*      → rewrite(/api/*)    → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
   /support-api/*   → rewrite(/api/*)    → 支撑中心 :8080  → MySQL(db=6) + Redis(db=6)
 
 业务系统 → Interaction Starter → /api/eleAiTender/interaction/*
@@ -164,7 +164,7 @@ Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.doc
 - **core模块 → support模块**: 用户认证、权限校验
 - **core模块 → file模块**: 文件上传/下载
 - **ai模块 → file模块**: 知识库文件管理
-- **core模块 → ai模块**: AI生成、文本优化、智能检测
+- **core模块 ↔ ai模块**: 通过 `ai_task` 表异步解耦（core写入任务 → AiTaskProcessor轮询执行 → core读取结果），无直接HTTP调用
 
 ## 文档规范
 
@@ -178,6 +178,7 @@ Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.doc
 | `docs/plans/` | 实施计划（对应 projects/） |
 | `docs/guides/` | 集成指南、接口文档 |
 | `docs/rules/` | 系统规范（权威参考） |
+| `docs/test/` | 测试报告、截图证据（test/screenshots） |
 
 ## 规范文档索引（按需加载）
 
