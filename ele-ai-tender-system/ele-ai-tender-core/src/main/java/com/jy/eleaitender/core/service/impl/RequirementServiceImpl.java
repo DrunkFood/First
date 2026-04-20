@@ -173,14 +173,6 @@ public class RequirementServiceImpl implements IRequirementService {
                 requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
         taskIds.put("TYPO", typoTask.getId());
 
-        AiTask policyReviewTask = aiTaskService.createTask(AiTaskType.DETECTION_POLICY_REVIEW,
-                requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
-        taskIds.put("POLICY_REVIEW", policyReviewTask.getId());
-
-        AiTask formatCheckTask = aiTaskService.createTask(AiTaskType.DETECTION_FORMAT_CHECK,
-                requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
-        taskIds.put("FORMAT_CHECK", formatCheckTask.getId());
-
         return taskIds;
     }
 

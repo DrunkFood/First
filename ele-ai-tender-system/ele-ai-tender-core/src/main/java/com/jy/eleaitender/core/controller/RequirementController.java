@@ -119,7 +119,7 @@ public class RequirementController {
 
     @PostMapping("/{id}/detect")
     @RequireLogin
-    @Operation(summary = "提交需求检测（敏感词+错别字+政策文件+格式规范）")
+    @Operation(summary = "提交需求检测（敏感词+错别字）")
     public Result<Map<String, Long>> detect(@PathVariable Long id) {
         return Result.success(requirementService.submitDetection(id));
     }
