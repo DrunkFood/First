@@ -3,6 +3,7 @@ package com.jy.eleaitender.core.statemachine.trigger;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.mapper.AiRequirementMapper;
 import com.jy.eleaitender.core.service.IRequirementService;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
@@ -25,17 +26,38 @@ public class RequirementTrigger implements PhaseTrigger {
     private AiRequirementMapper requirementMapper;
 
     @Autowired
+    private AiProjectMapper aiProjectMapper;
+
+    @Autowired
     private IRequirementService requirementService;
 
     @Override
     public void onEnter(AiProject project, Map<String, Object> context) {
-        // 确保需求记录存在
-        AiRequirement requirement = ensureRequirement(project);
+        // 如果项目已关联需求，读取需求内容并保存
+        if (project.getRequirementId() != null) {
+            AiRequirement aiRequirement = requirementMapper.selectById(project.getRequirementId());
+            project.setRequirementContent(aiRequirement.getContent());
+            aiProjectMapper.updateById(project);
+            return;
+        }
+        // 如果需求不存在，则创建新需求
+        AiRequirement requirement = new AiRequirement();
+        requirement.setRequirementName(project.getProjectName() + " - 招标需求");
+        requirement.setProjectCategory(project.getProjectCategory());
+        requirement.setProjectType(project.getProjectType());
+        requirement.setServiceSubType(project.getServiceSubType());
+        requirement.setBudget(project.getBudget());
+        requirement.setStatus("IN_PROGRESS");
+        requirement.setProgress(0);
+        requirementService.create(requirement);
+        log.info("自动创建需求记录: projectId={}, requirementId={}", project.getId(), requirement.getId());
+
+        // 关联到项目
+        project.setRequirementId(requirement.getId());
+        aiProjectMapper.updateById(project);
         // 自动触发AI需求生成
-        Map<String, Object> params = new HashMap<>();
-        params.put("projectId", project.getId());
         try {
-            AiTask task = requirementService.submitGenerate(requirement.getId(), params);
+            AiTask task = requirementService.submitGenerate(requirement.getId(), new HashMap<>());
             log.info("自动触发需求生成: projectId={}, requirementId={}, taskId={}",
                     project.getId(), requirement.getId(), task.getId());
         } catch (Exception e) {
@@ -55,38 +77,4 @@ public class RequirementTrigger implements PhaseTrigger {
         return "请先完成招标需求生成或手动填写需求内容";
     }
 
-    /**
-     * 确保项目关联的需求记录存在，不存在则自动创建
-     */
-    private AiRequirement ensureRequirement(AiProject project) {
-        // 如果项目已关联需求，直接返回
-        if (project.getRequirementId() != null) {
-            return requirementMapper.selectById(project.getRequirementId());
-        }
-
-        // 查询项目下是否已有需求
-        AiRequirement existing = requirementMapper.selectByProjectId(project.getId());
-        if (existing != null) {
-            project.setRequirementId(existing.getId());
-            return existing;
-        }
-
-        // 创建新需求
-        AiRequirement requirement = new AiRequirement();
-        requirement.setProjectId(project.getId());
-        requirement.setRequirementName(project.getProjectName() + " - 招标需求");
-        requirement.setProjectCategory(project.getProjectCategory());
-        requirement.setProjectType(project.getProjectType());
-        requirement.setServiceSubType(project.getServiceSubType());
-        requirement.setBudget(project.getBudget());
-        requirement.setStatus("IN_PROGRESS");
-        requirement.setProgress(0);
-        requirementService.create(requirement);
-
-        // 关联到项目
-        project.setRequirementId(requirement.getId());
-
-        log.info("自动创建需求记录: projectId={}, requirementId={}", project.getId(), requirement.getId());
-        return requirement;
-    }
 }

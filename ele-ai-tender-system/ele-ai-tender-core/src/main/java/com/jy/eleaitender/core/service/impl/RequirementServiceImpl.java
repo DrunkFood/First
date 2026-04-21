@@ -54,7 +54,7 @@ public class RequirementServiceImpl implements IRequirementService {
     };
 
     @Override
-    public Page<AiRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status, Long projectId) {
+    public Page<AiRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status) {
         Page<AiRequirement> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<AiRequirement> wrapper = new LambdaQueryWrapper<>();
 
@@ -63,9 +63,6 @@ public class RequirementServiceImpl implements IRequirementService {
         }
         if (StringUtils.hasText(status)) {
             wrapper.eq(AiRequirement::getStatus, status);
-        }
-        if (projectId != null) {
-            wrapper.eq(AiRequirement::getProjectId, projectId);
         }
 
         wrapper.orderByDesc(AiRequirement::getCreateTime);
@@ -144,8 +141,8 @@ public class RequirementServiceImpl implements IRequirementService {
         params.put("description", requirement.getRequirementDescription());
         // TODO 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
         params.put("referenceContent", "");
-        return aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE,
-                requirement.getProjectId(), requirementId, "REQUIREMENT", params, null);
+        return aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE, null,
+                requirementId, "REQUIREMENT", params, null);
     }
 
     @Override
@@ -187,7 +184,6 @@ public class RequirementServiceImpl implements IRequirementService {
         for (DetectionType type : ALL_DETECTION_TYPES) {
             // 创建检测记录
             AiDetectionRecord record = new AiDetectionRecord();
-            record.setProjectId(requirement.getProjectId());
             record.setRequirementId(requirementId);
             record.setDetectionType(type.getCode());
             record.setContentSnapshot(contentSnapshot);
@@ -205,7 +201,7 @@ public class RequirementServiceImpl implements IRequirementService {
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
 
             // bizId=recordId, bizType=DETECTION，使syncDetection能找到record
-            AiTask task = aiTaskService.createTask(taskType, requirement.getProjectId(),
+            AiTask task = aiTaskService.createTask(taskType, null,
                     record.getId(), "DETECTION", params, null);
 
             record.setTaskId(task.getId());

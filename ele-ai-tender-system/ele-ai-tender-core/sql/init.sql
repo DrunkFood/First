@@ -96,7 +96,6 @@ CREATE TABLE IF NOT EXISTS `ai_requirement` (
     `matched_file_id`        BIGINT        DEFAULT NULL COMMENT '匹配的历史文件ID',
     `matched_similarity`     DECIMAL(5,2)  DEFAULT NULL COMMENT '匹配度百分比',
     `uploaded_file_id`       BIGINT        DEFAULT NULL COMMENT '上传的文件ID',
-    `project_id`             BIGINT        DEFAULT NULL COMMENT '关联的项目ID',
     `content`                TEXT          DEFAULT NULL COMMENT '业务需求内容',
     `auto_save_content`      LONGTEXT      DEFAULT NULL COMMENT '自动保存内容(未提交的草稿)',
     `auto_save_time`         DATETIME      DEFAULT NULL COMMENT '自动保存时间',

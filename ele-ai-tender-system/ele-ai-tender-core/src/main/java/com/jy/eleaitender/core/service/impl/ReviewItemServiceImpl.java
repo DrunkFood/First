@@ -119,21 +119,12 @@ public class ReviewItemServiceImpl implements IReviewItemService {
 
         // 补全项目信息，确保AI生成器有足够的上下文
         params.put("projectId", projectId);
-        params.putIfAbsent("projectName", project.getProjectName());
-        params.putIfAbsent("projectType", project.getProjectType());
-        params.putIfAbsent("projectCategory", project.getProjectCategory());
-        params.putIfAbsent("budget", project.getBudget() != null ? project.getBudget().toPlainString() : null);
-        params.putIfAbsent("reviewMethod", project.getReviewType());
-
-        // 补全需求内容
-        if (!params.containsKey("requirementContent")) {
-            AiRequirement requirement = requirementMapper.selectByProjectId(projectId);
-            if (requirement != null && requirement.getContent() != null) {
-                params.put("requirementContent", requirement.getContent());
-            } else if (project.getRequirementContent() != null) {
-                params.put("requirementContent", project.getRequirementContent());
-            }
-        }
+        params.put("projectName", project.getProjectName());
+        params.put("projectType", project.getProjectType());
+        params.put("projectCategory", project.getProjectCategory());
+        params.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : null);
+        params.put("reviewMethod", project.getReviewType());
+        params.put("requirementContent", project.getRequirementContent());
 
         log.info("提交评审项生成: projectId={}, projectName={}", projectId, project.getProjectName());
         return aiTaskService.createTask(AiTaskType.REVIEW_ITEM_GENERATE,

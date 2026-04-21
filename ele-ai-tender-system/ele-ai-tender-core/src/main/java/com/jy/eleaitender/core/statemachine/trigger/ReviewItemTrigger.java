@@ -43,14 +43,7 @@ public class ReviewItemTrigger implements PhaseTrigger {
         params.put("projectCategory", project.getProjectCategory());
         params.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : null);
         params.put("reviewMethod", project.getReviewType());
-
-        // 补全需求内容
-        AiRequirement requirement = requirementMapper.selectByProjectId(project.getId());
-        if (requirement != null && requirement.getContent() != null) {
-            params.put("requirementContent", requirement.getContent());
-        } else if (project.getRequirementContent() != null) {
-            params.put("requirementContent", project.getRequirementContent());
-        }
+        params.put("requirementContent", project.getRequirementContent());
 
         try {
             AiTask task = reviewItemService.submitGenerate(project.getId(), params);

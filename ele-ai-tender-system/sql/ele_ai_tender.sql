@@ -242,7 +242,6 @@ CREATE TABLE `ai_requirement`  (
   `matched_file_id` bigint NULL DEFAULT NULL COMMENT '匹配的历史文件ID',
   `matched_similarity` decimal(5, 2) NULL DEFAULT NULL COMMENT '匹配度百分比',
   `uploaded_file_id` bigint NULL DEFAULT NULL COMMENT '上传的文件ID',
-  `project_id` bigint NULL DEFAULT NULL COMMENT '关联的项目ID',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '业务需求内容',
   `auto_save_content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '自动保存内容(未提交的草稿)',
   `auto_save_time` datetime NULL DEFAULT NULL COMMENT '自动保存时间',
@@ -258,15 +257,14 @@ CREATE TABLE `ai_requirement`  (
   `is_delete` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE,
-  INDEX `idx_create_id`(`create_id` ASC) USING BTREE,
-  INDEX `idx_project_id`(`project_id` ASC) USING BTREE
+  INDEX `idx_create_id`(`create_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '业务需求表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of ai_requirement
 -- ----------------------------
-INSERT INTO `ai_requirement` VALUES (1, '需求名称001', 'LIMITED_BELOW', 'GOODS', NULL, 100.00, '需求名称001', 'AUTO_MATCH', NULL, NULL, NULL, NULL, '需求内容001', NULL, NULL, 'IN_PROGRESS', 0, '2026-04-15 11:19:03', 0, 'system', '2026-04-15 11:19:12', 0, 'system', 1, 0);
-INSERT INTO `ai_requirement` VALUES (2, '需求名称002', 'LIMITED_BELOW', 'ENGINEERING', NULL, 100.00, '需求描述002', 'AUTO_MATCH', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'IN_PROGRESS', 0, '2026-04-15 11:19:33', 0, 'system', '2026-04-15 11:19:33', 0, 'system', 1, 0);
+INSERT INTO `ai_requirement` VALUES (1, '需求名称001', 'LIMITED_BELOW', 'GOODS', NULL, 100.00, '需求名称001', 'AUTO_MATCH', NULL, NULL, NULL, '需求内容001', NULL, NULL, 'IN_PROGRESS', 0, '2026-04-15 11:19:03', 0, 'system', '2026-04-15 11:19:12', 0, 'system', 1, 0);
+INSERT INTO `ai_requirement` VALUES (2, '需求名称002', 'LIMITED_BELOW', 'ENGINEERING', NULL, 100.00, '需求描述002', 'AUTO_MATCH', NULL, NULL, NULL, NULL, NULL, NULL, 'IN_PROGRESS', 0, '2026-04-15 11:19:33', 0, 'system', '2026-04-15 11:19:33', 0, 'system', 1, 0);
 
 -- ----------------------------
 -- Table structure for ai_review_item

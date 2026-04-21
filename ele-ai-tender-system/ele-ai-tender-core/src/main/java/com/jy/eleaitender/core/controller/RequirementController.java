@@ -34,9 +34,8 @@ public class RequirementController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String requirementName,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long projectId) {
-        return Result.success(requirementService.getPage(pageNum, pageSize, requirementName, status, projectId));
+            @RequestParam(required = false) String status) {
+        return Result.success(requirementService.getPage(pageNum, pageSize, requirementName, status));
     }
 
     @GetMapping("/match-files")

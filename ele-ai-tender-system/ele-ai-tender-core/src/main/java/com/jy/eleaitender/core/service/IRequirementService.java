@@ -17,7 +17,7 @@ public interface IRequirementService {
     /**
      * 分页查询需求列表
      */
-    Page<AiRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status, Long projectId);
+    Page<AiRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status);
 
     /**
      * 根据ID获取需求详情
