@@ -37,7 +37,15 @@
       "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
       "Bash(java -version)",
       "Bash(mvn spring-boot:run)",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(tasklist)",
+      "Bash(wmic process *)",
+      "Bash(taskkill //PID 9944 //F)",
+      "Bash(taskkill //PID 33364 //F)",
+      "Bash(taskkill //PID 55880 //F)",
+      "Bash(taskkill //PID 32104 //F)",
+      "Bash(taskkill //PID 45884 //F)",
+      "Bash(taskkill //PID 51820 //F)"
     ]
   }
 }

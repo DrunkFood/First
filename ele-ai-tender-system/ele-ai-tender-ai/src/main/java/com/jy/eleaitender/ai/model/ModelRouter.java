@@ -90,7 +90,9 @@ public class ModelRouter {
      */
     private AiUsageScenario resolveScenario(AiTaskType taskType) {
         return switch (taskType) {
-            case REQUIREMENT_GENERATE, REVIEW_ITEM_GENERATE -> AiUsageScenario.GENERATION;
+            case REQUIREMENT_GENERATE,
+                 PROJECT_REQUIREMENT_GENERATE,
+                 REVIEW_ITEM_GENERATE -> AiUsageScenario.GENERATION;
             case TEXT_OPTIMIZE -> AiUsageScenario.OPTIMIZATION;
             case DETECTION_SENSITIVE_WORD, DETECTION_TYPO,
                  DETECTION_POLICY_REVIEW, DETECTION_FORMAT_CHECK -> AiUsageScenario.DETECTION;

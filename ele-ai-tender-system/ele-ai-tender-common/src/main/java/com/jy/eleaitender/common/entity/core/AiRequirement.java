@@ -49,9 +49,6 @@ public class AiRequirement extends BaseEntity {
     @Schema(description = "上传的文件ID")
     private Long uploadedFileId;
 
-    @Schema(description = "关联的项目ID")
-    private Long projectId;
-
     @Schema(description = "业务需求内容")
     private String content;
 
