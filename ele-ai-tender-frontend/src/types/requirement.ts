@@ -33,7 +33,6 @@ export interface RequirementInfo {
   matchedFileIds?: number[]
   matchedSimilarity?: number
   uploadedFileId?: number
-  projectId?: number
   content?: string
   status: string
   progress?: number
@@ -62,7 +61,6 @@ export interface RequirementCreateParams {
   matchMode?: string
   matchedFileId?: number
   uploadedFileId?: number
-  projectId?: number
   content?: string
   status?: string
 }

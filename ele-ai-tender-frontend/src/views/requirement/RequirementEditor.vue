@@ -44,7 +44,6 @@
       v-model:messages="chatMessages"
       greeting="您好！我是您的AI助手，可以帮助您优化和修改业务需求内容。请选择快捷操作或输入您的需求。"
       :context="content"
-      :project-id="projectId"
       :requirement-id="requirementId"
       @feedback="handleChatFeedback"
       @message="handleChatMessage"
@@ -96,7 +95,6 @@ const route = useRoute()
 
 // ---- 基础数据 ----
 const requirementId = ref(0)
-const projectId = ref<number | undefined>(undefined)
 const requirementName = ref('')
 const content = ref('')
 const originalContent = ref('')
@@ -143,7 +141,6 @@ onMounted(async () => {
     const data = await requirementApi.getById(id)
     requirementName.value = data.requirementName || ''
     content.value = data.content || ''
-    projectId.value = data.projectId
     originalContent.value = content.value
     originalName.value = requirementName.value
 
@@ -205,7 +202,7 @@ function handleGenerate() {
 
   closeGenerateSSE = createSSEConnection(
     `/core-api/v1/requirements/${requirementId.value}/generate`,
-    { projectId: projectId.value },
+    { },
     (data: string) => {
       content.value += data
     },
@@ -244,7 +241,7 @@ function handleOptimize() {
     {
       content: originalText,
       type: 'requirement',
-      projectId: projectId.value,
+      projectId: undefined,
     },
     (data: string) => {
       content.value += data

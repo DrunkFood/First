@@ -21,7 +21,7 @@
           idle-desc="点击下方按钮开始AI生成招标需求内容"
         >
           <template #idle-action>
-            <button v-if="!readonly" class="btn btn-primary generate-btn" :disabled="!requirementId" @click="handleGenerate">
+            <button v-if="!readonly" class="btn btn-primary generate-btn" @click="handleGenerate">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
@@ -121,7 +121,6 @@
       greeting="您好！我是您的AI助手，可以帮助您修改详细需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
       :context="content"
       :project-id="projectId"
-      :requirement-id="requirementId"
       @feedback="handleChatFeedback"
       @message="handleChatMessage"
     >
@@ -137,16 +136,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, toRef } from 'vue'
 import { ElMessage } from 'element-plus'
 
 import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
-import { requirementApi } from '@/api/requirement'
 import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { useLatestTask } from '@/composables/useLatestTask'
-import { useAutoSave } from '@/composables/useAutoSave'
 import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress } from '@/types/ai-task'
 import { useThemeStore } from '@/store/theme'
@@ -169,21 +166,22 @@ const excludeToolbars: ToolbarNames[] = [
 ]
 
 const content = ref('')
-const requirementId = ref(0)
 const isOptimizing = ref(false)
 
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
 let closeOptimizeSSE: (() => void) | null = null
 
-const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
-  'REQUIREMENT_GENERATE',
-  requirementId,
+// AI任务：项目需求生成，bizId=projectId
+const projectIdRef = toRef(props, 'projectId')
+const { latestTask, canCreateNew, refresh } = useLatestTask(
+  'PROJECT_REQUIREMENT_GENERATE',
+  projectIdRef,
   'REQUIREMENT',
   async (task) => {
-    if (task.status !== 'COMPLETED' || !requirementId.value) return
+    if (task.status !== 'COMPLETED') return
 
-    // 优先从任务结果中直接提取内容（实时可用，避免后端10秒同步延迟）
+    // 优先从任务结果中直接提取内容（实时可用，避免后端同步延迟）
     let contentLoaded = false
     if (task.result) {
       try {
@@ -191,19 +189,19 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
         if (resultObj.content) {
           content.value = resultObj.content
           contentLoaded = true
-          try { await requirementApi.clearAutoSave(requirementId.value) } catch {}
+          // 同步到项目
+          await projectApi.update(props.projectId, { requirementContent: resultObj.content })
         }
       } catch { /* JSON解析失败，走fallback */ }
     }
 
-    // Fallback: 等待后端同步结果后再查询（result中无content的异常场景）
+    // Fallback: 从项目接口读取
     if (!contentLoaded) {
       setTimeout(async () => {
         try {
-          const req = await requirementApi.getById(requirementId.value)
-          if (req.content) {
-            content.value = req.content
-            try { await requirementApi.clearAutoSave(requirementId.value) } catch {}
+          const proj = await projectApi.getById(props.projectId)
+          if (proj.requirementContent) {
+            content.value = proj.requirementContent
           }
         } catch {
           // 忽略刷新失败，用户可手动刷新
@@ -238,13 +236,31 @@ watch(latestTask, (task) => {
   }
 })
 
-const { startAutoSave, recoverDraft } = useAutoSave(
-  requirementId,
-  content,
-  (id, data) => requirementApi.autoSave(id, data.content),
-  (id) => requirementApi.getAutoSave(id),
-  (id) => requirementApi.clearAutoSave(id),
-)
+// 自动保存：直接通过 projectApi.update 保存到项目
+let autoSaveTimer: ReturnType<typeof setInterval> | null = null
+const isAutoSaving = ref(false)
+
+function startAutoSave() {
+  if (autoSaveTimer) return
+  autoSaveTimer = setInterval(async () => {
+    if (!content.value) return
+    isAutoSaving.value = true
+    try {
+      await projectApi.update(props.projectId, { requirementContent: content.value })
+    } catch {
+      // 自动保存失败不阻塞
+    } finally {
+      isAutoSaving.value = false
+    }
+  }, 120000)
+}
+
+function stopAutoSave() {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer)
+    autoSaveTimer = null
+  }
+}
 
 const progressPercent = computed(() => {
   if (!latestTask.value) return 0
@@ -253,35 +269,24 @@ const progressPercent = computed(() => {
 
 const loadData = async () => {
   const project = await projectApi.getById(props.projectId)
-  if (project.requirementId) {
-    requirementId.value = project.requirementId
-    const req = await requirementApi.getById(project.requirementId)
-    content.value = req.content || ''
+  content.value = project.requirementContent || ''
 
-    // 已有内容说明已持久化，静默清除残留草稿避免弹框；否则尝试恢复草稿
-    if (content.value) {
-      try { await requirementApi.clearAutoSave(requirementId.value) } catch { /* 清除失败不影响主流程 */ }
-    } else {
-      await recoverDraft()
-    }
-
-    // 只在非只读模式下启动自动保存
-    if (!props.readonly) {
-      startAutoSave()
-    }
+  // 非只读模式启动自动保存
+  if (!props.readonly) {
+    startAutoSave()
   }
 }
 
 const handleGenerate = async () => {
-  if (!requirementId.value) return
   await refresh()
   if (!canCreateNew.value) {
     ElMessage.warning('AI生成任务正在处理中，请稍候')
     return
   }
+  // 推进阶段触发后端 RequirementTrigger.onEnter() 自动创建AI任务
+  // 如果已在需求阶段，则通过 advancePhase 重新进入（后端会创建新任务）
   try {
-    const res = await requirementApi.generate(requirementId.value, {})
-    setActive(res.id)
+    await projectApi.advancePhase(props.projectId, 2)
   } catch (e: any) {
     if (e?.code === 8084) {
       ElMessage.warning('AI生成任务正在处理中，请稍候')
@@ -356,8 +361,8 @@ const handleChatMessage = (_msg: string) => {
 }
 
 const handleSave = async () => {
-  if (requirementId.value && content.value) {
-    await requirementApi.update(requirementId.value, { content: content.value })
+  if (content.value) {
+    await projectApi.update(props.projectId, { requirementContent: content.value })
   }
   ElMessage.success('需求内容保存成功')
 }
@@ -380,6 +385,7 @@ onBeforeUnmount(() => {
     closeOptimizeSSE()
     closeOptimizeSSE = null
   }
+  stopAutoSave()
   // 清空内容，防止md-editor-v3在DOM销毁后报querySelectorAll/MutationObserver错误
   content.value = ''
 })

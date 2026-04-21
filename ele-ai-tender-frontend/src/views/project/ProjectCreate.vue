@@ -327,7 +327,7 @@ const form = reactive<ProjectCreateParams>({
   requirementContent: undefined,
   templateId: undefined,
   requirementId: undefined,
-  requirementSource: 'DIRECT',
+  requirementSource: 'SYSTEM_GENERATE',
   tenderUnit: undefined,
   contactPerson: undefined,
   contactPhone: undefined,
@@ -420,7 +420,7 @@ async function loadProjectDetail(id: number) {
 }
 
 function handleTabChange(tab: string | number) {
-  form.requirementSource = tab as 'DIRECT' | 'REFERENCE'
+  form.requirementSource = tab === 'REFERENCE' ? 'REFERENCE' : 'SYSTEM_GENERATE'
   if (tab === 'REFERENCE' && requirementList.value.length === 0) {
     loadRequirements()
   }
