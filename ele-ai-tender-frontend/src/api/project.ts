@@ -1,6 +1,7 @@
 import request from '@/utils/request'
 import type { PageResult } from '@/types'
 import type { ProjectInfo, ProjectQueryParams, ProjectCreateParams, ProjectVersionInfo } from '@/types/project'
+import type { AiTaskVO } from '@/types/ai-task'
 
 export const projectApi = {
   getList(params: ProjectQueryParams) {
@@ -27,6 +28,10 @@ export const projectApi = {
   /** 推进项目阶段（触发器自动发起下一阶段AI任务） */
   advancePhase(id: number, targetPhase: number, context?: Record<string, any>) {
     return request.put(`/core-api/v1/projects/${id}/phase`, { targetPhase, context })
+  },
+  /** 提交AI生成需求 */
+  generateRequirement(id: number) {
+    return request.post<any, AiTaskVO>(`/core-api/v1/projects/${id}/requirement-generate`)
   },
   /** 变更项目状态 */
   changeStatus(id: number, status: string) {

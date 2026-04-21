@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.common.entity.core.AiProject;
 
@@ -55,6 +56,11 @@ public interface IProjectService {
      * @param context     上下文参数（如policyFileIds等），可为null
      */
     void advancePhase(Long projectId, Integer targetPhase, Map<String, Object> context);
+
+    /**
+     * 提交AI生成需求
+     */
+    AiTask generateRequirement(Long projectId);
 
     /**
      * 变更项目状态

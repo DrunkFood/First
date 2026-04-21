@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.request.AdvancePhaseRequest;
@@ -109,6 +110,13 @@ public class ProjectController {
     public Result<Void> changeStatus(@PathVariable Long id, @RequestParam String targetStatus) {
         projectService.changeStatus(id, targetStatus);
         return Result.success();
+    }
+
+    @PostMapping("/{id}/requirement-generate")
+    @RequireLogin
+    @Operation(summary = "提交AI生成需求")
+    public Result<AiTask> generateRequirement(@PathVariable Long id) {
+        return Result.success(projectService.generateRequirement(id));
     }
 
     @PostMapping("/{id}/cancel")

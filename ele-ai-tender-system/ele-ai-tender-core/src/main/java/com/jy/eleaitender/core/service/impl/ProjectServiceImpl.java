@@ -3,6 +3,8 @@ package com.jy.eleaitender.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
+import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ProjectPhase;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -10,6 +12,7 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.common.entity.core.AiProject;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
+import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.statemachine.PhaseFlowController;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
@@ -26,6 +29,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -40,6 +44,9 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Autowired
     private AiProjectMapper projectMapper;
+
+    @Autowired
+    private IAiTaskService aiTaskService;
 
     @Autowired
     private PhaseFlowController phaseFlowController;
@@ -196,6 +203,21 @@ public class ProjectServiceImpl implements IProjectService {
         ProjectPhase target = ProjectPhase.fromCode(targetPhase);
         phaseFlowController.advancePhase(project, target, context);
         projectMapper.updateById(project);
+    }
+
+    @Override
+    public AiTask generateRequirement(Long projectId) {
+        AiProject project = getById(projectId);
+        Map<String, Object> params = new HashMap<>();
+        params.put("requirementName", project.getProjectName() + " - 招标需求");
+        params.put("projectType", project.getProjectType());
+        params.put("projectCategory", project.getProjectCategory());
+        params.put("budget", project.getBudget());
+        params.put("description", project.getProjectDescription());
+        // TODO 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
+        params.put("referenceContent", "");
+        return aiTaskService.createTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
+                project.getId(), project.getId(), "REQUIREMENT", params, null);
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.core.mapper.AiProjectMapper;
 import com.jy.eleaitender.core.mapper.AiRequirementMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
+import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IRequirementService;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class RequirementTrigger implements PhaseTrigger {
     private AiProjectMapper aiProjectMapper;
 
     @Autowired
-    private IAiTaskService aiTaskService;
+    private IProjectService projectService;
 
     @Override
     public void onEnter(AiProject project, Map<String, Object> context) {
@@ -45,21 +46,11 @@ public class RequirementTrigger implements PhaseTrigger {
         }
         // 如果需求不存在，自动触发AI需求生成
         try {
-            // 填充任务参数
-            Map<String, Object> params = new HashMap<>();
-            params.put("requirementName", project.getProjectName() + " - 招标需求");
-            params.put("projectType", project.getProjectType());
-            params.put("projectCategory", project.getProjectCategory());
-            params.put("budget", project.getBudget());
-            params.put("description", project.getProjectDescription());
-            // TODO 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
-            params.put("referenceContent", "");
-            AiTask task = aiTaskService.createTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE, null,
-                    project.getId(), "REQUIREMENT", params, null);
-            log.info("自动触发需求生成: projectId={}, requirementId={}, taskId={}",
-                    project.getId(), project.getId(), task.getId());
+            AiTask task = projectService.generateRequirement(project.getId());
+            log.info("自动触发项目需求生成: projectId={}, taskId={}",
+                    project.getId(), task.getId());
         } catch (Exception e) {
-            log.warn("自动触发需求生成失败（可能已有活跃任务）: projectId={}, error={}",
+            log.warn("自动触发项目需求生成失败（可能已有活跃任务）: projectId={}, error={}",
                     project.getId(), e.getMessage());
         }
     }

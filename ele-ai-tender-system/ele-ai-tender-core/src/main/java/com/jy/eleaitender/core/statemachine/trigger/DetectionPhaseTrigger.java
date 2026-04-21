@@ -25,7 +25,6 @@ public class DetectionPhaseTrigger implements PhaseTrigger {
     private IDetectionService detectionService;
 
     @Override
-    @SuppressWarnings("unchecked")
     public void onEnter(AiProject project, Map<String, Object> context) {
         // 从上下文中提取政策文件ID列表
         List<Long> policyFileIds = null;

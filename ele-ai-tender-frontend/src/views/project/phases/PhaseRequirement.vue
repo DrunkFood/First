@@ -272,10 +272,9 @@ const handleGenerate = async () => {
     ElMessage.warning('AI生成任务正在处理中，请稍候')
     return
   }
-  // 推进阶段触发后端 RequirementTrigger.onEnter() 自动创建AI任务
-  // 如果已在需求阶段，则通过 advancePhase 重新进入（后端会创建新任务）
   try {
-    await projectApi.advancePhase(props.projectId, 2)
+    const res = await projectApi.generateRequirement(props.projectId)
+    setActive(res.id)
   } catch (e: any) {
     if (e?.code === 8084) {
       ElMessage.warning('AI生成任务正在处理中，请稍候')
