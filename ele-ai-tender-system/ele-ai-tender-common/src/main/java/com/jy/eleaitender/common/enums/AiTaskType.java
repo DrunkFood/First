@@ -30,21 +30,6 @@ public enum AiTaskType {
         throw new IllegalArgumentException("未知的AI任务类型: " + code);
     }
 
-    /**
-     * 是否为检测类型
-     */
-    public boolean isDetection() {
-        return this == DETECTION_SENSITIVE_WORD || this == DETECTION_TYPO
-                || this == DETECTION_POLICY_REVIEW || this == DETECTION_FORMAT_CHECK;
-    }
-
-    /**
-     * 是否为业务需求检测类型（仅敏感词+错别字）
-     */
-    public boolean isRequirementDetection() {
-        return this == DETECTION_SENSITIVE_WORD || this == DETECTION_TYPO;
-    }
-
     public static AiTaskType mapToTaskType(DetectionType detectionType) {
         return switch (detectionType) {
             case SENSITIVE_WORD -> AiTaskType.DETECTION_SENSITIVE_WORD;
