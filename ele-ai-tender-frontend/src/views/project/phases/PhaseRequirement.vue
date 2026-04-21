@@ -1,115 +1,104 @@
 <template>
   <div class="phase-requirement">
-    <!-- 卡片容器 -->
-    <div class="form-container">
-      <!-- 卡片头部 -->
-      <div class="form-header">
-        <h3 class="form-title">详细需求生成</h3>
-      </div>
+    <!-- AI生成状态卡片（始终可见） -->
+    <GenerationStatusCard
+      :task="latestTask"
+      :can-create-new="canCreateNew"
+      :progress-percent="progressPercent"
+      generating-title="正在生成中"
+      generating-desc="AI正在生成招标需求内容，请稍候..."
+      completed-desc="所有章节已生成完成，您可以在编辑器中查看和修改内容"
+      idle-title="AI生成需求"
+      idle-desc="点击下方按钮开始AI生成招标需求内容"
+    >
+      <template #idle-action>
+        <button v-if="!readonly" class="btn btn-primary generate-btn" @click="handleGenerate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+          AI生成需求
+        </button>
+      </template>
+    </GenerationStatusCard>
 
-      <!-- 卡片内容区 -->
-      <div class="form-section">
-        <!-- AI生成状态卡片（始终可见） -->
-        <GenerationStatusCard
-          :task="latestTask"
-          :can-create-new="canCreateNew"
-          :progress-percent="progressPercent"
-          generating-title="正在生成中"
-          generating-desc="AI正在生成招标需求内容，请稍候..."
-          completed-desc="所有章节已生成完成，您可以在编辑器中查看和修改内容"
-          idle-title="AI生成需求"
-          idle-desc="点击下方按钮开始AI生成招标需求内容"
+    <!-- 章节标题 -->
+    <h4 class="section-title">第三章 招标/采购需求</h4>
+
+    <!-- 编辑器区域 -->
+    <div class="editor-container">
+      <div class="editor-area">
+        <MdPreview v-if="readonly" :model-value="content" :theme="themeStore.mode" />
+        <MarkdownEditor v-else v-model="content" :toolbars-exclude="excludeToolbars" />
+      </div>
+    </div>
+
+    <!-- AI内容反馈 -->
+    <div v-if="content && !readonly" class="ai-feedback">
+      <h4 class="feedback-title">对AI生成内容的反馈</h4>
+      <div class="feedback-actions">
+        <button
+          :class="['feedback-btn', 'btn-like', { active: genFeedback?.feedbackType === 'LIKE' }]"
+          :disabled="hasGenFeedback"
+          @click="handleFeedback('like')"
         >
-          <template #idle-action>
-            <button v-if="!readonly" class="btn btn-primary generate-btn" @click="handleGenerate">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-              AI生成需求
-            </button>
-          </template>
-        </GenerationStatusCard>
-
-        <!-- 章节标题 -->
-        <h4 class="section-title">第三章 招标/采购需求</h4>
-
-        <!-- 编辑器区域 -->
-        <div class="editor-container">
-          <div class="editor-area">
-            <MdPreview v-if="readonly" :model-value="content" :theme="themeStore.mode" />
-            <MarkdownEditor v-else v-model="content" :toolbars-exclude="excludeToolbars" />
-          </div>
-        </div>
-
-        <!-- AI内容反馈 -->
-        <div v-if="content && !readonly" class="ai-feedback">
-          <h4 class="feedback-title">对AI生成内容的反馈</h4>
-          <div class="feedback-actions">
-            <button
-              :class="['feedback-btn', 'btn-like', { active: genFeedback?.feedbackType === 'LIKE' }]"
-              :disabled="hasGenFeedback"
-              @click="handleFeedback('like')"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              <span>赞</span>
-            </button>
-            <button
-              :class="['feedback-btn', 'btn-dislike', { active: genFeedback?.feedbackType === 'DISLIKE' }]"
-              :disabled="hasGenFeedback"
-              @click="handleFeedback('dislike')"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-              <span>不行</span>
-            </button>
-            <span v-if="genFeedback" class="feedback-status">
-              {{ genFeedback.feedbackType === 'LIKE' ? '已赞' : '已反馈不满意' }}
-            </span>
-            <span v-else class="feedback-hint">帮助我们改进AI生成质量</span>
-          </div>
-        </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <span>赞</span>
+        </button>
+        <button
+          :class="['feedback-btn', 'btn-dislike', { active: genFeedback?.feedbackType === 'DISLIKE' }]"
+          :disabled="hasGenFeedback"
+          @click="handleFeedback('dislike')"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          <span>不行</span>
+        </button>
+        <span v-if="genFeedback" class="feedback-status">
+          {{ genFeedback.feedbackType === 'LIKE' ? '已赞' : '已反馈不满意' }}
+        </span>
+        <span v-else class="feedback-hint">帮助我们改进AI生成质量</span>
       </div>
+    </div>
 
-      <!-- 底部操作栏 -->
-      <div class="form-actions">
-        <div class="form-actions-left">
-          <button class="btn btn-secondary" @click="$emit('prev')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            上一步
-          </button>
-          <button v-if="!readonly" class="btn btn-warning" :disabled="!canCreateNew" @click="handleGenerate">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-            </svg>
-            重新生成章节
-          </button>
-        </div>
-        <div v-if="!readonly" class="form-actions-right">
-          <button class="btn btn-secondary" @click="handleSave">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            保存编辑
-          </button>
-          <button class="btn btn-primary" :disabled="!canCreateNew" @click="handleSaveAndNext">
-            确认需求
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </button>
-        </div>
+    <!-- 底部操作栏 -->
+    <div class="form-actions">
+      <div class="form-actions-left">
+        <button class="btn btn-secondary" @click="$emit('prev')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          上一步
+        </button>
+        <button v-if="!readonly" class="btn btn-warning" :disabled="!canCreateNew" @click="handleGenerate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10" />
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+          </svg>
+          重新生成章节
+        </button>
+      </div>
+      <div v-if="!readonly" class="form-actions-right">
+        <button class="btn btn-secondary" @click="handleSave">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          保存编辑
+        </button>
+        <button class="btn btn-primary" :disabled="!canCreateNew" @click="handleSaveAndNext">
+          确认需求
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -395,40 +384,13 @@ onMounted(loadData)
 
 <style scoped lang="scss">
 // ========================================
-// 卡片容器
-// ========================================
-.form-container {
-  background: var(--app-card-bg);
-  border-radius: var(--app-radius-sm);
-  border: 1px solid var(--app-border-light);
-  overflow: hidden;
-}
-
-.form-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-bg-tertiary);
-}
-
-.form-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-  margin: 0;
-}
-
-.form-section {
-  padding: 24px;
-}
-
-// ========================================
 // 章节标题
 // ========================================
 .section-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--app-text-primary);
-  margin: 0 0 20px 0;
+  margin: 20px 0 20px 0;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--app-brand-color);
 }
@@ -543,8 +505,8 @@ onMounted(loadData)
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 24px;
-  background: var(--app-bg-tertiary);
+  padding: 20px 0 0 0;
+  margin-top: 20px;
   border-top: 1px solid var(--app-border-light);
 }
 

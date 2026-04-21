@@ -1,213 +1,202 @@
 <template>
   <div class="phase-document">
-    <!-- 卡片容器 -->
-    <div class="form-container">
-      <!-- 卡片头部 -->
-      <div class="form-header">
-        <h3 class="form-title">文档集成</h3>
-      </div>
+    <!-- 生成状态卡片 -->
+    <div class="generation-status">
+      <!-- 已集成完成 -->
+      <template v-if="preview?.integrated">
+        <div class="status-icon completed">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <div class="status-info">
+          <div class="status-title">文档集成完成</div>
+          <div class="status-desc">招标文件已成功生成，请预览确认</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 100%" />
+            </div>
+            <div class="progress-text">100%</div>
+          </div>
+        </div>
+      </template>
+      <!-- 集成中 -->
+      <template v-else-if="isIntegrating">
+        <div class="status-icon spinning">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+        </div>
+        <div class="status-info">
+          <div class="status-title">正在集成中</div>
+          <div class="status-desc">正在生成招标文件，请稍候...</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 60%" />
+            </div>
+            <div class="progress-text">60%</div>
+          </div>
+        </div>
+      </template>
+      <!-- 待集成 -->
+      <template v-else>
+        <div class="status-icon idle">
+          <el-icon :size="24"><Document /></el-icon>
+        </div>
+        <div class="status-info">
+          <div class="status-title">待执行文档集成</div>
+          <div class="status-desc">请先选择政策文件，然后执行文档集成</div>
+        </div>
+        <button v-if="!readonly" class="btn btn-primary generate-btn" :loading="isIntegrating" @click="handleIntegrate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+          执行集成
+        </button>
+      </template>
+    </div>
 
-      <!-- 卡片内容区 -->
-      <div class="form-section">
-        <!-- 生成状态卡片 -->
-        <div class="generation-status">
-          <!-- 已集成完成 -->
-          <template v-if="preview?.integrated">
-            <div class="status-icon completed">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <div class="status-info">
-              <div class="status-title">文档集成完成</div>
-              <div class="status-desc">招标文件已成功生成，请预览确认</div>
-              <div class="progress-bar-container">
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 100%" />
-                </div>
-                <div class="progress-text">100%</div>
-              </div>
+    <!-- 文档信息栏 -->
+    <div v-if="preview?.integrated" class="document-info">
+      <div class="info-item">
+        <div class="info-label">文档名称</div>
+        <div class="info-value">{{ project?.projectName || '招标文件' }}.docx</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">文档大小</div>
+        <div class="info-value">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">页数</div>
+        <div class="info-value">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">生成时间</div>
+        <div class="info-value">{{ formatTime(project?.createTime) }}</div>
+      </div>
+    </div>
+
+    <!-- 章节标题 -->
+    <h4 class="section-title">文档确认</h4>
+
+    <!-- 预览容器 -->
+    <div v-if="preview?.integrated" class="preview-container">
+      <!-- 目录浮层面板 -->
+      <transition name="toc-fade">
+        <div v-if="showTocPanel" class="toc-panel">
+          <div class="toc-title">目录导航</div>
+          <template v-for="chapter in tocData" :key="chapter.id">
+            <div class="toc-item" @click="handleTocClick(chapter)">{{ chapter.title }}</div>
+            <div
+              v-for="child in chapter.children"
+              :key="child.id"
+              class="toc-item level-2"
+              @click="handleTocClick(child)"
+            >
+              {{ child.title }}
             </div>
           </template>
-          <!-- 集成中 -->
-          <template v-else-if="isIntegrating">
-            <div class="status-icon spinning">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
+        </div>
+      </transition>
+
+      <!-- 预览工具栏 -->
+      <div class="preview-toolbar">
+        <div class="toolbar-left">
+          <button class="toolbar-btn" :class="{ active: showTocPanel }" @click="showTocPanel = !showTocPanel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+            目录
+          </button>
+          <button class="toolbar-btn" @click="handlePrint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+            打印
+          </button>
+          <button class="toolbar-btn" @click="handleExport">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            下载
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <div class="zoom-controls">
+            <button class="toolbar-btn" @click="handleZoomOut">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="8" y1="11" x2="14" y2="11" />
               </svg>
-            </div>
-            <div class="status-info">
-              <div class="status-title">正在集成中</div>
-              <div class="status-desc">正在生成招标文件，请稍候...</div>
-              <div class="progress-bar-container">
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 60%" />
-                </div>
-                <div class="progress-text">60%</div>
-              </div>
-            </div>
-          </template>
-          <!-- 待集成 -->
-          <template v-else>
-            <div class="status-icon idle">
-              <el-icon :size="24"><Document /></el-icon>
-            </div>
-            <div class="status-info">
-              <div class="status-title">待执行文档集成</div>
-              <div class="status-desc">请先选择政策文件，然后执行文档集成</div>
-            </div>
-            <button v-if="!readonly" class="btn btn-primary generate-btn" :loading="isIntegrating" @click="handleIntegrate">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-              执行集成
             </button>
-          </template>
-        </div>
-
-        <!-- 文档信息栏 -->
-        <div v-if="preview?.integrated" class="document-info">
-          <div class="info-item">
-            <div class="info-label">文档名称</div>
-            <div class="info-value">{{ project?.projectName || '招标文件' }}.docx</div>
+            <span class="zoom-value">{{ zoomLevel }}%</span>
+            <button class="toolbar-btn" @click="handleZoomIn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </button>
           </div>
-          <div class="info-item">
-            <div class="info-label">文档大小</div>
-            <div class="info-value">-</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">页数</div>
-            <div class="info-value">-</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">生成时间</div>
-            <div class="info-value">{{ formatTime(project?.createTime) }}</div>
-          </div>
-        </div>
-
-        <!-- 章节标题 -->
-        <h4 class="section-title">文档确认</h4>
-
-        <!-- 预览容器 -->
-        <div v-if="preview?.integrated" class="preview-container">
-          <!-- 目录浮层面板 -->
-          <transition name="toc-fade">
-            <div v-if="showTocPanel" class="toc-panel">
-              <div class="toc-title">目录导航</div>
-              <template v-for="chapter in tocData" :key="chapter.id">
-                <div class="toc-item" @click="handleTocClick(chapter)">{{ chapter.title }}</div>
-                <div
-                  v-for="child in chapter.children"
-                  :key="child.id"
-                  class="toc-item level-2"
-                  @click="handleTocClick(child)"
-                >
-                  {{ child.title }}
-                </div>
-              </template>
-            </div>
-          </transition>
-
-          <!-- 预览工具栏 -->
-          <div class="preview-toolbar">
-            <div class="toolbar-left">
-              <button class="toolbar-btn" :class="{ active: showTocPanel }" @click="showTocPanel = !showTocPanel">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-                目录
-              </button>
-              <button class="toolbar-btn" @click="handlePrint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 6 2 18 2 18 9" />
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                  <rect x="6" y="14" width="12" height="8" />
-                </svg>
-                打印
-              </button>
-              <button class="toolbar-btn" @click="handleExport">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                下载
-              </button>
-            </div>
-            <div class="toolbar-right">
-              <div class="zoom-controls">
-                <button class="toolbar-btn" @click="handleZoomOut">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    <line x1="8" y1="11" x2="14" y2="11" />
-                  </svg>
-                </button>
-                <span class="zoom-value">{{ zoomLevel }}%</span>
-                <button class="toolbar-btn" @click="handleZoomIn">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    <line x1="11" y1="8" x2="11" y2="14" />
-                    <line x1="8" y1="11" x2="14" y2="11" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Word文档预览内容 -->
-          <div
-            ref="docxPreviewContainer"
-            class="preview-content docx-preview-container"
-            :style="{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }"
-          />
-          <!-- docx-preview渲染时的加载状态 -->
-          <div v-if="isDocxLoading" class="docx-loading">
-            <el-icon class="is-loading" :size="24"><Loading /></el-icon>
-            <span>文档加载中...</span>
-          </div>
-        </div>
-
-        <!-- 未集成时显示空状态 -->
-        <div v-else class="empty-state">
-          <el-icon :size="48" color="var(--app-text-tertiary)"><Document /></el-icon>
-          <p>请先执行文档集成</p>
-          <button v-if="!readonly" class="btn btn-secondary" @click="policyModalVisible = true">选择政策文件</button>
         </div>
       </div>
 
-      <!-- 底部操作栏 -->
-      <div class="form-actions">
-        <div class="form-actions-left">
-          <button class="btn btn-secondary" @click="$emit('prev')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            上一步
-          </button>
-        </div>
-        <div v-if="!readonly" class="form-actions-right">
-          <button class="btn btn-secondary" @click="handleSaveDraft">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            保存草稿
-          </button>
-          <button class="btn btn-success" :disabled="!preview?.integrated" @click="handleSubmitReview">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 11l3 3L22 4" />
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-            </svg>
-            提交检测
-          </button>
-        </div>
+      <!-- Word文档预览内容 -->
+      <div
+        ref="docxPreviewContainer"
+        class="preview-content docx-preview-container"
+        :style="{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }"
+      />
+      <!-- docx-preview渲染时的加载状态 -->
+      <div v-if="isDocxLoading" class="docx-loading">
+        <el-icon class="is-loading" :size="24"><Loading /></el-icon>
+        <span>文档加载中...</span>
+      </div>
+    </div>
+
+    <!-- 未集成时显示空状态 -->
+    <div v-else class="empty-state">
+      <el-icon :size="48" color="var(--app-text-tertiary)"><Document /></el-icon>
+      <p>请先执行文档集成</p>
+      <button v-if="!readonly" class="btn btn-secondary" @click="policyModalVisible = true">选择政策文件</button>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="form-actions">
+      <div class="form-actions-left">
+        <button class="btn btn-secondary" @click="$emit('prev')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          上一步
+        </button>
+      </div>
+      <div v-if="!readonly" class="form-actions-right">
+        <button class="btn btn-secondary" @click="handleSaveDraft">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          保存草稿
+        </button>
+        <button class="btn btn-success" :disabled="!preview?.integrated" @click="handleSubmitReview">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+          提交检测
+        </button>
       </div>
     </div>
 
@@ -506,33 +495,6 @@ defineExpose({ handleSaveEdit, handleApplyVariables })
 
 <style scoped lang="scss">
 // ========================================
-// 卡片容器
-// ========================================
-.form-container {
-  background: var(--app-card-bg);
-  border-radius: var(--app-radius-sm);
-  border: 1px solid var(--app-border-light);
-  overflow: hidden;
-}
-
-.form-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-bg-tertiary);
-}
-
-.form-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-  margin: 0;
-}
-
-.form-section {
-  padding: 24px;
-}
-
-// ========================================
 // 生成状态卡片
 // ========================================
 .generation-status {
@@ -659,7 +621,7 @@ defineExpose({ handleSaveEdit, handleApplyVariables })
   font-size: 15px;
   font-weight: 600;
   color: var(--app-text-primary);
-  margin: 0 0 20px 0;
+  margin: 20px 0 20px 0;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--app-brand-color);
 }
@@ -985,8 +947,8 @@ defineExpose({ handleSaveEdit, handleApplyVariables })
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 24px;
-  background: var(--app-bg-tertiary);
+  padding: 20px 0 0 0;
+  margin-top: 20px;
   border-top: 1px solid var(--app-border-light);
 }
 
