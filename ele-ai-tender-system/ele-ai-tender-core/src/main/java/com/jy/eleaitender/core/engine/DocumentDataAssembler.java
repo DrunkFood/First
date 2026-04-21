@@ -52,10 +52,7 @@ public class DocumentDataAssembler {
         data.put("contactPerson", project.getContactPerson());
         data.put("contactPhone", project.getContactPhone());
         data.put("projectDescription", project.getProjectDescription());
-
-        // 需求内容
-        String requirementContent = assembleRequirementContent(project);
-        data.put("requirementContent", requirementContent);
+        data.put("requirementContent", project.getRequirementContent());
 
         // 评审项（按类型分组）
         List<AiReviewItem> reviewItems = reviewItemMapper.selectByProjectId(projectId);
@@ -75,18 +72,4 @@ public class DocumentDataAssembler {
         return data;
     }
 
-    /**
-     * 组装需求内容
-     */
-    private String assembleRequirementContent(AiProject project) {
-        // 优先使用项目关联的需求
-        if (project.getRequirementId() != null) {
-            AiRequirement requirement = requirementMapper.selectById(project.getRequirementId());
-            if (requirement != null && requirement.getContent() != null) {
-                return requirement.getContent();
-            }
-        }
-        // 回退到项目自身的需求内容
-        return project.getRequirementContent() != null ? project.getRequirementContent() : "";
-    }
 }

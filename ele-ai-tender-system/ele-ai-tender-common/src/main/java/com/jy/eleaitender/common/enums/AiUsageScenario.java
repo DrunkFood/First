@@ -12,7 +12,8 @@ public enum AiUsageScenario {
 
     GENERATION("GENERATION", "生成"),
     OPTIMIZATION("OPTIMIZATION", "优化"),
-    DETECTION("DETECTION", "检测");
+    DETECTION("DETECTION", "检测"),
+    CHAT("CHAT", "对话");
 
     private final String code;
     private final String label;

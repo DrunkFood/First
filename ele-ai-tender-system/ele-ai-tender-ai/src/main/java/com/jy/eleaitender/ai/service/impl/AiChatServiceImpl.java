@@ -47,7 +47,7 @@ public class AiChatServiceImpl implements IAiChatService {
     public void streamChat(ChatRequest request, SseEmitter emitter) {
         executor.execute(() -> {
             try {
-                ChatClient chatClient = modelRouter.route(AiUsageScenario.OPTIMIZATION);
+                ChatClient chatClient = modelRouter.route(AiUsageScenario.CHAT);
 
                 // 构建对话历史
                 List<Message> chatMessages = new ArrayList<>();
@@ -151,7 +151,7 @@ public class AiChatServiceImpl implements IAiChatService {
 
     @Override
     public String suggest(ChatRequest request) {
-        ChatClient chatClient = modelRouter.route(AiUsageScenario.OPTIMIZATION);
+        ChatClient chatClient = modelRouter.route(AiUsageScenario.CHAT);
 
         StringBuilder userPrompt = new StringBuilder();
         if (request.getContext() != null && !request.getContext().isBlank()) {
