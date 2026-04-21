@@ -33,7 +33,7 @@
     </div>
 
     <!-- AI内容反馈 -->
-    <div v-if="content && !readonly" class="ai-feedback">
+    <div v-if="latestTask && content && !readonly" class="ai-feedback">
       <h4 class="feedback-title">对AI生成内容的反馈</h4>
       <div class="feedback-actions">
         <button
