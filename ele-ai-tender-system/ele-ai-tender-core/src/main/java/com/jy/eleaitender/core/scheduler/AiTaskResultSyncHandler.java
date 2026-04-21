@@ -79,6 +79,7 @@ public class AiTaskResultSyncHandler {
 
         switch (taskType) {
             case REQUIREMENT_GENERATE -> syncRequirement(task);
+            case PROJECT_REQUIREMENT_GENERATE -> syncProjectRequirement(task);
             case REVIEW_ITEM_GENERATE -> syncReviewItems(task);
             case DETECTION_SENSITIVE_WORD, DETECTION_TYPO,
                  DETECTION_POLICY_REVIEW, DETECTION_FORMAT_CHECK -> syncDetection(task);
@@ -113,6 +114,31 @@ public class AiTaskResultSyncHandler {
         requirement.setProgress(90);
         requirementMapper.updateById(requirement);
         log.info("同步需求内容成功: requirementId={}", requirementId);
+    }
+
+    private void syncProjectRequirement(AiTask task) {
+        Long projectId = task.getBizId();
+        AiProject project = projectMapper.selectById(projectId);
+        if (project == null) {
+            log.warn("项目不存在，跳过同步: projectId={}", projectId);
+            return;
+        }
+
+        if (!AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
+            log.info("项目需求生成任务非成功状态，不更新内容: requirementId={}, taskStatus={}",
+                    projectId, task.getStatus());
+            return;
+        }
+
+        String content = parseContentFromResult(task.getResult());
+        if (content == null) {
+            log.warn("解析需求生成结果为空，跳过同步: projectId={}", projectId);
+            return;
+        }
+
+        project.setRequirementContent(content);
+        projectMapper.updateById(project);
+        log.info("同步项目需求内容成功: projectId={}", projectId);
     }
 
     private String parseContentFromResult(String resultJson) {

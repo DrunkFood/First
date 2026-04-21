@@ -73,7 +73,8 @@ public class AiTaskProcessor {
     private String dispatch(AiTask task) {
         AiTaskType taskType = AiTaskType.fromCode(task.getTaskType());
         return switch (taskType) {
-            case REQUIREMENT_GENERATE -> requirementGenerator.generate(task);
+            case REQUIREMENT_GENERATE,
+                 PROJECT_REQUIREMENT_GENERATE -> requirementGenerator.generate(task);
             case REVIEW_ITEM_GENERATE -> reviewItemGenerator.generate(task);
             case DETECTION_SENSITIVE_WORD,
                  DETECTION_TYPO,

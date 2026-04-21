@@ -11,6 +11,4 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface AiRequirementMapper extends BaseMapper<AiRequirement> {
 
-    @Select("SELECT * FROM ai_requirement WHERE project_id = #{projectId} AND is_delete = 0 LIMIT 1")
-    AiRequirement selectByProjectId(Long projectId);
 }
