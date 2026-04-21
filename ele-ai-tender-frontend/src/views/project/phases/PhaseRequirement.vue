@@ -180,15 +180,29 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
-  (task) => {
-    // AI任务完成后，延迟等待后端同步结果，再重新加载需求数据
-    if (task.status === 'COMPLETED' && requirementId.value) {
+  async (task) => {
+    if (task.status !== 'COMPLETED' || !requirementId.value) return
+
+    // 优先从任务结果中直接提取内容（实时可用，避免后端10秒同步延迟）
+    let contentLoaded = false
+    if (task.result) {
+      try {
+        const resultObj = JSON.parse(task.result)
+        if (resultObj.content) {
+          content.value = resultObj.content
+          contentLoaded = true
+          try { await requirementApi.clearAutoSave(requirementId.value) } catch {}
+        }
+      } catch { /* JSON解析失败，走fallback */ }
+    }
+
+    // Fallback: 等待后端同步结果后再查询（result中无content的异常场景）
+    if (!contentLoaded) {
       setTimeout(async () => {
         try {
           const req = await requirementApi.getById(requirementId.value)
           if (req.content) {
             content.value = req.content
-            // AI生成完成后清除残留草稿，避免下次进入时弹出恢复提示
             try { await requirementApi.clearAutoSave(requirementId.value) } catch {}
           }
         } catch {

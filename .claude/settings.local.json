@@ -29,7 +29,15 @@
       "Bash(mkdir -p D:/tmp)",
       "Read(//d/tmp/**)",
       "Bash(ls *)",
-      "Bash(mvn clean *)"
+      "Bash(mvn clean *)",
+      "Bash(taskkill //F //FI \"WINDOWTITLE eq *spring-boot*\")",
+      "Bash(taskkill //F //FI \"IMAGENAME eq java.exe\" //FI \"MEMUSAGE gt 200000\")",
+      "Bash(taskkill //F //FI \"IMAGENAME eq node.exe\")",
+      "Bash(rtk mvn *)",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(java -version)",
+      "Bash(mvn spring-boot:run)",
+      "Bash(netstat -ano)"
     ]
   }
 }

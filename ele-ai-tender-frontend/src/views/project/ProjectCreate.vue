@@ -33,7 +33,7 @@
           <el-form-item label="引用业务需求" prop="requirementId">
             <el-select
               v-model="form.requirementId"
-              placeholder="请选择已审核通过的业务需求"
+              placeholder="请选择已完成的业务需求"
               filterable
               clearable
               style="width: 100%"
@@ -366,7 +366,7 @@ async function loadRequirements() {
     const res = await requirementApi.getList({
       pageNum: 1,
       pageSize: 200,
-      status: 'APPROVED',
+      status: 'COMPLETED',
     })
     requirementList.value = res.records || []
   } catch {
