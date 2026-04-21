@@ -33,6 +33,7 @@
 | AI编制 | AiTender |
 | 项目 | Project (ai_project) |
 | 业务需求 | Requirement (ai_requirement) |
+| 招标需求内容 | RequirementContent (ai_project.requirement_content) |
 | 模板 | Template (ai_template) |
 | 知识库文档 | KnowledgeDocument (ai_knowledge_document) |
 | 检测记录 | DetectionRecord (ai_detection_record) |
@@ -46,6 +47,8 @@
 **项目状态流转**: DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED / DETECTION_FAILED → PUBLISHED → ARCHIVED / CANCELLED
 
 **编制阶段流转**: BASIC_INFO(1) → REQUIREMENT(2) → REVIEW_ITEM(3) → DOCUMENT(4) → DETECTION(5)，由 PhaseFlowController 管控，详见 [PHASE_FLOW_SPEC.md](docs/rules/PHASE_FLOW_SPEC.md)
+
+**项目-需求关系**: 项目通过 `requirementId` 单向引用需求（`ai_requirement` 无 `projectId`）。进入需求阶段时，有关联需求→复制内容到 `project.requirementContent`；无关联→触发 `PROJECT_REQUIREMENT_GENERATE` AI任务。之后项目和需求再无关联，后续阶段均从 `project.requirementContent` 读取。
 
 **检测类型**: FAIRNESS(公平性) / COMPLIANCE(合规性) / TYPO(错别字) / SENSITIVE_WORD(敏感词)
 

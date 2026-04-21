@@ -29,8 +29,8 @@ flowchart LR
 | 阶段 | code | 进入时 onEnter | 完成校验 canComplete |
 |------|------|---------------|---------------------|
 | BASIC_INFO | 1 | 无（手动录入） | projectName / projectCategory / projectType 非空 |
-| REQUIREMENT | 2 | 自动创建需求 + 触发AI需求生成 | requirementId 或 requirementContent 非空 |
-| REVIEW_ITEM | 3 | 触发AI评审项生成 | 项目下存在评审项记录 |
+| REQUIREMENT | 2 | 有关联需求→复制内容到 requirementContent；无关联→创建需求+触发 PROJECT_REQUIREMENT_GENERATE | requirementId 或 requirementContent 非空 |
+| REVIEW_ITEM | 3 | 触发AI评审项生成（从 project.requirementContent 读取需求内容） | 项目下存在评审项记录 |
 | DOCUMENT | 4 | 自动执行文档集成 | generatedFileId 非空 |
 | DETECTION | 5 | 自动提交智能检测（携带policyFileIds） | 状态为 DETECTION_PASSED 或 DETECTION_SKIPPED |
 
@@ -82,9 +82,55 @@ advancePhase(projectId, targetPhase, context)
   → projectMapper.updateById(project)
 ```
 
-## 7. 前端集成
+## 7. 需求阶段触发器详解
 
-### 7.1 API 调用
+RequirementTrigger 是需求阶段的核心触发器，处理项目与需求的关联和内容快照逻辑。
+
+### 7.1 onEnter 流程
+
+```mermaid
+flowchart TD
+    START["进入 REQUIREMENT 阶段"] --> CHECK{"project.requirementId\n存在?"}
+    CHECK -->|是| COPY["读取 AiRequirement.content"]
+    COPY --> SAVE["写入 project.requirementContent"]
+    SAVE --> UPDATE["aiProjectMapper.updateById"]
+    UPDATE --> END["结束（不再访问需求表）"]
+    CHECK -->|否| CREATE["创建新 AiRequirement"]
+    CREATE --> LINK["project.requirementId = 新需求ID"]
+    LINK --> UPDATE2["aiProjectMapper.updateById"]
+    UPDATE2 --> AI["触发 PROJECT_REQUIREMENT_GENERATE\nAI任务"]
+    AI --> END2["AI结果 → project.requirementContent"]
+    END2 --> END
+```
+
+**关键设计**：
+- **内容快照**：进入需求阶段时，需求内容被复制到 `project.requirementContent`，后续阶段只读取项目上的字段
+- **单向关联**：`ai_requirement` 无 `project_id` 字段，只有 `ai_project.requirement_id` 单向指向需求
+- **两种路径**：
+  - 引入已有需求（`requirementId` 有值）→ 直接复制内容，不触发 AI
+  - 无关联需求 → 创建需求记录 + 触发 AI 生成
+
+### 7.2 canComplete 校验
+
+```java
+project.getRequirementId() != null
+    || (project.getRequirementContent() != null && !project.getRequirementContent().isBlank())
+```
+
+- 有 `requirementId` 说明已关联需求并复制了内容
+- 有 `requirementContent` 说明 AI 生成或手动填写已完成
+- 两个条件满足其一即可推进
+
+### 7.3 AI任务结果同步
+
+`PROJECT_REQUIREMENT_GENERATE` 任务完成后，由 `AiTaskResultSyncHandler.syncProjectRequirement()` 处理：
+- 从 `AiTask.result` 解析 `content` 字段
+- 直接写入 `project.requirementContent`
+- bizId 为 projectId，bizType 为 "REQUIREMENT"
+
+## 8. 前端集成
+
+### 8.1 API 调用
 
 ```typescript
 // src/api/project.ts
@@ -93,7 +139,7 @@ advancePhase(id: number, targetPhase: number, context?: Record<string, any>) {
 }
 ```
 
-### 7.2 各阶段组件调用时机
+### 8.2 各阶段组件调用时机
 
 | 前端组件 | 按钮 | 调用 |
 |---------|------|------|
@@ -102,19 +148,19 @@ advancePhase(id: number, targetPhase: number, context?: Record<string, any>) {
 | PhaseReviewItem | 确认评审项 | `advancePhase(projectId, 4)` |
 | PhaseDocument | 确认并检测 | `advancePhase(projectId, 5, { policyFileIds })` |
 
-### 7.3 上下文传递
+### 8.3 上下文传递
 
 `context` 参数用于向触发器传递运行时数据，当前仅 DETECTION 阶段使用：
 - `policyFileIds: number[]` — 用户选择的政策文件ID列表
 
-## 8. 设计约束
+## 9. 设计约束
 
-### 8.1 阶段转换规则
+### 9.1 阶段转换规则
 
 - 只能顺序推进到下一阶段，不能跳跃、不能倒退
 - `isValidTransition(current, target)` = `target.code == current.code + 1`
 
-### 8.2 循环依赖处理
+### 9.2 循环依赖处理
 
 PhaseTrigger 注入的业务 Service 可能依赖 IProjectService，形成循环：
 ```
@@ -122,19 +168,19 @@ ProjectServiceImpl → @Lazy PhaseTrigger → Service → IProjectService → Pr
 ```
 **解决方案**：ProjectServiceImpl 中所有触发器注入使用 `@Lazy` 注解。
 
-### 8.3 AI任务容错
+### 9.3 AI任务容错
 
 触发器 onEnter 中调用 Service 提交 AI 任务时，使用 try-catch 包裹：
 - 失败时仅 warn 日志，不阻塞阶段推进
 - 前端可通过 useLatestTask 组合式函数轮询任务状态
 
-### 8.4 DetectionService.submit() 职责边界
+### 9.4 DetectionService.submit() 职责边界
 
 - DetectionService.submit() 负责：创建检测记录 + 提交AI任务 + 更新Status为DETECTING
 - DetectionPhaseTrigger.onEnter() 负责：从context提取policyFileIds + 调用submit()
 - **submit() 不再自行推进阶段**，阶段推进由 PhaseFlowController 统一管理
 
-### 8.5 retry() 流程
+### 9.5 retry() 流程
 
 检测失败后的重试必须走状态机：
 ```
@@ -142,12 +188,15 @@ DETECTION_FAILED → IN_PROGRESS → PENDING_DETECTION → DETECTING
 ```
 不能直接设置状态。
 
-## 9. 排障指南
+## 10. 排障指南
 
 | 问题 | 排查方向 |
 |------|---------|
 | 阶段推进失败 "不允许跳转" | 检查 currentPhase 和 targetPhase，是否跳过中间阶段 |
 | 阶段推进失败 "当前阶段尚未完成" | 检查对应触发器 canComplete 逻辑 |
+| 需求阶段内容为空 | 检查 `project.requirement_id`：有值→查对应需求的 content 是否为空；无值→查 PROJECT_REQUIREMENT_GENERATE 任务状态 |
+| 需求阶段后内容丢失 | 确认 `project.requirement_content` 是否被写入，后续阶段只读此字段 |
+| 评审项生成缺少需求内容 | 检查 `project.requirement_content` 是否为空，ReviewItemTrigger 直接从项目读取 |
 | AI任务未自动触发 | 查看触发器 onEnter 日志，检查 Service 是否异常 |
 | Status 与 Phase 不一致 | 查 PhaseFlowController.syncProjectStatus 日志 |
 | 循环依赖报错 | 检查 @Lazy 注解是否遗漏 |
