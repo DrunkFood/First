@@ -7,6 +7,7 @@ import com.jy.eleaitender.ai.prompt.PromptTemplates;
 import com.jy.eleaitender.ai.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +69,7 @@ public class ReviewItemGenerator {
         // 验证结果包含reviewItems字段
         if (!resultParser.validateJsonField(jsonResult, "reviewItems")) {
             log.warn("评审项生成结果缺少reviewItems字段, taskId={}", task.getId());
-            jsonResult = "{\"reviewItems\": [], \"warning\": \"AI输出格式异常，请重试\"}";
+            throw new BusinessException("AI输出格式异常，请重试");
         }
 
         log.info("评审项生成完成: taskId={}", task.getId());

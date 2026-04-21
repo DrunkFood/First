@@ -157,7 +157,9 @@ public class AiTaskResultSyncHandler {
 
     // ========== 评审项生成同步 ==========
 
-    /** 子→父映射，用于插入时回填parentId */
+    /**
+     * 子→父映射，用于插入时回填parentId
+     */
     private final IdentityHashMap<AiReviewItem, AiReviewItem> parentMap = new IdentityHashMap<>();
 
     private void syncReviewItems(AiTask task) {
