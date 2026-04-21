@@ -19,6 +19,7 @@
               <el-option label="内容生成" value="GENERATION" />
               <el-option label="内容优化" value="OPTIMIZATION" />
               <el-option label="智能检测" value="DETECTION" />
+              <el-option label="AI对话" value="CHAT" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -87,6 +88,7 @@
             <el-option label="内容生成" value="GENERATION" />
             <el-option label="内容优化" value="OPTIMIZATION" />
             <el-option label="智能检测" value="DETECTION" />
+            <el-option label="AI对话" value="CHAT" />
           </el-select>
         </el-form-item>
         <el-form-item label="优先模型" required>
@@ -156,7 +158,7 @@ const form = reactive({
   description: '',
 })
 
-const scenarioMap: Record<string, string> = { GENERATION: '内容生成', OPTIMIZATION: '内容优化', DETECTION: '智能检测' }
+const scenarioMap: Record<string, string> = { GENERATION: '内容生成', OPTIMIZATION: '内容优化', DETECTION: '智能检测', CHAT: 'AI对话' }
 const scenarioLabel = (code?: string) => (code ? scenarioMap[code] || code : '-')
 
 const fetchData = async () => {
