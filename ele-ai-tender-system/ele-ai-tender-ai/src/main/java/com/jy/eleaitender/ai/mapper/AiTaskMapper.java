@@ -55,6 +55,15 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     int markFailed(@Param("id") Long id, @Param("errorMsg") String errorMsg);
 
     /**
+     * 标记任务失败
+     * 跳过数据隔离：后台任务处理无用户上下文
+     */
+    @DataScope(skip = true)
+    @Update("UPDATE ai_task SET status = 'FAILED', result = #{result}, error_msg = #{errorMsg}, completed_at = NOW() " +
+            "WHERE id = #{id} AND is_delete = 0")
+    int markFailed(@Param("id") Long id, @Param("result") String result, @Param("errorMsg") String errorMsg);
+
+    /**
      * 标记AI服务不可用
      * 跳过数据隔离：后台任务处理无用户上下文
      */

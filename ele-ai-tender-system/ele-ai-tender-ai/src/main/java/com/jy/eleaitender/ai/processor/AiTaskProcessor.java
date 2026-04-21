@@ -7,6 +7,7 @@ import com.jy.eleaitender.ai.generator.TextOptimizer;
 import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.exception.AiErrorContentException;
 import com.jy.eleaitender.common.exception.AiUnavailableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,9 @@ public class AiTaskProcessor {
             } catch (AiUnavailableException e) {
                 log.error("AI服务不可用: id={}, type={}", task.getId(), task.getTaskType(), e);
                 aiTaskMapper.markAiUnavailable(task.getId(), e.getMessage());
+            } catch (AiErrorContentException e) {
+                log.error("AI任务内容异常: id={}, type={}", task.getId(), task.getTaskType(), e);
+                aiTaskMapper.markFailed(task.getId(), e.getContent(), truncateErrorMsg(e.getMessage()));
             } catch (Exception e) {
                 log.error("AI任务处理失败: id={}, type={}", task.getId(), task.getTaskType(), e);
                 aiTaskMapper.markFailed(task.getId(), truncateErrorMsg(e.getMessage()));
