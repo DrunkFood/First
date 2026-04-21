@@ -48,10 +48,11 @@ public class AiCallRecorder {
     public String callAndRecord(ChatClient client, String systemPrompt, String userPrompt,
                                 String role, Long taskId, Long userId, List<String> fileIds) {
         String fileContents = fileContentService.resolveFileContents(fileIds);
+        userPrompt = userPrompt + fileContents;
 
         ChatResponse chatResponse = client.prompt()
                 .system(systemPrompt)
-                .user(userPrompt + fileContents)
+                .user(userPrompt)
                 .call()
                 .chatResponse();
 
