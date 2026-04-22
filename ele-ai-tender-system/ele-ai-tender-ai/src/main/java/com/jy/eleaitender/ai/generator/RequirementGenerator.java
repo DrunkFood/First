@@ -1,6 +1,5 @@
 package com.jy.eleaitender.ai.generator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.model.ModelRouter;
 import com.jy.eleaitender.ai.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.prompt.PromptTemplates;
@@ -13,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+
+import static org.apache.commons.collections4.MapUtils.getString;
 
 /**
  * 需求生成器
@@ -29,9 +30,6 @@ public class RequirementGenerator {
     private GenerateResultParser resultParser;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private AiCallRecorder aiCallRecorder;
 
     /**
@@ -43,7 +41,7 @@ public class RequirementGenerator {
     public String generate(AiTask task) {
         log.info("开始需求生成: taskId={}", task.getId());
 
-        Map<String, Object> params = parseParams(task.getRequestParams());
+        Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
 
         // 构建Prompt
         String userPrompt = PromptBuilder.buildRequirementGenerate(
@@ -66,29 +64,7 @@ public class RequirementGenerator {
         String content = resultParser.extractMarkdown(aiOutput);
 
         log.info("需求生成完成: taskId={}, contentLength={}", task.getId(), content.length());
-        return toJsonResult("content", content);
+        return resultParser.toJsonResult("content", content);
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> parseParams(String requestParams) {
-        try {
-            return objectMapper.readValue(requestParams, Map.class);
-        } catch (Exception e) {
-            log.warn("解析requestParams失败: {}", requestParams, e);
-            return Map.of();
-        }
-    }
-
-    private String getString(Map<String, Object> params, String key) {
-        Object value = params.get(key);
-        return value != null ? value.toString() : null;
-    }
-
-    private String toJsonResult(String key, String value) {
-        try {
-            return objectMapper.writeValueAsString(Map.of(key, value));
-        } catch (Exception e) {
-            return "{\"" + key + "\": \"\"}";
-        }
-    }
 }

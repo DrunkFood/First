@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static org.apache.commons.collections4.MapUtils.getString;
+
 /**
  * 评审项生成器
  * 通过AI模型根据项目信息和需求内容生成评审标准体系
@@ -30,9 +32,6 @@ public class ReviewItemGenerator {
     private GenerateResultParser resultParser;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private AiCallRecorder aiCallRecorder;
 
     /**
@@ -44,7 +43,7 @@ public class ReviewItemGenerator {
     public String generate(AiTask task) {
         log.info("开始评审项生成: taskId={}", task.getId());
 
-        Map<String, Object> params = parseParams(task.getRequestParams());
+        Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
 
         // 构建Prompt
         String userPrompt = PromptBuilder.buildReviewItemGenerate(
@@ -76,18 +75,4 @@ public class ReviewItemGenerator {
         return jsonResult;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> parseParams(String requestParams) {
-        try {
-            return objectMapper.readValue(requestParams, Map.class);
-        } catch (Exception e) {
-            log.warn("解析requestParams失败: {}", requestParams, e);
-            return Map.of();
-        }
-    }
-
-    private String getString(Map<String, Object> params, String key) {
-        Object value = params.get(key);
-        return value != null ? value.toString() : null;
-    }
 }

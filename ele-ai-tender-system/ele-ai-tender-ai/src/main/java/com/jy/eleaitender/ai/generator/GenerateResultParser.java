@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Map;
+
 /**
  * AI输出结果解析器
  * 从AI返回的文本中提取结构化内容（JSON或Markdown）
@@ -17,6 +19,24 @@ public class GenerateResultParser {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> parseParams(String requestParams) {
+        try {
+            return objectMapper.readValue(requestParams, Map.class);
+        } catch (Exception e) {
+            log.warn("解析requestParams失败: {}", requestParams, e);
+            return Map.of();
+        }
+    }
+
+    public String toJsonResult(String key, String value) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(key, value));
+        } catch (Exception e) {
+            return "{\"" + key + "\": \"\"}";
+        }
+    }
 
     /**
      * 提取AI输出中的JSON内容

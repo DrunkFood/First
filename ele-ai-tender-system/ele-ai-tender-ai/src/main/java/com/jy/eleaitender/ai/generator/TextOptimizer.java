@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static org.apache.commons.collections4.MapUtils.getString;
+
 /**
  * 文本优化器
  * 通过AI模型优化招标文件文本内容
@@ -26,7 +28,7 @@ public class TextOptimizer {
     private ModelRouter modelRouter;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private GenerateResultParser resultParser;
 
     @Autowired
     private AiCallRecorder aiCallRecorder;
@@ -40,7 +42,7 @@ public class TextOptimizer {
     public String optimize(AiTask task) {
         log.info("开始文本优化: taskId={}", task.getId());
 
-        Map<String, Object> params = parseParams(task.getRequestParams());
+        Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
 
         String content = getString(params, "content");
         String requirement = getString(params, "requirement");
@@ -56,29 +58,7 @@ public class TextOptimizer {
                 userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
         log.info("文本优化完成: taskId={}", task.getId());
-        return toJsonResult("optimizedContent", optimized != null ? optimized : "");
+        return resultParser.toJsonResult("optimizedContent", optimized != null ? optimized : "");
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> parseParams(String requestParams) {
-        try {
-            return objectMapper.readValue(requestParams, Map.class);
-        } catch (Exception e) {
-            log.warn("解析requestParams失败: {}", requestParams, e);
-            return Map.of();
-        }
-    }
-
-    private String getString(Map<String, Object> params, String key) {
-        Object value = params.get(key);
-        return value != null ? value.toString() : null;
-    }
-
-    private String toJsonResult(String key, String value) {
-        try {
-            return objectMapper.writeValueAsString(Map.of(key, value));
-        } catch (Exception e) {
-            return "{\"" + key + "\": \"\"}";
-        }
-    }
 }

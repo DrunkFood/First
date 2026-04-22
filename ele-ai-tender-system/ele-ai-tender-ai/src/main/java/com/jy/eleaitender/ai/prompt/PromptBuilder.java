@@ -6,14 +6,12 @@ package com.jy.eleaitender.ai.prompt;
  */
 public final class PromptBuilder {
 
-    private PromptBuilder() {}
-
     /**
      * 构建需求生成的User Prompt
      */
     public static String buildRequirementGenerate(String projectName, String projectType,
-                                                   String projectCategory, String budget,
-                                                   String description, String referenceContent) {
+                                                  String projectCategory, String budget,
+                                                  String description, String referenceContent) {
         return String.format(PromptTemplates.REQUIREMENT_GENERATE_USER,
                 defaultStr(projectName),
                 defaultStr(projectType),
@@ -27,8 +25,8 @@ public final class PromptBuilder {
      * 构建评审项生成的User Prompt
      */
     public static String buildReviewItemGenerate(String projectName, String projectType,
-                                                  String projectCategory, String budget,
-                                                  String requirementContent, String reviewMethod) {
+                                                 String projectCategory, String budget,
+                                                 String requirementContent, String reviewMethod) {
         return String.format(PromptTemplates.REVIEW_ITEM_GENERATE_USER,
                 defaultStr(projectName),
                 defaultStr(projectType),
