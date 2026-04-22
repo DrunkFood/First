@@ -31,10 +31,13 @@ public class SupTemplate extends BaseEntity {
     @Schema(description = "模板描述")
     private String description;
 
-    @Schema(description = "模板内容(Markdown)")
+    @Schema(description = "模板文件ID(关联file_info)")
+    private Long fileId;
+
+    @Schema(description = "模板用途说明")
     private String content;
 
-    @Schema(description = "模板结构定义JSON")
+    @Schema(description = "Word章节结构JSON")
     private String structureDefinition;
 
     @Schema(description = "版本号")

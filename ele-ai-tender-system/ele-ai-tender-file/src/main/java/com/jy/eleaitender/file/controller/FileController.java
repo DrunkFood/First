@@ -1,6 +1,7 @@
 package com.jy.eleaitender.file.controller;
 
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
+import com.jy.eleaitender.common.dto.response.WordStructureVO;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.FileException;
 import com.jy.eleaitender.common.response.Result;
@@ -8,6 +9,7 @@ import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.file.service.IFileStorageService;
+import com.jy.eleaitender.file.service.IWordDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /**
  * 文件服务控制器
@@ -36,6 +39,9 @@ public class FileController {
 
     @Autowired
     private IFileStorageService fileStorageService;
+
+    @Autowired
+    private IWordDocumentService wordDocumentService;
 
     @PostMapping("/upload")
     @RequireLogin
@@ -103,5 +109,27 @@ public class FileController {
         }
         boolean result = fileStorageService.delete(fileId);
         return Result.success(result);
+    }
+
+    @GetMapping("/structure/{fileId}")
+    @RequireLogin
+    @Operation(summary = "获取Word文档结构")
+    public Result<WordStructureVO> getFileStructure(@PathVariable Long fileId) {
+        return Result.success(wordDocumentService.getFileStructure(fileId));
+    }
+
+    @PostMapping("/generate-doc")
+    @RequireLogin
+    @Operation(summary = "基于模板生成文档")
+    public Result<Long> generateDocument(@RequestBody Map<String, Object> params) {
+        if (params.get("templateFileId") == null || params.get("data") == null) {
+            return Result.fail(ResponseCode.PARAM_ERROR);
+        }
+        Long templateFileId = ((Number) params.get("templateFileId")).longValue();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) params.get("data");
+        String fileName = (String) params.get("fileName");
+        Long generatedFileId = wordDocumentService.generateDocument(templateFileId, data, fileName);
+        return Result.success(generatedFileId);
     }
 }

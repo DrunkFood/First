@@ -3,7 +3,7 @@
     <div class="page-header-row">
       <div>
         <div class="page-title">模板管理</div>
-        <div class="page-subtitle">管理招标文件模板，支持Markdown格式</div>
+        <div class="page-subtitle">管理招标文件模板，上传Word模板文件</div>
       </div>
     </div>
 
@@ -14,7 +14,7 @@
             <el-input v-model="queryParams.templateName" placeholder="请输入模板名称" clearable />
           </el-form-item>
           <el-form-item label="类别">
-            <el-select v-model="queryParams.templateCategory" placeholder="请选择类别" clearable>
+            <el-select v-model="queryParams.projectCategory" placeholder="请选择类别" clearable>
               <el-option label="限额以下" value="LIMITED_BELOW" />
               <el-option label="产权交易" value="PROPERTY_TRADE" />
               <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
@@ -64,11 +64,17 @@
         <el-table-column type="selection" width="50" />
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="templateName" label="模板名称" min-width="180" />
-        <el-table-column prop="templateCategory" label="类别" width="120">
+        <el-table-column prop="projectCategory" label="类别" width="120">
           <template #default="{ row }">
-            <el-tag v-if="row.templateCategory === 'LIMITED_BELOW'" type="info">限额以下</el-tag>
-            <el-tag v-else-if="row.templateCategory === 'PROPERTY_TRADE'" type="warning">产权交易</el-tag>
-            <el-tag v-else-if="row.templateCategory === 'GOVERNMENT_PROCUREMENT'" type="success">政府采购</el-tag>
+            <el-tag v-if="row.projectCategory === 'LIMITED_BELOW'" type="info">限额以下</el-tag>
+            <el-tag v-else-if="row.projectCategory === 'PROPERTY_TRADE'" type="warning">产权交易</el-tag>
+            <el-tag v-else-if="row.projectCategory === 'GOVERNMENT_PROCUREMENT'" type="success">政府采购</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="模板文件" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.fileId" type="success" size="small">已上传</el-tag>
+            <span v-else>-</span>
           </template>
         </el-table-column>
         <el-table-column prop="isDefault" label="默认" width="80">
@@ -131,37 +137,46 @@
         <el-form-item label="模板名称" prop="templateName">
           <el-input v-model="formData.templateName" placeholder="请输入模板名称" />
         </el-form-item>
-        <el-form-item label="模板类别" prop="templateCategory">
-          <el-select v-model="formData.templateCategory" placeholder="请选择模板类别" style="width: 100%">
+        <el-form-item label="模板类别" prop="projectCategory">
+          <el-select v-model="formData.projectCategory" placeholder="请选择模板类别" style="width: 100%">
             <el-option label="限额以下" value="LIMITED_BELOW" />
             <el-option label="产权交易" value="PROPERTY_TRADE" />
             <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
           </el-select>
         </el-form-item>
-        <el-form-item label="项目类型" prop="templateType">
-          <el-select v-model="formData.templateType" placeholder="请选择项目类型" style="width: 100%">
+        <el-form-item label="项目类型" prop="projectType">
+          <el-select v-model="formData.projectType" placeholder="请选择项目类型" style="width: 100%">
             <el-option label="工程" value="ENGINEERING" />
             <el-option label="货物" value="GOODS" />
             <el-option label="服务" value="SERVICE" />
           </el-select>
         </el-form-item>
-        <el-form-item label="匹配模式" prop="matchMode">
-          <el-radio-group v-model="formData.matchMode">
-            <el-radio value="AUTO_MATCH">自动匹配</el-radio>
-            <el-radio value="MANUAL_SELECT">手动选择</el-radio>
-            <el-radio value="UPLOAD">上传</el-radio>
-          </el-radio-group>
+        <el-form-item label="模板文件" prop="fileId">
+          <el-upload
+            :action="''"
+            :auto-upload="false"
+            :limit="1"
+            accept=".docx"
+            :on-change="handleFileChange"
+            :file-list="fileList"
+            :on-remove="handleFileRemove"
+          >
+            <el-button type="primary">选择Word文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">仅支持 .docx 格式</div>
+            </template>
+          </el-upload>
         </el-form-item>
-        <el-form-item label="模板内容" prop="content">
+        <el-form-item label="用途说明">
           <el-input
             v-model="formData.content"
             type="textarea"
-            :rows="10"
-            placeholder="请输入Markdown格式的模板内容"
+            :rows="3"
+            placeholder="请输入模板用途说明"
           />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="formData.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+          <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -178,7 +193,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Delete } from '@element-plus/icons-vue'
-import { templateApi } from '@/api/template'
+import { templateApi, fileApi } from '@/api/template'
 import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams } from '@/types/template'
 
 const loading = ref(false)
@@ -190,7 +205,7 @@ const queryParams = reactive<TemplateQueryParams>({
   pageNum: 1,
   pageSize: 10,
   templateName: undefined,
-  templateCategory: undefined,
+  projectCategory: undefined,
   status: undefined,
 })
 
@@ -198,21 +213,33 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const submitLoading = ref(false)
 const formRef = ref<FormInstance>()
+const fileList = ref<any[]>([])
+const uploadingFile = ref<File | null>(null)
 const formData = reactive<TemplateCreateParams & { id?: number }>({
   templateName: '',
-  templateCategory: '',
-  templateType: '',
-  matchMode: 'AUTO_MATCH',
+  projectCategory: '',
+  projectType: '',
+  fileId: undefined,
   content: '',
-  remark: '',
+  description: '',
 })
 
 const formRules = reactive<FormRules>({
   templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }],
-  templateCategory: [{ required: true, message: '请选择模板类别', trigger: 'change' }],
-  templateType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
-  matchMode: [{ required: true, message: '请选择匹配模式', trigger: 'change' }],
+  projectCategory: [{ required: true, message: '请选择模板类别', trigger: 'change' }],
+  projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
 })
+
+const handleFileChange = (uploadFile: any) => {
+  uploadingFile.value = uploadFile.raw
+  fileList.value = [uploadFile]
+}
+
+const handleFileRemove = () => {
+  uploadingFile.value = null
+  fileList.value = []
+  formData.fileId = undefined
+}
 
 const fetchList = async () => {
   loading.value = true
@@ -236,7 +263,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryParams.templateName = undefined
-  queryParams.templateCategory = undefined
+  queryParams.projectCategory = undefined
   queryParams.status = undefined
   queryParams.pageNum = 1
   fetchList()
@@ -252,12 +279,15 @@ const handleEdit = (row: TemplateInfo) => {
   Object.assign(formData, {
     id: row.id,
     templateName: row.templateName,
-    templateCategory: row.templateCategory,
-    templateType: row.templateType,
-    matchMode: row.matchMode,
+    projectCategory: row.projectCategory,
+    projectType: row.projectType,
+    fileId: row.fileId,
     content: row.content,
-    remark: row.remark,
+    description: row.description,
   })
+  if (row.fileId) {
+    fileList.value = [{ name: '已上传模板文件', url: '' }]
+  }
   dialogVisible.value = true
 }
 
@@ -316,6 +346,12 @@ const handleSubmit = async () => {
 
     submitLoading.value = true
     try {
+      // 先上传文件
+      if (uploadingFile.value) {
+        const uploadRes = await fileApi.upload(uploadingFile.value, 'template')
+        formData.fileId = uploadRes.data.fileId
+      }
+
       if (formData.id) {
         await templateApi.update(formData as TemplateUpdateParams)
         ElMessage.success('更新成功')
@@ -338,12 +374,14 @@ const handleDialogClosed = () => {
   Object.assign(formData, {
     id: undefined,
     templateName: '',
-    templateCategory: '',
-    templateType: '',
-    matchMode: 'AUTO_MATCH',
+    projectCategory: '',
+    projectType: '',
+    fileId: undefined,
     content: '',
-    remark: '',
+    description: '',
   })
+  fileList.value = []
+  uploadingFile.value = null
 }
 
 onMounted(() => {

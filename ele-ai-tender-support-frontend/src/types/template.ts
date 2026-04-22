@@ -1,15 +1,28 @@
+// Word章节结构
+export interface WordChapter {
+  level: number
+  title: string
+  bookmarks?: string[]
+}
+
+export interface WordStructure {
+  chapters: WordChapter[]
+  placeholders: string[]
+  bookmarks: string[]
+}
+
 // 模板信息
 export interface TemplateInfo {
   id: number
   templateName: string
-  templateCategory: string
-  templateType: string
-  matchMode: string
-  content: string
-  structureDefinition?: string
+  projectCategory: string
+  projectType: string
+  fileId?: number
+  content?: string
+  structureDefinition?: WordStructure
   isDefault: number
   version: string
-  remark?: string
+  description?: string
   status: number
   createTime?: string
   updateTime?: string
@@ -22,33 +35,33 @@ export interface TemplateQueryParams {
   pageNum: number
   pageSize: number
   templateName?: string
-  templateCategory?: string
-  templateType?: string
+  projectCategory?: string
+  projectType?: string
   status?: number
 }
 
 // 模板创建参数
 export interface TemplateCreateParams {
   templateName: string
-  templateCategory: string
-  templateType: string
-  matchMode: string
+  projectCategory: string
+  projectType: string
+  fileId?: number
   content?: string
   structureDefinition?: string
   isDefault?: number
-  remark?: string
+  description?: string
 }
 
 // 模板更新参数
 export interface TemplateUpdateParams {
   id: number
   templateName?: string
-  templateCategory?: string
-  templateType?: string
-  matchMode?: string
+  projectCategory?: string
+  projectType?: string
+  fileId?: number
   content?: string
   structureDefinition?: string
   isDefault?: number
-  remark?: string
+  description?: string
   status?: number
 }

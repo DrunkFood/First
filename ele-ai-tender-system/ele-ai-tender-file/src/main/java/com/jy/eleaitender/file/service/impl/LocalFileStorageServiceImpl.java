@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,6 +90,60 @@ public class LocalFileStorageServiceImpl implements IFileStorageService {
 
         } catch (IOException e) {
             log.error("文件上传失败", e);
+            throw new FileException(ResponseCode.FILE_UPLOAD_ERROR);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public FileUploadResponse uploadFromBytes(InputStream inputStream, String fileName, String bizType) {
+        if (inputStream == null) {
+            throw new FileException(ResponseCode.FILE_UPLOAD_ERROR, "文件流不能为空");
+        }
+        if (StringUtils.isBlank(fileName)) {
+            throw new FileException(ResponseCode.FILE_UPLOAD_ERROR, "文件名不能为空");
+        }
+
+        try {
+            // 读取输入流到字节数组
+            byte[] bytes = inputStream.readAllBytes();
+            long fileSize = bytes.length;
+
+            // 计算SHA-256
+            String fileSha256 = DigestUtil.sha256Hex(bytes);
+
+            // 检查秒传
+            FileInfo existingFile = getBySha256(fileSha256);
+            if (existingFile != null) {
+                log.info("文件秒传成功, sha256: {}, fileId: {}", fileSha256, existingFile.getId());
+                return new FileUploadResponse(existingFile.getId(), fileName,
+                        existingFile.getFileSize(), fileSha256, extractFileType(fileName));
+            }
+
+            // 生成存储路径
+            String relativePath = generateRelativePath(bizType, fileName);
+            String absolutePath = fileStorageConfig.getBasePath() + File.separator + relativePath;
+
+            // 确保目录存在并写入文件
+            File destFile = new File(absolutePath);
+            FileUtil.mkParentDirs(destFile);
+            FileUtil.writeBytes(bytes, destFile);
+
+            // 保存文件信息到数据库
+            FileInfo fileInfo = new FileInfo();
+            fileInfo.setFileName(fileName);
+            fileInfo.setFilePath(relativePath);
+            fileInfo.setFileSize(fileSize);
+            fileInfo.setFileSha256(fileSha256);
+            fileInfo.setBizType(bizType);
+            fileInfoMapper.insert(fileInfo);
+
+            log.info("文件上传成功(字节流), fileId: {}, fileName: {}, path: {}",
+                    fileInfo.getId(), fileName, relativePath);
+
+            return new FileUploadResponse(fileInfo.getId(), fileName, fileSize, fileSha256, extractFileType(fileName));
+        } catch (IOException e) {
+            log.error("文件上传失败(字节流)", e);
             throw new FileException(ResponseCode.FILE_UPLOAD_ERROR);
         }
     }

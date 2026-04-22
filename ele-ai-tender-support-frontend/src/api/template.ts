@@ -40,6 +40,18 @@ export const templateApi = {
 
   // 设为默认模板
   setDefault(id: number): Promise<ApiResponse<void>> {
-    return request.put(`/v1/template-configs/${id}/set-default`)
+    return request.post(`/v1/template-configs/${id}/set-default`)
+  },
+}
+
+// 文件上传 API
+export const fileApi = {
+  upload(file: File, bizType: string) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('bizType', bizType)
+    return request.post<{ fileId: number; fileName: string }>('/file-api/api/file/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
   },
 }

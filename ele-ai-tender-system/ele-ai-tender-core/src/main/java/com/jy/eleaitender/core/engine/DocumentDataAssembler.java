@@ -46,7 +46,7 @@ public class DocumentDataAssembler {
         data.put("projectCode", project.getProjectCode());
         data.put("projectCategory", project.getProjectCategory());
         data.put("projectType", project.getProjectType());
-        data.put("budget", project.getBudget());
+        data.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : "");
         data.put("tenderUnit", project.getTenderUnit());
         data.put("projectLocation", project.getProjectLocation());
         data.put("contactPerson", project.getContactPerson());
@@ -63,13 +63,30 @@ public class DocumentDataAssembler {
                         Collectors.toList()
                 ));
 
-        data.put("complianceItems", grouped.getOrDefault("COMPLIANCE", Collections.emptyList()));
-        data.put("technicalItems", grouped.getOrDefault("TECHNICAL", Collections.emptyList()));
-        data.put("creditItems", grouped.getOrDefault("CREDIT", Collections.emptyList()));
-        data.put("commercialItems", grouped.getOrDefault("COMMERCIAL", Collections.emptyList()));
+        data.put("complianceItems", toFlatList(grouped.getOrDefault("COMPLIANCE", Collections.emptyList())));
+        data.put("technicalItems", toFlatList(grouped.getOrDefault("TECHNICAL", Collections.emptyList())));
+        data.put("creditItems", toFlatList(grouped.getOrDefault("CREDIT", Collections.emptyList())));
+        data.put("commercialItems", toFlatList(grouped.getOrDefault("COMMERCIAL", Collections.emptyList())));
         data.put("reviewType", project.getReviewType());
 
         return data;
+    }
+
+    /**
+     * 将评审项实体列表转为扁平化的Map列表，兼容poi-tl模板渲染
+     */
+    private List<Map<String, String>> toFlatList(List<TbProjectReviewItem> items) {
+        if (items == null || items.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return items.stream().map(item -> {
+            Map<String, String> map = new LinkedHashMap<>();
+            map.put("itemName", item.getItemName() != null ? item.getItemName() : "");
+            map.put("itemContent", item.getItemContent() != null ? item.getItemContent() : "");
+            map.put("score", item.getScore() != null ? String.valueOf(item.getScore()) : "");
+            map.put("level", item.getLevel() != null ? String.valueOf(item.getLevel()) : "1");
+            return map;
+        }).toList();
     }
 
 }

@@ -1,6 +1,7 @@
 package com.jy.eleaitender.common.client;
 
 import com.jy.eleaitender.common.dto.response.FileUploadResponse;
+import com.jy.eleaitender.common.dto.response.WordStructureVO;
 import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.common.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,8 @@ import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 /**
  * 内部文件服务客户端
@@ -114,6 +117,61 @@ public class InternalFileServiceClient {
     }
 
     /**
+     * 获取Word文档结构
+     *
+     * @param fileId 文件ID
+     * @return Word文档结构（章节、占位符、书签）
+     */
+    public WordStructureVO getFileStructure(Long fileId) {
+        String url = properties.getBaseUrl() + "/api/file/structure/" + fileId;
+        log.info("从文件服务获取Word文档结构: url={}", url);
+
+        HttpHeaders headers = new HttpHeaders();
+        addAuthHeader(headers);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+            return parseStructureResponse(response.getBody());
+        } catch (Exception e) {
+            log.error("获取Word文档结构失败: fileId={}, error={}", fileId, e.getMessage(), e);
+            throw new RuntimeException("获取Word文档结构失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 生成文档（基于模板和数据）
+     *
+     * @param templateFileId 模板文件ID
+     * @param data           模板填充数据
+     * @param fileName       生成文件名
+     * @return 生成的文件ID
+     */
+    public Long generateDocument(Long templateFileId, Map<String, Object> data, String fileName) {
+        String url = properties.getBaseUrl() + "/api/file/generate-doc";
+        log.info("调用文件服务生成文档: url={}, templateFileId={}", url, templateFileId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        addAuthHeader(headers);
+
+        Map<String, Object> params = new java.util.HashMap<>();
+        params.put("templateFileId", templateFileId);
+        params.put("data", data);
+        params.put("fileName", fileName);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+            return parseGeneratedFileId(response.getBody());
+        } catch (Exception e) {
+            log.error("文档生成失败: templateFileId={}, error={}", templateFileId, e.getMessage(), e);
+            throw new RuntimeException("文档生成失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * 生成或获取缓存的服务间调用JWT Token
      */
     private void addAuthHeader(HttpHeaders headers) {
@@ -162,6 +220,35 @@ public class InternalFileServiceClient {
             return result.getData();
         } catch (Exception e) {
             throw new RuntimeException("解析文件信息响应失败: " + e.getMessage(), e);
+        }
+    }
+
+    private WordStructureVO parseStructureResponse(String responseBody) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JavaType type = mapper.getTypeFactory()
+                    .constructParametricType(
+                            com.jy.eleaitender.common.response.Result.class,
+                            WordStructureVO.class);
+            com.jy.eleaitender.common.response.Result<WordStructureVO> result =
+                    mapper.readValue(responseBody, type);
+            return result.getData();
+        } catch (Exception e) {
+            throw new RuntimeException("解析文档结构响应失败: " + e.getMessage(), e);
+        }
+    }
+
+    private Long parseGeneratedFileId(String responseBody) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<String, Object> result = mapper.readValue(responseBody, java.util.Map.class);
+            Object data = result.get("data");
+            if (data == null) {
+                throw new RuntimeException("文件服务返回数据为空");
+            }
+            return ((Number) data).longValue();
+        } catch (Exception e) {
+            throw new RuntimeException("解析生成文件ID响应失败: " + e.getMessage(), e);
         }
     }
 

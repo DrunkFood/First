@@ -90,12 +90,30 @@
           <span class="tpl-name">{{ tpl.templateName }}</span>
           <span v-if="isDefaultTemplate(tpl)" class="tpl-badge">推荐</span>
         </div>
-        <p class="tpl-desc">{{ tpl.description || '暂无描述' }}</p>
+        <div class="tpl-card-body">
+          <!-- 用途说明 -->
+          <div v-if="tpl.content" class="tpl-desc">{{ tpl.content }}</div>
+          <!-- 文档结构树 -->
+          <div v-if="parseStructure(tpl.structureDefinition)?.chapters?.length" class="tpl-structure">
+            <div class="structure-title">文档结构</div>
+            <el-tree
+              :data="buildTreeData(parseStructure(tpl.structureDefinition)!.chapters)"
+              :props="{ label: 'title', children: 'children' }"
+              default-expand-all
+              :indent="12"
+            />
+          </div>
+          <!-- 占位符标签 -->
+          <div v-if="parseStructure(tpl.structureDefinition)?.placeholders?.length" class="tpl-placeholders">
+            <span class="placeholder-tag" v-for="p in parseStructure(tpl.structureDefinition)!.placeholders.slice(0, 5)" :key="p">
+              {{ p }}
+            </span>
+            <span v-if="parseStructure(tpl.structureDefinition)!.placeholders.length > 5" class="placeholder-more">
+              +{{ parseStructure(tpl.structureDefinition)!.placeholders.length - 5 }}
+            </span>
+          </div>
+        </div>
         <div class="tpl-meta">
-          <span class="tpl-meta-item">
-            <el-icon :size="12"><Document /></el-icon>
-            约{{ estimatePageCount(tpl.content) }}页
-          </span>
           <span class="tpl-meta-item">
             <el-icon :size="12"><Calendar /></el-icon>
             {{ formatTime(tpl.modifyTime || tpl.createTime) }} 更新
@@ -114,14 +132,43 @@
     <el-dialog
       v-model="previewDialogVisible"
       :title="previewTemplate?.templateName || '模板预览'"
-      width="70%"
+      width="60%"
       top="5vh"
       destroy-on-close
       class="template-preview-dialog"
     >
       <div class="template-preview-content">
-        <MdPreview v-if="previewTemplate?.content" :model-value="previewTemplate.content" :theme="themeStore.mode" />
-        <el-empty v-else description="该模板暂无内容" />
+        <!-- 用途说明 -->
+        <div v-if="previewTemplate?.content" class="preview-desc">{{ previewTemplate.content }}</div>
+        <!-- 文档结构树 -->
+        <div v-if="parseStructure(previewTemplate?.structureDefinition)?.chapters?.length" class="preview-structure">
+          <div class="structure-title">文档结构</div>
+          <el-tree
+            :data="buildTreeData(parseStructure(previewTemplate!.structureDefinition)!.chapters)"
+            :props="{ label: 'title', children: 'children' }"
+            default-expand-all
+            :indent="16"
+          />
+        </div>
+        <!-- 占位符标签 -->
+        <div v-if="parseStructure(previewTemplate?.structureDefinition)?.placeholders?.length" class="preview-placeholders">
+          <div class="structure-title">填充字段</div>
+          <div class="placeholder-tags">
+            <span class="placeholder-tag" v-for="p in parseStructure(previewTemplate!.structureDefinition)!.placeholders" :key="p">
+              {{ p }}
+            </span>
+          </div>
+        </div>
+        <!-- 书签 -->
+        <div v-if="parseStructure(previewTemplate?.structureDefinition)?.bookmarks?.length" class="preview-bookmarks">
+          <div class="structure-title">书签</div>
+          <div class="bookmark-tags">
+            <span class="bookmark-tag" v-for="b in parseStructure(previewTemplate!.structureDefinition)!.bookmarks" :key="b">
+              {{ b }}
+            </span>
+          </div>
+        </div>
+        <el-empty v-if="!previewTemplate?.content && !parseStructure(previewTemplate?.structureDefinition)?.chapters?.length" description="该模板暂无结构信息" />
       </div>
       <template #footer>
         <el-button @click="previewDialogVisible = false">关闭</el-button>
@@ -209,18 +256,15 @@
 import { ref, onMounted } from 'vue'
 import { projectApi } from '@/api/project'
 import { templateApi } from '@/api/template'
+import { projectTemplateApi } from '@/api/projectTemplate'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { UploadFilled, Document, Calendar, View } from '@element-plus/icons-vue'
+import { UploadFilled, Calendar, View } from '@element-plus/icons-vue'
 import { toWanYuan, toYuan } from '@/utils/budget'
-import { MdPreview } from 'md-editor-v3'
-import 'md-editor-v3/lib/preview.css'
-import { useThemeStore } from '@/store/theme'
-import type { TemplateInfo } from '@/types/template'
+import type { TemplateInfo, WordStructure, WordChapter } from '@/types/template'
 import type { AiMatchResult } from '@/types/ai'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: [] }>()
-const themeStore = useThemeStore()
 
 const formRef = ref<FormInstance>()
 const form = ref({
@@ -252,19 +296,37 @@ const defaultTemplateId = ref<number | null>(null)
 
 const isDefaultTemplate = (tpl: TemplateInfo) => tpl.id === defaultTemplateId.value
 
-function estimatePageCount(content?: string): number {
-  if (!content) return 0
-  const text = content
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/\*\*|__|\*|_|~~/g, '')
-    .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/\[([^\]]*)\]\(.*?\)/g, '$1')
-    .replace(/^[-*+]\s+/gm, '')
-    .replace(/^>\s+/gm, '')
-    .replace(/`{1,3}[^`]*`{1,3}/g, '')
-    .replace(/---|\*\*\*|___/g, '')
-  const charCount = text.replace(/\s/g, '').length
-  return Math.max(1, Math.ceil(charCount / 800))
+/** 解析 structureDefinition（可能是JSON字符串或已解析对象） */
+const parseStructure = (sd: WordStructure | string | undefined): WordStructure | null => {
+  if (!sd) return null
+  if (typeof sd === 'string') {
+    try {
+      return JSON.parse(sd)
+    } catch {
+      return null
+    }
+  }
+  return sd
+}
+
+/** 将扁平章节列表转为树结构 */
+const buildTreeData = (chapters: WordChapter[]) => {
+  const result: any[] = []
+  const stack: any[] = []
+
+  for (const ch of chapters) {
+    const node = { title: '  '.repeat(ch.level - 1) + ch.title, children: [] }
+    while (stack.length >= ch.level) {
+      stack.pop()
+    }
+    if (stack.length > 0) {
+      stack[stack.length - 1].children.push(node)
+    } else {
+      result.push(node)
+    }
+    stack.push(node)
+  }
+  return result
 }
 
 const loadTemplates = async () => {
@@ -353,11 +415,17 @@ const handleSaveAndNext = async () => {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
 
+  const { templateId, ...updateData } = form.value
   await projectApi.update(props.projectId, {
-    ...form.value,
+    ...updateData,
     budget: toYuan(form.value.budget),
-    templateId: form.value.templateId ?? undefined,
   })
+
+  // 绑定模板到项目模板表
+  if (form.value.templateId) {
+    await projectTemplateApi.bind(props.projectId, form.value.templateId)
+  }
+
   ElMessage.success('基础信息保存成功')
 
   // 推进阶段到"需求生成"，后端会自动触发AI需求生成任务
@@ -457,8 +525,62 @@ onMounted(() => {
 .tpl-desc {
   font-size: 12px;
   color: var(--app-text-secondary);
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   line-height: 1.5;
+}
+
+// 模板卡片主体
+.tpl-card-body {
+  margin-bottom: 8px;
+}
+
+// 文档结构树
+.tpl-structure {
+  margin: 8px 0;
+
+  .structure-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--app-text-secondary);
+    margin-bottom: 4px;
+  }
+
+  :deep(.el-tree) {
+    background: transparent;
+    font-size: 12px;
+
+    .el-tree-node__content {
+      height: 24px;
+    }
+  }
+}
+
+// 占位符标签
+.tpl-placeholders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.placeholder-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background: rgba(51, 108, 255, 0.08);
+  color: var(--app-brand-color);
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.placeholder-more {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--app-bg-tertiary, var(--app-bg-secondary));
+  color: var(--app-text-tertiary);
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .tpl-meta {
@@ -633,8 +755,65 @@ onMounted(() => {
   max-height: 70vh;
   overflow-y: auto;
 
-  :deep(.md-editor-preview-wrapper) {
-    padding: 0;
+  .preview-desc {
+    font-size: 14px;
+    color: var(--app-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .preview-structure {
+    margin-bottom: 20px;
+
+    .structure-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--app-text-primary);
+      margin-bottom: 8px;
+    }
+
+    :deep(.el-tree) {
+      background: transparent;
+    }
+  }
+
+  .preview-placeholders,
+  .preview-bookmarks {
+    margin-bottom: 20px;
+
+    .structure-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--app-text-primary);
+      margin-bottom: 8px;
+    }
+  }
+
+  .placeholder-tags,
+  .bookmark-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .placeholder-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(51, 108, 255, 0.08);
+    color: var(--app-brand-color);
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .bookmark-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(103, 194, 58, 0.08);
+    color: var(--el-color-success);
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.6;
   }
 }
 </style>

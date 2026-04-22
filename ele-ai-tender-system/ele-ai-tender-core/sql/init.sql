@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `tb_project` (
     `status`                VARCHAR(30)  NOT NULL DEFAULT 'DRAFT' COMMENT '项目状态: DRAFT/IN_PROGRESS/PENDING_DETECTION/DETECTING/DETECTION_PASSED/DETECTION_FAILED/DETECTION_SKIPPED/PUBLISHED/ARCHIVED/CANCELLED',
     `current_phase`         INT          DEFAULT NULL COMMENT '当前编制阶段: 1-基础信息 2-招标需求 3-评审项 4-文档集成 5-智能检测',
     `progress`              INT          DEFAULT NULL COMMENT '完成进度(百分比 0-100)',
-    `template_id`           BIGINT       DEFAULT NULL COMMENT '使用的模板ID',
+    `template_id`           BIGINT       DEFAULT NULL COMMENT '项目模板ID(关联tb_project_template)',
     `requirement_id`        BIGINT       DEFAULT NULL COMMENT '关联的业务需求ID',
     `requirement_source`    VARCHAR(30)  DEFAULT NULL COMMENT '需求来源: REFERENCE/SYSTEM_GENERATE',
     `requirement_content`   LONGTEXT     DEFAULT NULL COMMENT '招标需求内容',
@@ -125,7 +125,8 @@ CREATE TABLE IF NOT EXISTS `sup_template` (
     `template_name`         VARCHAR(100) NOT NULL COMMENT '模板名称',
     `project_category`      VARCHAR(30)  NOT NULL COMMENT '适用项目类别',
     `project_type`          VARCHAR(30)  NOT NULL COMMENT '适用项目类型',
-    `content`               LONGTEXT     NOT NULL COMMENT '模板内容(Markdown格式)',
+    `file_id`               BIGINT       DEFAULT NULL COMMENT '模板文件ID(关联file_info)',
+    `content`               LONGTEXT     DEFAULT NULL COMMENT '模板用途说明',
     `structure_definition`  JSON         DEFAULT NULL COMMENT '模板结构定义JSON',
     `version_no`            INT          NOT NULL DEFAULT 1 COMMENT '版本号',
     `is_default`            TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否默认模板: 0-否 1-是',
@@ -141,8 +142,39 @@ CREATE TABLE IF NOT EXISTS `sup_template` (
     PRIMARY KEY (`id`),
     UNIQUE INDEX `uk_template_code` (`template_code`),
     INDEX `idx_category_type` (`project_category`, `project_type`),
-    INDEX `idx_status` (`status`)
+    INDEX `idx_status` (`status`),
+    INDEX `idx_file_id` (`file_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='招标文件模板表';
+
+-- =============================================
+-- 4.1 项目模板表(只读快照)
+-- 实体: com.jy.eleaitender.common.entity.core.TbProjectTemplate
+-- 说明: 项目关联模板时，将模板信息快照到此表，后续模板变更不影响已关联项目
+-- =============================================
+CREATE TABLE IF NOT EXISTS `tb_project_template` (
+    `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `project_id`            BIGINT       NOT NULL COMMENT '项目ID',
+    `template_id`           BIGINT       NOT NULL COMMENT '源模板ID(sup_template.id)',
+    `template_code`         VARCHAR(50)  NOT NULL COMMENT '模板编码(快照)',
+    `template_name`         VARCHAR(100) NOT NULL COMMENT '模板名称(快照)',
+    `project_category`      VARCHAR(30)  NOT NULL COMMENT '适用项目类别(快照)',
+    `project_type`          VARCHAR(30)  NOT NULL COMMENT '适用项目类型(快照)',
+    `file_id`               BIGINT       DEFAULT NULL COMMENT '模板文件ID(快照，引用sup_template.file_id)',
+    `content`               TEXT         DEFAULT NULL COMMENT '模板用途说明(快照)',
+    `structure_definition`  JSON         DEFAULT NULL COMMENT 'Word章节结构JSON(快照)',
+    `version_no`            INT          NOT NULL DEFAULT 1 COMMENT '模板版本号(快照)',
+    `create_time`           DATETIME     NOT NULL COMMENT '创建时间',
+    `create_id`             BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人ID',
+    `create_name`           VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '创建人名称',
+    `modify_time`           DATETIME     NOT NULL COMMENT '修改时间',
+    `modify_id`             BIGINT       NOT NULL DEFAULT 0 COMMENT '修改人ID',
+    `modify_name`           VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '修改人名称',
+    `ver`                   INT          NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
+    `is_delete`             TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除',
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_project_id` (`project_id`),
+    INDEX `idx_template_id` (`template_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='项目模板表(只读快照)';
 
 -- =============================================
 -- 5. 评审项表（三级嵌套结构）

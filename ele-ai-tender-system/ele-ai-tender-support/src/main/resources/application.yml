@@ -48,6 +48,12 @@ jwt:
 swagger:
   enabled: true
 
+# 内部文件服务客户端配置
+internal:
+  file-service:
+    base-url: ${INTERNAL_FILE_SERVICE_URL:http://localhost:8081}
+    jwt-secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
+
 logging:
   level:
     com.jy.eleaitender: debug

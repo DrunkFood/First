@@ -4,6 +4,8 @@ import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.entity.file.FileInfo;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+
 /**
  * 文件存储服务接口
  */
@@ -17,6 +19,16 @@ public interface IFileStorageService {
      * @return 上传结果
      */
     FileUploadResponse upload(MultipartFile file, String bizType);
+
+    /**
+     * 从字节流上传文件
+     *
+     * @param inputStream 文件输入流
+     * @param fileName    文件名
+     * @param bizType     业务类型
+     * @return 上传结果
+     */
+    FileUploadResponse uploadFromBytes(InputStream inputStream, String fileName, String bizType);
 
     /**
      * 根据ID获取文件信息
