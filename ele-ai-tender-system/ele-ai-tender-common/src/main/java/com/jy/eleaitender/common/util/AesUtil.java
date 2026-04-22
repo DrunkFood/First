@@ -1,4 +1,4 @@
-package com.jy.eleaitender.common.util;
+package com.jy.eleaitender.common.utils;
 
 import cn.hutool.crypto.Mode;
 import cn.hutool.crypto.Padding;
@@ -7,7 +7,6 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 /**
  * AES 加密解密工具

@@ -1,4 +1,4 @@
-package com.jy.eleaitender.common.util;
+package com.jy.eleaitender.common.utils;
 
 import cn.hutool.crypto.digest.BCrypt;
 import org.apache.commons.lang3.StringUtils;

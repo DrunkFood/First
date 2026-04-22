@@ -1,4 +1,4 @@
-package com.jy.eleaitender.common.util;
+package com.jy.eleaitender.common.utils;
 
 import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.crypto.asymmetric.RSA;

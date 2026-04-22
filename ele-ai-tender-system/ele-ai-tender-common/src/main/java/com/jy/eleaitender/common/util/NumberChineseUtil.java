@@ -1,4 +1,4 @@
-package com.jy.eleaitender.common.util;
+package com.jy.eleaitender.common.utils;
 
 import java.util.Map;
 
