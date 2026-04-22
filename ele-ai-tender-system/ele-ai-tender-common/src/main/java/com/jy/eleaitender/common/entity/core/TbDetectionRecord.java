@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 
 /**
  * 检测记录实体（Core模块视图）
- * 对应表: ai_detection_record
+ * 对应表: tb_detection_record
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_detection_record")
+@TableName("tb_detection_record")
 @Schema(description = "检测记录")
-public class AiDetectionRecord extends BaseEntity {
+public class TbDetectionRecord extends BaseEntity {
 
     @Schema(description = "关联的业务需求ID(需求级检测时非空)")
     private Long requirementId;

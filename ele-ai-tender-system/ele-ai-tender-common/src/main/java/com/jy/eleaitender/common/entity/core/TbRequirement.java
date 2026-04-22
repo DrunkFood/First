@@ -11,13 +11,13 @@ import java.util.Date;
 
 /**
  * 业务需求实体
- * 对应表: ai_requirement
+ * 对应表: tb_requirement
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_requirement")
+@TableName("tb_requirement")
 @Schema(description = "业务需求")
-public class AiRequirement extends BaseEntity {
+public class TbRequirement extends BaseEntity {
 
     @Schema(description = "需求名称")
     private String requirementName;

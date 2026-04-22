@@ -3,7 +3,7 @@ package com.jy.eleaitender.core.statemachine;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +32,7 @@ public class ProjectStateMachine {
      *
      * @throws BusinessException 非法转换时抛出
      */
-    public static void transition(AiProject project, ProjectStatus target) {
+    public static void transition(TbProject project, ProjectStatus target) {
         ProjectStatus current = ProjectStatus.fromCode(project.getStatus());
         Set<ProjectStatus> allowed = TRANSITIONS.getOrDefault(current, Set.of());
         if (!allowed.contains(target)) {

@@ -1,6 +1,6 @@
 package com.jy.eleaitender.core.statemachine;
 
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 
 import java.util.Map;
 
@@ -16,19 +16,19 @@ public interface PhaseTrigger {
      * @param project 项目实体
      * @param context 上下文参数（如policyFileIds等），可为null
      */
-    default void onEnter(AiProject project, Map<String, Object> context) {
+    default void onEnter(TbProject project, Map<String, Object> context) {
     }
 
     /**
      * 离开阶段时执行（完成当前阶段）
      */
-    default void onExit(AiProject project) {
+    default void onExit(TbProject project) {
     }
 
     /**
      * 检查当前阶段是否可以完成（是否满足推进条件）
      */
-    boolean canComplete(AiProject project);
+    boolean canComplete(TbProject project);
 
     /**
      * 不能完成时的提示信息

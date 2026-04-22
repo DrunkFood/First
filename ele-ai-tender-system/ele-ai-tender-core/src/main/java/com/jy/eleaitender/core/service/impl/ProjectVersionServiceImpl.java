@@ -1,8 +1,8 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jy.eleaitender.common.entity.core.AiProjectVersion;
-import com.jy.eleaitender.core.mapper.AiProjectVersionMapper;
+import com.jy.eleaitender.common.entity.core.TbProjectVersion;
+import com.jy.eleaitender.core.mapper.TbProjectVersionMapper;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,36 +19,36 @@ import java.util.List;
 public class ProjectVersionServiceImpl implements IProjectVersionService {
 
     @Autowired
-    private AiProjectVersionMapper projectVersionMapper;
+    private TbProjectVersionMapper projectVersionMapper;
 
     @Autowired
     private IProjectService projectService;
 
     @Override
-    public List<AiProjectVersion> getByProjectId(Long projectId) {
+    public List<TbProjectVersion> getByProjectId(Long projectId) {
         // 校验项目归属
         projectService.getById(projectId);
-        LambdaQueryWrapper<AiProjectVersion> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiProjectVersion::getProjectId, projectId);
-        wrapper.orderByDesc(AiProjectVersion::getVersionNo);
+        LambdaQueryWrapper<TbProjectVersion> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TbProjectVersion::getProjectId, projectId);
+        wrapper.orderByDesc(TbProjectVersion::getVersionNo);
         return projectVersionMapper.selectList(wrapper);
     }
 
     @Override
     @Transactional
-    public AiProjectVersion createVersion(Long projectId, String contentSnapshot, String changeDescription) {
+    public TbProjectVersion createVersion(Long projectId, String contentSnapshot, String changeDescription) {
         // 校验项目归属
         projectService.getById(projectId);
         // 查询当前最大版本号
-        LambdaQueryWrapper<AiProjectVersion> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiProjectVersion::getProjectId, projectId);
-        wrapper.orderByDesc(AiProjectVersion::getVersionNo);
+        LambdaQueryWrapper<TbProjectVersion> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TbProjectVersion::getProjectId, projectId);
+        wrapper.orderByDesc(TbProjectVersion::getVersionNo);
         wrapper.last("LIMIT 1");
-        AiProjectVersion latest = projectVersionMapper.selectOne(wrapper);
+        TbProjectVersion latest = projectVersionMapper.selectOne(wrapper);
 
         int nextVersion = (latest != null) ? latest.getVersionNo() + 1 : 1;
 
-        AiProjectVersion version = new AiProjectVersion();
+        TbProjectVersion version = new TbProjectVersion();
         version.setProjectId(projectId);
         version.setVersionNo(nextVersion);
         version.setContentSnapshot(contentSnapshot);

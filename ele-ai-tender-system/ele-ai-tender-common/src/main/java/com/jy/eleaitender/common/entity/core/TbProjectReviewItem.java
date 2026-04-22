@@ -10,13 +10,13 @@ import java.math.BigDecimal;
 
 /**
  * 评审项实体
- * 对应表: ai_review_item
+ * 对应表: tb_project_review_item
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_review_item")
+@TableName("tb_project_review_item")
 @Schema(description = "评审项")
-public class AiReviewItem extends BaseEntity {
+public class TbProjectReviewItem extends BaseEntity {
 
     @Schema(description = "项目ID")
     private Long projectId;

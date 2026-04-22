@@ -1,12 +1,12 @@
 -- =========================================
 -- Ele AI Tender 编制中心 全量初始化脚本
 -- 数据库: ele_ai_tender (db=6)
--- 表前缀: ai_
+-- 表前缀: tb_(Core模块) / ai_(AI模块) / sup_(支撑中心) / file_(文件服务)
 -- 生成时间: 2026-04-15
 -- 覆盖模块: core + ai + common
 -- =========================================
 -- 说明:
---   本脚本为编制中心全量建表脚本，包含: ai_project / ai_project_version / ai_requirement / ai_review_item / ai_detection_record / ai_policy_file / sup_template
+--   本脚本为编制中心全量建表脚本，包含: tb_project / tb_project_version / tb_requirement / tb_project_review_item / tb_detection_record / tb_policy_file / sup_template
 --   所有字段严格对应Java实体类定义
 -- =========================================
 
@@ -17,9 +17,9 @@ USE `ele_ai_tender`;
 
 -- =============================================
 -- 1. AI编制项目表
--- 实体: com.jy.eleaitender.common.entity.core.AiProject
+-- 实体: com.jy.eleaitender.common.entity.core.TbProject
 -- =============================================
-CREATE TABLE IF NOT EXISTS `ai_project` (
+CREATE TABLE IF NOT EXISTS `tb_project` (
     `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '项目ID',
     `project_code`          VARCHAR(50)  NOT NULL COMMENT '项目编号',
     `project_name`          VARCHAR(100) NOT NULL COMMENT '项目名称',
@@ -60,9 +60,9 @@ CREATE TABLE IF NOT EXISTS `ai_project` (
 
 -- =============================================
 -- 2. AI编制项目版本表
--- 实体: com.jy.eleaitender.common.entity.core.AiProjectVersion
+-- 实体: com.jy.eleaitender.common.entity.core.TbProjectVersion
 -- =============================================
-CREATE TABLE IF NOT EXISTS `ai_project_version` (
+CREATE TABLE IF NOT EXISTS `tb_project_version` (
     `id`                 BIGINT       NOT NULL AUTO_INCREMENT COMMENT '版本ID',
     `project_id`         BIGINT       NOT NULL COMMENT '项目ID',
     `version_no`         INT          NOT NULL COMMENT '版本号',
@@ -82,9 +82,9 @@ CREATE TABLE IF NOT EXISTS `ai_project_version` (
 
 -- =============================================
 -- 3. 业务需求表
--- 实体: com.jy.eleaitender.common.entity.core.AiRequirement
+-- 实体: com.jy.eleaitender.common.entity.core.TbRequirement
 -- =============================================
-CREATE TABLE IF NOT EXISTS `ai_requirement` (
+CREATE TABLE IF NOT EXISTS `tb_requirement` (
     `id`                     BIGINT        NOT NULL AUTO_INCREMENT COMMENT '需求ID',
     `requirement_name`       VARCHAR(100)  NOT NULL COMMENT '需求名称',
     `project_category`       VARCHAR(30)   NOT NULL COMMENT '项目类别',
@@ -146,9 +146,9 @@ CREATE TABLE IF NOT EXISTS `sup_template` (
 
 -- =============================================
 -- 5. 评审项表（三级嵌套结构）
--- 实体: com.jy.eleaitender.common.entity.core.AiReviewItem
+-- 实体: com.jy.eleaitender.common.entity.core.TbProjectReviewItem
 -- =============================================
-CREATE TABLE IF NOT EXISTS `ai_review_item` (
+CREATE TABLE IF NOT EXISTS `tb_project_review_item` (
     `id`           BIGINT        NOT NULL AUTO_INCREMENT COMMENT '评审项ID',
     `project_id`   BIGINT        NOT NULL COMMENT '项目ID',
     `parent_id`    BIGINT        DEFAULT NULL COMMENT '父级ID, NULL表示顶级节点',
@@ -178,10 +178,10 @@ CREATE TABLE IF NOT EXISTS `ai_review_item` (
 
 -- =============================================
 -- 6. 用户政策文件表
--- 实体: com.jy.eleaitender.common.entity.core.AiPolicyFile
+-- 实体: com.jy.eleaitender.common.entity.core.TbPolicyFile
 -- 说明: 用户上传的政策文件, 平台政策文件使用sup_policy_file表
 -- =============================================
-CREATE TABLE IF NOT EXISTS `ai_policy_file` (
+CREATE TABLE IF NOT EXISTS `tb_policy_file` (
     `id`                   BIGINT       NOT NULL AUTO_INCREMENT COMMENT '文件ID',
     `file_name`            VARCHAR(200) NOT NULL COMMENT '文件名称',
     `file_category`        VARCHAR(30)  DEFAULT NULL COMMENT '文件分类: LAW/REGULATION/POLICY',
@@ -208,11 +208,11 @@ CREATE TABLE IF NOT EXISTS `ai_policy_file` (
 
 -- =============================================
 -- 7. 检测记录表
--- 实体: com.jy.eleaitender.common.entity.core.AiDetectionRecord (Core模块视图)
--- 实体: com.jy.eleaitender.common.entity.core.AiDetectionRecord (AI模块视图)
+-- 实体: com.jy.eleaitender.common.entity.core.TbDetectionRecord (Core模块视图)
+-- 实体: com.jy.eleaitender.common.entity.core.TbDetectionRecord (AI模块视图)
 -- 说明: Core和AI模块共享同一张表, 各自定义了不同的实体字段
 -- =============================================
-CREATE TABLE IF NOT EXISTS `ai_detection_record` (
+CREATE TABLE IF NOT EXISTS `tb_detection_record` (
     `id`               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '检测记录ID',
     `requirement_id`   BIGINT       DEFAULT NULL COMMENT '关联的业务需求ID(需求级检测时非空)',
     `project_id`       BIGINT       NOT NULL COMMENT '项目ID',

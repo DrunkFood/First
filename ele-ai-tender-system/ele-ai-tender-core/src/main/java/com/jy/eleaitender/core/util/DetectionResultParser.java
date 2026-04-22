@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.enums.DetectionType;
 import com.jy.eleaitender.core.dto.response.DetectionIssueVO;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ public class DetectionResultParser {
     /**
      * 解析result JSON，返回问题列表
      */
-    public static List<DetectionIssueVO> parseIssues(AiDetectionRecord record) {
+    public static List<DetectionIssueVO> parseIssues(TbDetectionRecord record) {
         if (record == null || !StringUtils.hasText(record.getResult())) {
             return Collections.emptyList();
         }

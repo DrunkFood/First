@@ -8,8 +8,9 @@ import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
 import com.jy.eleaitender.core.engine.DocumentDataAssembler;
 import com.jy.eleaitender.core.engine.MarkdownTemplateEngine;
 import com.jy.eleaitender.core.engine.WordDocumentGenerator;
-import com.jy.eleaitender.common.entity.core.AiProject;
-import com.jy.eleaitender.core.mapper.AiProjectMapper;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.service.IDocumentIntegrationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     private static final String BIZ_TYPE_TENDER_DOC = "tender-document";
 
     @Autowired
-    private AiProjectMapper projectMapper;
+    private TbProjectMapper projectMapper;
 
     @Autowired
     private DocumentDataAssembler dataAssembler;
@@ -46,7 +47,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     @Override
     @Transactional
     public DocumentPreviewVO integrate(Long projectId) {
-        AiProject project = getProjectOrThrow(projectId);
+        TbProject project = getProjectOrThrow(projectId);
 
         // 1. 组装文档数据
         Map<String, Object> data = dataAssembler.assemble(projectId);
@@ -79,7 +80,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
 
     @Override
     public DocumentPreviewVO getPreview(Long projectId) {
-        AiProject project = getProjectOrThrow(projectId);
+        TbProject project = getProjectOrThrow(projectId);
 
         String markdown = project.getRequirementContent();
         if (!StringUtils.hasText(markdown)) {
@@ -107,7 +108,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     @Override
     @Transactional
     public void editContent(Long projectId, String markdownContent) {
-        AiProject project = getProjectOrThrow(projectId);
+        TbProject project = getProjectOrThrow(projectId);
         project.setRequirementContent(markdownContent);
 
         // 内容变更后重新生成Word并上传
@@ -126,7 +127,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
      *
      * @return 上传后的文件ID
      */
-    private Long generateAndUploadWord(AiProject project, Map<String, Object> data, String html) {
+    private Long generateAndUploadWord(TbProject project, Map<String, Object> data, String html) {
         byte[] wordBytes = wordGenerator.generate(data, html);
         String fileName = project.getProjectName() + ".docx";
 
@@ -135,8 +136,8 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         return uploadResponse.getFileId();
     }
 
-    private AiProject getProjectOrThrow(Long projectId) {
-        AiProject project = projectMapper.selectById(projectId);
+    private TbProject getProjectOrThrow(Long projectId) {
+        TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             throw new BusinessException(ResponseCode.PROJECT_NOT_FOUND);
         }
@@ -200,7 +201,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         if (items instanceof java.util.List<?> list && !list.isEmpty()) {
             sb.append(header);
             for (Object item : list) {
-                if (item instanceof com.jy.eleaitender.common.entity.core.AiReviewItem reviewItem) {
+                if (item instanceof com.jy.eleaitender.common.entity.core.TbProjectReviewItem reviewItem) {
                     String indent = "  ".repeat(Math.max(0, (reviewItem.getLevel() != null ? reviewItem.getLevel() : 1) - 1));
                     sb.append(indent).append("- **").append(reviewItem.getItemName()).append("**");
                     if (StringUtils.hasText(reviewItem.getItemContent())) {

@@ -7,8 +7,8 @@ import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.request.AdvancePhaseRequest;
 import com.jy.eleaitender.core.dto.request.BatchDeleteRequest;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
-import com.jy.eleaitender.common.entity.core.AiProject;
-import com.jy.eleaitender.common.entity.core.AiProjectVersion;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbProjectVersion;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +35,7 @@ public class ProjectController {
     @GetMapping
     @RequireLogin
     @Operation(summary = "分页查询项目列表")
-    public Result<Page<AiProject>> list(
+    public Result<Page<TbProject>> list(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String projectName,
@@ -47,21 +47,21 @@ public class ProjectController {
     @GetMapping("/{id}")
     @RequireLogin
     @Operation(summary = "获取项目详情")
-    public Result<AiProject> getById(@PathVariable Long id) {
+    public Result<TbProject> getById(@PathVariable Long id) {
         return Result.success(projectService.getById(id));
     }
 
     @PostMapping
     @RequireLogin
     @Operation(summary = "创建项目")
-    public Result<AiProject> create(@RequestBody AiProject project) {
+    public Result<TbProject> create(@RequestBody TbProject project) {
         return Result.success(projectService.create(project));
     }
 
     @PutMapping("/{id}")
     @RequireLogin
     @Operation(summary = "更新项目")
-    public Result<Void> update(@PathVariable Long id, @RequestBody AiProject project) {
+    public Result<Void> update(@PathVariable Long id, @RequestBody TbProject project) {
         projectService.update(id, project);
         return Result.success();
     }
@@ -77,7 +77,7 @@ public class ProjectController {
     @GetMapping("/{id}/versions")
     @RequireLogin
     @Operation(summary = "获取项目版本历史")
-    public Result<List<AiProjectVersion>> getVersions(@PathVariable Long id) {
+    public Result<List<TbProjectVersion>> getVersions(@PathVariable Long id) {
         return Result.success(projectVersionService.getByProjectId(id));
     }
 

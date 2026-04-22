@@ -3,13 +3,13 @@ package com.jy.eleaitender.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
-import com.jy.eleaitender.common.entity.core.AiPolicyFile;
+import com.jy.eleaitender.common.entity.core.TbPolicyFile;
 import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.core.dto.response.PolicyFileVO;
-import com.jy.eleaitender.core.mapper.AiPolicyFileMapper;
+import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
 import com.jy.eleaitender.core.service.IPolicyFileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,29 +27,29 @@ import java.util.List;
 public class PolicyFileServiceImpl implements IPolicyFileService {
 
     @Autowired
-    private AiPolicyFileMapper aiPolicyFileMapper;
+    private TbPolicyFileMapper aiPolicyFileMapper;
 
     @Autowired
     private SupPolicyFileMapper supPolicyFileMapper;
 
     @Override
-    public Page<AiPolicyFile> getPage(Integer pageNum, Integer pageSize, String fileCategory, String applicableCategory) {
-        Page<AiPolicyFile> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<AiPolicyFile> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiPolicyFile::getUserId, SecurityContextHolder.getUserId());
+    public Page<TbPolicyFile> getPage(Integer pageNum, Integer pageSize, String fileCategory, String applicableCategory) {
+        Page<TbPolicyFile> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<TbPolicyFile> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TbPolicyFile::getUserId, SecurityContextHolder.getUserId());
         if (StringUtils.hasText(fileCategory)) {
-            wrapper.eq(AiPolicyFile::getFileCategory, fileCategory);
+            wrapper.eq(TbPolicyFile::getFileCategory, fileCategory);
         }
         if (StringUtils.hasText(applicableCategory)) {
-            wrapper.eq(AiPolicyFile::getApplicableCategory, applicableCategory);
+            wrapper.eq(TbPolicyFile::getApplicableCategory, applicableCategory);
         }
-        wrapper.orderByDesc(AiPolicyFile::getCreateTime);
+        wrapper.orderByDesc(TbPolicyFile::getCreateTime);
         return aiPolicyFileMapper.selectPage(page, wrapper);
     }
 
     @Override
-    public AiPolicyFile getById(Long id) {
-        AiPolicyFile file = aiPolicyFileMapper.selectById(id);
+    public TbPolicyFile getById(Long id) {
+        TbPolicyFile file = aiPolicyFileMapper.selectById(id);
         if (file == null) {
             throw new BusinessException(ResponseCode.POLICY_FILE_NOT_FOUND);
         }
@@ -60,7 +60,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
 
     @Override
     @Transactional
-    public AiPolicyFile create(AiPolicyFile policyFile) {
+    public TbPolicyFile create(TbPolicyFile policyFile) {
         policyFile.setUserId(SecurityContextHolder.getUserId());
         if (policyFile.getStatus() == null) {
             policyFile.setStatus(1);
@@ -72,7 +72,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     @Override
     @Transactional
     public void deleteById(Long id) {
-        AiPolicyFile file = getById(id);
+        TbPolicyFile file = getById(id);
         // 只能删除自己的文件
         if (!file.getUserId().equals(SecurityContextHolder.getUserId())) {
             throw new BusinessException(ResponseCode.FORBIDDEN, "无权删除该政策文件");
@@ -83,7 +83,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     @Override
     @Transactional
     public void setStatus(Long id, Integer status) {
-        AiPolicyFile file = getById(id); // 内部已做归属校验
+        TbPolicyFile file = getById(id); // 内部已做归属校验
         file.setStatus(status);
         aiPolicyFileMapper.updateById(file);
     }
@@ -105,15 +105,15 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
         }
 
         // 2. 查询用户级政策文件（ai_policy_file）
-        LambdaQueryWrapper<AiPolicyFile> userWrapper = new LambdaQueryWrapper<>();
-        userWrapper.eq(AiPolicyFile::getUserId, SecurityContextHolder.getUserId())
-                .eq(AiPolicyFile::getStatus, 1);
+        LambdaQueryWrapper<TbPolicyFile> userWrapper = new LambdaQueryWrapper<>();
+        userWrapper.eq(TbPolicyFile::getUserId, SecurityContextHolder.getUserId())
+                .eq(TbPolicyFile::getStatus, 1);
         if (StringUtils.hasText(applicableCategory)) {
-            userWrapper.and(w -> w.eq(AiPolicyFile::getApplicableCategory, applicableCategory)
-                    .or().isNull(AiPolicyFile::getApplicableCategory));
+            userWrapper.and(w -> w.eq(TbPolicyFile::getApplicableCategory, applicableCategory)
+                    .or().isNull(TbPolicyFile::getApplicableCategory));
         }
-        List<AiPolicyFile> userFiles = aiPolicyFileMapper.selectList(userWrapper);
-        for (AiPolicyFile f : userFiles) {
+        List<TbPolicyFile> userFiles = aiPolicyFileMapper.selectList(userWrapper);
+        for (TbPolicyFile f : userFiles) {
             result.add(toVO(f, "USER"));
         }
 
@@ -137,7 +137,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
         return vo;
     }
 
-    private PolicyFileVO toVO(AiPolicyFile f, String source) {
+    private PolicyFileVO toVO(TbPolicyFile f, String source) {
         PolicyFileVO vo = new PolicyFileVO();
         vo.setId(f.getId());
         vo.setFileName(f.getFileName());

@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.core.AiPolicyFile;
+import com.jy.eleaitender.common.entity.core.TbPolicyFile;
 import com.jy.eleaitender.core.dto.response.PolicyFileVO;
 
 import java.util.List;
@@ -14,17 +14,17 @@ public interface IPolicyFileService {
     /**
      * 分页查询当前用户的政策文件
      */
-    Page<AiPolicyFile> getPage(Integer pageNum, Integer pageSize, String fileCategory, String applicableCategory);
+    Page<TbPolicyFile> getPage(Integer pageNum, Integer pageSize, String fileCategory, String applicableCategory);
 
     /**
      * 获取详情
      */
-    AiPolicyFile getById(Long id);
+    TbPolicyFile getById(Long id);
 
     /**
      * 上传政策文件
      */
-    AiPolicyFile create(AiPolicyFile policyFile);
+    TbPolicyFile create(TbPolicyFile policyFile);
 
     /**
      * 删除政策文件

@@ -12,13 +12,12 @@
 
 - 使用 `snake_case`，按模块加前缀：
 
-| 模块 | 前缀 | 示例 |
-|------|------|------|
-| 支撑中心 | `sup_` | `sup_user`、`sup_access_log`、`sup_message` |
-| 文件服务 | `file_` | `file_info` |
-| 招标文件编制 | `td_` | `td_tender_document`、`td_project_lock` |
-| 投标文件加解密 | `bdc_` | `bdc_bid_document`、`bdc_decrypt_artifact` |
-| AI招标文件编制 | `ai_` | `ai_project`、`ai_requirement`、`ai_template` |
+| 模块     | 前缀 | 示例                                        |
+|--------|------|-------------------------------------------|
+| 支撑中心   | `sup_` | `sup_user`、`sup_access_log`、`sup_message` |
+| 文件服务   | `file_` | `file_info`                               |
+| 招标文件编制 | `td_` | `td_project`、`td_requirement`             |
+| AI服务   | `ai_` | `ai_task`、`ai_response_log`、`ai_model_config`  |
 
 - 新模块表前缀需先在 `PROJECT_SPEC_FINAL.md` 中登记
 
@@ -64,24 +63,6 @@ public class SomeEntity extends BaseEntity {
 ### 1.5 初始化 SQL
 
 - 每个模块的建表 DDL 放在 `sql/init.sql`
-
-### 1.6 数据库隔离策略
-
-AI 编制系统(ele-ai-tender)采用独立数据库和缓存：
-
-| 资源 | 现有系统 | AI 系统 | 说明 |
-|------|---------|--------|------|
-| MySQL | db=5 | db=6 | 独立数据库，避免数据污染 |
-| Redis | db=5 | db=6 | 独立缓存空间 |
-| 文件存储 | `/data/ele-tender/files` | `/data/ele-ai-tender/files` | 独立存储路径 |
-| 用户体系 | 独立 | 结构复用 | AI 系统复用 `sup_user` 等表结构，在 db=6 中建相同结构的表 |
-
-**复用原则**：
-- support/file 模块表结构必须与现有系统完全一致，直接复制建表 SQL
-- AI 新增业务表使用 `ai_` 前缀，继承 BaseEntity 规范
-- 两个系统用户数据相互独立，但表结构完全一致，后续可按需打通
-
----
 
 ## 2. 接口规范
 

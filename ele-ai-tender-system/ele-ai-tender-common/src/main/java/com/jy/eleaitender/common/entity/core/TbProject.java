@@ -11,13 +11,13 @@ import java.util.Date;
 
 /**
  * AI编制项目实体
- * 对应表: ai_project
+ * 对应表: tb_project
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_project")
+@TableName("tb_project")
 @Schema(description = "AI编制项目")
-public class AiProject extends BaseEntity {
+public class TbProject extends BaseEntity {
 
     @Schema(description = "项目编号")
     private String projectCode;

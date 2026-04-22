@@ -8,13 +8,13 @@ import lombok.EqualsAndHashCode;
 
 /**
  * 用户政策文件实体
- * 对应表: ai_policy_file
+ * 对应表: tb_policy_file
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_policy_file")
+@TableName("tb_policy_file")
 @Schema(description = "用户政策文件")
-public class AiPolicyFile extends BaseEntity {
+public class TbPolicyFile extends BaseEntity {
 
     @Schema(description = "文件名称")
     private String fileName;

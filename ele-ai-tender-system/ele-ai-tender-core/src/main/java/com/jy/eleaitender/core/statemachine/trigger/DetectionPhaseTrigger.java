@@ -1,6 +1,6 @@
 package com.jy.eleaitender.core.statemachine.trigger;
 
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.dto.request.DetectionSubmitRequest;
 import com.jy.eleaitender.core.service.IDetectionService;
@@ -25,7 +25,7 @@ public class DetectionPhaseTrigger implements PhaseTrigger {
     private IDetectionService detectionService;
 
     @Override
-    public void onEnter(AiProject project, Map<String, Object> context) {
+    public void onEnter(TbProject project, Map<String, Object> context) {
         // 从上下文中提取政策文件ID列表
         List<Long> policyFileIds = null;
         if (context != null && context.containsKey("policyFileIds")) {
@@ -57,7 +57,7 @@ public class DetectionPhaseTrigger implements PhaseTrigger {
     }
 
     @Override
-    public boolean canComplete(AiProject project) {
+    public boolean canComplete(TbProject project) {
         String status = project.getStatus();
         return ProjectStatus.DETECTION_PASSED.getCode().equals(status)
                 || ProjectStatus.DETECTION_SKIPPED.getCode().equals(status);

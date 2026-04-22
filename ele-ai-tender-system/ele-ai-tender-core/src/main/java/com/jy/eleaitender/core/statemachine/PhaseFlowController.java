@@ -1,6 +1,6 @@
 package com.jy.eleaitender.core.statemachine;
 
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.enums.ProjectPhase;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -54,7 +54,7 @@ public class PhaseFlowController {
      * @param target  目标阶段
      * @param context 上下文参数（如policyFileIds等），可为null
      */
-    public void advancePhase(AiProject project, ProjectPhase target, Map<String, Object> context) {
+    public void advancePhase(TbProject project, ProjectPhase target, Map<String, Object> context) {
         if (project.getCurrentPhase() == null) {
             throw new BusinessException(ResponseCode.PROJECT_PHASE_ERROR, "项目阶段信息缺失，请确认项目数据完整性");
         }
@@ -98,7 +98,7 @@ public class PhaseFlowController {
     /**
      * 检查是否可以推进到目标阶段
      */
-    public boolean canAdvance(AiProject project, ProjectPhase target) {
+    public boolean canAdvance(TbProject project, ProjectPhase target) {
         ProjectPhase current = ProjectPhase.fromCode(project.getCurrentPhase());
         if (!isValidTransition(current, target)) {
             return false;
@@ -131,7 +131,7 @@ public class PhaseFlowController {
      * - 进入 DETECTION 阶段：若状态已是 DETECTING（由 onEnter 触发器提交检测），跳过
      * - 进入其他阶段：若当前是 DRAFT，流转到 IN_PROGRESS
      */
-    private void syncProjectStatus(AiProject project, ProjectPhase target) {
+    private void syncProjectStatus(TbProject project, ProjectPhase target) {
         ProjectStatus expectedStatus = PHASE_STATUS_MAPPING.get(target);
         if (expectedStatus == null) {
             return;

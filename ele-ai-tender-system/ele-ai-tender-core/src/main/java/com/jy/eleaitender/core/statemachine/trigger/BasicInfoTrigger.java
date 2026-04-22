@@ -1,6 +1,6 @@
 package com.jy.eleaitender.core.statemachine.trigger;
 
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,7 @@ import java.util.Map;
 public class BasicInfoTrigger implements PhaseTrigger {
 
     @Override
-    public boolean canComplete(AiProject project) {
+    public boolean canComplete(TbProject project) {
         return project.getProjectName() != null && !project.getProjectName().isBlank()
                 && project.getProjectCategory() != null && !project.getProjectCategory().isBlank()
                 && project.getProjectType() != null && !project.getProjectType().isBlank();

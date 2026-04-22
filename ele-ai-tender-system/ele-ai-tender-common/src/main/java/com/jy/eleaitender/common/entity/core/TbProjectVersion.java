@@ -8,13 +8,13 @@ import lombok.EqualsAndHashCode;
 
 /**
  * 项目版本实体
- * 对应表: ai_project_version
+ * 对应表: tb_project_version
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_project_version")
+@TableName("tb_project_version")
 @Schema(description = "项目版本")
-public class AiProjectVersion extends BaseEntity {
+public class TbProjectVersion extends BaseEntity {
 
     @Schema(description = "项目ID")
     private Long projectId;

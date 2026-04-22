@@ -2,10 +2,10 @@ package com.jy.eleaitender.core.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
 import com.jy.eleaitender.core.service.IRequirementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +30,7 @@ public class RequirementController {
     @GetMapping
     @RequireLogin
     @Operation(summary = "分页查询需求列表")
-    public Result<Page<AiRequirement>> list(
+    public Result<Page<TbRequirement>> list(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String requirementName,
@@ -50,21 +50,21 @@ public class RequirementController {
     @GetMapping("/{id}")
     @RequireLogin
     @Operation(summary = "获取需求详情")
-    public Result<AiRequirement> getById(@PathVariable Long id) {
+    public Result<TbRequirement> getById(@PathVariable Long id) {
         return Result.success(requirementService.getById(id));
     }
 
     @PostMapping
     @RequireLogin
     @Operation(summary = "创建需求")
-    public Result<AiRequirement> create(@RequestBody AiRequirement requirement) {
+    public Result<TbRequirement> create(@RequestBody TbRequirement requirement) {
         return Result.success(requirementService.create(requirement));
     }
 
     @PutMapping("/{id}")
     @RequireLogin
     @Operation(summary = "更新需求")
-    public Result<Void> update(@PathVariable Long id, @RequestBody AiRequirement requirement) {
+    public Result<Void> update(@PathVariable Long id, @RequestBody TbRequirement requirement) {
         requirementService.update(id, requirement);
         return Result.success();
     }
@@ -80,7 +80,7 @@ public class RequirementController {
     @PostMapping("/{id}/match")
     @RequireLogin
     @Operation(summary = "匹配历史模板")
-    public Result<AiRequirement> match(
+    public Result<TbRequirement> match(
             @PathVariable Long id,
             @RequestParam Long matchedFileId,
             @RequestParam(defaultValue = "MANUAL_SELECT") String matchMode) {
@@ -147,7 +147,7 @@ public class RequirementController {
     @GetMapping("/{id}/detect/records")
     @RequireLogin
     @Operation(summary = "获取需求检测记录列表")
-    public Result<List<AiDetectionRecord>> getDetectionRecords(@PathVariable Long id) {
+    public Result<List<TbDetectionRecord>> getDetectionRecords(@PathVariable Long id) {
         return Result.success(requirementService.getDetectionRecords(id));
     }
 

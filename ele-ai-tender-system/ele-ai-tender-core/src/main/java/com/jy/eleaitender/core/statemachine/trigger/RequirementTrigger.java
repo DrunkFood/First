@@ -1,11 +1,11 @@
 package com.jy.eleaitender.core.statemachine.trigger;
 
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.entity.core.AiProject;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.enums.AiTaskType;
-import com.jy.eleaitender.core.mapper.AiProjectMapper;
-import com.jy.eleaitender.core.mapper.AiRequirementMapper;
+import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IRequirementService;
@@ -27,21 +27,21 @@ import java.util.Map;
 public class RequirementTrigger implements PhaseTrigger {
 
     @Autowired
-    private AiRequirementMapper requirementMapper;
+    private TbRequirementMapper requirementMapper;
 
     @Autowired
-    private AiProjectMapper aiProjectMapper;
+    private TbProjectMapper tbProjectMapper;
 
     @Autowired
     private IProjectService projectService;
 
     @Override
-    public void onEnter(AiProject project, Map<String, Object> context) {
+    public void onEnter(TbProject project, Map<String, Object> context) {
         // 如果项目已关联需求，读取需求内容并保存
         if (project.getRequirementId() != null) {
-            AiRequirement aiRequirement = requirementMapper.selectById(project.getRequirementId());
+            TbRequirement aiRequirement = requirementMapper.selectById(project.getRequirementId());
             project.setRequirementContent(aiRequirement.getContent());
-            aiProjectMapper.updateById(project);
+            tbProjectMapper.updateById(project);
             return;
         }
         // 如果需求不存在，自动触发AI需求生成
@@ -56,7 +56,7 @@ public class RequirementTrigger implements PhaseTrigger {
     }
 
     @Override
-    public boolean canComplete(AiProject project) {
+    public boolean canComplete(TbProject project) {
         return project.getRequirementId() != null
                 || (project.getRequirementContent() != null && !project.getRequirementContent().isBlank());
     }

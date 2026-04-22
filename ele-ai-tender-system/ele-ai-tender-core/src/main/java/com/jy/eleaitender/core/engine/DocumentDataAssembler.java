@@ -2,12 +2,12 @@ package com.jy.eleaitender.core.engine;
 
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.entity.core.AiProject;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
-import com.jy.eleaitender.common.entity.core.AiReviewItem;
-import com.jy.eleaitender.core.mapper.AiProjectMapper;
-import com.jy.eleaitender.core.mapper.AiRequirementMapper;
-import com.jy.eleaitender.core.mapper.AiReviewItemMapper;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
+import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import com.jy.eleaitender.core.mapper.TbRequirementMapper;
+import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,19 +22,19 @@ import java.util.stream.Collectors;
 public class DocumentDataAssembler {
 
     @Autowired
-    private AiProjectMapper projectMapper;
+    private TbProjectMapper projectMapper;
 
     @Autowired
-    private AiRequirementMapper requirementMapper;
+    private TbRequirementMapper requirementMapper;
 
     @Autowired
-    private AiReviewItemMapper reviewItemMapper;
+    private TbProjectReviewItemMapper reviewItemMapper;
 
     /**
      * 组装文档数据
      */
     public Map<String, Object> assemble(Long projectId) {
-        AiProject project = projectMapper.selectById(projectId);
+        TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             throw new BusinessException(ResponseCode.PROJECT_NOT_FOUND);
         }
@@ -55,8 +55,8 @@ public class DocumentDataAssembler {
         data.put("requirementContent", project.getRequirementContent());
 
         // 评审项（按类型分组）
-        List<AiReviewItem> reviewItems = reviewItemMapper.selectByProjectId(projectId);
-        Map<String, List<AiReviewItem>> grouped = reviewItems.stream()
+        List<TbProjectReviewItem> reviewItems = reviewItemMapper.selectByProjectId(projectId);
+        Map<String, List<TbProjectReviewItem>> grouped = reviewItems.stream()
                 .collect(Collectors.groupingBy(
                         item -> item.getReviewType() != null ? item.getReviewType() : "COMPLIANCE",
                         LinkedHashMap::new,

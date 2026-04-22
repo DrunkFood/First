@@ -3,19 +3,19 @@ package com.jy.eleaitender.core.scheduler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
-import com.jy.eleaitender.common.entity.core.AiProject;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
-import com.jy.eleaitender.common.entity.core.AiReviewItem;
+import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
+import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ProjectPhase;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.helper.MessageHelper;
-import com.jy.eleaitender.core.mapper.AiDetectionRecordMapper;
-import com.jy.eleaitender.core.mapper.AiProjectMapper;
-import com.jy.eleaitender.core.mapper.AiRequirementMapper;
-import com.jy.eleaitender.core.mapper.AiReviewItemMapper;
+import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
+import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import com.jy.eleaitender.core.mapper.TbRequirementMapper;
+import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.util.DetectionResultParser;
 import lombok.extern.slf4j.Slf4j;
@@ -39,16 +39,16 @@ import java.util.List;
 public class AiTaskResultSyncHandler {
 
     @Autowired
-    private AiRequirementMapper requirementMapper;
+    private TbRequirementMapper requirementMapper;
 
     @Autowired
-    private AiReviewItemMapper reviewItemMapper;
+    private TbProjectReviewItemMapper reviewItemMapper;
 
     @Autowired
-    private AiDetectionRecordMapper detectionRecordMapper;
+    private TbDetectionRecordMapper detectionRecordMapper;
 
     @Autowired
-    private AiProjectMapper projectMapper;
+    private TbProjectMapper projectMapper;
 
     @Autowired
     private MessageHelper messageHelper;
@@ -92,7 +92,7 @@ public class AiTaskResultSyncHandler {
 
     private void syncRequirement(AiTask task) {
         Long requirementId = task.getBizId();
-        AiRequirement requirement = requirementMapper.selectById(requirementId);
+        TbRequirement requirement = requirementMapper.selectById(requirementId);
         if (requirement == null) {
             log.warn("需求不存在，跳过同步: requirementId={}", requirementId);
             return;
@@ -118,7 +118,7 @@ public class AiTaskResultSyncHandler {
 
     private void syncProjectRequirement(AiTask task) {
         Long projectId = task.getBizId();
-        AiProject project = projectMapper.selectById(projectId);
+        TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             log.warn("项目不存在，跳过同步: projectId={}", projectId);
             return;
@@ -160,7 +160,7 @@ public class AiTaskResultSyncHandler {
     /**
      * 子→父映射，用于插入时回填parentId
      */
-    private final IdentityHashMap<AiReviewItem, AiReviewItem> parentMap = new IdentityHashMap<>();
+    private final IdentityHashMap<TbProjectReviewItem, TbProjectReviewItem> parentMap = new IdentityHashMap<>();
 
     private void syncReviewItems(AiTask task) {
         Long projectId = task.getBizId();
@@ -172,15 +172,15 @@ public class AiTaskResultSyncHandler {
         }
 
         parentMap.clear();
-        List<AiReviewItem> items = parseReviewItemsFromResult(task.getResult(), projectId);
+        List<TbProjectReviewItem> items = parseReviewItemsFromResult(task.getResult(), projectId);
         if (items.isEmpty()) {
             log.warn("评审项生成结果为空，跳过同步: projectId={}", projectId);
             return;
         }
 
         // 先删除该项目下已有评审项（AI全量生成模式）
-        List<AiReviewItem> existing = reviewItemMapper.selectByProjectId(projectId);
-        for (AiReviewItem existingItem : existing) {
+        List<TbProjectReviewItem> existing = reviewItemMapper.selectByProjectId(projectId);
+        for (TbProjectReviewItem existingItem : existing) {
             reviewItemMapper.deleteById(existingItem.getId());
         }
 
@@ -194,9 +194,9 @@ public class AiTaskResultSyncHandler {
         Long taskCreatorId = task.getCreateId();
         String taskCreatorName = task.getCreateName();
 
-        for (AiReviewItem item : items) {
+        for (TbProjectReviewItem item : items) {
             // 从映射中获取父节点，回填parentId
-            AiReviewItem parent = parentMap.get(item);
+            TbProjectReviewItem parent = parentMap.get(item);
             if (parent != null && parent.getId() != null) {
                 item.setParentId(parent.getId());
             }
@@ -214,7 +214,7 @@ public class AiTaskResultSyncHandler {
         log.info("同步评审项成功: projectId={}, count={}", projectId, items.size());
     }
 
-    private List<AiReviewItem> parseReviewItemsFromResult(String resultJson, Long projectId) {
+    private List<TbProjectReviewItem> parseReviewItemsFromResult(String resultJson, Long projectId) {
         if (!StringUtils.hasText(resultJson)) {
             return List.of();
         }
@@ -225,7 +225,7 @@ public class AiTaskResultSyncHandler {
                 return List.of();
             }
 
-            List<AiReviewItem> items = new ArrayList<>();
+            List<TbProjectReviewItem> items = new ArrayList<>();
             int[] sortOrder = {0}; // 用数组实现可变引用
 
             for (JsonNode itemNode : itemsNode) {
@@ -235,7 +235,7 @@ public class AiTaskResultSyncHandler {
                 int level = getInt(itemNode, "level", 1);
 
                 // 创建一级分类节点
-                AiReviewItem categoryItem = new AiReviewItem();
+                TbProjectReviewItem categoryItem = new TbProjectReviewItem();
                 categoryItem.setProjectId(projectId);
                 categoryItem.setItemName(categoryName);
                 categoryItem.setLevel(level);
@@ -259,15 +259,15 @@ public class AiTaskResultSyncHandler {
      * 通过 parentMap 记录父子关系，插入时按level排序确保父节点先入库获得ID
      */
     private void parseChildren(JsonNode childrenNode, Long projectId,
-                               AiReviewItem parentItem, String reviewType,
-                               int childLevel, List<AiReviewItem> items,
+                               TbProjectReviewItem parentItem, String reviewType,
+                               int childLevel, List<TbProjectReviewItem> items,
                                int[] sortOrder) {
         if (childrenNode == null || !childrenNode.isArray()) {
             return;
         }
 
         for (JsonNode childNode : childrenNode) {
-            AiReviewItem item = new AiReviewItem();
+            TbProjectReviewItem item = new TbProjectReviewItem();
             item.setProjectId(projectId);
             parentMap.put(item, parentItem); // 记录父子关系
             item.setItemName(getText(childNode, "name"));
@@ -315,7 +315,7 @@ public class AiTaskResultSyncHandler {
 
     private void syncDetection(AiTask task) {
         Long recordId = task.getBizId();
-        AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
+        TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
             log.warn("检测记录不存在，跳过同步: recordId={}", recordId);
             return;
@@ -371,7 +371,7 @@ public class AiTaskResultSyncHandler {
     }
 
     private void checkAndUpdateProjectDetectionStatus(Long projectId) {
-        List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
+        List<TbDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
         if (records.isEmpty()) {
             return;
         }
@@ -385,7 +385,7 @@ public class AiTaskResultSyncHandler {
             return;
         }
 
-        AiProject project = projectMapper.selectById(projectId);
+        TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             return;
         }

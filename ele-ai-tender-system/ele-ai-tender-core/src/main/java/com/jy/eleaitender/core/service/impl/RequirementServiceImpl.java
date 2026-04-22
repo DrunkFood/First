@@ -5,17 +5,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.DetectionType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
-import com.jy.eleaitender.core.mapper.AiDetectionRecordMapper;
+import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.AiKnowledgeDocumentMapper;
-import com.jy.eleaitender.core.mapper.AiRequirementMapper;
+import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IRequirementService;
 import com.jy.eleaitender.core.util.DetectionResultParser;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 public class RequirementServiceImpl implements IRequirementService {
 
     @Autowired
-    private AiRequirementMapper requirementMapper;
+    private TbRequirementMapper requirementMapper;
 
     @Autowired
     private AiKnowledgeDocumentMapper knowledgeDocumentMapper;
@@ -46,7 +46,7 @@ public class RequirementServiceImpl implements IRequirementService {
     private IAiTaskService aiTaskService;
 
     @Autowired
-    private AiDetectionRecordMapper detectionRecordMapper;
+    private TbDetectionRecordMapper detectionRecordMapper;
 
     private static final DetectionType[] ALL_DETECTION_TYPES = {
             DetectionType.SENSITIVE_WORD,
@@ -54,25 +54,25 @@ public class RequirementServiceImpl implements IRequirementService {
     };
 
     @Override
-    public Page<AiRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status) {
-        Page<AiRequirement> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<AiRequirement> wrapper = new LambdaQueryWrapper<>();
+    public Page<TbRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status) {
+        Page<TbRequirement> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<TbRequirement> wrapper = new LambdaQueryWrapper<>();
 
         if (StringUtils.hasText(requirementName)) {
-            wrapper.like(AiRequirement::getRequirementName, requirementName);
+            wrapper.like(TbRequirement::getRequirementName, requirementName);
         }
         if (StringUtils.hasText(status)) {
-            wrapper.eq(AiRequirement::getStatus, status);
+            wrapper.eq(TbRequirement::getStatus, status);
         }
 
-        wrapper.orderByDesc(AiRequirement::getCreateTime);
+        wrapper.orderByDesc(TbRequirement::getCreateTime);
 
         return requirementMapper.selectPage(page, wrapper);
     }
 
     @Override
-    public AiRequirement getById(Long id) {
-        AiRequirement requirement = requirementMapper.selectById(id);
+    public TbRequirement getById(Long id) {
+        TbRequirement requirement = requirementMapper.selectById(id);
         if (requirement == null) {
             throw new BusinessException(ResponseCode.REQUIREMENT_NOT_FOUND);
         }
@@ -82,7 +82,7 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Override
     @Transactional
-    public AiRequirement create(AiRequirement requirement) {
+    public TbRequirement create(TbRequirement requirement) {
         if (!StringUtils.hasText(requirement.getStatus())) {
             requirement.setStatus("IN_PROGRESS");
         }
@@ -95,7 +95,7 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Override
     @Transactional
-    public void update(Long id, AiRequirement requirement) {
+    public void update(Long id, TbRequirement requirement) {
         getById(id); // 内部已做归属校验
         requirement.setId(id);
         // 正式保存后清除自动保存内容
@@ -113,8 +113,8 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Override
     @Transactional
-    public AiRequirement matchTemplate(Long id, Long matchedFileId, String matchMode) {
-        AiRequirement requirement = getById(id);
+    public TbRequirement matchTemplate(Long id, Long matchedFileId, String matchMode) {
+        TbRequirement requirement = getById(id);
 
         requirement.setMatchMode(matchMode);
         requirement.setMatchedFileId(matchedFileId);
@@ -126,7 +126,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public AiTask submitGenerate(Long requirementId, Map<String, Object> params) {
-        AiRequirement requirement = getById(requirementId);
+        TbRequirement requirement = getById(requirementId);
         // 清空需求内容
         requirement.setContent("");
         requirement.setProgress(0);
@@ -148,7 +148,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public void autoSave(Long requirementId, String content) {
-        AiRequirement requirement = getById(requirementId);
+        TbRequirement requirement = getById(requirementId);
         requirement.setAutoSaveContent(content);
         requirement.setAutoSaveTime(new Date());
         requirementMapper.updateById(requirement);
@@ -156,14 +156,14 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Override
     public String getAutoSaveContent(Long requirementId) {
-        AiRequirement requirement = getById(requirementId);
+        TbRequirement requirement = getById(requirementId);
         return requirement.getAutoSaveContent();
     }
 
     @Override
     @Transactional
     public void clearAutoSave(Long requirementId) {
-        AiRequirement requirement = getById(requirementId);
+        TbRequirement requirement = getById(requirementId);
         requirement.setAutoSaveContent(null);
         requirement.setAutoSaveTime(null);
         requirementMapper.updateById(requirement);
@@ -172,7 +172,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public Map<String, Long> submitDetection(Long requirementId) {
-        AiRequirement requirement = getById(requirementId);
+        TbRequirement requirement = getById(requirementId);
 
         // 文档内容快照
         String contentSnapshot = requirement.getContent();
@@ -183,7 +183,7 @@ public class RequirementServiceImpl implements IRequirementService {
         // 为每种检测类型创建检测记录 + AI任务
         for (DetectionType type : ALL_DETECTION_TYPES) {
             // 创建检测记录
-            AiDetectionRecord record = new AiDetectionRecord();
+            TbDetectionRecord record = new TbDetectionRecord();
             record.setRequirementId(requirementId);
             record.setDetectionType(type.getCode());
             record.setContentSnapshot(contentSnapshot);
@@ -216,9 +216,9 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public void acceptDetectionIssue(Long requirementId, Long recordId, Integer issueIndex) {
-        AiRequirement requirement = getById(requirementId);
+        TbRequirement requirement = getById(requirementId);
 
-        AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
+        TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null || !requirementId.equals(record.getRequirementId())) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
@@ -253,7 +253,7 @@ public class RequirementServiceImpl implements IRequirementService {
     public void rejectDetectionIssue(Long requirementId, Long recordId, Integer issueIndex) {
         getById(requirementId);
 
-        AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
+        TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null || !requirementId.equals(record.getRequirementId())) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
@@ -266,7 +266,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    public List<AiDetectionRecord> getDetectionRecords(Long requirementId) {
+    public List<TbDetectionRecord> getDetectionRecords(Long requirementId) {
         getById(requirementId); // 内部已做归属校验
         return detectionRecordMapper.selectByRequirementId(requirementId);
     }
@@ -274,7 +274,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional
     public void finishDetection(Long requirementId) {
-        AiRequirement requirement = getById(requirementId);
+        TbRequirement requirement = getById(requirementId);
         requirement.setStatus("COMPLETED");
         requirement.setProgress(100);
         requirementMapper.updateById(requirement);
@@ -285,7 +285,7 @@ public class RequirementServiceImpl implements IRequirementService {
         // 获取当前需求的项目类型信息，用于匹配
         String projectType = null;
         if (requirementId != null) {
-            AiRequirement requirement = requirementMapper.selectById(requirementId);
+            TbRequirement requirement = requirementMapper.selectById(requirementId);
             if (requirement != null) {
                 projectType = requirement.getProjectType();
             }

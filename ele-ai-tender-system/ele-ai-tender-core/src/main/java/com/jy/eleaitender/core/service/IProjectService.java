@@ -3,7 +3,7 @@ package com.jy.eleaitender.core.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 
 import java.util.List;
 import java.util.Map;
@@ -16,22 +16,22 @@ public interface IProjectService {
     /**
      * 分页查询项目列表
      */
-    Page<AiProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory);
+    Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory);
 
     /**
      * 根据ID获取项目详情
      */
-    AiProject getById(Long id);
+    TbProject getById(Long id);
 
     /**
      * 创建项目
      */
-    AiProject create(AiProject project);
+    TbProject create(TbProject project);
 
     /**
      * 更新项目
      */
-    void update(Long id, AiProject project);
+    void update(Long id, TbProject project);
 
     /**
      * 批量删除项目

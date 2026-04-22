@@ -3,7 +3,7 @@ package com.jy.eleaitender.core.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
-import com.jy.eleaitender.common.entity.core.AiPolicyFile;
+import com.jy.eleaitender.common.entity.core.TbPolicyFile;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.request.PolicyFileRequest;
@@ -37,7 +37,7 @@ public class PolicyFileController {
     @GetMapping
     @RequireLogin
     @Operation(summary = "分页查询当前用户的政策文件")
-    public Result<Page<AiPolicyFile>> list(
+    public Result<Page<TbPolicyFile>> list(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String fileCategory,
@@ -48,8 +48,8 @@ public class PolicyFileController {
     @PostMapping
     @RequireLogin
     @Operation(summary = "上传政策文件")
-    public Result<AiPolicyFile> create(@RequestBody PolicyFileRequest request) {
-        AiPolicyFile policyFile = new AiPolicyFile();
+    public Result<TbPolicyFile> create(@RequestBody PolicyFileRequest request) {
+        TbPolicyFile policyFile = new TbPolicyFile();
         BeanUtils.copyProperties(request, policyFile);
         return Result.success(policyFileService.create(policyFile));
     }
@@ -57,7 +57,7 @@ public class PolicyFileController {
     @GetMapping("/{id}")
     @RequireLogin
     @Operation(summary = "查看详情")
-    public Result<AiPolicyFile> getById(@PathVariable Long id) {
+    public Result<TbPolicyFile> getById(@PathVariable Long id) {
         return Result.success(policyFileService.getById(id));
     }
 

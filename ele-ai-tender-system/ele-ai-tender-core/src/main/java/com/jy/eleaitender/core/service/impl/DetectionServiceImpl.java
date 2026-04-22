@@ -9,11 +9,11 @@ import com.jy.eleaitender.core.dto.request.DetectionSubmitRequest;
 import com.jy.eleaitender.core.dto.response.DetectionIssueVO;
 import com.jy.eleaitender.core.dto.response.DetectionProgressVO;
 import com.jy.eleaitender.core.dto.response.DetectionReportVO;
-import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.core.helper.MessageHelper;
-import com.jy.eleaitender.core.mapper.AiDetectionRecordMapper;
-import com.jy.eleaitender.core.mapper.AiProjectMapper;
+import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
+import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
 import com.jy.eleaitender.core.statemachine.PhaseFlowController;
@@ -38,10 +38,10 @@ import java.util.stream.Collectors;
 public class DetectionServiceImpl implements IDetectionService {
 
     @Autowired
-    private AiProjectMapper projectMapper;
+    private TbProjectMapper projectMapper;
 
     @Autowired
-    private AiDetectionRecordMapper detectionRecordMapper;
+    private TbDetectionRecordMapper detectionRecordMapper;
 
     @Autowired
     private IAiTaskService aiTaskService;
@@ -62,7 +62,7 @@ public class DetectionServiceImpl implements IDetectionService {
     @Override
     @Transactional
     public Map<String, Long> submit(Long projectId, DetectionSubmitRequest request) {
-        AiProject project = getProjectOrThrow(projectId);
+        TbProject project = getProjectOrThrow(projectId);
 
         // 状态转换: → PENDING_DETECTION
         ProjectStateMachine.transition(project, ProjectStatus.PENDING_DETECTION);
@@ -83,7 +83,7 @@ public class DetectionServiceImpl implements IDetectionService {
 
         // 为每种检测类型创建检测记录 + AI任务
         for (DetectionType type : ALL_DETECTION_TYPES) {
-            AiDetectionRecord record = new AiDetectionRecord();
+            TbDetectionRecord record = new TbDetectionRecord();
             record.setProjectId(projectId);
             record.setDetectionType(type.getCode());
             record.setContentSnapshot(contentSnapshot);
@@ -121,7 +121,7 @@ public class DetectionServiceImpl implements IDetectionService {
     public DetectionProgressVO getProgress(Long projectId) {
         getProjectOrThrow(projectId);
 
-        List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
+        List<TbDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
 
         DetectionProgressVO vo = new DetectionProgressVO();
         vo.setProjectId(projectId);
@@ -132,7 +132,7 @@ public class DetectionServiceImpl implements IDetectionService {
         boolean hasFailed = false;
         int totalIssues = 0;
 
-        for (AiDetectionRecord record : records) {
+        for (TbDetectionRecord record : records) {
             DetectionProgressVO.DetectionItemProgress item = new DetectionProgressVO.DetectionItemProgress();
             item.setDetectionType(record.getDetectionType());
             item.setTypeName(getDetectionTypeName(record.getDetectionType()));
@@ -178,8 +178,8 @@ public class DetectionServiceImpl implements IDetectionService {
 
     @Override
     public DetectionReportVO getReport(Long projectId) {
-        AiProject project = getProjectOrThrow(projectId);
-        List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
+        TbProject project = getProjectOrThrow(projectId);
+        List<TbDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
 
         DetectionReportVO report = new DetectionReportVO();
         report.setProjectId(projectId);
@@ -188,7 +188,7 @@ public class DetectionServiceImpl implements IDetectionService {
         List<DetectionIssueVO> issues = new ArrayList<>();
         int totalIssueCount = 0;
 
-        for (AiDetectionRecord record : records) {
+        for (TbDetectionRecord record : records) {
             List<DetectionIssueVO> recordIssues = DetectionResultParser.parseIssues(record);
             issues.addAll(recordIssues);
             totalIssueCount += recordIssues.size();
@@ -204,7 +204,7 @@ public class DetectionServiceImpl implements IDetectionService {
     @Override
     @Transactional
     public void acceptIssue(Long recordId, Integer issueIndex) {
-        AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
+        TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
@@ -222,7 +222,7 @@ public class DetectionServiceImpl implements IDetectionService {
     @Override
     @Transactional
     public void rejectIssue(Long recordId, Integer issueIndex) {
-        AiDetectionRecord record = detectionRecordMapper.selectById(recordId);
+        TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
@@ -241,8 +241,8 @@ public class DetectionServiceImpl implements IDetectionService {
     @Transactional
     public void acceptAll(Long projectId) {
         getProjectOrThrow(projectId);
-        List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
-        for (AiDetectionRecord record : records) {
+        List<TbDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
+        for (TbDetectionRecord record : records) {
             String updatedJson = DetectionResultParser.acceptAllIssues(record.getResult());
             if (updatedJson != null) {
                 record.setResult(updatedJson);
@@ -255,7 +255,7 @@ public class DetectionServiceImpl implements IDetectionService {
     @Override
     @Transactional
     public void skip(Long projectId) {
-        AiProject project = getProjectOrThrow(projectId);
+        TbProject project = getProjectOrThrow(projectId);
         ProjectStateMachine.transition(project, ProjectStatus.DETECTION_SKIPPED);
         projectMapper.updateById(project);
 
@@ -273,17 +273,17 @@ public class DetectionServiceImpl implements IDetectionService {
     @Override
     @Transactional
     public Map<String, Long> retry(Long projectId) {
-        AiProject project = getProjectOrThrow(projectId);
+        TbProject project = getProjectOrThrow(projectId);
 
         // 修复：走状态机，DETECTION_FAILED → IN_PROGRESS
         ProjectStateMachine.transition(project, ProjectStatus.IN_PROGRESS);
         projectMapper.updateById(project);
 
         // 重试失败的检测记录
-        List<AiDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
+        List<TbDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
         Map<String, Long> taskIds = new LinkedHashMap<>();
 
-        for (AiDetectionRecord record : records) {
+        for (TbDetectionRecord record : records) {
             AiTaskStatus status = AiTaskStatus.fromCode(record.getStatus());
             if (status.isRetryable()) {
                 record.setStatus(AiTaskStatus.PENDING.getCode());
@@ -320,8 +320,8 @@ public class DetectionServiceImpl implements IDetectionService {
         return taskIds;
     }
 
-    private AiProject getProjectOrThrow(Long projectId) {
-        AiProject project = projectMapper.selectById(projectId);
+    private TbProject getProjectOrThrow(Long projectId) {
+        TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             throw new BusinessException(ResponseCode.PROJECT_NOT_FOUND);
         }

@@ -1,7 +1,7 @@
 package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.support.SupMessage;
 import com.jy.eleaitender.common.entity.support.SysOperationLog;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
@@ -50,10 +50,10 @@ public class StatisticsServiceImpl implements IStatisticsService {
     private SysMainVersionMapper mainVersionMapper;
 
     @Autowired
-    private AiProjectMapper projectMapper;
+    private TbProjectMapper projectMapper;
 
     @Autowired
-    private AiRequirementMapper requirementMapper;
+    private TbRequirementMapper requirementMapper;
 
     @Autowired
     private TemplateConfigMapper templateMapper;
@@ -104,8 +104,8 @@ public class StatisticsServiceImpl implements IStatisticsService {
         vo.setTodayOperationCount(operationLogMapper.selectCount(todayWrapper));
 
         // 今日新建项目数
-        LambdaQueryWrapper<AiProject> todayProjectWrapper = new LambdaQueryWrapper<>();
-        todayProjectWrapper.ge(AiProject::getCreateTime, todayStart.getTime());
+        LambdaQueryWrapper<TbProject> todayProjectWrapper = new LambdaQueryWrapper<>();
+        todayProjectWrapper.ge(TbProject::getCreateTime, todayStart.getTime());
         vo.setTodayProjectCount(projectMapper.selectCount(todayProjectWrapper));
 
         // 当前用户未读消息数
@@ -178,15 +178,15 @@ public class StatisticsServiceImpl implements IStatisticsService {
      */
     private List<StatusDistItem> getProjectStatusDist() {
         // 查询所有非删除项目的状态
-        LambdaQueryWrapper<AiProject> wrapper = new LambdaQueryWrapper<>();
-        wrapper.select(AiProject::getStatus);
-        List<AiProject> projects = projectMapper.selectList(wrapper);
+        LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(TbProject::getStatus);
+        List<TbProject> projects = projectMapper.selectList(wrapper);
 
         // 按状态分组计数
         Map<String, Long> countByStatus = projects.stream()
                 .filter(p -> p.getStatus() != null)
                 .collect(Collectors.groupingBy(
-                        AiProject::getStatus,
+                        TbProject::getStatus,
                         LinkedHashMap::new,
                         Collectors.counting()
                 ));

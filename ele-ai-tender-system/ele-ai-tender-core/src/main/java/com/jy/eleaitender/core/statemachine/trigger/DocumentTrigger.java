@@ -1,6 +1,6 @@
 package com.jy.eleaitender.core.statemachine.trigger;
 
-import com.jy.eleaitender.common.entity.core.AiProject;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.core.service.IDocumentIntegrationService;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class DocumentTrigger implements PhaseTrigger {
     private IDocumentIntegrationService documentIntegrationService;
 
     @Override
-    public void onEnter(AiProject project, Map<String, Object> context) {
+    public void onEnter(TbProject project, Map<String, Object> context) {
         // 自动执行文档集成
         try {
             documentIntegrationService.integrate(project.getId());
@@ -32,7 +32,7 @@ public class DocumentTrigger implements PhaseTrigger {
     }
 
     @Override
-    public boolean canComplete(AiProject project) {
+    public boolean canComplete(TbProject project) {
         return project.getGeneratedFileId() != null;
     }
 

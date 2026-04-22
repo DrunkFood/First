@@ -2,8 +2,8 @@ package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.entity.core.AiDetectionRecord;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
+import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
 
 import java.util.List;
@@ -17,22 +17,22 @@ public interface IRequirementService {
     /**
      * 分页查询需求列表
      */
-    Page<AiRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status);
+    Page<TbRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status);
 
     /**
      * 根据ID获取需求详情
      */
-    AiRequirement getById(Long id);
+    TbRequirement getById(Long id);
 
     /**
      * 创建需求
      */
-    AiRequirement create(AiRequirement requirement);
+    TbRequirement create(TbRequirement requirement);
 
     /**
      * 更新需求
      */
-    void update(Long id, AiRequirement requirement);
+    void update(Long id, TbRequirement requirement);
 
     /**
      * 删除需求
@@ -42,7 +42,7 @@ public interface IRequirementService {
     /**
      * 匹配历史模板
      */
-    AiRequirement matchTemplate(Long id, Long matchedFileId, String matchMode);
+    TbRequirement matchTemplate(Long id, Long matchedFileId, String matchMode);
 
     /**
      * 提交AI生成需求任务
@@ -82,7 +82,7 @@ public interface IRequirementService {
     /**
      * 获取需求检测记录列表
      */
-    List<AiDetectionRecord> getDetectionRecords(Long requirementId);
+    List<TbDetectionRecord> getDetectionRecords(Long requirementId);
 
     /**
      * 完成需求检测（更新状态为COMPLETED）

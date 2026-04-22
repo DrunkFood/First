@@ -1,11 +1,11 @@
 package com.jy.eleaitender.core.statemachine.trigger;
 
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.entity.core.AiProject;
-import com.jy.eleaitender.common.entity.core.AiRequirement;
-import com.jy.eleaitender.common.entity.core.AiReviewItem;
-import com.jy.eleaitender.core.mapper.AiRequirementMapper;
-import com.jy.eleaitender.core.mapper.AiReviewItemMapper;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
+import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.core.mapper.TbRequirementMapper;
+import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.service.IReviewItemService;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
 import lombok.extern.slf4j.Slf4j;
@@ -25,16 +25,16 @@ import java.util.Map;
 public class ReviewItemTrigger implements PhaseTrigger {
 
     @Autowired
-    private AiReviewItemMapper reviewItemMapper;
+    private TbProjectReviewItemMapper reviewItemMapper;
 
     @Autowired
     private IReviewItemService reviewItemService;
 
     @Autowired
-    private AiRequirementMapper requirementMapper;
+    private TbRequirementMapper requirementMapper;
 
     @Override
-    public void onEnter(AiProject project, Map<String, Object> context) {
+    public void onEnter(TbProject project, Map<String, Object> context) {
         // 构建包含项目信息的参数
         Map<String, Object> params = new HashMap<>();
         params.put("projectId", project.getId());
@@ -55,8 +55,8 @@ public class ReviewItemTrigger implements PhaseTrigger {
     }
 
     @Override
-    public boolean canComplete(AiProject project) {
-        List<AiReviewItem> items = reviewItemMapper.selectByProjectId(project.getId());
+    public boolean canComplete(TbProject project) {
+        List<TbProjectReviewItem> items = reviewItemMapper.selectByProjectId(project.getId());
         return items != null && !items.isEmpty();
     }
 

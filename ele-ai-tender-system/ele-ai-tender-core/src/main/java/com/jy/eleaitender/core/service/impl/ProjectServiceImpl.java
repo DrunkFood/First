@@ -10,8 +10,8 @@ import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
-import com.jy.eleaitender.common.entity.core.AiProject;
-import com.jy.eleaitender.core.mapper.AiProjectMapper;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.statemachine.PhaseFlowController;
@@ -43,7 +43,7 @@ import jakarta.annotation.PostConstruct;
 public class ProjectServiceImpl implements IProjectService {
 
     @Autowired
-    private AiProjectMapper projectMapper;
+    private TbProjectMapper projectMapper;
 
     @Autowired
     private IAiTaskService aiTaskService;
@@ -84,28 +84,28 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    public Page<AiProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory) {
-        Page<AiProject> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<AiProject> wrapper = new LambdaQueryWrapper<>();
+    public Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory) {
+        Page<TbProject> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
 
         if (StringUtils.hasText(projectName)) {
-            wrapper.like(AiProject::getProjectName, projectName);
+            wrapper.like(TbProject::getProjectName, projectName);
         }
         if (StringUtils.hasText(status)) {
-            wrapper.eq(AiProject::getStatus, status);
+            wrapper.eq(TbProject::getStatus, status);
         }
         if (StringUtils.hasText(projectCategory)) {
-            wrapper.eq(AiProject::getProjectCategory, projectCategory);
+            wrapper.eq(TbProject::getProjectCategory, projectCategory);
         }
 
-        wrapper.orderByDesc(AiProject::getCreateTime);
+        wrapper.orderByDesc(TbProject::getCreateTime);
 
         return projectMapper.selectPage(page, wrapper);
     }
 
     @Override
-    public AiProject getById(Long id) {
-        AiProject project = projectMapper.selectById(id);
+    public TbProject getById(Long id) {
+        TbProject project = projectMapper.selectById(id);
         if (project == null) {
             throw new BusinessException(ResponseCode.PROJECT_NOT_FOUND);
         }
@@ -115,7 +115,7 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     @Transactional
-    public AiProject create(AiProject project) {
+    public TbProject create(TbProject project) {
         // 校验项目编号唯一性（如果用户提供了编号）
         if (StringUtils.hasText(project.getProjectCode())) {
             validateProjectCodeUnique(project.getProjectCode(), null);
@@ -143,8 +143,8 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     @Transactional
-    public void update(Long id, AiProject project) {
-        AiProject existing = getById(id); // 内部已做归属校验
+    public void update(Long id, TbProject project) {
+        TbProject existing = getById(id); // 内部已做归属校验
         project.setId(id);
         // 不允许修改项目编号
         project.setProjectCode(existing.getProjectCode());
@@ -158,7 +158,7 @@ public class ProjectServiceImpl implements IProjectService {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "请选择要删除的项目");
         }
         for (Long id : ids) {
-            AiProject project = projectMapper.selectById(id);
+            TbProject project = projectMapper.selectById(id);
             if (project != null) {
                 DataScopeHelper.checkOwnership(project.getCreateId());
             }
@@ -175,7 +175,7 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     public ProjectPhaseVO getPhase(Long projectId) {
-        AiProject project = getById(projectId); // 内部已做归属校验
+        TbProject project = getById(projectId); // 内部已做归属校验
         ProjectPhaseVO vo = new ProjectPhaseVO();
         vo.setProjectId(projectId);
         vo.setCurrentPhase(project.getCurrentPhase());
@@ -199,7 +199,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Transactional
     public void advancePhase(Long projectId, Integer targetPhase, Map<String, Object> context) {
-        AiProject project = getById(projectId); // 内部已做归属校验
+        TbProject project = getById(projectId); // 内部已做归属校验
         ProjectPhase target = ProjectPhase.fromCode(targetPhase);
         phaseFlowController.advancePhase(project, target, context);
         projectMapper.updateById(project);
@@ -207,7 +207,7 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     public AiTask generateRequirement(Long projectId) {
-        AiProject project = getById(projectId);
+        TbProject project = getById(projectId);
         Map<String, Object> params = new HashMap<>();
         params.put("requirementName", project.getProjectName() + " - 招标需求");
         params.put("projectType", project.getProjectType());
@@ -223,7 +223,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Transactional
     public void changeStatus(Long projectId, String targetStatus) {
-        AiProject project = getById(projectId); // 内部已做归属校验
+        TbProject project = getById(projectId); // 内部已做归属校验
         ProjectStatus target = ProjectStatus.fromCode(targetStatus);
         ProjectStateMachine.transition(project, target);
         projectMapper.updateById(project);
@@ -248,10 +248,10 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     private void validateProjectCodeUnique(String projectCode, Long excludeId) {
-        LambdaQueryWrapper<AiProject> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiProject::getProjectCode, projectCode);
+        LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TbProject::getProjectCode, projectCode);
         if (excludeId != null) {
-            wrapper.ne(AiProject::getId, excludeId);
+            wrapper.ne(TbProject::getId, excludeId);
         }
         if (projectMapper.selectCount(wrapper) > 0) {
             throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目编号已存在: " + projectCode);
@@ -259,10 +259,10 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     private void validateProjectNameUnique(String projectName, Long excludeId) {
-        LambdaQueryWrapper<AiProject> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiProject::getProjectName, projectName);
+        LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TbProject::getProjectName, projectName);
         if (excludeId != null) {
-            wrapper.ne(AiProject::getId, excludeId);
+            wrapper.ne(TbProject::getId, excludeId);
         }
         if (projectMapper.selectCount(wrapper) > 0) {
             throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目名称已存在: " + projectName);

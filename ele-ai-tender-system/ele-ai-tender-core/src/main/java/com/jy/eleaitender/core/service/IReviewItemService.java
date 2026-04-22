@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.entity.core.AiReviewItem;
+import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 
 import java.util.List;
 import java.util.Map;
@@ -14,17 +14,17 @@ public interface IReviewItemService {
     /**
      * 根据项目ID获取评审项树
      */
-    List<AiReviewItem> getTreeByProjectId(Long projectId);
+    List<TbProjectReviewItem> getTreeByProjectId(Long projectId);
 
     /**
      * 创建评审项
      */
-    AiReviewItem create(AiReviewItem reviewItem);
+    TbProjectReviewItem create(TbProjectReviewItem reviewItem);
 
     /**
      * 更新评审项
      */
-    void update(Long id, AiReviewItem reviewItem);
+    void update(Long id, TbProjectReviewItem reviewItem);
 
     /**
      * 删除评审项（级联删除子项）
@@ -39,10 +39,10 @@ public interface IReviewItemService {
     /**
      * 批量创建评审项
      */
-    void batchCreate(List<AiReviewItem> items);
+    void batchCreate(List<TbProjectReviewItem> items);
 
     /**
      * 批量更新评审项
      */
-    void batchUpdate(List<AiReviewItem> items);
+    void batchUpdate(List<TbProjectReviewItem> items);
 }
