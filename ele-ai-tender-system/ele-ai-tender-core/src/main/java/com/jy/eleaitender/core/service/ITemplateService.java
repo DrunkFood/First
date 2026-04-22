@@ -1,7 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.core.AiTemplate;
+import com.jy.eleaitender.common.entity.support.SupTemplate;
 
 import java.util.List;
 
@@ -13,27 +13,27 @@ public interface ITemplateService {
     /**
      * 分页查询模板列表
      */
-    Page<AiTemplate> getPage(Integer pageNum, Integer pageSize, String templateName, String projectCategory, String projectType);
+    Page<SupTemplate> getPage(Integer pageNum, Integer pageSize, String templateName, String projectCategory, String projectType);
 
     /**
      * 根据ID获取模板详情
      */
-    AiTemplate getById(Long id);
+    SupTemplate getById(Long id);
 
     /**
      * 获取默认模板
      */
-    AiTemplate getDefault(String projectCategory, String projectType);
+    SupTemplate getDefault(String projectCategory, String projectType);
 
     /**
      * 创建模板
      */
-    AiTemplate create(AiTemplate template);
+    SupTemplate create(SupTemplate template);
 
     /**
      * 更新模板
      */
-    void update(Long id, AiTemplate template);
+    void update(Long id, SupTemplate template);
 
     /**
      * 批量删除模板

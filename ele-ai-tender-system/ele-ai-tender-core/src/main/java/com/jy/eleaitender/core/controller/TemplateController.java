@@ -3,7 +3,7 @@ package com.jy.eleaitender.core.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
-import com.jy.eleaitender.common.entity.core.AiTemplate;
+import com.jy.eleaitender.common.entity.support.SupTemplate;
 import com.jy.eleaitender.core.service.ITemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +24,7 @@ public class TemplateController {
     @GetMapping
     @RequireLogin
     @Operation(summary = "分页查询模板列表")
-    public Result<Page<AiTemplate>> list(
+    public Result<Page<SupTemplate>> list(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String templateName,
@@ -36,14 +36,14 @@ public class TemplateController {
     @GetMapping("/{id}")
     @RequireLogin
     @Operation(summary = "获取模板详情")
-    public Result<AiTemplate> getById(@PathVariable Long id) {
+    public Result<SupTemplate> getById(@PathVariable Long id) {
         return Result.success(templateService.getById(id));
     }
 
     @GetMapping("/default")
     @RequireLogin
     @Operation(summary = "获取默认模板")
-    public Result<AiTemplate> getDefault(
+    public Result<SupTemplate> getDefault(
             @RequestParam(required = false) String projectCategory,
             @RequestParam(required = false) String projectType) {
         return Result.success(templateService.getDefault(projectCategory, projectType));

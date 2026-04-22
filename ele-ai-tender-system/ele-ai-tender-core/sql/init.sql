@@ -6,7 +6,7 @@
 -- 覆盖模块: core + ai + common
 -- =========================================
 -- 说明:
---   本脚本为编制中心全量建表脚本，包含: ai_project / ai_project_version / ai_requirement / ai_review_item / ai_detection_record / ai_policy_file / ai_template
+--   本脚本为编制中心全量建表脚本，包含: ai_project / ai_project_version / ai_requirement / ai_review_item / ai_detection_record / ai_policy_file / sup_template
 --   所有字段严格对应Java实体类定义
 -- =========================================
 
@@ -117,9 +117,9 @@ CREATE TABLE IF NOT EXISTS `ai_requirement` (
 
 -- =============================================
 -- 4. 招标文件模板表
--- 实体: com.jy.eleaitender.common.entity.core.AiTemplate
+-- 实体: com.jy.eleaitender.common.entity.core.SupTemplate
 -- =============================================
-CREATE TABLE IF NOT EXISTS `ai_template` (
+CREATE TABLE IF NOT EXISTS `sup_template` (
     `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '模板ID',
     `template_code`         VARCHAR(50)  NOT NULL COMMENT '模板编码',
     `template_name`         VARCHAR(100) NOT NULL COMMENT '模板名称',

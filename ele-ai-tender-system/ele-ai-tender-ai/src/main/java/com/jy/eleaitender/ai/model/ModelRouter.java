@@ -1,6 +1,6 @@
 package com.jy.eleaitender.ai.model;
 
-import com.jy.eleaitender.common.entity.support.AiModelConfig;
+import com.jy.eleaitender.common.entity.ai.AiModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.AiUsageScenario;

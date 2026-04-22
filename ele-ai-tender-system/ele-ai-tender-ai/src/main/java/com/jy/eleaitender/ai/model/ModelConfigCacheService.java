@@ -3,7 +3,7 @@ package com.jy.eleaitender.ai.model;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.ai.mapper.AiModelConfigReadMapper;
 import com.jy.eleaitender.ai.mapper.ModelRouteRuleReadMapper;
-import com.jy.eleaitender.common.entity.support.AiModelConfig;
+import com.jy.eleaitender.common.entity.ai.AiModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

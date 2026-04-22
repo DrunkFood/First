@@ -1,4 +1,4 @@
-package com.jy.eleaitender.common.entity.core;
+package com.jy.eleaitender.common.entity.support;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.jy.eleaitender.common.entity.base.BaseEntity;
@@ -8,13 +8,13 @@ import lombok.EqualsAndHashCode;
 
 /**
  * 招标文件模板实体
- * 对应表: ai_template
+ * 对应表: sup_template
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_template")
+@TableName("sup_template")
 @Schema(description = "招标文件模板")
-public class AiTemplate extends BaseEntity {
+public class SupTemplate extends BaseEntity {
 
     @Schema(description = "模板编码")
     private String templateCode;

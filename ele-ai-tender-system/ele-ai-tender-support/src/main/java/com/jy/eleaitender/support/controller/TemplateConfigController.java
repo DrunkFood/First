@@ -1,7 +1,7 @@
 package com.jy.eleaitender.support.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.core.AiTemplate;
+import com.jy.eleaitender.common.entity.support.SupTemplate;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.support.service.ITemplateConfigService;
@@ -21,7 +21,7 @@ public class TemplateConfigController {
     @GetMapping
     @Operation(summary = "查询模板列表")
     @RequireLogin
-    public Result<Page<AiTemplate>> list(
+    public Result<Page<SupTemplate>> list(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String templateName,
@@ -33,21 +33,21 @@ public class TemplateConfigController {
     @GetMapping("/{id}")
     @Operation(summary = "获取模板详情")
     @RequireLogin
-    public Result<AiTemplate> getById(@PathVariable Long id) {
+    public Result<SupTemplate> getById(@PathVariable Long id) {
         return Result.success(templateConfigService.getById(id));
     }
 
     @PostMapping
     @Operation(summary = "创建模板")
     @RequireLogin
-    public Result<AiTemplate> create(@RequestBody AiTemplate template) {
+    public Result<SupTemplate> create(@RequestBody SupTemplate template) {
         return Result.success(templateConfigService.create(template));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新模板")
     @RequireLogin
-    public Result<Void> update(@PathVariable Long id, @RequestBody AiTemplate template) {
+    public Result<Void> update(@PathVariable Long id, @RequestBody SupTemplate template) {
         template.setId(id);
         templateConfigService.update(template);
         return Result.success();

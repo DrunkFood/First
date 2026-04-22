@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.entity.core.AiTemplate;
-import com.jy.eleaitender.core.mapper.AiTemplateMapper;
+import com.jy.eleaitender.common.entity.support.SupTemplate;
+import com.jy.eleaitender.core.mapper.SupTemplateMapper;
 import com.jy.eleaitender.core.service.ITemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,31 +21,31 @@ import java.util.List;
 public class TemplateServiceImpl implements ITemplateService {
 
     @Autowired
-    private AiTemplateMapper templateMapper;
+    private SupTemplateMapper templateMapper;
 
     @Override
-    public Page<AiTemplate> getPage(Integer pageNum, Integer pageSize, String templateName, String projectCategory, String projectType) {
-        Page<AiTemplate> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<AiTemplate> wrapper = new LambdaQueryWrapper<>();
+    public Page<SupTemplate> getPage(Integer pageNum, Integer pageSize, String templateName, String projectCategory, String projectType) {
+        Page<SupTemplate> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<SupTemplate> wrapper = new LambdaQueryWrapper<>();
 
         if (StringUtils.hasText(templateName)) {
-            wrapper.like(AiTemplate::getTemplateName, templateName);
+            wrapper.like(SupTemplate::getTemplateName, templateName);
         }
         if (StringUtils.hasText(projectCategory)) {
-            wrapper.eq(AiTemplate::getProjectCategory, projectCategory);
+            wrapper.eq(SupTemplate::getProjectCategory, projectCategory);
         }
         if (StringUtils.hasText(projectType)) {
-            wrapper.eq(AiTemplate::getProjectType, projectType);
+            wrapper.eq(SupTemplate::getProjectType, projectType);
         }
 
-        wrapper.orderByDesc(AiTemplate::getCreateTime);
+        wrapper.orderByDesc(SupTemplate::getCreateTime);
 
         return templateMapper.selectPage(page, wrapper);
     }
 
     @Override
-    public AiTemplate getById(Long id) {
-        AiTemplate template = templateMapper.selectById(id);
+    public SupTemplate getById(Long id) {
+        SupTemplate template = templateMapper.selectById(id);
         if (template == null) {
             throw new BusinessException(ResponseCode.TEMPLATE_NOT_FOUND);
         }
@@ -53,14 +53,14 @@ public class TemplateServiceImpl implements ITemplateService {
     }
 
     @Override
-    public AiTemplate getDefault(String projectCategory, String projectType) {
-        LambdaQueryWrapper<AiTemplate> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiTemplate::getIsDefault, 1);
+    public SupTemplate getDefault(String projectCategory, String projectType) {
+        LambdaQueryWrapper<SupTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SupTemplate::getIsDefault, 1);
         if (StringUtils.hasText(projectCategory)) {
-            wrapper.eq(AiTemplate::getProjectCategory, projectCategory);
+            wrapper.eq(SupTemplate::getProjectCategory, projectCategory);
         }
         if (StringUtils.hasText(projectType)) {
-            wrapper.eq(AiTemplate::getProjectType, projectType);
+            wrapper.eq(SupTemplate::getProjectType, projectType);
         }
         wrapper.last("LIMIT 1");
 
@@ -69,7 +69,7 @@ public class TemplateServiceImpl implements ITemplateService {
 
     @Override
     @Transactional
-    public AiTemplate create(AiTemplate template) {
+    public SupTemplate create(SupTemplate template) {
         // 新模板默认非默认
         if (template.getIsDefault() == null) {
             template.setIsDefault(0);
@@ -87,8 +87,8 @@ public class TemplateServiceImpl implements ITemplateService {
 
     @Override
     @Transactional
-    public void update(Long id, AiTemplate template) {
-        AiTemplate existing = getById(id);
+    public void update(Long id, SupTemplate template) {
+        SupTemplate existing = getById(id);
         template.setId(id);
         templateMapper.updateById(template);
     }
@@ -107,24 +107,24 @@ public class TemplateServiceImpl implements ITemplateService {
     @Override
     @Transactional
     public void setDefault(Long id) {
-        AiTemplate template = getById(id);
+        SupTemplate template = getById(id);
 
         // 先清除同项目类别和类型的其他默认模板
-        LambdaQueryWrapper<AiTemplate> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiTemplate::getIsDefault, 1);
-        wrapper.eq(AiTemplate::getProjectCategory, template.getProjectCategory());
-        wrapper.eq(AiTemplate::getProjectType, template.getProjectType());
+        LambdaQueryWrapper<SupTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SupTemplate::getIsDefault, 1);
+        wrapper.eq(SupTemplate::getProjectCategory, template.getProjectCategory());
+        wrapper.eq(SupTemplate::getProjectType, template.getProjectType());
 
-        List<AiTemplate> oldDefaults = templateMapper.selectList(wrapper);
-        for (AiTemplate oldDefault : oldDefaults) {
-            AiTemplate update = new AiTemplate();
+        List<SupTemplate> oldDefaults = templateMapper.selectList(wrapper);
+        for (SupTemplate oldDefault : oldDefaults) {
+            SupTemplate update = new SupTemplate();
             update.setId(oldDefault.getId());
             update.setIsDefault(0);
             templateMapper.updateById(update);
         }
 
         // 设置当前模板为默认
-        AiTemplate update = new AiTemplate();
+        SupTemplate update = new SupTemplate();
         update.setId(id);
         update.setIsDefault(1);
         templateMapper.updateById(update);
