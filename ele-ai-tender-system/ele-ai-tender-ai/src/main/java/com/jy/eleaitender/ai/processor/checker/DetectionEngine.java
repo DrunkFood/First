@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.checker;
+package com.jy.eleaitender.ai.processor.checker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;

@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.recorder;
+package com.jy.eleaitender.ai.processor.recorder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.service.FileContentService;

@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.model;
+package com.jy.eleaitender.ai.processor.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

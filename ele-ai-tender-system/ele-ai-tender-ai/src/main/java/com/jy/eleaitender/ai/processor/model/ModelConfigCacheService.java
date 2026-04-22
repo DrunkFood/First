@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.model;
+package com.jy.eleaitender.ai.processor.model;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.ai.mapper.ModelConfigReadMapper;

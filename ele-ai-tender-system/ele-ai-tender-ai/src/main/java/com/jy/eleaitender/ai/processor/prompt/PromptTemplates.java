@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.prompt;
+package com.jy.eleaitender.ai.processor.prompt;
 
 /**
  * Prompt模板常量

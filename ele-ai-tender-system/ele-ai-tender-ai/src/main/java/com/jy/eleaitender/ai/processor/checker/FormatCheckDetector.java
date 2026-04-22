@@ -1,7 +1,7 @@
-package com.jy.eleaitender.ai.checker;
+package com.jy.eleaitender.ai.processor.checker;
 
-import com.jy.eleaitender.ai.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
+import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

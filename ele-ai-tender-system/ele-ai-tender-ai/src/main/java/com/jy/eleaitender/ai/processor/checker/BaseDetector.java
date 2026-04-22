@@ -1,12 +1,12 @@
-package com.jy.eleaitender.ai.checker;
+package com.jy.eleaitender.ai.processor.checker;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.dto.response.DetectionIssueVO;
-import com.jy.eleaitender.ai.generator.GenerateResultParser;
-import com.jy.eleaitender.ai.model.ModelRouter;
-import com.jy.eleaitender.ai.recorder.AiCallRecorder;
+import com.jy.eleaitender.ai.processor.generator.GenerateResultParser;
+import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.enums.AiUsageScenario;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

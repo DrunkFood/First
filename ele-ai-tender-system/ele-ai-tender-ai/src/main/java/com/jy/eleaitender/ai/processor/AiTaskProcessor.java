@@ -1,9 +1,9 @@
 package com.jy.eleaitender.ai.processor;
 
-import com.jy.eleaitender.ai.checker.DetectionEngine;
-import com.jy.eleaitender.ai.generator.RequirementGenerator;
-import com.jy.eleaitender.ai.generator.ReviewItemGenerator;
-import com.jy.eleaitender.ai.generator.TextOptimizer;
+import com.jy.eleaitender.ai.processor.checker.DetectionEngine;
+import com.jy.eleaitender.ai.processor.generator.RequirementGenerator;
+import com.jy.eleaitender.ai.processor.generator.ReviewItemGenerator;
+import com.jy.eleaitender.ai.processor.generator.TextOptimizer;
 import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;

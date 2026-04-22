@@ -1,17 +1,17 @@
-package com.jy.eleaitender.ai.checker;
+package com.jy.eleaitender.ai.processor.checker;
 
-import com.jy.eleaitender.ai.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
+import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 /**
- * 敏感词检测器
- * 检测歧视性、限制性、排他性、倾向性表述
+ * 错别字检测器
+ * 检测错别字、语法错误、标点符号错误
  */
 @Component
-public class SensitiveWordDetector extends BaseDetector {
+public class TypoDetector extends BaseDetector {
 
     @Override
     protected Boolean needFileFlag() {
@@ -20,12 +20,12 @@ public class SensitiveWordDetector extends BaseDetector {
 
     @Override
     protected String getDetectionType() {
-        return "SENSITIVE_WORD";
+        return "TYPO";
     }
 
     @Override
     protected String getSystemPrompt() {
-        return PromptTemplates.DETECTION_SENSITIVE_WORD;
+        return PromptTemplates.DETECTION_TYPO;
     }
 
     @Override

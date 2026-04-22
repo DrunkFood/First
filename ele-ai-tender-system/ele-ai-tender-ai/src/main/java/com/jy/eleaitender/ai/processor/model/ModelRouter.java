@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.model;
+package com.jy.eleaitender.ai.processor.model;
 
 import com.jy.eleaitender.common.entity.support.SupModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
