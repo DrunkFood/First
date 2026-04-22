@@ -71,4 +71,13 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     @Update("UPDATE ai_task SET status = 'AI_UNAVAILABLE', error_msg = #{errorMsg}, completed_at = NOW() " +
             "WHERE id = #{id} AND is_delete = 0")
     int markAiUnavailable(@Param("id") Long id, @Param("errorMsg") String errorMsg);
+
+    /**
+     * 批量将PROCESSING状态的任务标记为AI_UNAVAILABLE
+     * 用于服务启动/关闭时清理残留的处理中任务
+     */
+    @DataScope(skip = true)
+    @Update("UPDATE ai_task SET status = 'AI_UNAVAILABLE', error_msg = #{errorMsg}, completed_at = NOW() " +
+            "WHERE status = 'PROCESSING' AND is_delete = 0")
+    int markAllProcessingAsAiUnavailable(@Param("errorMsg") String errorMsg);
 }
