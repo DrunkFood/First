@@ -242,6 +242,11 @@ public class InternalFileServiceClient {
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             java.util.Map<String, Object> result = mapper.readValue(responseBody, java.util.Map.class);
+            Integer code = (Integer) result.get("code");
+            if (code == null || code != 200) {
+                String msg = (String) result.getOrDefault("message", "未知错误");
+                throw new RuntimeException("文件服务返回错误: " + msg);
+            }
             Object data = result.get("data");
             if (data == null) {
                 throw new RuntimeException("文件服务返回数据为空");

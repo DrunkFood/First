@@ -25,7 +25,9 @@ public class WordTemplateEngine {
      * @return 生成文档的字节数组
      */
     public byte[] render(InputStream templateStream, Map<String, Object> data) {
-        Configure config = Configure.builder().useSpringEL().build();
+        // 使用poi-tl原生引擎（非SpringEL），原生引擎直接通过Map.get()访问，
+        // 缺失字段返回空字符串而非抛异常；SpringEL会用反射访问属性，对Map不友好
+        Configure config = Configure.builder().build();
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             XWPFTemplate template = XWPFTemplate.compile(templateStream, config).render(data);
             template.writeAndClose(out);
