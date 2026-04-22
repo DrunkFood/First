@@ -111,40 +111,8 @@ CREATE TABLE IF NOT EXISTS `tb_requirement` (
     `is_delete`              TINYINT       NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除',
     PRIMARY KEY (`id`),
     INDEX `idx_status` (`status`),
-    INDEX `idx_create_id` (`create_id`),
-    INDEX `idx_project_id` (`project_id`)
+    INDEX `idx_create_id` (`create_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='业务需求表';
-
--- =============================================
--- 4. 招标文件模板表
--- 实体: com.jy.eleaitender.common.entity.core.SupTemplate
--- =============================================
-CREATE TABLE IF NOT EXISTS `sup_template` (
-    `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '模板ID',
-    `template_code`         VARCHAR(50)  NOT NULL COMMENT '模板编码',
-    `template_name`         VARCHAR(100) NOT NULL COMMENT '模板名称',
-    `project_category`      VARCHAR(30)  NOT NULL COMMENT '适用项目类别',
-    `project_type`          VARCHAR(30)  NOT NULL COMMENT '适用项目类型',
-    `file_id`               BIGINT       DEFAULT NULL COMMENT '模板文件ID(关联file_info)',
-    `content`               LONGTEXT     DEFAULT NULL COMMENT '模板用途说明',
-    `structure_definition`  JSON         DEFAULT NULL COMMENT '模板结构定义JSON',
-    `version_no`            INT          NOT NULL DEFAULT 1 COMMENT '版本号',
-    `is_default`            TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否默认模板: 0-否 1-是',
-    `status`                VARCHAR(30)  NOT NULL DEFAULT 'ENABLED' COMMENT '状态: ENABLED/DISABLED',
-    `create_time`           DATETIME     NOT NULL COMMENT '创建时间',
-    `create_id`             BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人ID',
-    `create_name`           VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '创建人名称',
-    `modify_time`           DATETIME     NOT NULL COMMENT '修改时间',
-    `modify_id`             BIGINT       NOT NULL DEFAULT 0 COMMENT '修改人ID',
-    `modify_name`           VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '修改人名称',
-    `ver`                   INT          NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
-    `is_delete`             TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除',
-    PRIMARY KEY (`id`),
-    UNIQUE INDEX `uk_template_code` (`template_code`),
-    INDEX `idx_category_type` (`project_category`, `project_type`),
-    INDEX `idx_status` (`status`),
-    INDEX `idx_file_id` (`file_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='招标文件模板表';
 
 -- =============================================
 -- 4.1 项目模板表(只读快照)

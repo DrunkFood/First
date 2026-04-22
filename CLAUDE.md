@@ -122,12 +122,12 @@ mvn -pl ele-ai-tender-support -am package               # 打包单模块
 ## 基础设施
 
 ```
-MySQL : 10.11.20.50:15005/ele_ai_tender（db=6，独立于现有系统 db=5）
-Redis : 10.11.20.50:16879  db=6  password=test123（独立于现有系统 db=5）
+MySQL : 10.11.20.50:15005/ele_ai_tender
+Redis : 10.11.20.50:16879  db=6  password=test123
 Milvus: localhost:19530  collection=ai_tender_knowledge（向量数据库）
 文件存储: /data/ele-ai-tender/files（独立存储路径）
 大模型API: DeepSeek等云端模型 + 本地微调模型
-默认管理员: admin / admin123
+默认管理员: admin / 123456
 ```
 
 **环境变量覆盖**: `SPRING_DATASOURCE_PASSWORD` · `SPRING_REDIS_PASSWORD` · `APP_JWT_SECRET` · `DEEPSEEK_API_KEY` · `LOCAL_MODEL_KEY`
