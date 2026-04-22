@@ -15,7 +15,7 @@
 | 空目录预留 | 已创建 | checker/、generator/、knowledge/、model/、prompt/ |
 | **模型配置管理(Support)** | **100%** | `ModelConfigController` + Service + Mapper 完整CRUD已实现 |
 | **路由规则管理(Support)** | **100%** | `ModelRouteRuleController` + Service + Mapper 完整CRUD已实现 |
-| **ai_model_config表** | **已建** | 模型名称/类型/端点/密钥/参数/场景/启用状态/Token统计 |
+| **sup_model_config表** | **已建** | 模型名称/类型/端点/密钥/参数/场景/启用状态/Token统计 |
 | **sup_model_route_rule表** | **已建** | 场景→优先模型→降级模型，按优先级排序 |
 
 ### 1.2 需要实现的核心能力
@@ -131,7 +131,7 @@ flowchart LR
 
     subgraph DB["数据库配置(Support管理)"]
         Rule["sup_model_route_rule<br/>场景→模型ID→优先级"]
-        Config["ai_model_config<br/>端点/密钥/参数"]
+        Config["sup_model_config<br/>端点/密钥/参数"]
     end
 
     subgraph Cache["Redis缓存(AI模块)"]
@@ -172,7 +172,7 @@ sequenceDiagram
 
 ### 3.1 Spring AI集成 + 模型路由（数据库驱动）
 
-**目标**：基于 Spring AI 1.1.0 接入多模型，模型配置和路由规则从数据库（`ai_model_config` + `sup_model_route_rule`）获取，支持动态刷新。
+**目标**：基于 Spring AI 1.1.0 接入多模型，模型配置和路由规则从数据库（`sup_model_config` + `sup_model_route_rule`）获取，支持动态刷新。
 
 #### 3.1.1 Spring AI基础配置
 
@@ -209,7 +209,7 @@ spring:
 
 #### 3.1.2 DynamicChatClientFactory（动态ChatClient工厂）
 
-**核心职责**：根据 `ai_model_config` 表中的配置信息，动态创建不同模型的 ChatClient 实例。
+**核心职责**：根据 `sup_model_config` 表中的配置信息，动态创建不同模型的 ChatClient 实例。
 
 ```java
 @Component
@@ -255,7 +255,7 @@ public class DynamicChatClientFactory {
 
 #### 3.1.3 ModelConfigCacheService（配置缓存服务）
 
-**核心职责**：管理 `ai_model_config` 和 `sup_model_route_rule` 的缓存，减少数据库查询。
+**核心职责**：管理 `sup_model_config` 和 `sup_model_route_rule` 的缓存，减少数据库查询。
 
 ```java
 @Service
@@ -427,7 +427,7 @@ flowchart TB
     Rules -->|无规则| Err1["AiUnavailableException<br/>无可用路由规则"]
     Rules -->|有规则| Loop["遍历规则列表"]
     
-    Loop --> Primary["查优先模型配置<br/>ai_model_config"]
+    Loop --> Primary["查优先模型配置<br/>sup_model_config"]
     Primary -->|存在且启用| Create1["DynamicChatClientFactory<br/>创建ChatClient"]
     Primary -->|不存在或停用| FallbackCheck{"有降级模型?"}
     
@@ -451,7 +451,7 @@ flowchart TB
 
 #### 3.1.6 AI模块需要的Mapper（只读）
 
-AI模块需要**只读**访问 `ai_model_config` 和 `sup_model_route_rule` 两张表：
+AI模块需要**只读**访问 `sup_model_config` 和 `sup_model_route_rule` 两张表：
 
 **新建文件**：
 
@@ -1370,7 +1370,7 @@ flowchart TB
 - 支撑中心管理员可在界面上动态增删改模型配置和路由规则，无需重启服务
 - 通过 Redis Pub/Sub 实现配置变更实时通知，AI模块秒级刷新
 - `sup_model_route_rule` 表支持按场景配置优先模型和降级模型，灵活度高
-- `ai_model_config` 表存储端点、密钥（AES加密）、参数，集中管理安全性好
+- `sup_model_config` 表存储端点、密钥（AES加密）、参数，集中管理安全性好
 - `application.yml` 仅保留 Spring AI 自动装配所需的占位默认值，不承载业务配置
 
 **已有基础**（Support模块已完整实现）：
@@ -1397,4 +1397,4 @@ flowchart TB
 | Prompt效果不佳 | 生成质量低 | PromptTemplates集中管理，便于迭代调优 |
 | SSE连接超时 | 用户体验差 | 60秒超时 + 前端断线重连 |
 | 检测误报率高 | 用户信任度低 | 支持单条接受/拒绝，后续根据反馈优化Prompt |
-| Token消耗过快 | 成本不可控 | ai_model_config记录token_usage，支持限额 |
+| Token消耗过快 | 成本不可控 | sup_model_config记录token_usage，支持限额 |

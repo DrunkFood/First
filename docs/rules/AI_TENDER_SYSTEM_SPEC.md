@@ -86,18 +86,25 @@
 
 ## 4. 当前关键表
 
-### AI编制业务表（`ai_*`）
+### 核心业务表（`tb_*`）
 
 | 表名 | 用途 |
 |------|------|
-| `ai_project` | 项目表，存储 `project_code` / `project_name` / `project_category` / `project_type` / `budget` / `status` / `template_id` / `requirement_id` / `requirement_source` / `requirement_content` |
-| `ai_project_version` | 项目版本表，存储 `project_id` / `version_no` / `content_snapshot`(JSON) / `change_description` |
-| `ai_requirement` | 业务需求表，存储 `requirement_name` / `requirement_description` / `match_mode` / `matched_file_id` / `matched_similarity` / `content`（**无 projectId**，需求与项目通过 `ai_project.requirement_id` 单向关联） |
-| `ai_template` | 模板表，存储 `template_code` / `template_name` / `project_category` / `project_type` / `content`(Markdown) / `structure_definition`(JSON) / `is_default` |
+| `tb_project` | 项目表，存储 `project_code` / `project_name` / `project_category` / `project_type` / `budget` / `status` / `template_id` / `requirement_id` / `requirement_source` / `requirement_content` |
+| `tb_project_version` | 项目版本表，存储 `project_id` / `version_no` / `content_snapshot`(JSON) / `change_description` |
+| `tb_requirement` | 业务需求表，存储 `requirement_name` / `requirement_description` / `match_mode` / `matched_file_id` / `matched_similarity` / `content`（**无 projectId**，需求与项目通过 `tb_project.requirement_id` 单向关联） |
+| `tb_detection_record` | 检测记录表，存储 `project_id` / `detection_type` / `content_snapshot` / `result`(JSON) / `status` |
+| `tb_project_review_item` | 评审项表，存储 `project_id` / `parent_id` / `level`(1/2/3) / `item_name` / `item_content` / `sort_order` |
+| `tb_policy_file` | 用户政策文件表，存储 `file_name` / `file_category` / `applicable_category` / `file_id` / `status` |
+
+### AI服务表（`ai_*`）
+
+| 表名 | 用途 |
+|------|------|
+| `ai_task` | AI任务表，存储 `biz_id` / `task_type` / `status` / `result` / `prompt` |
 | `ai_knowledge_document` | 知识库文档表，存储 `doc_name` / `doc_category` / `file_id` / `file_type` / `vector_collection` / `vector_ids`(JSON) |
-| `ai_detection_record` | 检测记录表，存储 `project_id` / `detection_type` / `content_snapshot` / `result`(JSON) / `status` |
-| `ai_review_item` | 评审项表，存储 `project_id` / `parent_id` / `level`(1/2/3) / `item_name` / `item_content` / `sort_order` |
-| `ai_model_config` | AI模型配置表，存储 `model_name` / `model_type`(LOCAL/CLOUD/PRIVATE) / `api_endpoint` / `api_key`(加密) / `model_params`(JSON) / `usage_scenario` / `token_usage` |
+| `ai_content_feedback` | AI内容反馈表 |
+| `ai_response_log` | AI响应日志表 |
 
 所有表继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`ver`、`is_delete` 等）。
 
@@ -146,11 +153,11 @@ flowchart TD
 
 - **创建项目时**：可通过引入模式关联已有需求（设置 `requirementId`），也可不关联
 - **进入需求阶段时**：
-  - 有关联需求 → 从 `ai_requirement.content` 复制到 `project.requirementContent`，之后不再访问需求表
+  - 有关联需求 → 从 `tb_requirement.content` 复制到 `project.requirementContent`，之后不再访问需求表
   - 无关联需求 → 触发 AI 任务 `PROJECT_REQUIREMENT_GENERATE`，结果直接写入 `project.requirementContent`
 - **进入需求阶段后**：项目和需求再无关联，后续阶段均从 `project.requirementContent` 读取需求内容
 - **需求来源**：`requirementSource` 标记 `REFERENCE`（引入已有需求）或 `SYSTEM_GENERATE`（AI生成）
-- **注意**：`ai_requirement` 表**无 `project_id` 字段**，需求是独立实体，不反向关联项目
+- **注意**：`tb_requirement` 表**无 `project_id` 字段**，需求是独立实体，不反向关联项目
 
 ### 5.2 评审项三级结构
 
@@ -216,17 +223,17 @@ Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.doc
 
 - 模板使用 Markdown 格式，便于编辑和版本管理
 - Word生成使用 poi-tl 模板引擎，保证格式保真
-- 生成完成后固化版本快照到 `ai_project_version`
+- 生成完成后固化版本快照到 `tb_project_version`
 
 ## 9. 排障原则
 
-- **项目状态异常** → 查 `ai_project.status` 字段，检查状态流转是否合法
+- **项目状态异常** → 查 `tb_project.status` 字段，检查状态流转是否合法
 - **阶段推进失败** → 查 PhaseFlowController 日志，检查 canComplete 和转换规则，详见 [PHASE_FLOW_SPEC.md](PHASE_FLOW_SPEC.md)
-- **需求阶段内容为空** → 查 `ai_project.requirement_id` 是否有值：有值则检查对应需求是否有 content；无值则检查 AI 任务 `PROJECT_REQUIREMENT_GENERATE` 是否成功
-- **AI生成失败** → 查 `ai_model_config` 配置是否正确，检查 Token 用量是否超限
-- **检测结果异常** → 查 `ai_detection_record.result` JSON，确认检测类型和输入内容
+- **需求阶段内容为空** → 查 `tb_project.requirement_id` 是否有值：有值则检查对应需求是否有 content；无值则检查 AI 任务 `PROJECT_REQUIREMENT_GENERATE` 是否成功
+- **AI生成失败** → 查 `sup_model_config` 配置是否正确，检查 Token 用量是否超限
+- **检测结果异常** → 查 `tb_detection_record.result` JSON，确认检测类型和输入内容
 - **知识库检索不准** → 查 `ai_knowledge_document.vector_ids`，确认向量化是否完成
-- **评审项结构错误** → 查 `ai_review_item.parent_id` 和 `level`，确认三级结构完整
+- **评审项结构错误** → 查 `tb_project_review_item.parent_id` 和 `level`，确认三级结构完整
 
 ## 相关规范
 

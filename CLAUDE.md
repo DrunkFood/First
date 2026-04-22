@@ -28,17 +28,19 @@
 
 ## 术语规范
 
-| 中文 | 代码术语 |
-|------|----------|
-| AI编制 | AiTender |
-| 项目 | Project (ai_project) |
-| 业务需求 | Requirement (ai_requirement) |
-| 招标需求内容 | RequirementContent (ai_project.requirement_content) |
-| 模板 | Template (ai_template) |
-| 知识库文档 | KnowledgeDocument (ai_knowledge_document) |
-| 检测记录 | DetectionRecord (ai_detection_record) |
-| 评审项 | ReviewItem (ai_review_item) |
-| AI模型配置 | ModelConfig (ai_model_config) |
+| 中文 | 代码术语 | 表名 |
+|------|----------|------|
+| AI编制 | AiTender | — |
+| 项目 | Project (TbProject) | tb_project |
+| 业务需求 | Requirement (TbRequirement) | tb_requirement |
+| 招标需求内容 | RequirementContent | tb_project.requirement_content |
+| 模板 | Template (SupTemplate) | sup_template |
+| 知识库文档 | KnowledgeDocument | ai_knowledge_document |
+| 检测记录 | DetectionRecord (TbDetectionRecord) | tb_detection_record |
+| 评审项 | ReviewItem (TbProjectReviewItem) | tb_project_review_item |
+| AI模型配置 | ModelConfig | sup_model_config |
+
+**表前缀规范**: `tb_`(核心服务) / `ai_`(AI服务) / `sup_`(支撑中心) / `file_`(文件服务)
 
 **项目类别**: LIMITED_BELOW(限额以下) / PROPERTY_TRADE(产权交易) / GOVERNMENT_PROCUREMENT(政府采购)
 
@@ -48,7 +50,7 @@
 
 **编制阶段流转**: BASIC_INFO(1) → REQUIREMENT(2) → REVIEW_ITEM(3) → DOCUMENT(4) → DETECTION(5)，由 PhaseFlowController 管控，详见 [PHASE_FLOW_SPEC.md](docs/rules/PHASE_FLOW_SPEC.md)
 
-**项目-需求关系**: 项目通过 `requirementId` 单向引用需求（`ai_requirement` 无 `projectId`）。进入需求阶段时，有关联需求→复制内容到 `project.requirementContent`；无关联→触发 `PROJECT_REQUIREMENT_GENERATE` AI任务。之后项目和需求再无关联，后续阶段均从 `project.requirementContent` 读取。
+**项目-需求关系**: 项目通过 `requirementId` 单向引用需求（`tb_requirement` 无 `projectId`）。进入需求阶段时，有关联需求→复制内容到 `project.requirementContent`；无关联→触发 `PROJECT_REQUIREMENT_GENERATE` AI任务。之后项目和需求再无关联，后续阶段均从 `project.requirementContent` 读取。
 
 **检测类型**: FAIRNESS(公平性) / COMPLIANCE(合规性) / TYPO(错别字) / SENSITIVE_WORD(敏感词)
 
@@ -110,7 +112,7 @@ mvn -pl ele-ai-tender-support -am package               # 打包单模块
 - **返回结构**: `Result.success(data)` / `Result.fail(code, msg)`；交互接口用 `InteractionResult<T>`
 - **实体**: 所有实体继承 `BaseEntity`（自动填充 create/modify 时间、ver、is_delete）
 - **权限**: `@RequireLogin` / `@RequirePermission("xxx")`
-- **命名**: Service 接口 `I*Service`；DB 表前缀 `ai_*`（本系统）/ `sup_*`(支撑) / `file_*`(文件)
+- **命名**: Service 接口 `I*Service`；DB 表前缀 `tb_`(核心) / `ai_`(AI服务) / `sup_`(支撑) / `file_`(文件)
 - **依赖**: 新依赖版本声明在父 POM `<dependencyManagement>`
 - **Interaction**: 公开 API 保持 JDK 8 兼容；协议 DTO 只放 `ele-ai-tender-common-interaction`
 - **安全**: 签名用 `SignatureUtil`(HMAC-SHA256)、密码用 `PasswordUtil`(BCrypt)、字符集必须显式 UTF-8
@@ -167,7 +169,7 @@ Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.doc
 - **core模块 → support模块**: 用户认证、权限校验
 - **core模块 → file模块**: 文件上传/下载
 - **ai模块 → file模块**: 知识库文件管理
-- **core模块 ↔ ai模块**: 通过 `ai_task` 表异步解耦（core写入任务 → AiTaskProcessor轮询执行 → core读取结果），无直接HTTP调用
+- **core模块 ↔ ai模块**: 通过 `ai_task` 表异步解耦（core写入任务 → AiTaskProcessor轮询执行 → core读取结果），无直接HTTP调用。
 
 ## 文档规范
 

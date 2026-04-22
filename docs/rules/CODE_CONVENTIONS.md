@@ -17,7 +17,7 @@
 | 支撑中心   | `sup_` | `sup_user`、`sup_access_log`、`sup_message` |
 | 文件服务   | `file_` | `file_info`                               |
 | 招标文件编制 | `td_` | `td_project`、`td_requirement`             |
-| AI服务   | `ai_` | `ai_task`、`ai_response_log`、`ai_model_config`  |
+| AI服务   | `ai_` | `ai_task`、`ai_response_log`、`sup_model_config`  |
 
 - 新模块表前缀需先在 `PROJECT_SPEC_FINAL.md` 中登记
 
@@ -401,4 +401,3 @@ SignatureUtil.verify(data, signature, secret)
 | `/file-api/*` | file :8081 | 无重写 |
 | `/core-api/*` | ai-tender-core :8082 | `/core-api/` → `/api/` |
 | `/ai-api/*` | ai-tender-ai :8083 | `/ai-api/` → `/api/` |
-| `/support-api/*`(AI系统) | ai-tender-support :8080 | `/support-api/` → `/api/` |

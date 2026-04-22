@@ -91,13 +91,13 @@ RequirementTrigger 是需求阶段的核心触发器，处理项目与需求的�
 ```mermaid
 flowchart TD
     START["进入 REQUIREMENT 阶段"] --> CHECK{"project.requirementId\n存在?"}
-    CHECK -->|是| COPY["读取 AiRequirement.content"]
+    CHECK -->|是| COPY["读取 TbRequirement.content"]
     COPY --> SAVE["写入 project.requirementContent"]
-    SAVE --> UPDATE["aiProjectMapper.updateById"]
+    SAVE --> UPDATE["tbProjectMapper.updateById"]
     UPDATE --> END["结束（不再访问需求表）"]
-    CHECK -->|否| CREATE["创建新 AiRequirement"]
+    CHECK -->|否| CREATE["创建新 TbRequirement"]
     CREATE --> LINK["project.requirementId = 新需求ID"]
-    LINK --> UPDATE2["aiProjectMapper.updateById"]
+    LINK --> UPDATE2["tbProjectMapper.updateById"]
     UPDATE2 --> AI["触发 PROJECT_REQUIREMENT_GENERATE\nAI任务"]
     AI --> END2["AI结果 → project.requirementContent"]
     END2 --> END
@@ -105,7 +105,7 @@ flowchart TD
 
 **关键设计**：
 - **内容快照**：进入需求阶段时，需求内容被复制到 `project.requirementContent`，后续阶段只读取项目上的字段
-- **单向关联**：`ai_requirement` 无 `project_id` 字段，只有 `ai_project.requirement_id` 单向指向需求
+- **单向关联**：`tb_requirement` 无 `project_id` 字段，只有 `tb_project.requirement_id` 单向指向需求
 - **两种路径**：
   - 引入已有需求（`requirementId` 有值）→ 直接复制内容，不触发 AI
   - 无关联需求 → 创建需求记录 + 触发 AI 生成
