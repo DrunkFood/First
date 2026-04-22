@@ -77,13 +77,17 @@ public class AiTaskProcessor {
     private String dispatch(AiTask task) {
         AiTaskType taskType = AiTaskType.fromCode(task.getTaskType());
         return switch (taskType) {
+            // 需求生成
             case REQUIREMENT_GENERATE,
                  PROJECT_REQUIREMENT_GENERATE -> requirementGenerator.generate(task);
+            // 评审项生成
             case REVIEW_ITEM_GENERATE -> reviewItemGenerator.generate(task);
+            // 检测任务
             case DETECTION_SENSITIVE_WORD,
                  DETECTION_TYPO,
                  DETECTION_POLICY_REVIEW,
                  DETECTION_FORMAT_CHECK -> detectionEngine.detect(task);
+            // 文本优化
             case TEXT_OPTIMIZE -> textOptimizer.optimize(task);
         };
     }

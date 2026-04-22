@@ -26,4 +26,23 @@ public enum AiUsageScenario {
         }
         throw new IllegalArgumentException("未知的使用场景: " + code);
     }
+
+    /**
+     * 任务类型 → 使用场景映射
+     */
+    public static AiUsageScenario resolveScenario(AiTaskType taskType) {
+        return switch (taskType) {
+            // 生成类任务
+            case REQUIREMENT_GENERATE,
+                 PROJECT_REQUIREMENT_GENERATE,
+                 REVIEW_ITEM_GENERATE -> AiUsageScenario.GENERATION;
+            // 优化类任务
+            case TEXT_OPTIMIZE -> AiUsageScenario.OPTIMIZATION;
+            // 检测类任务
+            case DETECTION_SENSITIVE_WORD,
+                 DETECTION_TYPO,
+                 DETECTION_POLICY_REVIEW,
+                 DETECTION_FORMAT_CHECK -> AiUsageScenario.DETECTION;
+        };
+    }
 }

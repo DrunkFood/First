@@ -3,6 +3,8 @@ package com.jy.eleaitender.common.exception;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import lombok.Getter;
 
+import java.io.Serial;
+
 /**
  * AI服务不可用异常
  * 当所有模型路由均不可用时抛出
@@ -10,6 +12,7 @@ import lombok.Getter;
 @Getter
 public class AiErrorContentException extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final int code;

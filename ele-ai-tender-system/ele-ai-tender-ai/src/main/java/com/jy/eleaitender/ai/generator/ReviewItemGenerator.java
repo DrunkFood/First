@@ -1,6 +1,5 @@
 package com.jy.eleaitender.ai.generator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.model.ModelRouter;
 import com.jy.eleaitender.ai.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.prompt.PromptTemplates;
