@@ -3,11 +3,11 @@ package com.jy.eleaitender.core.engine;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.entity.core.TbProject;
-import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -18,14 +18,12 @@ import java.util.stream.Collectors;
  * 文档数据组装器
  * 收集项目基础信息、需求内容、评审项数据，组装为文档模板所需的数据模型
  */
+@Slf4j
 @Component
 public class DocumentDataAssembler {
 
     @Autowired
     private TbProjectMapper projectMapper;
-
-    @Autowired
-    private TbRequirementMapper requirementMapper;
 
     @Autowired
     private TbProjectReviewItemMapper reviewItemMapper;
