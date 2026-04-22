@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.SupModelConfig;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.util.AesUtil;
@@ -36,27 +36,27 @@ public class ModelConfigServiceImpl implements IModelConfigService {
 
     @Override
     public Page<ModelConfigVO> getPage(Integer pageNum, Integer pageSize, String modelType, String provider, String usageScenario, String modelName, Integer isActive) {
-        Page<AiModelConfig> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<AiModelConfig> wrapper = new LambdaQueryWrapper<>();
+        Page<SupModelConfig> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<SupModelConfig> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(modelType)) {
-            wrapper.eq(AiModelConfig::getModelType, modelType);
+            wrapper.eq(SupModelConfig::getModelType, modelType);
         }
         if (StringUtils.hasText(provider)) {
-            wrapper.eq(AiModelConfig::getProvider, provider);
+            wrapper.eq(SupModelConfig::getProvider, provider);
         }
         if (StringUtils.hasText(usageScenario)) {
-            wrapper.eq(AiModelConfig::getUsageScenario, usageScenario);
+            wrapper.eq(SupModelConfig::getUsageScenario, usageScenario);
         }
         if (StringUtils.hasText(modelName)) {
-            wrapper.like(AiModelConfig::getModelName, modelName);
+            wrapper.like(SupModelConfig::getModelName, modelName);
         }
         if (isActive != null) {
-            wrapper.eq(AiModelConfig::getIsActive, isActive);
+            wrapper.eq(SupModelConfig::getIsActive, isActive);
         }
-        wrapper.eq(AiModelConfig::getIsDelete, 0);
-        wrapper.orderByDesc(AiModelConfig::getCreateTime);
+        wrapper.eq(SupModelConfig::getIsDelete, 0);
+        wrapper.orderByDesc(SupModelConfig::getCreateTime);
 
-        Page<AiModelConfig> entityPage = modelConfigMapper.selectPage(page, wrapper);
+        Page<SupModelConfig> entityPage = modelConfigMapper.selectPage(page, wrapper);
 
         // 转换为 VO 分页
         Page<ModelConfigVO> voPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(), entityPage.getTotal());
@@ -66,16 +66,16 @@ public class ModelConfigServiceImpl implements IModelConfigService {
 
     @Override
     public List<ModelConfigVO> getActiveList() {
-        LambdaQueryWrapper<AiModelConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiModelConfig::getIsActive, 1);
-        wrapper.eq(AiModelConfig::getIsDelete, 0);
-        wrapper.orderByAsc(AiModelConfig::getModelName);
+        LambdaQueryWrapper<SupModelConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SupModelConfig::getIsActive, 1);
+        wrapper.eq(SupModelConfig::getIsDelete, 0);
+        wrapper.orderByAsc(SupModelConfig::getModelName);
         return modelConfigMapper.selectList(wrapper).stream().map(this::toVO).toList();
     }
 
     @Override
     public ModelConfigVO getDetailById(Long id) {
-        AiModelConfig config = modelConfigMapper.selectById(id);
+        SupModelConfig config = modelConfigMapper.selectById(id);
         if (config == null) {
             throw new BusinessException(ResponseCode.MODEL_CONFIG_NOT_FOUND);
         }
@@ -85,7 +85,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     @Override
     @Transactional
     public ModelConfigVO create(ModelConfigCreateDTO dto) {
-        AiModelConfig config = toEntity(dto);
+        SupModelConfig config = toEntity(dto);
         if (config.getIsActive() == null) {
             config.setIsActive(1);
         }
@@ -102,7 +102,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     @Override
     @Transactional
     public void update(Long id, ModelConfigUpdateDTO dto) {
-        AiModelConfig existing = modelConfigMapper.selectById(id);
+        SupModelConfig existing = modelConfigMapper.selectById(id);
         if (existing == null) {
             throw new BusinessException(ResponseCode.MODEL_CONFIG_NOT_FOUND);
         }
@@ -134,7 +134,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     @Override
     @Transactional
     public void setActive(Long id, Integer isActive) {
-        AiModelConfig config = modelConfigMapper.selectById(id);
+        SupModelConfig config = modelConfigMapper.selectById(id);
         if (config == null) {
             throw new BusinessException(ResponseCode.MODEL_CONFIG_NOT_FOUND);
         }
@@ -147,7 +147,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     /**
      * Entity → VO（apiKey脱敏，字段名映射）
      */
-    private ModelConfigVO toVO(AiModelConfig entity) {
+    private ModelConfigVO toVO(SupModelConfig entity) {
         ModelConfigVO vo = new ModelConfigVO();
         vo.setId(entity.getId());
         vo.setModelName(entity.getModelName());
@@ -191,8 +191,8 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     /**
      * CreateDTO → Entity（组装modelParams JSON）
      */
-    private AiModelConfig toEntity(ModelConfigCreateDTO dto) {
-        AiModelConfig config = new AiModelConfig();
+    private SupModelConfig toEntity(ModelConfigCreateDTO dto) {
+        SupModelConfig config = new SupModelConfig();
         config.setModelName(dto.getModelName());
         config.setModelType(dto.getModelType());
         config.setProvider(StringUtils.hasText(dto.getProvider()) ? dto.getProvider() : "OPENAI");
@@ -214,7 +214,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     /**
      * UpdateDTO → Entity 合并（仅更新非空字段）
      */
-    private void mergeDtoToEntity(ModelConfigUpdateDTO dto, AiModelConfig entity) {
+    private void mergeDtoToEntity(ModelConfigUpdateDTO dto, SupModelConfig entity) {
         if (dto.getModelName() != null) entity.setModelName(dto.getModelName());
         if (dto.getModelType() != null) entity.setModelType(dto.getModelType());
         if (dto.getProvider() != null) entity.setProvider(dto.getProvider());
@@ -334,7 +334,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     /**
      * RSA解密前端传来的apiKey，然后AES加密存储
      */
-    private void encryptApiKey(AiModelConfig config, String encryptedApiKey, String keyId) {
+    private void encryptApiKey(SupModelConfig config, String encryptedApiKey, String keyId) {
         if (!StringUtils.hasText(encryptedApiKey)) {
             return;
         }

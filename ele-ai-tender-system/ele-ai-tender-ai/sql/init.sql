@@ -9,42 +9,6 @@ CREATE DATABASE IF NOT EXISTS `ele_ai_tender` DEFAULT CHARACTER SET utf8mb4 COLL
 
 USE `ele_ai_tender`;
 
--- =====================================================
--- 1. AI模型配置表 (ai_model_config)
---    支撑中心管理，AI模块读取（只读缓存）
--- =====================================================
-CREATE TABLE IF NOT EXISTS `ai_model_config` (
-    `id`              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '配置ID',
-    `model_name`      VARCHAR(100) NOT NULL COMMENT '模型名称',
-    `model_type`      VARCHAR(20)  NOT NULL COMMENT '模型类型: LOCAL(本地微调)/CLOUD(云端大模型)/PRIVATE(私有化部署)',
-    `provider`        VARCHAR(20)  NOT NULL DEFAULT 'OPENAI' COMMENT '模型供应商: OPENAI(兼容协议)/ZHIPU(智谱AI)',
-    `api_endpoint`    VARCHAR(500) DEFAULT NULL COMMENT 'API端点地址',
-    `api_key`         VARCHAR(500) DEFAULT NULL COMMENT 'API密钥(AES加密存储)',
-    `model_params`    JSON         DEFAULT NULL COMMENT '模型参数(temperature/maxTokens/topP/model等)',
-    `usage_scenario`  VARCHAR(50)  DEFAULT NULL COMMENT '使用场景: GENERATION/OPTIMIZATION/DETECTION',
-    `is_active`       TINYINT      NOT NULL DEFAULT 1 COMMENT '是否启用: 0-停用, 1-启用',
-    `token_usage`     BIGINT       NOT NULL DEFAULT 0 COMMENT 'Token使用量(累计)',
-    `cost`            DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '累计费用(元)',
-    `create_time`     DATETIME     NOT NULL COMMENT '创建时间',
-    `create_id`       BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人ID',
-    `create_name`     VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '创建人名称',
-    `modify_time`     DATETIME     NOT NULL COMMENT '修改时间',
-    `modify_id`       BIGINT       NOT NULL DEFAULT 0 COMMENT '修改人ID',
-    `modify_name`     VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '修改人名称',
-    `ver`             INT          NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
-    `is_delete`       TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除, 1-已删除',
-    PRIMARY KEY (`id`),
-    INDEX `idx_model_type` (`model_type`),
-    INDEX `idx_usage_scenario` (`usage_scenario`),
-    INDEX `idx_is_active` (`is_active`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型配置表';
-
--- 初始化默认模型配置
-INSERT INTO `ai_model_config` (`model_name`, `model_type`, `provider`, `api_endpoint`, `api_key`, `model_params`, `usage_scenario`, `is_active`, `create_time`, `modify_time`) VALUES
-('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.7, "maxTokens": 4096, "topP": 0.9, "model": "deepseek-chat"}', 'GENERATION', 1, NOW(), NOW()),
-('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.3, "maxTokens": 2048, "topP": 0.85, "model": "deepseek-chat"}', 'OPTIMIZATION', 1, NOW(), NOW()),
-('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.1, "maxTokens": 4096, "topP": 0.8, "model": "deepseek-chat"}', 'DETECTION', 1, NOW(), NOW());
-
 -- =============================================
 -- 2. AI任务队列表
 -- 实体: com.jy.eleaitender.common.entity.ai.AiTask
@@ -149,6 +113,6 @@ SELECT TABLE_NAME, TABLE_COMMENT
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = 'ele_ai_tender'
   AND TABLE_NAME IN (
-    'ai_model_config', 'ai_task', 'ai_knowledge_document', 'ai_response_log'
+    'sup_model_config', 'ai_task', 'ai_knowledge_document', 'ai_response_log'
   )
 ORDER BY TABLE_NAME;

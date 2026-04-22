@@ -1,4 +1,4 @@
-package com.jy.eleaitender.common.entity.ai;
+package com.jy.eleaitender.common.entity.support;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.jy.eleaitender.common.entity.base.BaseEntity;
@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("ai_model_config")
+@TableName("sup_model_config")
 @Schema(description = "AI模型配置")
-public class AiModelConfig extends BaseEntity {
+public class SupModelConfig extends BaseEntity {
     @Schema(description = "模型名称")
     private String modelName;
     @Schema(description = "模型类型")

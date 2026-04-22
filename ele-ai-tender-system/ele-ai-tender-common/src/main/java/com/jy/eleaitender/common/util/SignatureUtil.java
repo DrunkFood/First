@@ -1,4 +1,4 @@
-package com.jy.eleaitender.common.utils;
+package com.jy.eleaitender.common.util;
 
 import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;

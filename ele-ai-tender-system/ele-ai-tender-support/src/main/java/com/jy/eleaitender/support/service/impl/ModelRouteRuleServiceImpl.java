@@ -2,7 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.SupModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
@@ -116,9 +116,9 @@ public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
         // 批量查询模型名称
         Map<Long, String> modelNameMap = Map.of();
         if (!modelIds.isEmpty()) {
-            List<AiModelConfig> models = modelConfigMapper.selectBatchIds(modelIds);
+            List<SupModelConfig> models = modelConfigMapper.selectBatchIds(modelIds);
             modelNameMap = models.stream()
-                    .collect(Collectors.toMap(AiModelConfig::getId, AiModelConfig::getModelName, (a, b) -> a));
+                    .collect(Collectors.toMap(SupModelConfig::getId, SupModelConfig::getModelName, (a, b) -> a));
         }
 
         Map<Long, String> finalMap = modelNameMap;

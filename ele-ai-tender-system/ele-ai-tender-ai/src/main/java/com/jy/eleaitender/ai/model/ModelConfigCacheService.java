@@ -1,9 +1,9 @@
 package com.jy.eleaitender.ai.model;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jy.eleaitender.ai.mapper.AiModelConfigReadMapper;
+import com.jy.eleaitender.ai.mapper.ModelConfigReadMapper;
 import com.jy.eleaitender.ai.mapper.ModelRouteRuleReadMapper;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.SupModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ import java.util.List;
 public class ModelConfigCacheService {
 
     @Autowired
-    private AiModelConfigReadMapper modelConfigMapper;
+    private ModelConfigReadMapper modelConfigMapper;
 
     @Autowired
     private ModelRouteRuleReadMapper routeRuleMapper;
@@ -46,11 +46,11 @@ public class ModelConfigCacheService {
      * @param modelId 模型配置ID
      * @return 模型配置（不存在或已删除返回null）
      */
-    public AiModelConfig getModelConfig(Long modelId) {
+    public SupModelConfig getModelConfig(Long modelId) {
         if (modelId == null) {
             return null;
         }
-        AiModelConfig config = modelConfigMapper.selectById(modelId);
+        SupModelConfig config = modelConfigMapper.selectById(modelId);
         if (config == null || (config.getIsDelete() != null && config.getIsDelete() == 1)) {
             return null;
         }

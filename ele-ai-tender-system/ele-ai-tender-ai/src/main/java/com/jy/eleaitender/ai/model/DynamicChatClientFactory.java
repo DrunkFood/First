@@ -2,7 +2,7 @@ package com.jy.eleaitender.ai.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.SupModelConfig;
 import com.jy.eleaitender.common.util.AesUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -35,14 +35,14 @@ public class DynamicChatClientFactory {
      * @param config 数据库中的模型配置
      * @return ChatClient实例
      */
-    public ChatClient getOrCreateChatClient(AiModelConfig config) {
+    public ChatClient getOrCreateChatClient(SupModelConfig config) {
         return buildChatClient(config);
     }
 
     /**
      * 根据模型配置的供应商类型分发构建ChatClient
      */
-    private ChatClient buildChatClient(AiModelConfig config) {
+    private ChatClient buildChatClient(SupModelConfig config) {
         String provider = config.getProvider();
         if ("ZHIPU".equals(provider)) {
             return buildZhiPuChatClient(config);
@@ -54,7 +54,7 @@ public class DynamicChatClientFactory {
      * 使用OpenAI兼容协议构建ChatClient
      * 适用于DeepSeek、GPT、本地vLLM/Ollama等
      */
-    private ChatClient buildOpenAiChatClient(AiModelConfig config) {
+    private ChatClient buildOpenAiChatClient(SupModelConfig config) {
         log.info("创建OpenAI兼容ChatClient: model={}, type={}, endpoint={}",
                 config.getModelName(), config.getModelType(), config.getApiEndpoint());
 
@@ -85,7 +85,7 @@ public class DynamicChatClientFactory {
      * 使用智谱AI SDK构建ChatClient
      * 智谱API不兼容OpenAI协议，需使用专属SDK
      */
-    private ChatClient buildZhiPuChatClient(AiModelConfig config) {
+    private ChatClient buildZhiPuChatClient(SupModelConfig config) {
         log.info("创建智谱AI ChatClient: model={}, type={}, endpoint={}",
                 config.getModelName(), config.getModelType(), config.getApiEndpoint());
 

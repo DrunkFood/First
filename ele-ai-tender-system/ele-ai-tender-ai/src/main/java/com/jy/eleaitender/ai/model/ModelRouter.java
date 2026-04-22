@@ -1,6 +1,6 @@
 package com.jy.eleaitender.ai.model;
 
-import com.jy.eleaitender.common.entity.ai.AiModelConfig;
+import com.jy.eleaitender.common.entity.support.SupModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.AiUsageScenario;
@@ -68,7 +68,7 @@ public class ModelRouter {
      * 尝试根据模型ID创建ChatClient
      */
     private ChatClient tryCreateClient(Long modelId, String roleLabel) {
-        AiModelConfig config = cacheService.getModelConfig(modelId);
+        SupModelConfig config = cacheService.getModelConfig(modelId);
         if (config == null) {
             log.warn("{}模型不存在: modelId={}", roleLabel, modelId);
             return null;

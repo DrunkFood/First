@@ -18,10 +18,10 @@ public class SupModelRouteRule extends BaseEntity {
     @Schema(description = "使用场景: GENERATION/OPTIMIZATION/DETECTION")
     private String usageScenario;
 
-    @Schema(description = "优先模型ID(关联ai_model_config.id)")
+    @Schema(description = "优先模型ID(关联sup_model_config.id)")
     private Long primaryModelId;
 
-    @Schema(description = "降级模型ID(关联ai_model_config.id)")
+    @Schema(description = "降级模型ID(关联sup_model_config.id)")
     private Long fallbackModelId;
 
     @Schema(description = "优先级(值越小优先级越高)")
