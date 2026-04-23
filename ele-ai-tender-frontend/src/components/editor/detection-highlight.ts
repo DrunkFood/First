@@ -3,6 +3,14 @@ import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import type { DetectionIssueVO } from '@/types/detection'
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    detectionHighlight: {
+      setDetectionHighlights: (highlights: DetectionIssueVO[]) => ReturnType
+    }
+  }
+}
+
 const pluginKey = new PluginKey('detectionHighlight')
 
 export const DetectionHighlight = Extension.create({
