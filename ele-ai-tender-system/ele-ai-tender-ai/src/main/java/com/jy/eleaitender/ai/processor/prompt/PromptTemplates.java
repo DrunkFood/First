@@ -123,6 +123,7 @@ public final class PromptTemplates {
                 {{
                   "position": "问题位置描述",
                   "original": "原文内容",
+                  "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "修改建议",
                   "reason": "问题原因",
                   "severity": "HIGH|MEDIUM|LOW"
@@ -153,6 +154,7 @@ public final class PromptTemplates {
                 {{
                   "position": "问题位置描述",
                   "original": "原文错误内容",
+                  "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "正确写法",
                   "reason": "错误类型说明"
                 }}
@@ -183,6 +185,7 @@ public final class PromptTemplates {
                 {{
                   "position": "问题位置描述",
                   "original": "原文内容",
+                  "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "合规修改建议",
                   "policyReference": "相关政策条款引用",
                   "severity": "HIGH|MEDIUM|LOW"
@@ -214,6 +217,7 @@ public final class PromptTemplates {
                 {{
                   "position": "问题位置描述",
                   "original": "原文内容",
+                  "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "格式修改建议",
                   "ruleViolated": "违反的格式规则"
                 }}

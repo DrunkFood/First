@@ -13,8 +13,8 @@ import com.jy.eleaitender.common.enums.DetectionType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
-import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.AiKnowledgeDocumentMapper;
+import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IRequirementService;
@@ -27,6 +27,8 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -177,6 +179,11 @@ public class RequirementServiceImpl implements IRequirementService {
         // 文档内容快照
         String contentSnapshot = requirement.getContent();
 
+        // 软删除该需求已有的检测记录，避免重新检测时出现重复记录
+        // 注意：此操作通过原生SQL绕过@TableLogic，不更新ver/modifyTime等审计字段（软删除后记录不再被业务查询）
+        // 注意：进行中的旧AI任务仍会执行完，但syncDetection会因selectById查不到记录而跳过结果同步
+        detectionRecordMapper.softDeleteByRequirementId(requirementId);
+
         // 需求级检测只有2项：敏感词 + 错别字
         Map<String, Long> taskIds = new LinkedHashMap<>();
 
@@ -223,28 +230,37 @@ public class RequirementServiceImpl implements IRequirementService {
             throw new BusinessException(ResponseCode.DETECTION_NOT_FOUND);
         }
 
-        // 提取original和suggestion用于自动修正
+        // 提取original和targeted用于自动修正
         String original = DetectionResultParser.getIssueField(record.getResult(), issueIndex, "original");
-        String suggestion = DetectionResultParser.getIssueField(record.getResult(), issueIndex, "suggestion");
+        String targeted = DetectionResultParser.getIssueField(record.getResult(), issueIndex, "targeted");
 
-        // 更新handleStatus为1（已接受）
-        String updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, 1);
-        if (updatedJson != null) {
-            record.setResult(updatedJson);
-            detectionRecordMapper.updateById(record);
-        }
-
-        // 自动修正：将original替换为suggestion（仅替换首次出现，避免多处误替换）
-        if (StringUtils.hasText(original) && StringUtils.hasText(suggestion) && !original.equals(suggestion)) {
+        boolean updateFlag = false;
+        // 自动修正：将original替换为targeted（仅替换首次出现，避免多处误替换）
+        if (StringUtils.hasText(original) && StringUtils.hasText(targeted) && !original.equals(targeted)) {
             String content = requirement.getContent();
             if (content != null && content.contains(original)) {
-                content = content.replaceFirst(java.util.regex.Pattern.quote(original),
-                        java.util.regex.Matcher.quoteReplacement(suggestion));
+                content = content.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(targeted));
                 requirement.setContent(content);
                 requirementMapper.updateById(requirement);
+
+                updateFlag = true;
             } else {
                 log.warn("接受建议时原文已不存在，跳过自动修正: requirementId={}, issueIndex={}", requirementId, issueIndex);
             }
+        }
+
+        // 更新handleStatus
+        String updatedJson;
+        if (updateFlag) {
+            // 更新handleStatus为1（已接受）
+            updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, 1);
+        } else {
+            // 更新handleStatus为3（未找到）
+            updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, 3);
+        }
+        if (updatedJson != null) {
+            record.setResult(updatedJson);
+            detectionRecordMapper.updateById(record);
         }
     }
 

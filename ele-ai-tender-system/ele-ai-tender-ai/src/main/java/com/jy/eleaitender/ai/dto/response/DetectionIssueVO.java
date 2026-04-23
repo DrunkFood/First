@@ -16,6 +16,9 @@ public class DetectionIssueVO {
     @Schema(description = "原文内容")
     private String original;
 
+    @Schema(description = "修改内容(可直接替换原文)")
+    private String targeted;
+
     @Schema(description = "修改建议")
     private String suggestion;
 

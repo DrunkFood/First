@@ -25,6 +25,12 @@ public class DetectionIssueVO {
     @Schema(description = "问题位置(文本片段)")
     private String location;
 
+    @Schema(description = "原始文本")
+    private String original;
+
+    @Schema(description = "替换文本(可直接替换原文)")
+    private String targeted;
+
     @Schema(description = "建议修改内容")
     private String suggestion;
 

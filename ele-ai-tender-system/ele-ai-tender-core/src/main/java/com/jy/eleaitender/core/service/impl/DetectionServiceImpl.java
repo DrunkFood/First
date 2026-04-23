@@ -49,9 +49,6 @@ public class DetectionServiceImpl implements IDetectionService {
     @Autowired
     private MessageHelper messageHelper;
 
-    @Autowired
-    private PhaseFlowController phaseFlowController;
-
     private static final DetectionType[] ALL_DETECTION_TYPES = {
             DetectionType.SENSITIVE_WORD,
             DetectionType.TYPO,

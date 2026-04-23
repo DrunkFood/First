@@ -49,6 +49,8 @@ public class DetectionResultParser {
                 vo.setDetectionType(getStringValue(issueNode, "detectionType", record.getDetectionType()));
                 vo.setTypeName(getTypeName(issueNode, record.getDetectionType()));
                 vo.setLocation(getStringValue(issueNode, "position", ""));
+                vo.setOriginal(getStringValue(issueNode, "original", ""));
+                vo.setTargeted(getStringValue(issueNode, "targeted", ""));
                 vo.setDescription(buildDescription(issueNode));
                 vo.setSuggestion(getStringValue(issueNode, "suggestion", ""));
                 vo.setSeverity(getStringValue(issueNode, "severity", "MEDIUM"));
@@ -104,7 +106,7 @@ public class DetectionResultParser {
      *
      * @param resultJson    原始result JSON
      * @param issueIndex    issues数组中的索引
-     * @param handleStatus  新的handleStatus值 (0-未处理 1-已接受 2-已拒绝)
+     * @param handleStatus  新的handleStatus值 (0-未处理 1-已接受 2-已拒绝 3-未找到)
      * @return 更新后的JSON字符串，失败返回原JSON
      */
     public static String updateIssueHandleStatus(String resultJson, int issueIndex, int handleStatus) {

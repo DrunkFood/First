@@ -107,7 +107,11 @@
               </div>
               <div class="item-body">
                 <p class="item-content">{{ issue.description }}</p>
-                <p v-if="issue.suggestion" class="item-suggestion">
+                <p v-if="issue.targeted" class="item-suggestion">
+                  <span class="label">替换建议：</span>
+                  <span class="suggestion-text">{{ issue.targeted }}</span>
+                </p>
+                <p v-else-if="issue.suggestion" class="item-suggestion">
                   <span class="label">AI建议：</span>
                   <span class="suggestion-text">{{ issue.suggestion }}</span>
                 </p>
@@ -124,9 +128,9 @@
                 <template v-else-if="issue.handleStatus === 0 && isRequirementCompleted">
                   <el-tag type="info" size="small">未处理</el-tag>
                 </template>
-                <el-tag v-else :type="issue.handleStatus === 1 ? 'success' : 'info'" size="small">
-                  {{ issue.handleStatus === 1 ? '已接受' : '已拒绝' }}
-                </el-tag>
+                <el-tag v-else-if="issue.handleStatus === 1" type="success" size="small">已接受</el-tag>
+                <el-tag v-else-if="issue.handleStatus === 2" type="info" size="small">已拒绝</el-tag>
+                <el-tag v-else-if="issue.handleStatus === 3" type="warning" size="small">未找到</el-tag>
                 <el-button size="small" @click="handleViewOriginal(issue)">
                   查看原文
                 </el-button>
@@ -194,7 +198,7 @@ import { requirementApi } from '@/api/requirement'
 import { useTaskPolling } from '@/composables/useTaskPolling'
 import { getTaskProgress, TERMINAL_STATUSES } from '@/types/ai-task'
 import type { AiTaskVO, AiTaskStatus } from '@/types/ai-task'
-import type { DetectionIssueVO } from '@/types/detection'
+import type { DetectionIssueVO, RequirementDetectionRecord } from '@/types/detection'
 
 /**
  * 需求级检测只有2项：敏感词 + 错别字
@@ -339,8 +343,17 @@ async function restoreDetectionState() {
       return
     }
 
-    const cards = detectCards.value
+    // 每种检测类型只取最新记录（按id倒序取第一条），防止重新检测后出现重复记录
+    const latestByType = new Map<string, RequirementDetectionRecord>()
     for (const record of records) {
+      const existing = latestByType.get(record.detectionType)
+      if (!existing || record.id > existing.id) {
+        latestByType.set(record.detectionType, record)
+      }
+    }
+
+    const cards = detectCards.value
+    for (const record of latestByType.values()) {
       const cardIndex = cards.findIndex(c => c.type === record.detectionType)
       if (cardIndex < 0) continue
       const card = cards[cardIndex]!
@@ -470,6 +483,7 @@ function parseTaskResult(card: DetectCard, resultJson?: string) {
           description: issue.reason || issue.description || '',
           location: issue.position || issue.location || '',
           original: issue.original || '',
+          targeted: issue.targeted || '',
           suggestion: issue.suggestion || '',
           severity: issue.severity || 'MEDIUM',
           handleStatus: issue.handleStatus || 0,

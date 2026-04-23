@@ -28,6 +28,7 @@ export interface DetectionIssueVO {
   description: string
   location: string
   original: string
+  targeted: string
   suggestion: string
   severity: 'HIGH' | 'MEDIUM' | 'LOW'
   handleStatus: number
