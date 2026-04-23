@@ -34,7 +34,7 @@
             class="name-input"
           />
         </div>
-        <MarkdownEditor v-model="content" class="editor-content" />
+        <CherryMarkdownEditor v-model="content" class="editor-content" />
       </div>
     </div>
 
@@ -86,7 +86,7 @@ import { requirementApi } from '@/api/requirement'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { aiTaskApi } from '@/api/ai-task'
 import { useFeedback } from '@/composables/useFeedback'
-import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
+import CherryMarkdownEditor from '@/components/editor/CherryMarkdownEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import type { AiChatMessage } from '@/types/ai'
 

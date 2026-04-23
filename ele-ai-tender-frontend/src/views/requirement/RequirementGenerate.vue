@@ -39,20 +39,12 @@
           <div class="content-header">
             <h3>业务需求内容</h3>
             <div class="content-actions">
-              <el-tooltip content="保存" placement="top">
+              <el-tooltip v-if="!isRequirementCompleted" content="保存" placement="top">
                 <button class="primary-action-btn" :disabled="saving" @click="handleSave">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
                     <polyline points="17 21 17 13 7 13 7 21" />
                     <polyline points="7 3 7 8 15 8" />
-                  </svg>
-                </button>
-              </el-tooltip>
-              <el-tooltip :content="editMode ? '切换预览' : '编辑'" placement="top">
-                <button class="primary-action-btn" @click="editMode = !editMode">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
                 </button>
               </el-tooltip>
@@ -138,8 +130,11 @@
                 </div>
               </div>
               <div class="content-area">
-                <MarkdownEditor v-show="editMode" v-model="content" class="content-editor" />
-                <MdPreview v-show="!editMode" :model-value="content" class="content-preview" />
+                <CherryMarkdownEditor
+                  v-model="content"
+                  :readonly="isRequirementCompleted"
+                  class="content-editor"
+                />
               </div>
 
               <!-- AI反馈 -->
@@ -193,7 +188,10 @@
           <!-- 底部操作栏 -->
           <div class="form-actions">
             <el-button @click="router.back()">返回修改</el-button>
-            <el-button type="primary" @click="handleNextStep">
+            <el-button v-if="isRequirementCompleted" @click="router.push('/requirement')">
+              返回列表
+            </el-button>
+            <el-button v-else type="primary" @click="handleNextStep">
               下一步：智能检测
             </el-button>
           </div>
@@ -203,6 +201,7 @@
 
     <!-- AI助手侧边栏 -->
     <AiAssistantSidebar
+      v-if="!isRequirementCompleted"
       v-model:visible="chatVisible"
       v-model:messages="chatMessages"
       greeting="您好！我是您的AI助手，可以帮助您修改业务需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
@@ -227,13 +226,11 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
-import { MdPreview } from 'md-editor-v3'
-import 'md-editor-v3/lib/preview.css'
 import { requirementApi } from '@/api/requirement'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
-import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
+import CherryMarkdownEditor from '@/components/editor/CherryMarkdownEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { PROJECT_TYPE_MAP } from '@/constants/status-maps'
@@ -256,7 +253,6 @@ const tags = ref<Array<{ text: string; type: '' | 'success' | 'warning' | 'info'
 // ---- 状态 ----
 const saving = ref(false)
 const exporting = ref(false)
-const editMode = ref(false)
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
 
@@ -390,7 +386,7 @@ onBeforeUnmount(() => {
     clearInterval(generateProgressTimer)
     generateProgressTimer = null
   }
-  // 清空内容，防止md-editor-v3在DOM销毁后报querySelectorAll/MutationObserver错误
+  // 清空内容，防止编辑器在DOM销毁后报错
   content.value = ''
 })
 
@@ -429,7 +425,6 @@ async function handleGenerate() {
   }
 
   sseGenerating.value = true
-  editMode.value = false
   content.value = ''
   sseProgress.value = 0
 

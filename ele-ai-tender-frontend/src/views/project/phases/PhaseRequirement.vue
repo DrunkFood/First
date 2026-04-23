@@ -27,8 +27,7 @@
     <!-- 编辑器区域 -->
     <div class="editor-container">
       <div class="editor-area">
-        <MdPreview v-if="readonly" :model-value="content" :theme="themeStore.mode" />
-        <MarkdownEditor v-else v-model="content" :toolbars-exclude="excludeToolbars" />
+        <CherryMarkdownEditor v-model="content" :readonly="readonly" />
       </div>
     </div>
 
@@ -128,31 +127,18 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, toRef } from 'vue'
 import { ElMessage } from 'element-plus'
 
-import { MdPreview } from 'md-editor-v3'
-import 'md-editor-v3/lib/preview.css'
 import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress } from '@/types/ai-task'
-import { useThemeStore } from '@/store/theme'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
-import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
+import CherryMarkdownEditor from '@/components/editor/CherryMarkdownEditor.vue'
 import type { AiChatMessage } from '@/types/ai'
-import type { ToolbarNames } from 'md-editor-v3'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
-const themeStore = useThemeStore()
-
-// 排除不需要的工具栏项，只保留原型中的：加粗/斜体/下划线/列表/插入图片
-const excludeToolbars: ToolbarNames[] = [
-  'strikeThrough', 'title', 'sub', 'sup', 'quote', 'task', 'codeRow', 'code',
-  'link', 'table', 'mermaid', 'katex', 'save',
-  'prettier', 'pageFullscreen', 'fullscreen', 'preview', 'htmlPreview', 'catalog',
-  'github',
-]
 
 const content = ref('')
 const isOptimizing = ref(false)
@@ -163,7 +149,7 @@ let closeOptimizeSSE: (() => void) | null = null
 
 // AI任务：项目需求生成，bizId=projectId
 const projectIdRef = toRef(props, 'projectId')
-const { latestTask, canCreateNew, refresh } = useLatestTask(
+const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   'PROJECT_REQUIREMENT_GENERATE',
   projectIdRef,
   'REQUIREMENT',
@@ -374,7 +360,7 @@ onBeforeUnmount(() => {
     closeOptimizeSSE = null
   }
   stopAutoSave()
-  // 清空内容，防止md-editor-v3在DOM销毁后报querySelectorAll/MutationObserver错误
+  // 清空内容，防止编辑器在DOM销毁后报错
   content.value = ''
 })
 
@@ -405,12 +391,8 @@ onMounted(loadData)
 }
 
 .editor-area {
-  :deep(.markdown-editor) {
+  :deep(.cherry-markdown-editor) {
     min-height: 500px;
-  }
-
-  :deep(.md-editor-preview-wrapper) {
-    padding: 24px;
   }
 }
 

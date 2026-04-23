@@ -80,7 +80,7 @@
     <div class="tpl-hint">新建项目选择模板，引用项目显示当前项目的招标文件</div>
     <div class="template-grid" v-loading="templateLoading">
       <div
-        v-for="tpl in templateList"
+        v-for="tpl in displayTemplateList"
         :key="tpl.id"
         class="template-card"
         :class="{ selected: form.templateId === tpl.id, readonly: readonly }"
@@ -93,17 +93,7 @@
         <div class="tpl-card-body">
           <!-- 用途说明 -->
           <div v-if="tpl.content" class="tpl-desc">{{ tpl.content }}</div>
-          <!-- 文档结构树 -->
-          <div v-if="parseStructure(tpl.structureDefinition)?.chapters?.length" class="tpl-structure">
-            <div class="structure-title">文档结构</div>
-            <el-tree
-              :data="buildTreeData(parseStructure(tpl.structureDefinition)!.chapters)"
-              :props="{ label: 'title', children: 'children' }"
-              default-expand-all
-              :indent="12"
-            />
-          </div>
-          <!-- 占位符标签 -->
+<!-- 占位符标签 -->
           <div v-if="parseStructure(tpl.structureDefinition)?.placeholders?.length" class="tpl-placeholders">
             <span class="placeholder-tag" v-for="p in parseStructure(tpl.structureDefinition)!.placeholders.slice(0, 5)" :key="p">
               {{ p }}
@@ -125,14 +115,14 @@
           </el-button>
         </div>
       </div>
-      <el-empty v-if="!templateLoading && !templateList.length" description="暂无可用模板" :image-size="60" />
+      <el-empty v-if="!templateLoading && !displayTemplateList.length" description="暂无可用模板" :image-size="60" />
     </div>
 
     <!-- 模板详情预览弹窗 -->
     <el-dialog
       v-model="previewDialogVisible"
       :title="previewTemplate?.templateName || '模板预览'"
-      width="60%"
+      width="80%"
       top="5vh"
       destroy-on-close
       class="template-preview-dialog"
@@ -140,16 +130,9 @@
       <div class="template-preview-content">
         <!-- 用途说明 -->
         <div v-if="previewTemplate?.content" class="preview-desc">{{ previewTemplate.content }}</div>
-        <!-- 文档结构树 -->
-        <div v-if="parseStructure(previewTemplate?.structureDefinition)?.chapters?.length" class="preview-structure">
-          <div class="structure-title">文档结构</div>
-          <el-tree
-            :data="buildTreeData(parseStructure(previewTemplate!.structureDefinition)!.chapters)"
-            :props="{ label: 'title', children: 'children' }"
-            default-expand-all
-            :indent="16"
-          />
-        </div>
+        <!-- Word文档预览 -->
+        <DocxPreview v-if="previewTemplate?.fileId" :file-id="previewTemplate.fileId" />
+        <el-empty v-else-if="!previewTemplate?.content" description="该模板暂无预览内容" />
         <!-- 占位符标签 -->
         <div v-if="parseStructure(previewTemplate?.structureDefinition)?.placeholders?.length" class="preview-placeholders">
           <div class="structure-title">填充字段</div>
@@ -168,7 +151,6 @@
             </span>
           </div>
         </div>
-        <el-empty v-if="!previewTemplate?.content && !parseStructure(previewTemplate?.structureDefinition)?.chapters?.length" description="该模板暂无结构信息" />
       </div>
       <template #footer>
         <el-button @click="previewDialogVisible = false">关闭</el-button>
@@ -253,14 +235,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { projectApi } from '@/api/project'
 import { templateApi } from '@/api/template'
 import { projectTemplateApi } from '@/api/projectTemplate'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { UploadFilled, Calendar, View } from '@element-plus/icons-vue'
 import { toWanYuan, toYuan } from '@/utils/budget'
-import type { TemplateInfo, WordStructure, WordChapter } from '@/types/template'
+import DocxPreview from '@/components/document/DocxPreview.vue'
+import type { TemplateInfo, WordStructure } from '@/types/template'
 import type { AiMatchResult } from '@/types/ai'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
@@ -296,6 +279,40 @@ const defaultTemplateId = ref<number | null>(null)
 
 const isDefaultTemplate = (tpl: TemplateInfo) => tpl.id === defaultTemplateId.value
 
+/** 项目模板快照（readonly时从tb_project_template查询） */
+const projectTemplateSnapshot = ref<TemplateInfo | null>(null)
+
+/** 展示用模板列表：编辑模式=全量，只读模式=项目绑定模板 */
+const displayTemplateList = computed<TemplateInfo[]>(() => {
+  if (!props.readonly) return templateList.value
+  return projectTemplateSnapshot.value ? [projectTemplateSnapshot.value] : []
+})
+
+/** 只读模式下加载项目模板快照 */
+const loadProjectTemplate = async () => {
+  try {
+    const pt = await projectTemplateApi.getByProject(props.projectId)
+    if (pt) {
+      projectTemplateSnapshot.value = {
+        id: pt.id,
+        templateName: pt.templateName,
+        projectCategory: pt.projectCategory,
+        projectType: pt.projectType,
+        fileId: pt.fileId,
+        content: pt.content,
+        structureDefinition: pt.structureDefinition as any,
+        versionNo: pt.versionNo,
+        isDefault: 0,
+        status: 'PUBLISHED',
+        createTime: pt.createTime,
+        modifyTime: pt.modifyTime,
+      }
+    }
+  } catch {
+    // 查询失败不报错，展示为空
+  }
+}
+
 /** 解析 structureDefinition（可能是JSON字符串或已解析对象） */
 const parseStructure = (sd: WordStructure | string | undefined): WordStructure | null => {
   if (!sd) return null
@@ -307,26 +324,6 @@ const parseStructure = (sd: WordStructure | string | undefined): WordStructure |
     }
   }
   return sd
-}
-
-/** 将扁平章节列表转为树结构 */
-const buildTreeData = (chapters: WordChapter[]) => {
-  const result: any[] = []
-  const stack: any[] = []
-
-  for (const ch of chapters) {
-    const node = { title: '  '.repeat(ch.level - 1) + ch.title, children: [] }
-    while (stack.length >= ch.level) {
-      stack.pop()
-    }
-    if (stack.length > 0) {
-      stack[stack.length - 1].children.push(node)
-    } else {
-      result.push(node)
-    }
-    stack.push(node)
-  }
-  return result
 }
 
 const loadTemplates = async () => {
@@ -440,7 +437,11 @@ const handleSaveAndNext = async () => {
 
 onMounted(() => {
   loadProject()
-  loadTemplates()
+  if (props.readonly) {
+    loadProjectTemplate()
+  } else {
+    loadTemplates()
+  }
 })
 </script>
 
@@ -532,27 +533,6 @@ onMounted(() => {
 // 模板卡片主体
 .tpl-card-body {
   margin-bottom: 8px;
-}
-
-// 文档结构树
-.tpl-structure {
-  margin: 8px 0;
-
-  .structure-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--app-text-secondary);
-    margin-bottom: 4px;
-  }
-
-  :deep(.el-tree) {
-    background: transparent;
-    font-size: 12px;
-
-    .el-tree-node__content {
-      height: 24px;
-    }
-  }
 }
 
 // 占位符标签
@@ -760,21 +740,6 @@ onMounted(() => {
     color: var(--app-text-secondary);
     line-height: 1.6;
     margin-bottom: 20px;
-  }
-
-  .preview-structure {
-    margin-bottom: 20px;
-
-    .structure-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--app-text-primary);
-      margin-bottom: 8px;
-    }
-
-    :deep(.el-tree) {
-      background: transparent;
-    }
   }
 
   .preview-placeholders,
