@@ -83,7 +83,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ModelConfigVO create(ModelConfigCreateDTO dto) {
         SupModelConfig config = toEntity(dto);
         if (config.getIsActive() == null) {
@@ -100,7 +100,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(Long id, ModelConfigUpdateDTO dto) {
         SupModelConfig existing = modelConfigMapper.selectById(id);
         if (existing == null) {
@@ -120,19 +120,19 @@ public class ModelConfigServiceImpl implements IModelConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         modelConfigMapper.deleteById(id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteByIds(List<Long> ids) {
         modelConfigMapper.deleteBatchIds(ids);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void setActive(Long id, Integer isActive) {
         SupModelConfig config = modelConfigMapper.selectById(id);
         if (config == null) {

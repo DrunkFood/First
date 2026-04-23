@@ -60,7 +60,7 @@ public class AiTaskResultSyncHandler {
      * 按任务类型分发同步逻辑
      * 事务注解在此public方法上，确保各类型同步操作的事务性
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void sync(AiTask task) {
         // SKIPPED 任务不需要同步业务数据
         if (AiTaskStatus.SKIPPED.getCode().equals(task.getStatus())) {

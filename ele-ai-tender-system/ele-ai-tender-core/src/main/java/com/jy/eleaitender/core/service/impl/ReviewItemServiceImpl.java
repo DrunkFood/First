@@ -51,7 +51,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TbProjectReviewItem create(TbProjectReviewItem reviewItem) {
         // 校验项目归属
         projectService.getById(reviewItem.getProjectId());
@@ -64,7 +64,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(Long id, TbProjectReviewItem reviewItem) {
         TbProjectReviewItem existing = reviewItemMapper.selectById(id);
         if (existing == null) {
@@ -77,7 +77,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         TbProjectReviewItem item = reviewItemMapper.selectById(id);
         if (item == null) {
@@ -109,7 +109,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
 
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiTask submitGenerate(Long projectId, Map<String, Object> params) {
         // 校验项目归属并获取项目信息
         TbProject project = projectService.getById(projectId);
@@ -132,7 +132,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void batchCreate(List<TbProjectReviewItem> items) {
         if (items == null || items.isEmpty()) {
             return;
@@ -151,7 +151,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void batchUpdate(List<TbProjectReviewItem> items) {
         if (items == null || items.isEmpty()) {
             return;

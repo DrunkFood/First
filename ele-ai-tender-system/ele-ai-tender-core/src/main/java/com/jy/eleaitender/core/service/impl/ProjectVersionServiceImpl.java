@@ -35,7 +35,7 @@ public class ProjectVersionServiceImpl implements IProjectVersionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TbProjectVersion createVersion(Long projectId, String contentSnapshot, String changeDescription) {
         // 校验项目归属
         projectService.getById(projectId);

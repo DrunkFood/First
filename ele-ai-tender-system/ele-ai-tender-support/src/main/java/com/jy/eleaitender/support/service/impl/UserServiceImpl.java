@@ -63,7 +63,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public SysUser createUser(SysUser user) {
         // 加密密码
         if (user.getPassword() != null) {
@@ -77,7 +77,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateUser(SysUser user) {
         // 不更新密码
         user.setPassword(null);
@@ -88,7 +88,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteUser(Long id) {
         userMapper.deleteById(id);
         LambdaQueryWrapper<SysUserRole> wrapper = new LambdaQueryWrapper<>();

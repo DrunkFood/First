@@ -68,7 +68,7 @@ public class SysParameterServiceImpl implements ISysParameterService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void batchUpdate(Map<String, String> params) {
         for (Map.Entry<String, String> entry : params.entrySet()) {
             updateByKey(entry.getKey(), entry.getValue());
@@ -76,7 +76,7 @@ public class SysParameterServiceImpl implements ISysParameterService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateByKey(String paramKey, String paramValue) {
         LambdaUpdateWrapper<SysParameter> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(SysParameter::getParamKey, paramKey)

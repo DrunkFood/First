@@ -53,7 +53,7 @@ public class MessageServiceImpl implements IMessageService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void markRead(Long id) {
         SupMessage message = messageMapper.selectById(id);
         if (message == null) {
@@ -67,20 +67,20 @@ public class MessageServiceImpl implements IMessageService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void markAllRead() {
         Long userId = SecurityContextHolder.getUserId();
         messageMapper.markAllRead(userId);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         messageMapper.deleteById(id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void send(SupMessage message) {
         if (message.getIsRead() == null) {
             message.setIsRead(0);

@@ -62,8 +62,6 @@ public class FileController {
         if (fileInfo == null) {
             throw new FileException(ResponseCode.FILE_NOT_FOUND);
         }
-        // 校验文件归属
-        DataScopeHelper.checkOwnership(fileInfo.getCreateId());
 
         String filePath = fileStorageService.getFilePath(fileId);
         File file = new File(filePath);
@@ -92,8 +90,6 @@ public class FileController {
         if (fileInfo == null) {
             return Result.fail(ResponseCode.FILE_NOT_FOUND);
         }
-        // 校验文件归属
-        DataScopeHelper.checkOwnership(fileInfo.getCreateId());
         return Result.success(fileInfo);
     }
 

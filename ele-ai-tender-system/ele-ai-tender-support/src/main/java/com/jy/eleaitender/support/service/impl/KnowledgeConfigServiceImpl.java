@@ -39,7 +39,7 @@ public class KnowledgeConfigServiceImpl implements IKnowledgeConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiKnowledgeDocument create(AiKnowledgeDocument document) {
         if (document.getStatus() == null) {
             document.setStatus("ACTIVE");
@@ -49,13 +49,13 @@ public class KnowledgeConfigServiceImpl implements IKnowledgeConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(AiKnowledgeDocument document) {
         knowledgeDocumentMapper.updateById(document);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         knowledgeDocumentMapper.deleteById(id);
     }

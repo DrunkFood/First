@@ -57,7 +57,7 @@ public class DetectionServiceImpl implements IDetectionService {
     };
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Long> submit(Long projectId, DetectionSubmitRequest request) {
         TbProject project = getProjectOrThrow(projectId);
 
@@ -199,7 +199,7 @@ public class DetectionServiceImpl implements IDetectionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void acceptIssue(Long recordId, Integer issueIndex) {
         TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
@@ -217,7 +217,7 @@ public class DetectionServiceImpl implements IDetectionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void rejectIssue(Long recordId, Integer issueIndex) {
         TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
@@ -235,7 +235,7 @@ public class DetectionServiceImpl implements IDetectionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void acceptAll(Long projectId) {
         getProjectOrThrow(projectId);
         List<TbDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
@@ -250,7 +250,7 @@ public class DetectionServiceImpl implements IDetectionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void skip(Long projectId) {
         TbProject project = getProjectOrThrow(projectId);
         ProjectStateMachine.transition(project, ProjectStatus.DETECTION_SKIPPED);
@@ -268,7 +268,7 @@ public class DetectionServiceImpl implements IDetectionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Long> retry(Long projectId) {
         TbProject project = getProjectOrThrow(projectId);
 

@@ -60,7 +60,7 @@ public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public SupModelRouteRule create(SupModelRouteRule rule) {
         if (rule.getIsActive() == null) {
             rule.setIsActive(1);
@@ -73,19 +73,19 @@ public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(SupModelRouteRule rule) {
         routeRuleMapper.updateById(rule);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         routeRuleMapper.deleteById(id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void setActive(Long id, Integer isActive) {
         SupModelRouteRule rule = routeRuleMapper.selectById(id);
         if (rule == null) {

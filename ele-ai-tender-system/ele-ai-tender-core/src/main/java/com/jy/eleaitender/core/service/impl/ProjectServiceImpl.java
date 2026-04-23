@@ -114,7 +114,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TbProject create(TbProject project) {
         // 校验项目编号唯一性（如果用户提供了编号）
         if (StringUtils.hasText(project.getProjectCode())) {
@@ -142,7 +142,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(Long id, TbProject project) {
         TbProject existing = getById(id); // 内部已做归属校验
         project.setId(id);
@@ -152,7 +152,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "请选择要删除的项目");
@@ -197,7 +197,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void advancePhase(Long projectId, Integer targetPhase, Map<String, Object> context) {
         TbProject project = getById(projectId); // 内部已做归属校验
         ProjectPhase target = ProjectPhase.fromCode(targetPhase);
@@ -221,7 +221,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void changeStatus(Long projectId, String targetStatus) {
         TbProject project = getById(projectId); // 内部已做归属校验
         ProjectStatus target = ProjectStatus.fromCode(targetStatus);
@@ -230,19 +230,19 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cancelProject(Long projectId) {
         changeStatus(projectId, ProjectStatus.CANCELLED.getCode());
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void publishProject(Long projectId) {
         changeStatus(projectId, ProjectStatus.PUBLISHED.getCode());
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void archiveProject(Long projectId) {
         changeStatus(projectId, ProjectStatus.ARCHIVED.getCode());
     }

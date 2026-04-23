@@ -50,7 +50,7 @@ public class UserMessageServiceImpl implements IUserMessageService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void markRead(Long id) {
         SupMessage msg = supMessageMapper.selectById(id);
         if (msg == null) {
@@ -62,14 +62,14 @@ public class UserMessageServiceImpl implements IUserMessageService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void markAllRead() {
         Long userId = SecurityContextHolder.getUserId();
         supMessageMapper.markAllRead(userId);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         supMessageMapper.deleteById(id);
     }

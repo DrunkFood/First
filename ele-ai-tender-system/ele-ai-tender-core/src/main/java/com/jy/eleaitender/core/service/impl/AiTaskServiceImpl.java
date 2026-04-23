@@ -30,7 +30,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
     private ObjectMapper objectMapper;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
                              Map<String, Object> requestParams, String fileIds) {
         // 防重复提交：同一业务同一类型不能有活跃任务
@@ -72,7 +72,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void skipTask(Long taskId) {
         AiTask task = aiTaskMapper.selectById(taskId);
         if (task == null) {

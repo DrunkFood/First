@@ -83,7 +83,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TbRequirement create(TbRequirement requirement) {
         if (!StringUtils.hasText(requirement.getStatus())) {
             requirement.setStatus("IN_PROGRESS");
@@ -96,7 +96,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(Long id, TbRequirement requirement) {
         getById(id); // 内部已做归属校验
         requirement.setId(id);
@@ -107,14 +107,14 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         getById(id); // 内部已做归属校验
         requirementMapper.deleteById(id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TbRequirement matchTemplate(Long id, Long matchedFileId, String matchMode) {
         TbRequirement requirement = getById(id);
 
@@ -126,7 +126,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiTask submitGenerate(Long requirementId, Map<String, Object> params) {
         TbRequirement requirement = getById(requirementId);
         // 清空需求内容
@@ -148,7 +148,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void autoSave(Long requirementId, String content) {
         TbRequirement requirement = getById(requirementId);
         requirement.setAutoSaveContent(content);
@@ -163,7 +163,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void clearAutoSave(Long requirementId) {
         TbRequirement requirement = getById(requirementId);
         requirement.setAutoSaveContent(null);
@@ -172,7 +172,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Long> submitDetection(Long requirementId) {
         TbRequirement requirement = getById(requirementId);
 
@@ -221,7 +221,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void acceptDetectionIssue(Long requirementId, Long recordId, Integer issueIndex) {
         TbRequirement requirement = getById(requirementId);
 
@@ -265,7 +265,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void rejectDetectionIssue(Long requirementId, Long recordId, Integer issueIndex) {
         getById(requirementId);
 
@@ -288,7 +288,7 @@ public class RequirementServiceImpl implements IRequirementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void finishDetection(Long requirementId) {
         TbRequirement requirement = getById(requirementId);
         requirement.setStatus("COMPLETED");

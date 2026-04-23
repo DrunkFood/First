@@ -55,7 +55,7 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public SupTemplate create(SupTemplate template) {
         if (template.getVersionNo() == null) {
             template.setVersionNo(1);
@@ -80,7 +80,7 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(SupTemplate template) {
         // 如果fileId变更，重新解析Word结构
         if (template.getFileId() != null) {
@@ -98,13 +98,13 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         templateMapper.deleteById(id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void setDefault(Long id) {
         SupTemplate template = templateMapper.selectById(id);
         if (template == null) {
@@ -127,7 +127,7 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void setStatus(Long id, String status) {
         SupTemplate template = templateMapper.selectById(id);
         if (template == null) {

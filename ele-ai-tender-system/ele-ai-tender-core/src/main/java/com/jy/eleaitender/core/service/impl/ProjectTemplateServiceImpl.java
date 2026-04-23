@@ -32,7 +32,7 @@ public class ProjectTemplateServiceImpl implements IProjectTemplateService {
     private TbProjectMapper projectMapper;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TbProjectTemplate bindTemplate(Long projectId, Long supTemplateId) {
         // 校验源模板存在
         SupTemplate supTemplate = supTemplateMapper.selectById(supTemplateId);

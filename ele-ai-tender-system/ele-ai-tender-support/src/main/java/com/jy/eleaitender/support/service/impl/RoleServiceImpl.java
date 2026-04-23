@@ -96,7 +96,7 @@ public class RoleServiceImpl implements IRoleService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void assignMenus(Long roleId, List<Long> menuIds) {
         // 物理删除原有权限，避免逻辑删除记录命中唯一索引(role_id, menu_id)
         roleMenuMapper.deleteByRoleIdPhysical(roleId);

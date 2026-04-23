@@ -48,7 +48,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public SupPolicyFile create(SupPolicyFile policyFile) {
         if (policyFile.getStatus() == null) {
             policyFile.setStatus(1);
@@ -58,19 +58,19 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(SupPolicyFile policyFile) {
         policyFileMapper.updateById(policyFile);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         policyFileMapper.deleteById(id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void setStatus(Long id, Integer status) {
         SupPolicyFile policyFile = policyFileMapper.selectById(id);
         if (policyFile == null) {

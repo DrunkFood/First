@@ -59,7 +59,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TbPolicyFile create(TbPolicyFile policyFile) {
         policyFile.setUserId(SecurityContextHolder.getUserId());
         if (policyFile.getStatus() == null) {
@@ -70,7 +70,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         TbPolicyFile file = getById(id);
         // 只能删除自己的文件
@@ -81,7 +81,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void setStatus(Long id, Integer status) {
         TbPolicyFile file = getById(id); // 内部已做归属校验
         file.setStatus(status);

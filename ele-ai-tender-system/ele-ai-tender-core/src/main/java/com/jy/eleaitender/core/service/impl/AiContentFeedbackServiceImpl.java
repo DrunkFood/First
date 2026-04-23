@@ -31,7 +31,7 @@ public class AiContentFeedbackServiceImpl implements IAiContentFeedbackService {
     private AiTaskMapper aiTaskMapper;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public FeedbackVO submitFeedback(FeedbackSubmitRequest request) {
         Long userId = SecurityContextHolder.getUserId();
 

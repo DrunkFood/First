@@ -68,7 +68,7 @@ public class TemplateServiceImpl implements ITemplateService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public SupTemplate create(SupTemplate template) {
         // 新模板默认非默认
         if (template.getIsDefault() == null) {
@@ -86,7 +86,7 @@ public class TemplateServiceImpl implements ITemplateService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(Long id, SupTemplate template) {
         SupTemplate existing = getById(id);
         template.setId(id);
@@ -94,7 +94,7 @@ public class TemplateServiceImpl implements ITemplateService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "请选择要删除的模板");
@@ -105,7 +105,7 @@ public class TemplateServiceImpl implements ITemplateService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void setDefault(Long id) {
         SupTemplate template = getById(id);
 

@@ -38,7 +38,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     private InternalFileServiceClient fileServiceClient;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public DocumentPreviewVO integrate(Long projectId) {
         TbProject project = getProjectOrThrow(projectId);
 
@@ -82,7 +82,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void editContent(Long projectId, String markdownContent) {
         throw new BusinessException(ResponseCode.OPERATION_NOT_SUPPORTED, "在线编辑暂不支持，请通过模板修改后重新生成");
     }

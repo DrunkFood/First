@@ -40,7 +40,7 @@ public class KnowledgeDocumentServiceImpl implements IKnowledgeDocumentService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiKnowledgeDocument create(KnowledgeDocumentRequest request) {
         AiKnowledgeDocument doc = new AiKnowledgeDocument();
         doc.setDocName(request.getDocName());
@@ -53,7 +53,7 @@ public class KnowledgeDocumentServiceImpl implements IKnowledgeDocumentService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         knowledgeDocumentMapper.deleteById(id);
     }
