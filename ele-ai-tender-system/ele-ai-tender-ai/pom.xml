@@ -102,12 +102,6 @@
             <artifactId>milvus-sdk-java</artifactId>
             <version>${milvus-sdk.version}</version>
         </dependency>
-
-        <!-- Commons IO -->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
