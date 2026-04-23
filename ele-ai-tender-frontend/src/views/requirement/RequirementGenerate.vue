@@ -130,7 +130,7 @@
                 </div>
               </div>
               <div class="content-area">
-                <CherryMarkdownEditor
+                <WysiwygEditor
                   v-model="content"
                   :readonly="isRequirementCompleted"
                   class="content-editor"
@@ -235,7 +235,7 @@ import { requirementApi } from '@/api/requirement'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
-import CherryMarkdownEditor from '@/components/editor/CherryMarkdownEditor.vue'
+import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { PROJECT_TYPE_MAP } from '@/constants/status-maps'

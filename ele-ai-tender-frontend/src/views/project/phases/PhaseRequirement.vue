@@ -27,7 +27,7 @@
     <!-- 编辑器区域 -->
     <div class="editor-container">
       <div class="editor-area">
-        <CherryMarkdownEditor v-model="content" :readonly="readonly" />
+        <WysiwygEditor v-model="content" :readonly="readonly" />
       </div>
     </div>
 
@@ -134,7 +134,7 @@ import { useFeedback } from '@/composables/useFeedback'
 import { getTaskProgress } from '@/types/ai-task'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
-import CherryMarkdownEditor from '@/components/editor/CherryMarkdownEditor.vue'
+import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
 import type { AiChatMessage } from '@/types/ai'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
