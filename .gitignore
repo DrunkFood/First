@@ -48,6 +48,7 @@ ele-tender-support-frontend/.vite/
 
 # OS
 Thumbs.db
+*.lnk
 
 # Java/Maven (if needed)
 target/
