@@ -42,9 +42,9 @@
           </div>
           <!-- AI消息反馈按钮（非发送中且有内容时才显示） -->
           <div v-if="msg.role === 'assistant' && msg.content && !sending" class="message-actions">
-            <template v-if="chatFeedbackMap[msg.uid]">
+            <template v-if="msg.uid && chatFeedbackMap[msg.uid]">
               <span class="feedback-indicator">
-                {{ chatFeedbackMap[msg.uid] === 'LIKE' ? '已赞' : '已反馈不满意' }}
+                {{ chatFeedbackMap[msg.uid!] === 'LIKE' ? '已赞' : '已反馈不满意' }}
               </span>
             </template>
             <template v-else>
@@ -134,7 +134,7 @@ function generateUid(role: string, timestamp: number, content?: string): string 
 
 /** 处理聊天消息反馈（记录状态后冒泡给父组件） */
 function handleFeedback(type: 'like' | 'dislike', msg: AiChatMessage) {
-  if (chatFeedbackMap[msg.uid]) return
+  if (!msg.uid || chatFeedbackMap[msg.uid]) return
   chatFeedbackMap[msg.uid] = type === 'like' ? 'LIKE' : 'DISLIKE'
   emit('feedback', type, msg)
 }
