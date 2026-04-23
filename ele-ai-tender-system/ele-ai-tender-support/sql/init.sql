@@ -439,7 +439,6 @@ CREATE TABLE `sup_sms_code` (
 -- =============================================
 CREATE TABLE IF NOT EXISTS `sup_template` (
                                               `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '模板ID',
-                                              `template_code`         VARCHAR(50)  NOT NULL COMMENT '模板编码',
                                               `template_name`         VARCHAR(100) NOT NULL COMMENT '模板名称',
                                               `project_category`      VARCHAR(30)  NOT NULL COMMENT '适用项目类别',
                                               `project_type`          VARCHAR(30)  NOT NULL COMMENT '适用项目类型',
@@ -458,7 +457,6 @@ CREATE TABLE IF NOT EXISTS `sup_template` (
                                               `ver`                   INT          NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
                                               `is_delete`             TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除',
                                               PRIMARY KEY (`id`),
-                                              UNIQUE INDEX `uk_template_code` (`template_code`),
                                               INDEX `idx_category_type` (`project_category`, `project_type`),
                                               INDEX `idx_status` (`status`),
                                               INDEX `idx_file_id` (`file_id`)

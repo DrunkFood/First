@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
         '/file-api': {
           target: env.VITE_FILE_API_URL || 'http://localhost:8081',
           changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/file-api/, ''),
         },
       },
     },

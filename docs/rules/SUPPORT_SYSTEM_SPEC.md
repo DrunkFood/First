@@ -205,7 +205,7 @@
 | `sup_policy_file` | SupPolicyFile | 平台政策文件，`file_name` / `file_category` / `applicable_category` / `file_id` / `file_size` / `file_type` / `description` / `status` |
 | `sup_message` | SupMessage | 消息通知，`user_id` / `title` / `content` / `message_type` / `biz_id` / `biz_type` / `is_read` / `read_time` |
 | `sup_sms_code` | SupSmsCode | 短信验证码 |
-| `sup_template` | SupTemplate | 招标文件模板，`template_code` / `template_name` / `project_category` / `project_type` / `file_id` / `content` / `structure_definition`(JSON) / `version_no` / `is_default` / `status` |
+| `sup_template` | SupTemplate | 招标文件模板，`template_name` / `project_category` / `project_type` / `file_id` / `content` / `structure_definition`(JSON) / `version_no` / `is_default` / `status` |
 | `sup_model_config` | SupModelConfig | AI模型配置，`model_name` / `model_type` / `provider` / `api_endpoint` / `api_key` / `model_params`(JSON) / `usage_scenario` / `is_active` / `token_usage` / `cost` |
 | `sup_model_route_rule` | SupModelRouteRule | 模型路由规则，`usage_scenario` / `primary_model_id` / `fallback_model_id` / `priority` / `is_active` |
 

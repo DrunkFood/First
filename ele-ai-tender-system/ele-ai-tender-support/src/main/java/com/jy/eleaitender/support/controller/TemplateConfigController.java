@@ -26,8 +26,9 @@ public class TemplateConfigController {
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String templateName,
             @RequestParam(required = false) String projectCategory,
-            @RequestParam(required = false) String projectType) {
-        return Result.success(templateConfigService.getPage(pageNum, pageSize, templateName, projectCategory, projectType));
+            @RequestParam(required = false) String projectType,
+            @RequestParam(required = false) String status) {
+        return Result.success(templateConfigService.getPage(pageNum, pageSize, templateName, projectCategory, projectType, status));
     }
 
     @GetMapping("/{id}")
@@ -66,6 +67,14 @@ public class TemplateConfigController {
     @RequireLogin
     public Result<Void> setDefault(@PathVariable Long id) {
         templateConfigService.setDefault(id);
+        return Result.success();
+    }
+
+    @PutMapping("/{id}/status")
+    @Operation(summary = "设置模板状态")
+    @RequireLogin
+    public Result<Void> setStatus(@PathVariable Long id, @RequestParam String status) {
+        templateConfigService.setStatus(id, status);
         return Result.success();
     }
 }

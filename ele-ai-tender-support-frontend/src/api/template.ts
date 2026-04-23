@@ -1,4 +1,5 @@
 import { request } from '@/utils/request'
+import axios from 'axios'
 import type {
   TemplateInfo,
   TemplateQueryParams,
@@ -6,6 +7,22 @@ import type {
   TemplateUpdateParams,
 } from '@/types/template'
 import type { ApiResponse, PageResult } from '@/types'
+import { useUserStore } from '@/store/user'
+
+// 文件服务专用 axios 实例（独立 baseURL，不走 /support-api 代理）
+const fileService = axios.create({
+  baseURL: '/file-api',
+  timeout: 60000,
+})
+
+fileService.interceptors.request.use((config) => {
+  const userStore = useUserStore()
+  const token = userStore.token
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
 export const templateApi = {
   // 分页查询模板
@@ -42,6 +59,11 @@ export const templateApi = {
   setDefault(id: number): Promise<ApiResponse<void>> {
     return request.post(`/v1/template-configs/${id}/set-default`)
   },
+
+  // 设置模板状态
+  setStatus(id: number, status: string): Promise<ApiResponse<void>> {
+    return request.put(`/v1/template-configs/${id}/status`, undefined, { params: { status } })
+  },
 }
 
 // 文件上传 API
@@ -50,8 +72,10 @@ export const fileApi = {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('bizType', bizType)
-    return request.post<{ fileId: number; fileName: string }>('/file-api/api/file/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    return fileService.post<ApiResponse<{ fileId: number; fileName: string }>>(
+      '/api/file/upload',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    ).then(res => res.data)
   },
 }

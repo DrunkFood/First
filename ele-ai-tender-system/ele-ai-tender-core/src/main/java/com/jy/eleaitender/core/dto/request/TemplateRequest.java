@@ -7,10 +7,6 @@ import lombok.Data;
 @Data
 @Schema(description = "模板创建/更新请求")
 public class TemplateRequest {
-    @NotBlank(message = "模板编码不能为空")
-    @Schema(description = "模板编码")
-    private String templateCode;
-    
     @NotBlank(message = "模板名称不能为空")
     @Schema(description = "模板名称")
     private String templateName;

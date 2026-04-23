@@ -22,9 +22,6 @@ public class TbProjectTemplate extends BaseEntity {
     @Schema(description = "源模板ID(sup_template.id)")
     private Long templateId;
 
-    @Schema(description = "模板编码(快照)")
-    private String templateCode;
-
     @Schema(description = "模板名称(快照)")
     private String templateName;
 

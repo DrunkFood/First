@@ -52,7 +52,6 @@ public class ProjectTemplateServiceImpl implements IProjectTemplateService {
         TbProjectTemplate pt = new TbProjectTemplate();
         pt.setProjectId(projectId);
         pt.setTemplateId(supTemplate.getId());
-        pt.setTemplateCode(supTemplate.getTemplateCode());
         pt.setTemplateName(supTemplate.getTemplateName());
         pt.setProjectCategory(supTemplate.getProjectCategory());
         pt.setProjectType(supTemplate.getProjectType());

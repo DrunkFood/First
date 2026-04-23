@@ -123,7 +123,6 @@ CREATE TABLE IF NOT EXISTS `tb_project_template` (
     `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
     `project_id`            BIGINT       NOT NULL COMMENT '项目ID',
     `template_id`           BIGINT       NOT NULL COMMENT '源模板ID(sup_template.id)',
-    `template_code`         VARCHAR(50)  NOT NULL COMMENT '模板编码(快照)',
     `template_name`         VARCHAR(100) NOT NULL COMMENT '模板名称(快照)',
     `project_category`      VARCHAR(30)  NOT NULL COMMENT '适用项目类别(快照)',
     `project_type`          VARCHAR(30)  NOT NULL COMMENT '适用项目类型(快照)',

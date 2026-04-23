@@ -27,10 +27,10 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
     private InternalFileServiceClient fileServiceClient;
 
     @Override
-    public Page<SupTemplate> getPage(Integer pageNum, Integer pageSize, String templateName, String projectCategory, String projectType) {
+    public Page<SupTemplate> getPage(Integer pageNum, Integer pageSize, String templateName, String projectCategory, String projectType, String status) {
         Page<SupTemplate> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<SupTemplate> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(templateName)) {
             wrapper.like(SupTemplate::getTemplateName, templateName);
         }
@@ -40,9 +40,12 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
         if (StringUtils.hasText(projectType)) {
             wrapper.eq(SupTemplate::getProjectType, projectType);
         }
+        if (StringUtils.hasText(status)) {
+            wrapper.eq(SupTemplate::getStatus, status);
+        }
         wrapper.eq(SupTemplate::getIsDelete, 0);
         wrapper.orderByDesc(SupTemplate::getCreateTime);
-        
+
         return templateMapper.selectPage(page, wrapper);
     }
 
@@ -107,7 +110,7 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
         if (template == null) {
             throw new BusinessException(ResponseCode.TEMPLATE_NOT_FOUND);
         }
-        
+
         // 清除同category+type下的其他默认模板
         UpdateWrapper<SupTemplate> clearWrapper = new UpdateWrapper<>();
         clearWrapper.eq("project_category", template.getProjectCategory());
@@ -115,11 +118,27 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
         clearWrapper.eq("is_delete", 0);
         clearWrapper.set("is_default", 0);
         templateMapper.update(null, clearWrapper);
-        
+
         // 设置当前模板为默认
         SupTemplate update = new SupTemplate();
         update.setId(id);
         update.setIsDefault(1);
+        templateMapper.updateById(update);
+    }
+
+    @Override
+    @Transactional
+    public void setStatus(Long id, String status) {
+        SupTemplate template = templateMapper.selectById(id);
+        if (template == null) {
+            throw new BusinessException(ResponseCode.TEMPLATE_NOT_FOUND);
+        }
+        if (!"ENABLED".equals(status) && !"DISABLED".equals(status)) {
+            throw new BusinessException(ResponseCode.PARAM_ERROR);
+        }
+        SupTemplate update = new SupTemplate();
+        update.setId(id);
+        update.setStatus(status);
         templateMapper.updateById(update);
     }
 

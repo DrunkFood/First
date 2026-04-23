@@ -23,7 +23,7 @@ export interface TemplateInfo {
   isDefault: number
   version: string
   description?: string
-  status: number
+  status: string
   createTime?: string
   updateTime?: string
   createId?: number
@@ -37,7 +37,7 @@ export interface TemplateQueryParams {
   templateName?: string
   projectCategory?: string
   projectType?: string
-  status?: number
+  status?: string
 }
 
 // 模板创建参数
@@ -63,5 +63,5 @@ export interface TemplateUpdateParams {
   structureDefinition?: string
   isDefault?: number
   description?: string
-  status?: number
+  status?: string
 }

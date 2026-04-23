@@ -22,8 +22,8 @@
           </el-form-item>
           <el-form-item label="状态">
             <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-              <el-option label="启用" :value="1" />
-              <el-option label="禁用" :value="0" />
+              <el-option label="启用" value="ENABLED" />
+              <el-option label="禁用" value="DISABLED" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -61,8 +61,8 @@
         stripe
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column type="selection" width="40" />
+        <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="templateName" label="模板名称" min-width="180" />
         <el-table-column prop="projectCategory" label="类别" width="120">
           <template #default="{ row }">
@@ -85,8 +85,10 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 1" type="success" size="small">启用</el-tag>
-            <el-tag v-else type="danger" size="small">禁用</el-tag>
+            <el-switch
+              :model-value="row.status === 'ENABLED'"
+              @change="(val: boolean) => handleStatusChange(row, val)"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="createName" label="创建人" width="120" />
@@ -332,6 +334,16 @@ const handleSetDefault = async (row: TemplateInfo) => {
     fetchList()
   } catch (error) {
     console.error('设为默认模板失败:', error)
+  }
+}
+
+const handleStatusChange = async (row: TemplateInfo, enabled: boolean) => {
+  try {
+    await templateApi.setStatus(row.id, enabled ? 'ENABLED' : 'DISABLED')
+    ElMessage.success(enabled ? '已启用' : '已禁用')
+    fetchList()
+  } catch (error) {
+    console.error('修改状态失败:', error)
   }
 }
 

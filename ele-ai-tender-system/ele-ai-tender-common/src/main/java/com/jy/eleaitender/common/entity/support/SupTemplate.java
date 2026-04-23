@@ -16,9 +16,6 @@ import lombok.EqualsAndHashCode;
 @Schema(description = "招标文件模板")
 public class SupTemplate extends BaseEntity {
 
-    @Schema(description = "模板编码")
-    private String templateCode;
-
     @Schema(description = "模板名称")
     private String templateName;
 
