@@ -55,7 +55,6 @@
           </el-form-item>
         </el-form>
 
-        <div class="tips">测试账号建议：`admin / admin123`</div>
       </section>
     </div>
   </div>

@@ -16,11 +16,12 @@ public final class DataScopeTable {
      * 不在此集合中的表不会被拦截器过滤
      */
     public static final Set<String> ISOLATED_TABLES = Set.of(
-            "ai_project",
-            "ai_requirement",
-            "ai_review_item",
-            "ai_detection_record",
-            "ai_project_version",
+            "tb_requirement",
+            "tb_project",
+            "tb_project_review_item",
+            "tb_project_template",
+            "tb_project_version",
+            "tb_detection_record",
             "ai_task",
             "file_info"
     );

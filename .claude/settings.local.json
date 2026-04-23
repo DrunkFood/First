@@ -20,7 +20,7 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
       "Bash(curl -s http://localhost:8080/api/auth/public-key)",
       "Bash(python -m json.tool)",
-      "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"123456\"}')",
       "Bash(node -e ' *)",
       "Bash(curl -s http://localhost:8082/api/v1/requirements -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T')",
       "Bash(curl -sv http://localhost:8082/api/v1/requirements -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJ0eXBlIjoiSU5URVJOQUwiLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE3NzYyNTU2NjAsImV4cCI6MTc3NjI2Mjg2MH0.5cCg4AdhScJEfBaeIGLnvRhOywKgEBVRgooevxKMpXWM8HR97Kvx8xIELJpxMS0T')",
