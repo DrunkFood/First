@@ -11,21 +11,24 @@
 - 项目管理（CRUD + 版本管理 + 状态流转）
 - 业务需求编制（需求创建 + 历史匹配 + AI生成）
 - 评审项管理（三级嵌套结构）
-- 文档生成（调用 ai模块，管理生成记录）
+- 文档集成（调用 ai模块，管理生成记录）
+- 检测管理（提交检测 + 查看结果 + 重试）
+- AI内容反馈、用户消息、用户政策文件
+- 项目模板快照
 
 ### 2.2 ai模块 (8083) — AI能力提供
 
 - AI助手（对话式助手、文本优化、SSE流式响应）
 - 知识库（文档上传、向量化、Milvus检索）
-- 智能检测（公平性、合规性、错别字、敏感词）
-- 模型路由（本地模型/云端模型智能路由）
-- 文档生成（Markdown → Word转换）
+- 智能检测（敏感词、错别字、政策文件审查、格式规范检测）
+- 模型路由（本地模型/云端模型/私有化模型智能路由）
+- 文档匹配（基于知识库的文档相似度匹配）
 
 ### 2.3 职责边界
 
-- **core模块**: 负责"何时生成"——组装参数、调用ai模块、管理文档记录、版本快照
-- **ai模块**: 负责"如何生成"——Markdown→Word实际转换、模板渲染、格式处理
-- **调用链路**: `core DocumentService` → HTTP调用 → `ai WordGenerator`
+- **core模块**: 负责"何时生成"——组装参数、写入AI任务到 `ai_task` 表、管理文档记录、版本快照
+- **ai模块**: 负责"如何生成"——AiTaskProcessor轮询任务、Markdown→Word转换、模板渲染、格式处理、检测执行
+- **调用链路**: `core Service` → 写入 `ai_task` → `AiTaskProcessor` 轮询执行 → `core AiTaskResultSyncHandler` 读取结果
 
 ## 3. 当前接口
 
@@ -37,11 +40,6 @@
 - `GET /projects/{id}` — 获取项目详情
 - `PUT /projects/{id}` — 更新项目
 - `DELETE /projects` — 批量删除项目
-- `POST /projects/{id}/generate` — AI生成招标文件
-- `GET /projects/{id}/versions` — 获取版本历史
-- `GET /projects/{id}/versions/compare` — 版本对比
-- `POST /projects/{id}/export` — 导出Word文档
-- `POST /projects/{id}/publish` — 发布项目
 - `PUT /projects/{id}/phase` — 推进项目阶段（RequestBody: targetPhase + context）
 
 **业务需求**:
@@ -51,7 +49,6 @@
 - `PUT /requirements/{id}` — 更新需求
 - `POST /requirements/{id}/match` — 匹配历史模板
 - `POST /requirements/{id}/generate` — AI生成需求初稿
-- `POST /requirements/{id}/submit` — 提交审核
 
 **评审项**:
 - `POST /review-items` — 创建评审项
@@ -60,29 +57,61 @@
 - `DELETE /review-items/{id}` — 删除评审项
 - `POST /review-items/generate` — AI生成评审项
 
+**检测管理**:
+- `POST /detections/submit` — 提交检测
+- `GET /detections/{projectId}/progress` — 查询检测进度
+- `GET /detections/{projectId}/report` — 获取检测报告
+- `POST /detections/{projectId}/retry` — 重试检测
+- `PUT /detections/{projectId}/skip` — 跳过检测
+
+**文档集成**:
+- `POST /document-integration/{projectId}/generate` — 生成文档
+- `GET /document-integration/{projectId}/preview` — 预览文档
+
+**项目模板快照**:
+- `GET /project-templates/{projectId}` — 获取项目模板快照
+- `PUT /project-templates/{projectId}` — 更新项目模板快照
+
+**AI任务管理**:
+- `GET /ai-tasks/latest` — 获取最新AI任务
+- `GET /ai-tasks/{id}` — 获取AI任务详情
+
+**AI内容反馈**:
+- `POST /ai-content-feedback` — 提交反馈
+- `GET /ai-content-feedback` — 查询反馈
+
+**用户消息**:
+- `GET /user-messages` — 查询消息列表
+- `GET /user-messages/unread-count` — 未读消息数
+- `PUT /user-messages/{id}/read` — 标记已读
+
+**用户政策文件**:
+- `GET /policy-files` — 查询用户政策文件
+- `POST /policy-files` — 上传用户政策文件
+- `DELETE /policy-files/{id}` — 删除用户政策文件
+
 ### 3.2 ai模块（`/api/v1`）
 
 **AI助手**:
+- `POST /ai/chat` — 对话式AI助手(SSE流式)
 - `POST /ai/optimize` — 文本优化(SSE流式)
-- `POST /ai/suggest` — 获取AI建议
-- `POST /ai/generate` — AI内容生成
-- `POST /ai/chat` — 对话式AI助手
 
-**智能检测**:
-- `POST /detection/start` — 启动检测
-- `GET /detection/{id}/status` — 查询检测状态
-- `GET /detection/{id}/result` — 获取检测结果
-- `POST /detection/{id}/confirm` — 确认检测结果
+**文档匹配**:
+- `POST /document-match/match` — 文档相似度匹配
 
 **知识库**:
 - `POST /knowledge/documents` — 上传知识文档
 - `GET /knowledge/documents` — 查询知识文档列表
 - `DELETE /knowledge/documents/{id}` — 删除知识文档
 - `POST /knowledge/retrieve` — 检索知识(向量检索)
-- `POST /knowledge/vectorize` — 手动触发向量化
 
-**文档生成**:
-- `POST /documents/generate` — 生成Word文档（内部接口，由core模块调用）
+**AI任务处理（内部，非HTTP接口）**:
+- `AiTaskProcessor` — 轮询 `ai_task` 表执行AI任务
+- `DetectionEngine` — 检测引擎（敏感词/错别字/政策审查/格式检测）
+- `RequirementGenerator` — 需求生成器
+- `ReviewItemGenerator` — 评审项生成器
+- `TextOptimizer` — 文本优化器
+- `ModelRouter` + `DynamicChatClientFactory` — 动态模型路由
 
 ## 4. 当前关键表
 
@@ -90,21 +119,22 @@
 
 | 表名 | 用途 |
 |------|------|
-| `tb_project` | 项目表，存储 `project_code` / `project_name` / `project_category` / `project_type` / `budget` / `status` / `template_id` / `requirement_id` / `requirement_source` / `requirement_content` |
+| `tb_project` | 项目表，存储 `project_code` / `project_name` / `project_category` / `project_type` / `service_sub_type` / `budget` / `status` / `current_phase` / `progress` / `template_id` / `requirement_id` / `requirement_content` / `generated_file_id` |
 | `tb_project_version` | 项目版本表，存储 `project_id` / `version_no` / `content_snapshot`(JSON) / `change_description` |
-| `tb_requirement` | 业务需求表，存储 `requirement_name` / `requirement_description` / `match_mode` / `matched_file_id` / `matched_similarity` / `content`（**无 projectId**，需求与项目通过 `tb_project.requirement_id` 单向关联） |
-| `tb_detection_record` | 检测记录表，存储 `project_id` / `detection_type` / `content_snapshot` / `result`(JSON) / `status` |
-| `tb_project_review_item` | 评审项表，存储 `project_id` / `parent_id` / `level`(1/2/3) / `item_name` / `item_content` / `sort_order` |
-| `tb_policy_file` | 用户政策文件表，存储 `file_name` / `file_category` / `applicable_category` / `file_id` / `status` |
+| `tb_requirement` | 业务需求表，存储 `requirement_name` / `project_category` / `project_type` / `service_sub_type` / `budget` / `requirement_description` / `match_mode` / `matched_file_id` / `matched_similarity` / `uploaded_file_id` / `content` / `auto_save_content` / `status` / `progress`（**无 projectId**，需求与项目通过 `tb_project.requirement_id` 单向关联） |
+| `tb_project_template` | 项目模板快照表，存储 `project_id` / `template_id` / `template_code` / `template_name` / `project_category` / `project_type` / `file_id` / `content` / `structure_definition`(JSON) / `version_no` |
+| `tb_detection_record` | 检测记录表，存储 `requirement_id` / `project_id` / `detection_type` / `content_snapshot` / `result`(JSON) / `status` / `task_id` / `policy_file_ids` / `started_at` / `completed_at` |
+| `tb_project_review_item` | 评审项表，存储 `project_id` / `parent_id` / `level` / `item_name` / `item_content` / `sort_order` / `review_type` / `score` / `max_score` / `weight` / `subjectivity` / `is_required` |
+| `tb_policy_file` | 用户政策文件表，存储 `file_name` / `file_category` / `applicable_category` / `file_id` / `file_size` / `file_type` / `description` / `user_id` / `status` |
 
 ### AI服务表（`ai_*`）
 
 | 表名 | 用途 |
 |------|------|
-| `ai_task` | AI任务表，存储 `biz_id` / `task_type` / `status` / `result` / `prompt` |
-| `ai_knowledge_document` | 知识库文档表，存储 `doc_name` / `doc_category` / `file_id` / `file_type` / `vector_collection` / `vector_ids`(JSON) |
+| `ai_task` | AI任务表，存储 `task_type` / `project_id` / `biz_id` / `biz_type` / `request_params` / `file_ids` / `status` / `result` / `error_msg` / `retry_count` / `max_retry` / `started_at` / `completed_at` / `timeout_minutes` |
+| `ai_knowledge_document` | 知识库文档表，存储 `doc_name` / `doc_category` / `file_id` / `file_type` / `content` / `vector_collection` / `vector_ids`(JSON) / `status` |
 | `ai_content_feedback` | AI内容反馈表 |
-| `ai_response_log` | AI响应日志表 |
+| `ai_response_log` | AI响应日志表，存储 `model` / `role` / `messages` / `content` / `finish_reason` / `prompt_tokens` / `completion_tokens` / `total_tokens` / `task_id` / `conversation_id` |
 
 所有表继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`ver`、`is_delete` 等）。
 
@@ -113,7 +143,7 @@
 ### 5.1 项目状态流转
 
 ```
-DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED / DETECTION_FAILED → PUBLISHED → ARCHIVED / CANCELLED
+DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED / DETECTION_FAILED / DETECTION_SKIPPED → PUBLISHED → ARCHIVED / CANCELLED
 ```
 
 - 状态流转必须在 Service 层进行校验，不允许跳过中间状态
@@ -205,6 +235,17 @@ ai:token:limit:{user_id}:{date} - String 当日Token使用量
 
 ### 7.2 使用场景
 
+AiTaskType 枚举定义了所有AI任务类型：
+- `REQUIREMENT_GENERATE`: 需求生成
+- `PROJECT_REQUIREMENT_GENERATE`: 项目需求生成
+- `REVIEW_ITEM_GENERATE`: 评审项生成
+- `DETECTION_SENSITIVE_WORD`: 敏感词检测
+- `DETECTION_TYPO`: 错别字检测
+- `DETECTION_POLICY_REVIEW`: 政策文件审查
+- `DETECTION_FORMAT_CHECK`: 格式规范检测
+- `TEXT_OPTIMIZE`: 文本优化
+
+AiUsageScenario 枚举定义模型使用场景：
 - `GENERATION`: 内容生成
 - `OPTIMIZATION`: 文本优化
 - `DETECTION`: 智能检测
@@ -212,17 +253,23 @@ ai:token:limit:{user_id}:{date} - String 当日Token使用量
 ### 7.3 模型路由
 
 ```
-任务类型 → ModelRouter → 本地模型(生成类) / 云端模型(优化/检测类)
+任务类型 → ModelRouter → DynamicChatClientFactory → 本地模型(LOCAL) / 云端模型(CLOUD) / 私有化模型(PRIVATE)
 ```
+
+- 模型路由由 `ModelRouter` + `DynamicChatClientFactory` 动态选择
+- `ModelConfigCacheService` 缓存模型配置，定期从 `sup_model_config` 刷新
+- 路由规则通过 `sup_model_route_rule` 配置主备模型
 
 ## 8. 文档生成流程
 
 ```
-Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.docx
+Word模板上传 → WordStructureParser解析模板结构 → DocumentDataAssembler组装数据 → poi-tl填充Word模板 → 导出.docx
 ```
 
-- 模板使用 Markdown 格式，便于编辑和版本管理
-- Word生成使用 poi-tl 模板引擎，保证格式保真
+- 模板使用 Word(.docx) 格式上传，通过 `WordStructureParser` 解析结构定义
+- 数据组装由 core 模块的 `DocumentDataAssembler` 完成
+- Word生成使用 file 模块的 `WordDocumentGenerator` + `WordTemplateEngine`(poi-tl)
+- 同时提供 `MarkdownTemplateEngine` 支持 Markdown 格式模板
 - 生成完成后固化版本快照到 `tb_project_version`
 
 ## 9. 排障原则

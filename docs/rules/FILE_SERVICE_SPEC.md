@@ -2,18 +2,38 @@
 
 ## 1. 定位
 
-`ele-tender-file` 提供统一文件能力，只负责文件上传、下载、查询和删除，不承接业务页面逻辑。
+`ele-ai-tender-file` 提供统一文件能力，负责文件上传、下载、查询、删除，以及文档生成引擎（Markdown→Word / Word模板→Word）。
 
 ## 2. 当前接口
 
 - `POST /api/file/upload`
 
-> `ele-tender-interaction` starter 已通过 `FileClient` 封装此接口，业务系统无需自行对接。
+> `ele-ai-tender-interaction` starter 已通过 `FileClient` 封装此接口，业务系统无需自行对接。
 
-- `POST /api/file/esign/upload`
 - `GET /api/file/download/{fileId}`
 - `GET /api/file/info/{fileId}`
 - `DELETE /api/file/delete/{fileId}`
+
+## 2.1 文档生成引擎
+
+文件模块内置文档生成引擎，供 core 模块通过内部接口调用：
+
+| 类 | 职责 |
+|----|------|
+| `MarkdownTemplateEngine` | Markdown 模板解析与渲染 |
+| `WordTemplateEngine` | Word 模板(poi-tl)填充与渲染 |
+| `WordDocumentGenerator` | Word 文档生成总控 |
+| `WordStructureParser` | Word 模板结构解析，提取占位符和结构定义 |
+
+### poi-tl 引擎约束
+
+- **必须使用原生引擎**（`Configure.builder().build()`），**禁止 `useSpringEL()`**
+  - SpringEL 通过反射访问 JavaBean 属性，对 `Map<String, Object>` 类型数据不友好
+  - 缺失字段会抛 `SpelEvaluationException: Property or field 'xxx' cannot be found`
+  - 原生引擎通过 `Map.get()` 访问数据，缺失字段返回空字符串，天然容错
+- **占位符语法**: `{{变量名}}`，支持中英文变量名（正则: `\{\{([\w一-龥]+)}}`）
+- **模板数据**: DocumentDataAssembler 组装扁平 Map，评审项转为 `List<Map<String, String>>`
+- **结构解析时机**: Support 模块创建/更新模板时自动调用 File 服务解析 Word 结构，结果存入 `structureDefinition`
 
 ## 3. 当前表
 
@@ -23,30 +43,26 @@
 |------|------|
 | `id` | 文件主键（bigint，自增，对外暴露为 `fileId`） |
 | `file_name` | 原始文件名 |
+| `file_path` | 服务端存储路径 |
 | `file_size` | 文件大小（bytes） |
 | `file_type` | 文件扩展名（如 `.pdf`） |
-| `biz_type` | 业务类型（上传时由调用方传入，用于分类存储） |
-| `storage_path` | 服务端存储路径（相对路径） |
 | `file_sha256` | 文件 SHA-256 摘要（十六进制字符串） |
-| `upload_user_id` | 上传人 ID |
-| `upload_user_name` | 上传人姓名 |
+| `biz_type` | 业务类型（上传时由调用方传入，用于分类存储） |
+
+继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`create_id`、`modify_id`、`ver`、`is_delete` 等）。
 
 继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`is_delete` 等）。
 
 ## 4. 上传约束
 
 - 通用上传必须提供 `file` 和 `bizType`
-- Esign 上传必须提供 `file`
-- Esign 上传认证 token 走请求参数 `token`，不走 `Authorization` 头
 - 默认最大文件大小 `500MB`
 
 ### 当前白名单
 
-- `.jar`
-- `.war`
-- `.zip`
-- `.tar.gz`
-- `.pdf`
+- `.doc`、`.docx`、`.pdf`
+- `.txt`、`.md`
+- `.jar`、`.war`、`.zip`、`.tar.gz`
 
 > 若接入系统配置了自定义后缀，需在 `file.storage.allowed-types` 中手动添加对应后缀。
 
@@ -56,11 +72,18 @@
 - 文件摘要统一使用 `fileSha256` / `file_sha256`（SHA-256 十六进制字符串，UTF-8 编码）
 - 文件元信息统一保存在 `file_info`
 
-## 6. 排障原则
+## 6. 内部服务调用
 
-- **文件上传失败** → 检查文件扩展名是否在白名单内、文件大小是否超过 500MB、`FILE_STORAGE_BASE_PATH` 目录是否有写权限
-- **下载 404** → 确认 `file_info.storage_path` 对应文件在磁盘上实际存在，检查 `FILE_STORAGE_BASE_PATH` 环境变量配置是否正确
-- **Esign 上传报 401** → 确认 `token` 请求参数非空且在有效期内（Esign token 走请求参数，不走 `Authorization` 头）
+core/support 模块通过 `InternalFileServiceClient` 调用 File 服务，关键约束：
+
+- **错误响应处理**: 客户端必须检查响应 `code` 字段，`code != 200` 时提取 `message` 抛出具体错误，避免误导性的"数据为空"
+- **服务间认证**: 使用 `TOKEN_TYPE_SERVICE` 类型的 JWT，密钥复用 `APP_JWT_SECRET`，服务间调用视为管理员权限
+- **新增端点**: `/api/file/structure/{fileId}`（GET）、`/api/file/generate-doc`（POST）需在 `InternalFileServiceClient` 中同步添加解析逻辑
+
+## 7. 排障原则
+
+- **文件上传失败** → 检查文件扩展名是否在白名单内、文件大小是否超过 500MB、`file.storage.base-path` 目录是否有写权限
+- **下载 404** → 确认 `file_info.file_path` 对应文件在磁盘上实际存在，检查 `file.storage.base-path` 配置是否正确
 - **fileSha256 校验失败** → 确认调用方计算方式与服务端一致（SHA-256 十六进制字符串，字节序列使用 UTF-8）
 
 日志与链路追踪规范见 [PROJECT_SPEC_FINAL.md](PROJECT_SPEC_FINAL.md)（日志中不得记录文件二进制内容，需透传 `X-Trace-Id`）。

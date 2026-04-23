@@ -16,14 +16,14 @@
 
 **后端**: `ele-ai-tender-system/` — Maven 多模块，7个模块
 
-| 模块 | 端口 | 职责 | 说明 |
+| 模块 | 端口 | 职责 | 说明   |
 |------|------|------|------|
 | `ele-ai-tender-common` | — | 公共实体、工具类、异常、统一响应 | JDK17+，依赖Spring Boot 3 |
 | `ele-ai-tender-common-interaction` | — | 交互协议 DTO/SPI/路径常量 | JDK8兼容，供第三方系统接入 |
 | `ele-ai-tender-interaction` | — | 业务系统接入 Starter | 3个子模块(core/autoconfigure/starter)，JDK8兼容，Spring Boot 2.7.18编译 |
-| `ele-ai-tender-support` | 8080 | 认证(含外部系统对接)、用户、角色、菜单、模板配置、知识库配置、模型配置与路由、系统参数、政策文件、消息通知、统计分析、访问/操作日志、版本管理 | 高度复用 ele-tender-support |
-| `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除 | 高度复用 ele-tender-file |
-| `ele-ai-tender-core` | 8082 | 项目管理、业务需求编制、AI编制任务、AI内容反馈、检测管理、评审项管理、文档生成、用户消息 | 核心业务模块 |
+| `ele-ai-tender-support` | 8080 | 认证(含外部系统对接)、用户、角色、菜单、模板配置、知识库配置、模型配置与路由、系统参数、政策文件、消息通知、统计分析、访问/操作日志、版本管理 | 支撑中心 |
+| `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除、文档生成(Markdown→Word引擎) | 含MarkdownTemplateEngine/WordTemplateEngine/WordDocumentGenerator |
+| `ele-ai-tender-core` | 8082 | 项目管理、业务需求编制、AI编制任务、AI内容反馈、检测管理、评审项管理、文档集成、用户消息、政策文件(用户级)、项目模板快照 | 核心业务模块 |
 | `ele-ai-tender-ai` | 8083 | AI对话、知识库管理、文档匹配 | 检测引擎(DetectionEngine)和模型路由(ModelRouter)在Service层 |
 
 ## 术语规范
@@ -35,10 +35,15 @@
 | 业务需求 | Requirement (TbRequirement) | tb_requirement |
 | 招标需求内容 | RequirementContent | tb_project.requirement_content |
 | 模板 | Template (SupTemplate) | sup_template |
+| 项目模板快照 | ProjectTemplate (TbProjectTemplate) | tb_project_template |
 | 知识库文档 | KnowledgeDocument | ai_knowledge_document |
 | 检测记录 | DetectionRecord (TbDetectionRecord) | tb_detection_record |
 | 评审项 | ReviewItem (TbProjectReviewItem) | tb_project_review_item |
 | AI模型配置 | ModelConfig | sup_model_config |
+| AI内容反馈 | AiContentFeedback | ai_content_feedback |
+| AI响应日志 | AiResponseLog | ai_response_log |
+| 用户政策文件 | PolicyFile (TbPolicyFile) | tb_policy_file |
+| 平台政策文件 | SupPolicyFile | sup_policy_file |
 
 **表前缀规范**: `tb_`(核心服务) / `ai_`(AI服务) / `sup_`(支撑中心) / `file_`(文件服务)
 
@@ -46,13 +51,15 @@
 
 **项目类型**: ENGINEERING(工程) / GOODS(货物) / SERVICE(服务)
 
-**项目状态流转**: DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED / DETECTION_FAILED → PUBLISHED → ARCHIVED / CANCELLED
+**项目状态流转**: DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED / DETECTION_FAILED / DETECTION_SKIPPED → PUBLISHED → ARCHIVED / CANCELLED
 
 **编制阶段流转**: BASIC_INFO(1) → REQUIREMENT(2) → REVIEW_ITEM(3) → DOCUMENT(4) → DETECTION(5)，由 PhaseFlowController 管控，详见 [PHASE_FLOW_SPEC.md](docs/rules/PHASE_FLOW_SPEC.md)
 
 **项目-需求关系**: 项目通过 `requirementId` 单向引用需求（`tb_requirement` 无 `projectId`）。进入需求阶段时，有关联需求→复制内容到 `project.requirementContent`；无关联→触发 `PROJECT_REQUIREMENT_GENERATE` AI任务。之后项目和需求再无关联，后续阶段均从 `project.requirementContent` 读取。
 
-**检测类型**: FAIRNESS(公平性) / COMPLIANCE(合规性) / TYPO(错别字) / SENSITIVE_WORD(敏感词)
+**检测类型**: SENSITIVE_WORD(敏感词) / TYPO(错别字) / POLICY_REVIEW(政策文件审查) / FORMAT_CHECK(格式规范检测)
+
+**评审类型**: COMPLIANCE(符合性审查) / TECHNICAL(技术标评审) / CREDIT(资信标评审) / COMMERCIAL(商务评审)
 
 ## 启动命令
 
@@ -124,7 +131,7 @@ mvn -pl ele-ai-tender-support -am package               # 打包单模块
 ```
 MySQL : 10.11.20.50:15005/ele_ai_tender
 Redis : 10.11.20.50:16879  db=6  password=test123
-Milvus: localhost:19530  collection=ai_tender_knowledge（向量数据库）
+Milvus: localhost:19530  database=ele_ai_tender（向量数据库）
 文件存储: /data/ele-ai-tender/files（独立存储路径）
 大模型API: DeepSeek等云端模型 + 本地微调模型
 默认管理员: admin / 123456
@@ -144,11 +151,14 @@ spring.config.import: optional:file:${user.home}/.ele-ai-tender/{module}-local.y
 ### 混合模型路由
 
 ```
-任务类型 → ModelRouter → 本地模型(生成类) / 云端模型(优化/检测类)
+任务类型 → ModelRouter → 本地模型(LOCAL) / 云端模型(CLOUD) / 私有化模型(PRIVATE)
 ```
 
-- **本地模型**: 处理大批量生成任务，降低Token成本
-- **云端模型**(DeepSeek等): 处理优化和检测任务，保证质量
+- **LOCAL(本地微调)**: 处理大批量生成任务，降低Token成本
+- **CLOUD(云端大模型)**(DeepSeek等): 处理优化和检测任务，保证质量
+- **PRIVATE(私有化部署)**: 私有化场景部署
+
+模型路由由 `ModelRouter`(ai模块) + `DynamicChatClientFactory` 动态选择，配置通过 `sup_model_config` 和 `sup_model_route_rule` 管理。
 
 ### 知识库向量化流程
 
@@ -162,14 +172,16 @@ AI助手和文本优化接口使用 SSE (Server-Sent Events) 实现流式响应�
 
 ### 文档生成
 
-Markdown模板 → flexmark-java解析 → poi-tl填充Word模板 → 导出.docx
+Word模板上传 → WordStructureParser解析模板结构 → poi-tl填充数据 → 导出.docx
+
+文档生成引擎位于 file 模块：`MarkdownTemplateEngine`、`WordTemplateEngine`、`WordDocumentGenerator`、`WordStructureParser`。core 模块通过 `DocumentDataAssembler` 组装填充数据。
 
 ### 服务调用关系
 
 - **core模块 → support模块**: 用户认证、权限校验
 - **core模块 → file模块**: 文件上传/下载
 - **ai模块 → file模块**: 知识库文件管理
-- **core模块 ↔ ai模块**: 通过 `ai_task` 表异步解耦（core写入任务 → AiTaskProcessor轮询执行 → core读取结果），无直接HTTP调用。
+- **core模块 ↔ ai模块**: 通过 `ai_task` 表异步解耦（core写入任务 → AiTaskProcessor轮询执行 → core读取结果），无直接HTTP调用。core模块的 `mybatis-plus.table-prefix` 配置为 `ai_`，但核心业务实体(TbProject等)通过 `@TableName` 显式指定 `tb_` 前缀，不受默认前缀影响。
 
 ## 文档规范
 

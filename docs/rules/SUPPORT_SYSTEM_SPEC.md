@@ -191,23 +191,23 @@
 
 | 表名 | 实体类 | 用途 |
 |------|--------|------|
-| `sup_user` | SysUser | 用户账号，`username` / `password_hash` / `real_name` / `status` |
+| `sup_user` | SysUser | 用户账号，`username` / `password` / `real_name` / `phone` / `email` / `status` / `last_login_time` |
 | `sup_role` | SysRole | 角色定义，`role_code` / `role_name` |
 | `sup_user_role` | SysUserRole | 用户角色关联 |
-| `sup_menu` | SysMenu | 菜单树，`menu_type` / `path` / `icon` / `parent_id` / `permission` |
+| `sup_menu` | SysMenu | 菜单树，`menu_type` / `menu_url` / `permission` / `icon` / `parent_id` / `sort_order` / `status` |
 | `sup_role_menu` | SysRoleMenu | 角色菜单关联 |
-| `sup_access_system` | SysAccessSystem | 外部接入系统，`app_key` / `app_secret` / `callback_url` / `callback_signature_key` |
+| `sup_access_system` | SysAccessSystem | 外部接入系统，`app_key` / `app_secret` / `expire_time` / `status` |
 | `sup_main_version` | SysMainVersion | 主版本 |
 | `sup_plugin_version` | SysPluginVersion | 插件版本 |
 | `sup_operation_log` | SysOperationLog | 操作日志（AOP切面写入） |
 | `sup_access_log` | SysAccessLog | HTTP访问日志 |
-| `sup_sys_parameter` | SysParameter | 系统参数，`param_key` / `param_value` / `param_group` |
-| `sup_policy_file` | SupPolicyFile | 平台政策文件 |
-| `sup_message` | SupMessage | 消息通知 |
+| `sup_sys_parameter` | SysParameter | 系统参数，`param_group` / `param_key` / `param_value` / `param_type` / `param_name` / `description` / `sort_order` |
+| `sup_policy_file` | SupPolicyFile | 平台政策文件，`file_name` / `file_category` / `applicable_category` / `file_id` / `file_size` / `file_type` / `description` / `status` |
+| `sup_message` | SupMessage | 消息通知，`user_id` / `title` / `content` / `message_type` / `biz_id` / `biz_type` / `is_read` / `read_time` |
 | `sup_sms_code` | SupSmsCode | 短信验证码 |
-| `sup_template` | SupTemplate | 招标文件模板 |
-| `sup_model_config` | SupModelConfig | AI模型配置 |
-| `sup_model_route_rule` | SupModelRouteRule | 模型路由规则 |
+| `sup_template` | SupTemplate | 招标文件模板，`template_code` / `template_name` / `project_category` / `project_type` / `file_id` / `content` / `structure_definition`(JSON) / `version_no` / `is_default` / `status` |
+| `sup_model_config` | SupModelConfig | AI模型配置，`model_name` / `model_type` / `provider` / `api_endpoint` / `api_key` / `model_params`(JSON) / `usage_scenario` / `is_active` / `token_usage` / `cost` |
+| `sup_model_route_rule` | SupModelRouteRule | 模型路由规则，`usage_scenario` / `primary_model_id` / `fallback_model_id` / `priority` / `is_active` |
 
 > 支撑中心还跨模块引用了 `TbProject`(tb_project) 和 `TbRequirement`(tb_requirement) 用于统计分析。
 

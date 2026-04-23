@@ -1,6 +1,6 @@
-# EleTender 编码规范
+# EleAiTender 编码规范
 
-本文档为 EleTender 项目的统一编码规范，覆盖数据库、接口、代码组织、异常处理与安全等约束。
+本文档为 EleAiTender 项目的统一编码规范，覆盖数据库、接口、代码组织、异常处理与安全等约束。
 
 > 裁定顺序：当前代码实现 > 本文档 > 历史设计讨论
 
@@ -14,10 +14,10 @@
 
 | 模块     | 前缀 | 示例                                        |
 |--------|------|-------------------------------------------|
-| 支撑中心   | `sup_` | `sup_user`、`sup_access_log`、`sup_message` |
+| 支撑中心   | `sup_` | `sup_user`、`sup_access_log`、`sup_message`、`sup_model_config` |
 | 文件服务   | `file_` | `file_info`                               |
-| 招标文件编制 | `td_` | `td_project`、`td_requirement`             |
-| AI服务   | `ai_` | `ai_task`、`ai_response_log`、`sup_model_config`  |
+| 核心业务   | `tb_` | `tb_project`、`tb_requirement`、`tb_detection_record` |
+| AI服务   | `ai_` | `ai_task`、`ai_knowledge_document`、`ai_response_log`、`ai_content_feedback` |
 
 - 新模块表前缀需先在 `PROJECT_SPEC_FINAL.md` 中登记
 
@@ -147,7 +147,7 @@ Result<Page<UserVO>> result = Result.success(page);
 | 7001–7999 | 投标文件加解密相关 |
 | 8001–8999 | AI 编制系统相关 |
 
-新增业务错误码在 `ele-tender-common` 的 `ResponseCode` 枚举中登记，并注释归属范围。
+新增业务错误码在 `ele-ai-tender-common` 的 `ResponseCode` 枚举中登记，并注释归属范围。
 
 ### 2.6 权限注解
 
@@ -188,7 +188,7 @@ fileId     文件 ID（文件相关操作）
 ### 3.1 包结构
 
 ```
-com.jy.eletender.{module}/
+com.jy.eleaitender.{module}/
 ├── config/          Spring 配置类
 ├── controller/      HTTP 控制器
 ├── service/
@@ -242,15 +242,15 @@ com.jy.eletender.{module}/
 
 | 场景 | 放哪 |
 |------|------|
-| 跨模块通用类型（非交互协议） | `ele-tender-common` |
-| 对外交互协议 DTO / SPI / 路径常量 | `ele-tender-common-interaction` |
+| 跨模块通用类型（非交互协议） | `ele-ai-tender-common` |
+| 对外交互协议 DTO / SPI / 路径常量 | `ele-ai-tender-common-interaction` |
 | 模块内部 DTO | 所在模块的 `dto/` 包 |
 | 模块内部枚举 | 所在模块的 `enums/` 包 |
 
 **单源原则**：严禁在多个模块维护同名同义的 DTO，必须引用唯一来源。
 
 **协议 DTO 约束**：
-- `ele-tender-common-interaction` 中的协议 DTO 不带 `jakarta.validation` 注解
+- `ele-ai-tender-common-interaction` 中的协议 DTO 不带 `jakarta.validation` 注解
 - 在 controller / facade 边界做显式转换（mapper），service 层不接收协议 DTO
 
 ### 3.5 事务规范
@@ -335,7 +335,7 @@ public void validate() {
 
 ### 5.3 JWT 与认证
 
-- 四个后端服务（support/file/tender-document/crypto）共享同一套 JWT 密钥
+- 四个后端服务（support/file/core/ai）共享同一套 JWT 密钥
 - 所有服务启动时必须执行 `JwtUtil.configure(secret, expiration, externalExpiration)`
 - JWT 配置推荐：
 
@@ -398,6 +398,6 @@ SignatureUtil.verify(data, signature, secret)
 | 前端路径前缀 | 目标服务 | 路径重写 |
 |-------------|----------|----------|
 | `/support-api/*` | support :8080 | `/support-api/` → `/api/` |
-| `/file-api/*` | file :8081 | 无重写 |
-| `/core-api/*` | ai-tender-core :8082 | `/core-api/` → `/api/` |
-| `/ai-api/*` | ai-tender-ai :8083 | `/ai-api/` → `/api/` |
+| `/file-api/*` | file :8081 | `/file-api/` → `/api/` |
+| `/core-api/*` | core :8082 | `/core-api/` → `/api/` |
+| `/ai-api/*` | ai :8083 | `/ai-api/` → `/api/` |

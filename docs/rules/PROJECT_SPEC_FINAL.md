@@ -16,7 +16,7 @@
 
 | 模块 | 类型 | 端口 | 详细规范 |
 |------|------|------|----------|
-| `ele-ai-tender-support-frontend` | 前端 | 5174（开发） | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
+| `ele-ai-tender-support-frontend` | 前端 | 3060（开发） | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
 | `ele-ai-tender-frontend` | 前端 | 5173（开发） | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
 | `ele-ai-tender-common` | 公共库 | — | — |
 | `ele-ai-tender-common-interaction` | 协议库 | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
@@ -43,22 +43,26 @@
 - 交互协议 DTO、SPI、路径常量 → `ele-ai-tender-common-interaction`（单源，禁止复制）
 - controller / facade 边界通过 mapper 显式转换，service 层不直接透传协议 DTO
 - 协议 DTO 不放 `jakarta/javax.validation` 注解
-- core模块负责业务编排，ai模块负责AI能力提供，通过HTTP调用通信
+- core模块负责业务编排，ai模块负责AI能力提供，通过 `ai_task` 表异步解耦（core写入任务 → AiTaskProcessor轮询执行 → core读取结果），无直接HTTP调用
 
 ## 5. 表前缀
 
 | 模块 | 前缀 | 说明 |
 |------|------|------|
-| 支撑中心 | `sup_*` | 用户、角色、菜单、日志等 |
+| 支撑中心 | `sup_*` | 用户、角色、菜单、日志、模板、模型配置、路由规则、消息、政策文件等 |
 | 文件服务 | `file_*` | 文件信息 |
-| AI编制系统 | `ai_*` | 项目、需求、模板、知识库、检测记录、评审项、模型配置 |
+| 核心业务 | `tb_*` | 项目、需求、检测记录、评审项、项目模板快照、用户政策文件 |
+| AI服务 | `ai_*` | AI任务、知识库文档、AI响应日志、AI内容反馈 |
 
 ## 6. 关键接口清单
 
 ### 支撑中心（`/api`）
 - `/auth/*`、`/users/*`、`/roles/*`、`/menus/*`
-- `/templates/*`、`/knowledge/*`、`/statistics/*`
-- `/ai-config/*`、`/access-logs`、`/messages/*`
+- `/v1/template-configs/*`、`/v1/knowledge-configs/*`、`/v1/statistics/*`
+- `/v1/model-configs/*`、`/v1/model-routes/*`、`/access-logs`、`/v1/messages/*`
+- `/v1/policy-files/*`、`/v1/sys-params/*`、`/versions/*`
+- `/external-systems/*`、`/external/*`
+- `/v1/operation-logs/*`
 
 ### 文件服务（`/api/file`）
 - `POST /upload`、`GET /download/{fileId}`
@@ -69,10 +73,17 @@
 - `/requirements/*` — 业务需求
 - `/review-items/*` — 评审项
 - `/templates/*` — 模板管理
+- `/detections/*` — 检测管理
+- `/document-integration/*` — 文档集成
+- `/project-templates/*` — 项目模板快照
+- `/policy-files/*` — 用户政策文件
+- `/ai-tasks/*` — AI任务管理
+- `/ai-content-feedback/*` — AI内容反馈
+- `/user-messages/*` — 用户消息
 
 ### AI服务（`/api/v1`）
-- `/ai/*` — AI助手、文本优化、生成
-- `/detection/*` — 智能检测
+- `/ai/*` — AI助手对话、文本优化、生成
+- `/document-match/*` — 文档匹配
 - `/knowledge/*` — 知识库检索
 
 ### 交互固定路径（`/api/eleAiTender/interaction`）
@@ -104,7 +115,7 @@
 | 前端路径前缀 | 目标 |
 |-------------|------|
 | `/support-api/*` | support :8080（rewrite → `/api/*`） |
-| `/file-api/*` | file :8081 |
+| `/file-api/*` | file :8081（rewrite → `/api/*`） |
 | `/core-api/*` | core :8082（rewrite → `/api/*`） |
 | `/ai-api/*` | ai :8083（rewrite → `/api/*`） |
 
