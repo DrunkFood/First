@@ -11,10 +11,18 @@ import com.jy.eleaitender.core.service.IRequirementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 业务需求控制器
@@ -157,5 +165,19 @@ public class RequirementController {
     public Result<Void> finishDetection(@PathVariable Long id) {
         requirementService.finishDetection(id);
         return Result.success();
+    }
+
+    @GetMapping("/{id}/export")
+    @RequireLogin
+    @Operation(summary = "导出需求文档")
+    public ResponseEntity<Resource> exportDocument(@PathVariable Long id) {
+        byte[] bytes = requirementService.exportDocument(id);
+        TbRequirement req = requirementService.getById(id);
+        String fileName = URLEncoder.encode(req.getRequirementName(), StandardCharsets.UTF_8) + ".docx";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .body(new ByteArrayResource(bytes));
     }
 }

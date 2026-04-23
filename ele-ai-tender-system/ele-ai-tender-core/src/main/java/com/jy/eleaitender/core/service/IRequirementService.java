@@ -93,4 +93,9 @@ public interface IRequirementService {
      * 获取匹配文件列表
      */
     List<MatchFileVO> getMatchFiles(Long requirementId, String keyword);
+
+    /**
+     * 导出需求文档（Markdown→Word）
+     */
+    byte[] exportDocument(Long id);
 }

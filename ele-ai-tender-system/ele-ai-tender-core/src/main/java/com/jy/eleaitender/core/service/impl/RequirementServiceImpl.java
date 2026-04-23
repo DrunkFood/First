@@ -13,6 +13,8 @@ import com.jy.eleaitender.common.enums.DetectionType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
+import com.jy.eleaitender.core.engine.MarkdownTemplateEngine;
+import com.jy.eleaitender.core.engine.WordDocumentGenerator;
 import com.jy.eleaitender.core.mapper.AiKnowledgeDocumentMapper;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbRequirementMapper;
@@ -49,6 +51,12 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Autowired
     private TbDetectionRecordMapper detectionRecordMapper;
+
+    @Autowired
+    private MarkdownTemplateEngine markdownTemplateEngine;
+
+    @Autowired
+    private WordDocumentGenerator wordDocumentGenerator;
 
     private static final DetectionType[] ALL_DETECTION_TYPES = {
             DetectionType.SENSITIVE_WORD,
@@ -368,6 +376,14 @@ public class RequirementServiceImpl implements IRequirementService {
             parts.add("同类型文档");
         }
         return String.join("、", parts);
+    }
+
+    @Override
+    public byte[] exportDocument(Long id) {
+        TbRequirement req = getById(id);
+        String html = markdownTemplateEngine.markdownToHtml(req.getContent());
+        Map<String, Object> data = Map.of("projectName", req.getRequirementName());
+        return wordDocumentGenerator.generate(data, html);
     }
 
 }
