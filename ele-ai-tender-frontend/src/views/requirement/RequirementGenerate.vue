@@ -507,7 +507,8 @@ async function handleExport() {
 
 // ---- 下一步 ----
 function handleNextStep() {
-  if (!content.value) {
+  const hasContent = content.value || requirementData.value.content
+  if (!hasContent && requirementData.value.status !== 'COMPLETED') {
     ElMessage.warning('请先生成需求内容')
     return
   }
