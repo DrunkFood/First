@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { renderAsync } from 'docx-preview'
@@ -29,12 +29,21 @@ const props = withDefaults(defineProps<{
 
 const loading = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
+let cancelled = false
+
+onBeforeUnmount(() => {
+  cancelled = true
+  if (containerRef.value) {
+    containerRef.value.innerHTML = ''
+  }
+})
 
 const renderDocx = async (fileId: number) => {
   loading.value = true
   try {
     const blob = await fileApi.download(fileId) as unknown as Blob
     await nextTick()
+    if (cancelled) return
     if (containerRef.value) {
       containerRef.value.innerHTML = ''
       await renderAsync(blob, containerRef.value, undefined, {
@@ -51,6 +60,7 @@ const renderDocx = async (fileId: number) => {
       })
     }
   } catch (e) {
+    if (cancelled) return
     console.error('Word文档渲染失败:', e)
     ElMessage.warning('Word文档渲染失败，请使用下载功能查看')
   } finally {
@@ -61,8 +71,11 @@ const renderDocx = async (fileId: number) => {
 watch(() => props.fileId, (newId) => {
   if (newId) {
     renderDocx(newId)
-  } else if (containerRef.value) {
-    containerRef.value.innerHTML = ''
+  } else {
+    loading.value = false
+    if (containerRef.value) {
+      containerRef.value.innerHTML = ''
+    }
   }
 }, { immediate: true })
 </script>

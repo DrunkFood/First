@@ -18,7 +18,9 @@
     </template>
 
     <div v-loading="loading" class="document-preview">
-      <div v-if="previewData" class="preview-content" v-html="previewData.htmlContent"></div>
+      <template v-if="integrated && fileId">
+        <DocxPreview :file-id="fileId" />
+      </template>
       <el-empty v-else-if="!loading" description="暂无文档内容" />
     </div>
   </el-dialog>
@@ -30,7 +32,7 @@ import { ElMessage } from 'element-plus'
 import { Download, Printer, Close } from '@element-plus/icons-vue'
 import { documentApi } from '@/api/document'
 import { fileApi } from '@/api/file'
-import type { DocumentPreviewVO } from '@/types/document'
+import DocxPreview from '@/components/document/DocxPreview.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -44,15 +46,21 @@ defineEmits<{
 
 const loading = ref(false)
 const downloadLoading = ref(false)
-const previewData = ref<DocumentPreviewVO | null>(null)
+const fileId = ref<number | null>(null)
+const integrated = ref(false)
+const projectName = ref('文档')
 
 async function handleOpen() {
   if (!props.projectId) return
   loading.value = true
   try {
-    previewData.value = await documentApi.getPreview(props.projectId)
+    const data = await documentApi.getPreview(props.projectId)
+    fileId.value = data.generatedFileId
+    integrated.value = data.integrated
+    projectName.value = data.projectName || '文档'
   } catch {
-    previewData.value = null
+    fileId.value = null
+    integrated.value = false
     ElMessage.error('获取文档预览失败')
   } finally {
     loading.value = false
@@ -60,17 +68,18 @@ async function handleOpen() {
 }
 
 async function handleDownload() {
-  if (!props.generatedFileId) {
+  const targetFileId = fileId.value || props.generatedFileId
+  if (!targetFileId) {
     ElMessage.warning('文档尚未生成，无法下载')
     return
   }
   downloadLoading.value = true
   try {
-    const blob = await fileApi.download(props.generatedFileId)
+    const blob = await fileApi.download(targetFileId)
     const url = window.URL.createObjectURL(blob as Blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${previewData.value?.projectName || '文档'}.docx`
+    link.download = `${projectName.value}.docx`
     link.click()
     window.URL.revokeObjectURL(url)
     ElMessage.success('文档下载成功')
@@ -82,19 +91,7 @@ async function handleDownload() {
 }
 
 function handlePrint() {
-  const contentEl = document.querySelector('.preview-content')
-  if (!contentEl) return
-  const printWindow = window.open('', '_blank')
-  if (!printWindow) return
-  printWindow.document.write(`
-    <html>
-      <head><title>打印预览</title></head>
-      <body>${contentEl.innerHTML}</body>
-    </html>
-  `)
-  printWindow.document.close()
-  printWindow.print()
-  printWindow.close()
+  window.print()
 }
 </script>
 
@@ -115,28 +112,5 @@ function handlePrint() {
 }
 .document-preview {
   min-height: 400px;
-}
-.preview-content {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
-  background: var(--app-bg-primary);
-  line-height: 1.8;
-  color: var(--app-text-primary);
-}
-.preview-content :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 12px 0;
-}
-.preview-content :deep(td),
-.preview-content :deep(th) {
-  border: 1px solid var(--app-border-medium);
-  padding: 8px 12px;
-}
-.preview-content :deep(h1),
-.preview-content :deep(h2),
-.preview-content :deep(h3) {
-  margin: 16px 0 8px;
 }
 </style>

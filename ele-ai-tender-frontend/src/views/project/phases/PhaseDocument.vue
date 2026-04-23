@@ -151,16 +151,7 @@
       </div>
 
       <!-- Word文档预览内容 -->
-      <div
-        ref="docxPreviewContainer"
-        class="preview-content docx-preview-container"
-        :style="{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }"
-      />
-      <!-- docx-preview渲染时的加载状态 -->
-      <div v-if="isDocxLoading" class="docx-loading">
-        <el-icon class="is-loading" :size="24"><Loading /></el-icon>
-        <span>文档加载中...</span>
-      </div>
+      <DocxPreview :file-id="preview?.generatedFileId ?? null" :zoom="zoomLevel" />
     </div>
 
     <!-- 未集成时显示空状态 -->
@@ -251,16 +242,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Document, Loading } from '@element-plus/icons-vue'
-import { renderAsync } from 'docx-preview'
+import { Document } from '@element-plus/icons-vue'
+import DocxPreview from '@/components/document/DocxPreview.vue'
 import { documentApi } from '@/api/document'
 import { fileApi } from '@/api/file'
 import { policyFileApi } from '@/api/policy-file'
 import { projectApi } from '@/api/project'
-import { toWanYuan } from '@/utils/budget'
-import { PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
+import { PROJECT_CATEGORY_MAP } from '@/constants/status-maps'
 import type { DocumentPreviewVO } from '@/types/document'
 import type { KnowledgeDocumentPolicyVO, PolicyFileVO } from '@/types/policy-file'
 import type { ProjectInfo } from '@/types/project'
@@ -269,13 +259,10 @@ const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const preview = ref<DocumentPreviewVO | null>(null)
-const markdownContent = ref('')
 const isIntegrating = ref(false)
-const isDocxLoading = ref(false)
 const showTocPanel = ref(false)
 const zoomLevel = ref(100)
 const policyModalVisible = ref(false)
-const docxPreviewContainer = ref<HTMLElement | null>(null)
 
 // --- 文档目录 ---
 const tocData = [
@@ -363,86 +350,15 @@ const handleConfirmPolicyFiles = async () => {
   }
 }
 
-// --- 变量替换 ---
-interface VariableItem { key: string; label: string; value: string }
-const variables = ref<VariableItem[]>([])
-
-const initVariables = () => {
-  if (!project.value) return
-  variables.value = [
-    { key: 'projectName', label: '项目名称', value: project.value.projectName || '' },
-    { key: 'projectCategory', label: '项目类别', value: PROJECT_CATEGORY_MAP[project.value.projectCategory || '']?.label || project.value.projectCategory || '' },
-    { key: 'projectType', label: '项目类型', value: PROJECT_TYPE_MAP[project.value.projectType || '']?.label || project.value.projectType || '' },
-    { key: 'budget', label: '预算金额(万元)', value: project.value.budget ? String(toWanYuan(project.value.budget)) : '' },
-    { key: 'tenderUnit', label: '招标单位', value: project.value.tenderUnit || '' },
-    { key: 'contactPerson', label: '联系人', value: project.value.contactPerson || '' },
-    { key: 'contactPhone', label: '联系电话', value: project.value.contactPhone || '' },
-    { key: 'projectDescription', label: '项目描述', value: project.value.projectDescription || '' },
-  ]
-}
-
-const handleApplyVariables = () => {
-  let result = markdownContent.value
-  for (const v of variables.value) {
-    const regex = new RegExp(`\\{\\{${v.key}\\}\\}`, 'g')
-    result = result.replace(regex, v.value)
-  }
-  markdownContent.value = result
-  ElMessage.success('变量替换完成，请检查内容后保存')
-}
-
 // --- 文档操作 ---
 const loadPreview = async () => {
   preview.value = await documentApi.getPreview(props.projectId)
-  if (preview.value?.markdownContent) {
-    markdownContent.value = preview.value.markdownContent
-  }
-  // 如果已集成且有generatedFileId，渲染Word文档
-  if (preview.value?.integrated && preview.value?.generatedFileId) {
-    await renderDocxPreview(preview.value.generatedFileId)
-  }
-}
-
-/** 使用docx-preview渲染Word文档 */
-const renderDocxPreview = async (fileId: number) => {
-  isDocxLoading.value = true
-  try {
-    const blob = await fileApi.download(fileId) as unknown as Blob
-    await nextTick()
-    if (docxPreviewContainer.value) {
-      docxPreviewContainer.value.innerHTML = ''
-      await renderAsync(blob, docxPreviewContainer.value, undefined, {
-        className: 'docx-preview-wrapper',
-        inWrapper: true,
-        ignoreWidth: false,
-        ignoreHeight: false,
-        ignoreFonts: false,
-        breakPages: true,
-        ignoreLastRenderedPageBreak: true,
-        experimental: false,
-        trimXmlDeclaration: true,
-        debug: false,
-      })
-    }
-  } catch (e) {
-    console.error('Word文档渲染失败:', e)
-    ElMessage.warning('Word文档渲染失败，请使用下载功能查看')
-  } finally {
-    isDocxLoading.value = false
-  }
 }
 
 const handleIntegrate = async () => {
   isIntegrating.value = true
   try {
     preview.value = await documentApi.integrate(props.projectId)
-    if (preview.value?.markdownContent) {
-      markdownContent.value = preview.value.markdownContent
-    }
-    // 集成完成后渲染Word文档
-    if (preview.value?.generatedFileId) {
-      await renderDocxPreview(preview.value.generatedFileId)
-    }
     ElMessage.success('文档集成完成')
   } catch {
     ElMessage.error('文档集成失败')
@@ -470,12 +386,6 @@ const handleExport = async () => {
   }
 }
 
-const handleSaveEdit = async () => {
-  await documentApi.editContent(props.projectId, markdownContent.value)
-  ElMessage.success('保存成功')
-  await loadPreview()
-}
-
 const handleSaveDraft = () => {
   ElMessage.success('草稿保存成功')
 }
@@ -486,11 +396,8 @@ const handleSubmitReview = async () => {
 
 onMounted(async () => {
   project.value = await projectApi.getById(props.projectId)
-  initVariables()
   await Promise.all([loadPreview(), loadKnowledgePolicyDocs(), loadPolicyFiles()])
 })
-
-defineExpose({ handleSaveEdit, handleApplyVariables })
 </script>
 
 <style scoped lang="scss">
@@ -764,162 +671,6 @@ defineExpose({ handleSaveEdit, handleApplyVariables })
 .toc-fade-leave-to {
   opacity: 0;
   transform: translateX(-10px);
-}
-
-// ========================================
-// 预览内容
-// ========================================
-.preview-content {
-  padding: 40px;
-  background: white;
-  color: #1a1a1a;
-  min-height: 500px;
-  line-height: 1.8;
-  overflow-y: auto;
-}
-
-// docx-preview 容器样式
-.docx-preview-container {
-  :deep(.docx-wrapper) {
-    background: white;
-    padding: 0;
-
-    .docx-wrapper > section.docx {
-      box-shadow: none;
-      margin-bottom: 0;
-      padding: 0;
-    }
-  }
-}
-
-.docx-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  gap: 12px;
-  color: var(--app-text-secondary);
-  font-size: 14px;
-}
-
-// 保留HTML预览样式（兼容降级场景）
-.html-preview-content {
-  padding: 40px;
-  background: white;
-  color: #1a1a1a;
-  min-height: 500px;
-  line-height: 1.8;
-  overflow-y: auto;
-
-  :deep(h1) {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    text-align: center;
-    color: #1a1a1a;
-  }
-
-  :deep(h2) {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    margin-top: 24px;
-    color: #1a1a1a;
-  }
-
-  :deep(h3) {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    margin-top: 20px;
-    color: #1a1a1a;
-  }
-
-  :deep(p) {
-    margin-bottom: 12px;
-    text-indent: 2em;
-  }
-
-  :deep(ul), :deep(ol) {
-    margin-left: 2em;
-    margin-bottom: 12px;
-  }
-
-  :deep(li) {
-    margin-bottom: 6px;
-  }
-
-  :deep(table) {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 16px;
-  }
-
-  :deep(th), :deep(td) {
-    border: 1px solid #ddd;
-    padding: 8px 12px;
-    text-align: left;
-    text-indent: 0;
-  }
-
-  :deep(th) {
-    background: #f5f5f5;
-    font-weight: 600;
-  }
-}
-
-.save-edit-bar {
-  padding: 16px 0;
-  display: flex;
-  justify-content: flex-end;
-}
-
-// ========================================
-// 变量替换
-// ========================================
-.variable-section {
-  padding: 16px;
-}
-
-.variable-hint {
-  color: var(--app-text-tertiary);
-  font-size: 13px;
-  margin-bottom: 16px;
-}
-
-.variable-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.variable-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.variable-label {
-  font-size: 13px;
-  color: var(--app-text-secondary);
-  font-weight: 500;
-}
-
-.variable-input {
-  padding: 8px 12px;
-  background: var(--app-input-bg);
-  border: 1px solid var(--app-border-light);
-  border-radius: 6px;
-  color: var(--app-text-primary);
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-
-  &:focus {
-    border-color: var(--app-brand-color);
-    box-shadow: 0 0 0 2px rgba(51, 108, 255, 0.1);
-  }
 }
 
 // ========================================

@@ -71,7 +71,7 @@
             <el-tooltip content="功能开发中" placement="top">
               <el-button type="warning" disabled>回传至交易系统</el-button>
             </el-tooltip>
-            <el-button type="primary" :icon="View" @click="showPreview = true">预览文档</el-button>
+            <el-button type="primary" :icon="View" :disabled="!project?.generatedFileId" @click="showPreview = true">预览文档</el-button>
             <el-button type="success" :icon="Download" @click="handleExport" :loading="exportLoading">导出文档</el-button>
           </div>
         </div>
@@ -116,7 +116,7 @@
                 </div>
               </div>
               <div class="doc-file-actions">
-                <el-button type="primary" :icon="View" @click="showPreview = true">预览</el-button>
+                <el-button type="primary" :icon="View" :disabled="!project?.generatedFileId" @click="showPreview = true">预览</el-button>
                 <el-button :icon="Download" @click="handleExport">导出</el-button>
               </div>
             </div>
