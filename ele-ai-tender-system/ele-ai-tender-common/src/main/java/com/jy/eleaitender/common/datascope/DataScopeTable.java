@@ -22,8 +22,7 @@ public final class DataScopeTable {
             "tb_project_template",
             "tb_project_version",
             "tb_detection_record",
-            "ai_task",
-            "file_info"
+            "ai_task"
     );
 
     private DataScopeTable() {

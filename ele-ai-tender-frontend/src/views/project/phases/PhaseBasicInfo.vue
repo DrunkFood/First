@@ -437,11 +437,8 @@ const handleSaveAndNext = async () => {
 
 onMounted(() => {
   loadProject()
-  if (props.readonly) {
-    loadProjectTemplate()
-  } else {
-    loadTemplates()
-  }
+  loadTemplates()
+  loadProjectTemplate()
 })
 </script>
 

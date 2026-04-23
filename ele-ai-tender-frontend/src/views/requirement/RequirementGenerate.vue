@@ -187,11 +187,16 @@
 
           <!-- 底部操作栏 -->
           <div class="form-actions">
-            <el-button @click="router.back()">返回修改</el-button>
             <el-button v-if="isRequirementCompleted" @click="router.push('/requirement')">
               返回列表
             </el-button>
-            <el-button v-else type="primary" @click="handleNextStep">
+            <el-button v-if="isRequirementCompleted" type="primary" @click="handleNextStep">
+              查看智能检测
+            </el-button>
+            <el-button v-if="!isRequirementCompleted" @click="router.push('/requirement')">
+              返回列表
+            </el-button>
+            <el-button v-if="!isRequirementCompleted" type="primary" @click="handleNextStep">
               下一步：智能检测
             </el-button>
           </div>

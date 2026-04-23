@@ -18,8 +18,20 @@
       </div>
 
       <template v-else>
+        <!-- 初始状态：需求已完成（只读） -->
+        <div v-if="notStarted && isRequirementCompleted" class="detect-card start-card">
+          <div class="start-icon">
+            <el-icon :size="48" color="var(--app-color-success)"><CircleCheck /></el-icon>
+          </div>
+          <h3 class="start-title">业务需求智能检测</h3>
+          <p class="start-desc">该需求已完成，暂无检测记录</p>
+          <div class="start-actions">
+            <el-button @click="router.push(`/requirement/generate/${requirementId}`)">返回需求</el-button>
+          </div>
+        </div>
+
         <!-- 初始状态：跳过检测 / 开始智能检测 -->
-        <div v-if="notStarted" class="detect-card start-card">
+        <div v-else-if="notStarted" class="detect-card start-card">
           <div class="start-icon">
             <el-icon :size="48" color="var(--app-brand-color)"><CircleCheck /></el-icon>
           </div>
@@ -101,13 +113,16 @@
                 </p>
               </div>
               <div class="item-actions">
-                <template v-if="issue.handleStatus === 0">
+                <template v-if="issue.handleStatus === 0 && !isRequirementCompleted">
                   <el-button size="small" type="success" @click="handleAccept(issue, idx)">
                     接受建议
                   </el-button>
                   <el-button size="small" type="danger" @click="handleReject(issue, idx)">
                     拒绝建议
                   </el-button>
+                </template>
+                <template v-else-if="issue.handleStatus === 0 && isRequirementCompleted">
+                  <el-tag type="info" size="small">未处理</el-tag>
                 </template>
                 <el-tag v-else :type="issue.handleStatus === 1 ? 'success' : 'info'" size="small">
                   {{ issue.handleStatus === 1 ? '已接受' : '已拒绝' }}
