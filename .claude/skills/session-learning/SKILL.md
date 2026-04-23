@@ -1,6 +1,6 @@
 ---
 name: session-learning
-description: "对话经验总结与 Skills 沉淀工具。在任务完成后分析对话上下文，提取有价值的经验教训，优先扩充现有 skills 而非新增。关键词: 总结, 经验, 教训, skill, 沉淀, 学习, experience, learning, refinement, 复盘"
+description: "对话经验总结与知识沉淀工具。在任务完成后分析对话上下文，提取有价值的经验教训，优先扩充现有 docs/rules/、memory/ 或 skills 而非新增。关键词: 总结, 经验, 教训, skill, 沉淀, 学习, experience, learning, refinement, 复盘"
 ---
 
 # 对话经验总结与 Skills 沉淀
@@ -15,9 +15,9 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
 
 当以下情况发生时使用此 skill：
 - 用户请求总结本轮对话的经验
-- 用户询问是否需要补充/更新 skills
+- 用户询问是否需要补充/更新 docs / memory / skills
 - 一个复杂任务成功完成后，主动询问用户是否需要沉淀经验
-- 用户使用关键词：总结经验、沉淀、学习、skill 补充
+- 用户使用关键词：总结经验、沉淀、学习、skill 补充、优化规范
 
 ---
 
@@ -32,7 +32,7 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
    - 任务是否成功完成
 
 2. **提取关键信息**：
-   - 涉及的技术领域（如 VS Code 服务、TypeScript、Rust 等）
+   - 涉及的技术领域（Spring Boot、MyBatis-Plus、Vue 3、AI、TypeScript、Rust 等）
    - 使用的工具或命令
    - 发现的最佳实践
    - 踩过的坑和解决方法
@@ -56,25 +56,15 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
    - 错误的假设
    - 需要避免的陷阱
 
-### 第三步：Skills 匹配与更新
+### 第三步：沉淀目标选择
 
-1. **浏览现有 skills**
+1. **根据经验类型选择最合适的沉淀位置**
 
-   首先列出 `.claude/skills/` 目录下的所有 skills：
-
-   ```
-   现有 skills 列表：
-   - ai-chat/           # AI 聊天功能开发
-   - ai-contribution-dev/  # AI 贡献度开发
-   - design/            # 设计组件
-   - desktop/           # 桌面应用开发
-   - log-troubleshoot/  # 日志排查
-   - meego-task/        # Meego 任务管理
-   - rust-ai-agent-dev/ # Rust AI Agent 开发
-   - vscode-platform/   # VS Code 平台层
-   - vscode-services/   # VS Code 服务层
-   - vscode-workbench-contrib/  # VS Code 工作台贡献点
-   ```
+| 优先级 | 沉淀位置 | 适用场景 | 生命周期 |
+|--------|----------|----------|----------|
+| 1️⃣ | `docs/rules/` | 系统规范级知识：模块职责、API规范、架构约束、排障原则 | 长期，随项目迭代 |
+| 2️⃣ | `memory/` | 工作经验级知识：踩坑记录、工具用法、配置技巧 | 中期，可能随环境变化过时 |
+| 3️⃣ | `.claude/skills/` | 流程级知识：可复用的工作流程、决策树 | 长期，跨会话复用 |
 
 2. **判断扩充策略**
 
@@ -88,16 +78,15 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
 
 3. **内容定位决策表**
 
-   | 经验类型 | 归属 skill | 具体位置 |
-   |----------|------------|----------|
-   | VS Code 服务使用 | vscode-services | 对应 docs/*.md |
-   | 平台层开发 | vscode-platform | 对应 docs/*.md |
-   | 工作台功能开发 | vscode-workbench-contrib | 对应 docs/*.md |
-   | UI/组件设计 | design | 对应 docs/*.md |
-   | AI 聊天功能 | ai-chat | 对应 docs/*.md |
-   | Rust Agent 开发 | rust-ai-agent-dev | 对应 docs/*.md |
-   | 桌面应用开发 | desktop | 对应 docs/*.md |
-   | 日志分析排查 | log-troubleshoot | 对应 docs/*.md |
+   | 经验类型 | 目标文件 | 更新方式 |
+   |----------|----------|----------|
+   | 编码规范、异常处理、安全 | `CODE_CONVENTIONS.md` | 补充章节或条目 |
+   | AI编制业务：需求、检测、评审项 | `AI_TENDER_SYSTEM_SPEC.md` | 更新流程描述或字段定义 |
+   | 阶段流转、触发器、PhaseFlowController | `PHASE_FLOW_SPEC.md` | 补充触发条件或状态联动 |
+   | 文件服务、文档生成引擎 | `FILE_SERVICE_SPEC.md` | 更新引擎类列表或约束 |
+   | 认证、权限、用户管理 | `SUPPORT_SYSTEM_SPEC.md` | 补充接口或流程 |
+   | 第三方系统接入 | `INTERACTION_INTEGRATION_SPEC.md` | 补充协议或配置 |
+   | 全局约束：模块、端口、日志 | `PROJECT_SPEC_FINAL.md` | 更新模块职责或配置 |
 
 ### 第四步：生成更新建议
 
@@ -118,11 +107,11 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
 ### 踩坑记录
 1. [坑点1] - [解决方案]
 
-## 📝 Skills 更新建议
+## 📝 沉淀建议
 
-### 建议更新: [skill 名称]
+### 建议更新: [沉淀知识名称]
 
-**更新类型**: 扩充 docs / 补充 SKILL.md / 新增 skill
+**更新类型**: 扩充 docs / 新增 docs / 补充 SKILL.md / 新增 skill
 **目标文件**: [具体文件路径]
 **更新内容**:
 
@@ -160,10 +149,13 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
 
 1. **不要过度总结** - 只提取真正有价值的、可复用的经验
 2. **保持简洁** - 每条经验应该简明扼要，避免冗长
-3. **优先扩充** - 始终优先考虑扩充现有 skills，而非创建新的
-4. **尊重用户** - 任何更新都必须先征得用户同意
-5. **避免重复** - 更新前检查是否已存在类似内容
-6. **保持一致** - 新内容应与现有 skill 的风格保持一致
+3. **docs/rules/ 优先** - 系统规范级知识应沉淀到 rules，而非仅存 memory
+4. **优先扩充** - 始终优先考虑扩充现有 rules / skills / memory，而非创建新的
+5. **尊重用户** - 任何更新都必须先征得用户同意
+6. **验证后再更新** - 更新 docs/rules/ 前，先 Grep 验证代码实际状态，避免"旧文档修成错文档"
+7. **最小化变更** - 只更新与经验直接相关的章节，不重写无关内容
+8. **避免重复** - 更新前检查是否已存在类似内容
+9. **保持一致** - 新内容应与现有 skill 的风格保持一致
 
 ---
 
@@ -175,6 +167,19 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
 - 简短的概述
 - 具体的代码示例
 - 注意事项或常见问题
+
+### 更新 docs/rules
+
+- 遵循现有文档的结构和风格
+- 补充具体代码示例和注意事项
+- 如果发现文档与代码不一致，**以代码为准**更新文档
+- 更新后用 Grep 验证：搜索旧错误关键词确认零残留
+
+### 更新 memory
+
+- 文件命名：小写英文 + 连字符，如 `core-doc-engine.md`
+- frontmatter 必须包含 name / description / type
+- feedback 类型加 **Why:** 和 **How to apply:** 行
 
 ### 补充 SKILL.md
 
@@ -194,3 +199,5 @@ description: "对话经验总结与 Skills 沉淀工具。在任务完成后分�
 ## 🔗 相关资源
 
 - Skills 目录: `.claude/skills/`
+- 规范文档: `docs/rules/`
+- 持久记忆: `~/.claude/projects/{project-hash}/memory/`

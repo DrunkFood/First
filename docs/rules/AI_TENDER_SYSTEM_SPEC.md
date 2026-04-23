@@ -268,8 +268,8 @@ Word模板上传 → WordStructureParser解析模板结构 → DocumentDataAssem
 
 - 模板使用 Word(.docx) 格式上传，通过 `WordStructureParser` 解析结构定义
 - 数据组装由 core 模块的 `DocumentDataAssembler` 完成
-- Word生成使用 file 模块的 `WordDocumentGenerator` + `WordTemplateEngine`(poi-tl)
-- 同时提供 `MarkdownTemplateEngine` 支持 Markdown 格式模板
+- Word生成使用 file 模块的 `WordTemplateEngine`(poi-tl) 用于项目文档模板填充
+- core 模块的 `WordDocumentGenerator` + `MarkdownTemplateEngine` 用于需求导出等场景（已从 file 模块移入）
 - 生成完成后固化版本快照到 `tb_project_version`
 
 ## 9. 排障原则

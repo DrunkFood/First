@@ -20,10 +20,10 @@
 
 | 类 | 职责 |
 |----|------|
-| `MarkdownTemplateEngine` | Markdown 模板解析与渲染 |
 | `WordTemplateEngine` | Word 模板(poi-tl)填充与渲染 |
-| `WordDocumentGenerator` | Word 文档生成总控 |
 | `WordStructureParser` | Word 模板结构解析，提取占位符和结构定义 |
+
+> **注意**: `MarkdownTemplateEngine` 和 `WordDocumentGenerator` 已移入 core 模块（`com.jy.eleaitender.core.engine`），用于需求导出等 core 内部文档生成场景。
 
 ### poi-tl 引擎约束
 

@@ -56,7 +56,7 @@
         <spring-ai.version>1.1.0</spring-ai.version>
         <milvus-sdk.version>2.3.3</milvus-sdk.version>
         <tika.version>2.9.0</tika.version>
-        <poi-tl.version>1.12.0</poi-tl.version>
+        <poi-tl.version>1.12.2</poi-tl.version>
         <jsoup.version>1.17.2</jsoup.version>
         <flexmark.version>0.64.0</flexmark.version>
     </properties>
