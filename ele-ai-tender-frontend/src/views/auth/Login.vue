@@ -79,6 +79,7 @@
           <el-form-item>
             <div class="remember-row">
               <el-checkbox v-model="rememberUsername">记住密码</el-checkbox>
+              <el-link type="primary" :underline="false" @click="showResetDialog = true">忘记密码?</el-link>
             </div>
           </el-form-item>
           <el-form-item>
@@ -142,6 +143,8 @@
         </el-form>
       </section>
     </div>
+
+    <ResetPasswordDialog v-model="showResetDialog" />
   </div>
 </template>
 
@@ -152,6 +155,7 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Lock, User, Iphone, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { authApi } from '@/api/auth'
+import ResetPasswordDialog from '@/components/common/ResetPasswordDialog.vue'
 
 const REMEMBERED_USERNAME_KEY = 'remembered_username'
 
@@ -164,6 +168,7 @@ const loading = ref(false)
 const sendingCode = ref(false)
 const countdown = ref(0)
 const rememberUsername = ref(false)
+const showResetDialog = ref(false)
 
 // 账号密码登录
 const passwordFormRef = ref<FormInstance>()
@@ -452,6 +457,9 @@ onMounted(() => {
 
 .remember-row {
   width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .submit-btn {

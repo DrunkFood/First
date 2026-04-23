@@ -26,7 +26,7 @@ public class WebConfig implements WebMvcConfigurer {
     public JwtAuthenticationFilter jwtAuthenticationFilter(StringRedisTemplate redisTemplate) {
         return new JwtAuthenticationFilter(
                 redisTemplate,
-                List.of("/api/auth/login", "/api/auth/send-sms-code", "/api/auth/phone-login", "/api/external/token", "/swagger-ui", "/v3/api-docs", "/webjars"),
+                List.of("/api/auth/login", "/api/auth/send-sms-code", "/api/auth/phone-login", "/api/auth/reset-password", "/api/external/token", "/swagger-ui", "/v3/api-docs", "/webjars"),
                 Set.of(CommonConstant.TOKEN_TYPE_INTERNAL, CommonConstant.TOKEN_TYPE_EXTERNAL)
         );
     }

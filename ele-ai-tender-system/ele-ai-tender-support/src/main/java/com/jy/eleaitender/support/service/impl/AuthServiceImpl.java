@@ -12,6 +12,7 @@ import com.jy.eleaitender.common.util.PasswordUtil;
 import com.jy.eleaitender.common.util.RsaKeyUtil;
 import com.jy.eleaitender.common.util.SignatureUtil;
 import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
+import com.jy.eleaitender.common.dto.request.ResetPasswordRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
@@ -148,6 +149,43 @@ public class AuthServiceImpl implements IAuthService {
         UserLoginResponse response = buildLoginResponse(user);
         log.info("用户[{}]通过手机验证码登录成功", user.getUsername());
         return response;
+    }
+
+    @Override
+    public void resetPasswordByPhone(ResetPasswordRequest request) {
+        // 1. 验证短信验证码
+        boolean valid = smsService.verifyCode(request.getPhone(), request.getCode());
+        if (!valid) {
+            throw new BusinessException("验证码错误或已过期");
+        }
+
+        // 2. 查询用户
+        SysUser user = userMapper.selectByPhone(request.getPhone());
+        if (user == null) {
+            throw new BusinessException("该手机号未注册");
+        }
+
+        // 3. RSA解密新密码
+        String rawPassword = RsaKeyUtil.decryptPassword(request.getKeyId(), request.getNewPassword());
+
+        // 4. 密码长度校验（RSA解密后的明文）
+        if (rawPassword.length() < 6 || rawPassword.length() > 20) {
+            throw new BusinessException("密码长度需为6-20位");
+        }
+
+        // 5. 更新密码
+        user.setPassword(PasswordUtil.encode(rawPassword));
+        userMapper.updateById(user);
+
+        // 6. 清除该用户的登录缓存，强制重新登录
+        String tokenKey = RedisKeyConstant.TOKEN_PREFIX + user.getId();
+        redisTemplate.delete(tokenKey);
+        String permissionKey = RedisKeyConstant.USER_PERMISSIONS_PREFIX + user.getId();
+        redisTemplate.delete(permissionKey);
+        String roleKey = RedisKeyConstant.USER_ROLES_PREFIX + user.getId();
+        redisTemplate.delete(roleKey);
+
+        log.info("用户[{}]通过短信验证码重置密码成功", user.getUsername());
     }
 
     /**

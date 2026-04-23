@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.controller;
 
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
+import com.jy.eleaitender.common.dto.request.ResetPasswordRequest;
 import com.jy.eleaitender.common.dto.request.SendSmsCodeRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import java.util.Map;
 
 /**
@@ -61,7 +63,8 @@ public class AuthController {
     public Result<String> sendSmsCode(@Valid @RequestBody SendSmsCodeRequest request,
                                       HttpServletRequest httpRequest) {
         String ipAddress = httpRequest.getRemoteAddr();
-        String code = smsService.sendSmsCode(request.getPhone(), "LOGIN", ipAddress);
+        String scene = StringUtils.isNotBlank(request.getScene()) ? request.getScene() : "LOGIN";
+        String code = smsService.sendSmsCode(request.getPhone(), scene, ipAddress);
         return Result.success(code); // 仅测试用，实际不返回验证码
     }
 
@@ -70,6 +73,13 @@ public class AuthController {
     public Result<UserLoginResponse> phoneLogin(@Valid @RequestBody PhoneLoginRequest request) {
         UserLoginResponse response = authService.phoneLogin(request);
         return Result.success(response);
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "短信验证码重置密码")
+    public Result<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPasswordByPhone(request);
+        return Result.success();
     }
 
     @PostMapping("/logout")

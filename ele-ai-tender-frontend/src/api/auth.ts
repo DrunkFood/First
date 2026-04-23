@@ -35,12 +35,34 @@ export const authApi = {
 
   // 发送手机验证码
   sendSmsCode(params: SendSmsCodeRequest): Promise<string> {
-    return request.post('/support-api/auth/send-sms-code', params)
+    return request.post('/support-api/auth/send-sms-code', {
+      phone: params.phone,
+      scene: params.scene || 'LOGIN',
+    })
   },
 
   // 手机验证码登录
   phoneLogin(params: PhoneLoginRequest): Promise<LoginResult> {
     return request.post('/support-api/auth/phone-login', params)
+  },
+
+  // 短信验证码重置密码
+  async resetPassword(phone: string, code: string, newPassword: string): Promise<void> {
+    const keyRes = await authApi.getPublicKey()
+    const { keyId, publicKey } = keyRes
+    const formattedKey = formatPublicKey(keyId, publicKey)
+
+    const encryptedPassword = encryptByPublicKey(formattedKey, newPassword)
+    if (!encryptedPassword) {
+      throw new Error('密码加密失败')
+    }
+
+    return request.post('/support-api/auth/reset-password', {
+      phone,
+      code,
+      keyId,
+      newPassword: encryptedPassword,
+    })
   },
 
   // 获取当前用户信息

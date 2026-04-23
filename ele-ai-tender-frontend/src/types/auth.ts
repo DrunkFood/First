@@ -11,6 +11,14 @@ export interface PhoneLoginRequest {
 
 export interface SendSmsCodeRequest {
   phone: string
+  scene?: string // LOGIN | RESET_PWD，默认 LOGIN
+}
+
+export interface ResetPasswordRequest {
+  phone: string
+  code: string
+  keyId: string
+  newPassword: string // RSA 加密后的密码
 }
 
 export interface UserInfo {

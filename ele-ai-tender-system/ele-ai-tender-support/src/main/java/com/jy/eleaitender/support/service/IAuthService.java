@@ -1,6 +1,7 @@
 package com.jy.eleaitender.support.service;
 
 import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
+import com.jy.eleaitender.common.dto.request.ResetPasswordRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueCommand;
@@ -27,6 +28,13 @@ public interface IAuthService {
      * @return 登录响应
      */
     UserLoginResponse phoneLogin(PhoneLoginRequest request);
+
+    /**
+     * 短信验证码重置密码
+     *
+     * @param request 重置密码请求
+     */
+    void resetPasswordByPhone(ResetPasswordRequest request);
 
     /**
      * 用户登出
