@@ -133,6 +133,7 @@
                 <WysiwygEditor
                   v-model="content"
                   :readonly="isRequirementCompleted"
+                  :highlights="detectionIssues"
                   class="content-editor"
                 />
               </div>
@@ -243,6 +244,7 @@ import { REQUIREMENT_TYPE_MAP } from '@/types/requirement'
 import { formatBudgetWanYuan } from '@/utils/budget'
 import type { RequirementInfo, MatchFile } from '@/types/requirement'
 import type { AiChatMessage } from '@/types/ai'
+import type { DetectionIssueVO, RequirementDetectionRecord } from '@/types/detection'
 
 const router = useRouter()
 const route = useRoute()
@@ -254,6 +256,7 @@ const requirementData = ref<Partial<RequirementInfo>>({})
 const content = ref('')
 const referenceFiles = ref<MatchFile[]>([])
 const tags = ref<Array<{ text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }>>([])
+const detectionIssues = ref<DetectionIssueVO[]>([])
 
 // ---- 状态 ----
 const saving = ref(false)
@@ -380,6 +383,9 @@ onMounted(async () => {
 
     // 生成标签
     generateTags(data)
+
+    // 加载检测记录（用于编辑器高亮）
+    loadDetectionHighlights(id)
   } catch {
     ElMessage.error('加载需求失败')
     router.back()
@@ -535,6 +541,57 @@ function handleAiMessage(msg: string) {
 
 function formatBudget(yuan?: number): string {
   return formatBudgetWanYuan(yuan)
+}
+
+// ---- 检测高亮 ----
+async function loadDetectionHighlights(reqId: number) {
+  try {
+    const records = await requirementApi.getDetectionRecords(reqId)
+    if (!records || records.length === 0) return
+
+    // 每种检测类型只取最新记录（与 RequirementDetect 逻辑一致）
+    const latestByType = new Map<string, RequirementDetectionRecord>()
+    for (const record of records) {
+      const existing = latestByType.get(record.detectionType)
+      if (!existing || record.id > existing.id) {
+        latestByType.set(record.detectionType, record)
+      }
+    }
+
+    const allIssues: DetectionIssueVO[] = []
+    for (const record of latestByType.values()) {
+      if (record.status !== 'COMPLETED' || !record.result) continue
+      const typeLabel = record.detectionType === 'TYPO' ? '错别字检查'
+        : record.detectionType === 'SENSITIVE_WORD' ? '敏感词检测' : record.detectionType
+      const parsed = parseDetectionIssues(record, typeLabel)
+      allIssues.push(...parsed)
+    }
+    detectionIssues.value = allIssues
+  } catch {
+    // 无检测记录，不处理
+  }
+}
+
+function parseDetectionIssues(record: RequirementDetectionRecord, typeName: string): DetectionIssueVO[] {
+  try {
+    const result = JSON.parse(record.result!)
+    if (!Array.isArray(result.issues)) return []
+    return result.issues.map((issue: any, i: number) => ({
+      recordId: issue.recordId || result.recordId || record.id,
+      detectionType: record.detectionType,
+      typeName,
+      description: issue.reason || issue.description || '',
+      location: issue.position || issue.location || '',
+      original: issue.original || '',
+      targeted: issue.targeted || '',
+      suggestion: issue.suggestion || '',
+      severity: issue.severity || 'MEDIUM',
+      handleStatus: issue.handleStatus ?? 0,
+      issueIndex: i,
+    }))
+  } catch {
+    return []
+  }
 }
 </script>
 

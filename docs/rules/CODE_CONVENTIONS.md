@@ -231,7 +231,7 @@ com.jy.eleaitender.{module}/
 
 **Service**（`I*Service` + `impl/`）：
 - 所有业务逻辑
-- 多写操作使用 `@Transactional`
+- 多写操作使用 `@Transactional(rollbackFor = Exception.class)`
 - **禁止**直接透传协议 DTO（先在 controller/facade 边界转换）
 
 **Mapper**：
@@ -261,8 +261,8 @@ com.jy.eleaitender.{module}/
 public void doSomething() { ... }
 ```
 
-- 只读查询**不加** `@Transactional`（或加 `readOnly = true`）
-- 避免在 `@Transactional` 方法中调用外部 HTTP 接口（影响事务时长）
+- 只读查询**不加** `@Transactional(rollbackFor = Exception.class)`（或加 `readOnly = true`）
+- 避免在 `@Transactional(rollbackFor = Exception.class)` 方法中调用外部 HTTP 接口（影响事务时长）
 
 ### 3.6 依赖管理
 

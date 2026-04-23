@@ -125,13 +125,17 @@ import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import Placeholder from '@tiptap/extension-placeholder'
+import { DetectionHighlight } from './detection-highlight'
+import type { DetectionIssueVO } from '@/types/detection'
 
 const modelValue = defineModel<string>({ default: '' })
 
 const props = withDefaults(defineProps<{
   readonly?: boolean
+  highlights?: DetectionIssueVO[]
 }>(), {
   readonly: false,
+  highlights: () => [],
 })
 
 
@@ -157,6 +161,7 @@ const editor = useEditor({
     Placeholder.configure({
       placeholder: '开始输入内容...',
     }),
+    DetectionHighlight,
   ],
   editorProps: {
     attributes: {
@@ -214,6 +219,10 @@ watch(modelValue, (newVal) => {
 watch(() => props.readonly, (val) => {
   editor.value?.setEditable(!val)
 })
+
+watch(() => props.highlights, (val) => {
+  editor.value?.commands.setDetectionHighlights(val || [])
+}, { deep: true, immediate: true })
 
 // 主题：通过 CSS 类名切换，不操作编辑器实例
 // 主题变量由 _tokens.scss 中的 [data-theme="light"] 控制
@@ -478,5 +487,88 @@ onBeforeUnmount(() => {
 
 .is-readonly .editor-content :deep(.ProseMirror) {
   min-height: unset;
+}
+
+/* ---- 检测高亮 ---- */
+.editor-content :deep(.detection-highlight) {
+  position: relative;
+  border-radius: 2px;
+  padding: 1px 0;
+  cursor: help;
+  transition: background 0.15s ease;
+}
+
+.editor-content :deep(.detection-high) {
+  background: rgba(239, 68, 68, 0.15);
+  text-decoration: underline wavy rgba(239, 68, 68, 0.8);
+  text-underline-offset: 3px;
+}
+
+.editor-content :deep(.detection-medium) {
+  background: rgba(245, 158, 11, 0.15);
+  text-decoration: underline wavy rgba(245, 158, 11, 0.8);
+  text-underline-offset: 3px;
+}
+
+.editor-content :deep(.detection-low) {
+  background: rgba(59, 130, 246, 0.12);
+  text-decoration: underline wavy rgba(59, 130, 246, 0.7);
+  text-underline-offset: 3px;
+}
+
+.editor-content :deep(.detection-highlight:hover) {
+  filter: brightness(1.2);
+}
+
+/* 检测高亮悬浮提示 */
+.editor-content :deep(.detection-highlight::after) {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: var(--app-bg-elevated);
+  color: var(--app-text-primary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  border-radius: 4px;
+  border: 1px solid var(--app-border-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  max-width: 400px;
+  white-space: pre-line;
+  word-break: break-word;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 10;
+}
+
+.editor-content :deep(.detection-highlight:hover::after) {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 提示箭头 */
+.editor-content :deep(.detection-highlight::before) {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--app-bg-elevated);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 10;
+}
+
+.editor-content :deep(.detection-highlight:hover::before) {
+  opacity: 1;
+  visibility: visible;
 }
 </style>

@@ -183,6 +183,7 @@
     <!-- 查看原文弹窗 -->
     <el-dialog v-model="originalVisible" title="查看原文" width="600px">
       <div v-if="currentOriginal" class="original-content">
+        <div v-if="currentOriginal.location" class="original-position">{{ currentOriginal.location }}</div>
         <div class="original-context" v-html="highlightedContent"></div>
       </div>
     </el-dialog>
@@ -285,21 +286,14 @@ const canReDetect = computed(() => {
   return detectCards.value.every(c => !c.taskId || TERMINAL_STATUSES.includes(c.status as AiTaskStatus) || c.completed || c.failed)
 })
 
-/** 查看原文高亮内容 */
+/** 查看原文：展示original内容并高亮 */
 const highlightedContent = computed(() => {
   if (!currentOriginal.value) return ''
   const original = currentOriginal.value.original
-  const location = currentOriginal.value.location || ''
-
   if (original) {
-    const context = location || original
-    const escapedOriginal = escapeHtml(original).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    return escapeHtml(context).replace(
-      new RegExp(`(${escapedOriginal})`, 'g'),
-      '<mark class="highlight-issue">$1</mark>'
-    )
+    return '<mark class="highlight-issue">' + escapeHtml(original) + '</mark>'
   }
-  return escapeHtml(location || currentOriginal.value.description || '无原文信息')
+  return escapeHtml(currentOriginal.value.description || '无原文信息')
 })
 
 function escapeHtml(text: string) {
@@ -863,6 +857,14 @@ function getIssueClass(issue: DetectionIssueVO): string {
 /* ---- 查看原文弹窗 ---- */
 .original-content {
   padding: 8px 0;
+}
+
+.original-position {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--app-border-light);
 }
 
 .original-context {
