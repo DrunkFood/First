@@ -1,14 +1,20 @@
 package com.jy.eleaitender.ai.processor.checker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.ai.service.FileContentService;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
+
+import static org.apache.commons.collections4.MapUtils.getLong;
+import static org.apache.commons.collections4.MapUtils.getString;
 
 /**
  * 检测引擎（编排器）
@@ -17,6 +23,9 @@ import java.util.Map;
 @Slf4j
 @Component
 public class DetectionEngine {
+
+    @Autowired
+    private FileContentService fileContentService;
 
     @Autowired
     private SensitiveWordDetector sensitiveWordDetector;
@@ -43,8 +52,20 @@ public class DetectionEngine {
         AiTaskType taskType = AiTaskType.fromCode(task.getTaskType());
         log.info("开始检测: taskId={}, type={}", task.getId(), taskType.getLabel());
 
+        StringJoiner contentJoiner = new StringJoiner("\n\n");
+
         Map<String, Object> params = parseParams(task.getRequestParams());
         String content = getString(params, "content");
+        if (StringUtils.hasText(content)) {
+            contentJoiner.add(content);
+        }
+        Long contentFileId = getLong(params, "contentFileId");
+        if (contentFileId != null) {
+            String extractContent = fileContentService.extractContent(contentFileId);
+            if (StringUtils.hasText(extractContent)) {
+                contentJoiner.add(extractContent);
+            }
+        }
 
         // 分发到具体检测器，传递任务ID和用户ID用于响应记录
         BaseDetector detector = resolveDetector(taskType);
@@ -55,7 +76,7 @@ public class DetectionEngine {
             fileIdList = task.getFileIdList();
         }
 
-        BaseDetector.DetectionResult result = detector.detect(content, params,
+        BaseDetector.DetectionResult result = detector.detect(contentJoiner.toString(), params,
                 task.getId(), task.getCreateId(), fileIdList);
 
         log.info("检测完成: taskId={}, type={}, issueCount={}, score={}",
@@ -85,11 +106,6 @@ public class DetectionEngine {
             log.warn("解析requestParams失败: {}", requestParams, e);
             return Map.of();
         }
-    }
-
-    private String getString(Map<String, Object> params, String key) {
-        Object value = params.get(key);
-        return value != null ? value.toString() : null;
     }
 
     private String toJson(BaseDetector.DetectionResult result) {

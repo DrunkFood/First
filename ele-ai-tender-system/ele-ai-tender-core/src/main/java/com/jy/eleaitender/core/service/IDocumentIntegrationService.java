@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service;
 
+import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
 
 /**
@@ -8,9 +9,9 @@ import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
 public interface IDocumentIntegrationService {
 
     /**
-     * 执行文档集成（生成预览用HTML）
+     * 执行文档集成
      */
-    DocumentPreviewVO integrate(Long projectId);
+    AiTask integrate(Long projectId);
 
     /**
      * 获取集成预览

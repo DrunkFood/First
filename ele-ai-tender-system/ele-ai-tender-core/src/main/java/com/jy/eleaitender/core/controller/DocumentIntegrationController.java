@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.controller;
 
+import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
@@ -7,13 +8,8 @@ import com.jy.eleaitender.core.service.IDocumentIntegrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -30,7 +26,7 @@ public class DocumentIntegrationController {
     @PostMapping("/integrate/{projectId}")
     @RequireLogin
     @Operation(summary = "执行文档集成")
-    public Result<DocumentPreviewVO> integrate(@PathVariable Long projectId) {
+    public Result<AiTask> integrate(@PathVariable Long projectId) {
         return Result.success(documentIntegrationService.integrate(projectId));
     }
 

@@ -1,10 +1,11 @@
 package com.jy.eleaitender.ai.processor;
 
+import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import com.jy.eleaitender.ai.processor.checker.DetectionEngine;
+import com.jy.eleaitender.ai.processor.generator.DocumentIntegration;
 import com.jy.eleaitender.ai.processor.generator.RequirementGenerator;
 import com.jy.eleaitender.ai.processor.generator.ReviewItemGenerator;
 import com.jy.eleaitender.ai.processor.generator.TextOptimizer;
-import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.exception.AiErrorContentException;
@@ -35,6 +36,9 @@ public class AiTaskProcessor {
 
     @Autowired
     private DetectionEngine detectionEngine;
+
+    @Autowired
+    private DocumentIntegration documentIntegration;
 
     @Autowired
     private TextOptimizer textOptimizer;
@@ -87,6 +91,8 @@ public class AiTaskProcessor {
                  DETECTION_TYPO,
                  DETECTION_POLICY_REVIEW,
                  DETECTION_FORMAT_CHECK -> detectionEngine.detect(task);
+            // 文档集成
+            case DOCUMENT_INTEGRATION -> documentIntegration.integration(task);
             // 文本优化
             case TEXT_OPTIMIZE -> textOptimizer.optimize(task);
         };

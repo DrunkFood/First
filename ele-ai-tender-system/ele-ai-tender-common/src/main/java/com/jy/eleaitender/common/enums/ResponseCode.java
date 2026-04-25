@@ -144,7 +144,8 @@ public enum ResponseCode {
     // 文档集成相关 9041-9049
     DOCUMENT_INTEGRATE_ERROR(9041, "文档集成失败"),
     DOCUMENT_EXPORT_ERROR(9042, "文档导出失败"),
-    OPERATION_NOT_SUPPORTED(9043, "操作暂不支持");
+    OPERATION_NOT_SUPPORTED(9043, "操作暂不支持"),
+    DOCUMENT_INTEGRATE_DUPLICATE(9044, "文档集成任务正在执行中");
 
     private final int code;
     private final String message;

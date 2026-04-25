@@ -30,6 +30,9 @@ public class TbDetectionRecord extends BaseEntity {
     @Schema(description = "检测内容快照")
     private String contentSnapshot;
 
+    @Schema(description = "检测文件id")
+    private Long contentFileId;
+
     @Schema(description = "检测结果JSON")
     private String result;
 

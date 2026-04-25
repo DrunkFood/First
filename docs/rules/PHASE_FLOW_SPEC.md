@@ -31,7 +31,7 @@ flowchart LR
 | BASIC_INFO | 1 | 无（手动录入） | projectName / projectCategory / projectType 非空 |
 | REQUIREMENT | 2 | 有关联需求→复制内容到 requirementContent；无关联→创建需求+触发 PROJECT_REQUIREMENT_GENERATE | requirementId 或 requirementContent 非空 |
 | REVIEW_ITEM | 3 | 触发AI评审项生成（从 project.requirementContent 读取需求内容） | 项目下存在评审项记录 |
-| DOCUMENT | 4 | 自动执行文档集成 | generatedFileId 非空 |
+| DOCUMENT | 4 | 创建DOCUMENT_INTEGRATION AI任务（异步，ai模块调用File服务生成Word，SyncHandler回写generatedFileId） | generatedFileId 非空 |
 | DETECTION | 5 | 自动提交智能检测（携带policyFileIds） | 状态为 DETECTION_PASSED 或 DETECTION_SKIPPED |
 
 ## 4. Phase-Status 联动规则

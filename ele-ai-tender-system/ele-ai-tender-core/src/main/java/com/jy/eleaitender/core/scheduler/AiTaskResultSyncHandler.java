@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
-import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ProjectPhase;
@@ -14,8 +14,8 @@ import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.helper.MessageHelper;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
-import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
+import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.util.DetectionResultParser;
 import lombok.extern.slf4j.Slf4j;
@@ -81,8 +81,11 @@ public class AiTaskResultSyncHandler {
             case REQUIREMENT_GENERATE -> syncRequirement(task);
             case PROJECT_REQUIREMENT_GENERATE -> syncProjectRequirement(task);
             case REVIEW_ITEM_GENERATE -> syncReviewItems(task);
-            case DETECTION_SENSITIVE_WORD, DETECTION_TYPO,
-                 DETECTION_POLICY_REVIEW, DETECTION_FORMAT_CHECK -> syncDetection(task);
+            case DOCUMENT_INTEGRATION -> syncDocumentIntegration(task);
+            case DETECTION_SENSITIVE_WORD,
+                 DETECTION_TYPO,
+                 DETECTION_POLICY_REVIEW,
+                 DETECTION_FORMAT_CHECK -> syncDetection(task);
             // TEXT_OPTIMIZE 通过SSE直接返回，无需同步到业务表
             default -> log.debug("无需同步的任务类型: {}", taskType);
         }
@@ -309,6 +312,51 @@ public class AiTaskResultSyncHandler {
             return "COMMERCIAL";
         }
         return "COMPLIANCE";
+    }
+
+    // ========== 文档集成同步 ==========
+
+    private void syncDocumentIntegration(AiTask task) {
+        Long projectId = task.getBizId();
+        TbProject project = projectMapper.selectById(projectId);
+        if (project == null) {
+            log.warn("项目不存在，跳过同步: projectId={}", projectId);
+            return;
+        }
+
+        if (!AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
+            log.info("项目文档集成任务非成功状态，不更新内容: projectId={}, taskStatus={}",
+                    projectId, task.getStatus());
+            return;
+        }
+
+        String result = task.getResult();
+        if (!StringUtils.hasText(result)) {
+            log.warn("文档集成结果为空，跳过同步: projectId={}", projectId);
+            return;
+        }
+
+        Long generatedFileId;
+        try {
+            generatedFileId = Long.valueOf(result);
+        } catch (NumberFormatException e) {
+            log.error("文档集成结果格式异常: projectId={}, result={}", projectId, result, e);
+            return;
+        }
+
+        project.setGeneratedFileId(generatedFileId);
+        projectMapper.updateById(project);
+
+        // 发送文档集成完成通知
+        Long userId = project.getCreateId();
+        if (userId != null) {
+            messageHelper.sendDocumentIntegrationNotice(userId,
+                    "项目「" + project.getProjectName() + "」文档生成完成",
+                    "招标文档已生成，请查看并确认",
+                    projectId);
+        }
+
+        log.info("同步文档集成成功: projectId={}, generatedFileId={}", projectId, generatedFileId);
     }
 
     // ========== 检测任务同步 ==========

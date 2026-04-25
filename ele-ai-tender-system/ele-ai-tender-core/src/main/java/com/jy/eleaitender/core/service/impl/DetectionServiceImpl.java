@@ -16,7 +16,6 @@ import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
-import com.jy.eleaitender.core.statemachine.PhaseFlowController;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.util.DetectionResultParser;
 import lombok.extern.slf4j.Slf4j;
@@ -73,9 +72,6 @@ public class DetectionServiceImpl implements IDetectionService {
                     .collect(Collectors.joining(","));
         }
 
-        // 文档内容快照
-        String contentSnapshot = project.getRequirementContent();
-
         Map<String, Long> taskIds = new LinkedHashMap<>();
 
         // 为每种检测类型创建检测记录 + AI任务
@@ -83,7 +79,7 @@ public class DetectionServiceImpl implements IDetectionService {
             TbDetectionRecord record = new TbDetectionRecord();
             record.setProjectId(projectId);
             record.setDetectionType(type.getCode());
-            record.setContentSnapshot(contentSnapshot);
+            record.setContentFileId(project.getGeneratedFileId());
             record.setStatus(AiTaskStatus.PENDING.getCode());
             record.setPolicyFileIds(policyFileIdStr);
             record.setStartedAt(LocalDateTime.now());
@@ -94,7 +90,7 @@ public class DetectionServiceImpl implements IDetectionService {
             params.put("projectId", projectId);
             params.put("detectionRecordId", record.getId());
             params.put("detectionType", type.getCode());
-            params.put("content", contentSnapshot);
+            params.put("contentFileId", project.getGeneratedFileId());
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
             AiTask task = aiTaskService.createTask(taskType, projectId,

@@ -1,10 +1,11 @@
 import request from '@/utils/request'
 import type { DocumentPreviewVO } from '@/types/document'
+import type { AiTaskVO } from '@/types/ai-task'
 
 export const documentApi = {
-  /** 执行文档集成 */
+  /** 执行文档集成（异步，返回AI任务） */
   integrate(projectId: number) {
-    return request.post<any, DocumentPreviewVO>(`/core-api/v1/documents/integrate/${projectId}`)
+    return request.post<any, AiTaskVO>(`/core-api/v1/documents/integrate/${projectId}`)
   },
 
   /** 获取集成预览 */

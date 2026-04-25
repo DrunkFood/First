@@ -1,13 +1,17 @@
 package com.jy.eleaitender.core.service.impl;
 
-import com.jy.eleaitender.common.client.InternalFileServiceClient;
+import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
+import com.jy.eleaitender.common.enums.AiTaskStatus;
+import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.core.dto.response.AiTaskVO;
 import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
 import com.jy.eleaitender.core.engine.DocumentDataAssembler;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDocumentIntegrationService;
 import com.jy.eleaitender.core.service.IProjectTemplateService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +30,9 @@ import java.util.Map;
 public class DocumentIntegrationServiceImpl implements IDocumentIntegrationService {
 
     @Autowired
+    private IAiTaskService aiTaskService;
+
+    @Autowired
     private TbProjectMapper projectMapper;
 
     @Autowired
@@ -34,39 +41,37 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
     @Autowired
     private IProjectTemplateService projectTemplateService;
 
-    @Autowired
-    private InternalFileServiceClient fileServiceClient;
-
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public DocumentPreviewVO integrate(Long projectId) {
+    public AiTask integrate(Long projectId) {
         TbProject project = getProjectOrThrow(projectId);
 
-        // 1. 获取项目模板
+        // 检查是否已有活跃的文档集成任务
+        AiTaskVO latestTask = aiTaskService.getLatestTask(
+                AiTaskType.DOCUMENT_INTEGRATION.getCode(), projectId, "PROJECT");
+        if (latestTask != null && isActive(latestTask)) {
+            throw new BusinessException(ResponseCode.DOCUMENT_INTEGRATE_DUPLICATE);
+        }
+
+        // 获取项目模板
         TbProjectTemplate pt = projectTemplateService.getByProjectId(projectId);
         if (pt == null || pt.getFileId() == null) {
             throw new BusinessException(ResponseCode.TEMPLATE_NOT_FOUND, "项目未绑定模板或模板无文件");
         }
 
-        // 2. 组装扁平化文档数据
-        Map<String, Object> data = dataAssembler.assemble(projectId);
+        // 组装扁平化文档数据
+        Map<String, Object> params = dataAssembler.assemble(projectId);
+        params.put("templateFileId", pt.getFileId());
+        params.put("projectName", project.getProjectName());
 
-        // 3. 调用File服务生成Word文档
-        Long generatedFileId = fileServiceClient.generateDocument(
-                pt.getFileId(), data, project.getProjectName() + ".docx");
+        return aiTaskService.createTask(AiTaskType.DOCUMENT_INTEGRATION,
+                project.getId(), project.getId(), "PROJECT", params, null);
+    }
 
-        // 4. 更新项目
-        project.setGeneratedFileId(generatedFileId);
-        projectMapper.updateById(project);
-
-        log.info("文档集成完成，项目ID: {}, 生成文件ID: {}", projectId, generatedFileId);
-
-        DocumentPreviewVO vo = new DocumentPreviewVO();
-        vo.setProjectId(projectId);
-        vo.setProjectName(project.getProjectName());
-        vo.setIntegrated(true);
-        vo.setGeneratedFileId(generatedFileId);
-        return vo;
+    private boolean isActive(AiTaskVO task) {
+        String status = task.getStatus();
+        return AiTaskStatus.PENDING.getCode().equals(status)
+                || AiTaskStatus.PROCESSING.getCode().equals(status);
     }
 
     @Override

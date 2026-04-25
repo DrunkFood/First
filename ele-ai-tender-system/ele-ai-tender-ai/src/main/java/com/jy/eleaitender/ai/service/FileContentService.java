@@ -64,7 +64,7 @@ public class FileContentService {
     /**
      * 通过文件服务下载文件并用Tika解析文本内容
      */
-    private String extractContent(Long fileId) {
+    public String extractContent(Long fileId) {
         try {
             byte[] fileBytes = fileServiceClient.download(fileId);
             if (fileBytes == null || fileBytes.length == 0) {

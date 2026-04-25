@@ -34,6 +34,13 @@ public class MessageHelper {
     }
 
     /**
+     * 发送文档集成通知
+     */
+    public void sendDocumentIntegrationNotice(Long userId, String title, String content, Long projectId) {
+        send(userId, title, content, MessageType.SYSTEM, MessageBizType.PROJECT, projectId);
+    }
+
+    /**
      * 发送警告通知
      */
     public void sendWarningNotice(Long userId, String title, String content, Long bizId) {

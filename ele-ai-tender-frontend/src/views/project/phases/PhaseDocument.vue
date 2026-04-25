@@ -48,7 +48,7 @@
           <div class="status-title">待执行文档集成</div>
           <div class="status-desc">请先选择政策文件，然后执行文档集成</div>
         </div>
-        <button v-if="!readonly" class="btn btn-primary generate-btn" :loading="isIntegrating" @click="handleIntegrate">
+        <button v-if="!readonly" class="btn btn-primary generate-btn" :disabled="isIntegrating || !canCreateNew" @click="handleIntegrate">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
@@ -250,6 +250,7 @@ import { documentApi } from '@/api/document'
 import { fileApi } from '@/api/file'
 import { policyFileApi } from '@/api/policy-file'
 import { projectApi } from '@/api/project'
+import { useLatestTask } from '@/composables/useLatestTask'
 import { PROJECT_CATEGORY_MAP } from '@/constants/status-maps'
 import type { DocumentPreviewVO } from '@/types/document'
 import type { KnowledgeDocumentPolicyVO, PolicyFileVO } from '@/types/policy-file'
@@ -259,10 +260,29 @@ const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const preview = ref<DocumentPreviewVO | null>(null)
-const isIntegrating = ref(false)
 const showTocPanel = ref(false)
 const zoomLevel = ref(100)
 const policyModalVisible = ref(false)
+
+// 文档集成AI任务状态管理
+const projectIdRef = computed(() => props.projectId)
+const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
+  'DOCUMENT_INTEGRATION',
+  projectIdRef,
+  'PROJECT',
+  (task) => {
+    // AI任务完成后，带重试刷新预览（后端同步结果可能有延迟）
+    if (task.status === 'COMPLETED') {
+      loadPreviewWithRetry()
+    } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
+      ElMessage.error('文档集成失败，请重试')
+    }
+  },
+)
+
+const isIntegrating = computed(() =>
+  latestTask.value?.status === 'PENDING' || latestTask.value?.status === 'PROCESSING'
+)
 
 // --- 文档目录 ---
 const tocData = [
@@ -355,15 +375,33 @@ const loadPreview = async () => {
   preview.value = await documentApi.getPreview(props.projectId)
 }
 
+/** 带重试的预览加载：AI任务完成后后端同步可能有延迟，最多重试3次 */
+const loadPreviewWithRetry = async (retries = 3, delayMs = 2000) => {
+  for (let i = 0; i < retries; i++) {
+    await new Promise(r => setTimeout(r, delayMs))
+    await loadPreview()
+    if (preview.value?.integrated) return
+  }
+}
+
 const handleIntegrate = async () => {
-  isIntegrating.value = true
+  // 刷新最新任务状态，确保校验是最新的
+  await refresh()
+  if (!canCreateNew.value) {
+    ElMessage.warning('文档集成任务正在处理中，请稍候')
+    return
+  }
   try {
-    preview.value = await documentApi.integrate(props.projectId)
-    ElMessage.success('文档集成完成')
-  } catch {
-    ElMessage.error('文档集成失败')
-  } finally {
-    isIntegrating.value = false
+    const task = await documentApi.integrate(props.projectId)
+    setActive(task.id)
+    ElMessage.info('文档集成任务已提交，请稍候')
+  } catch (e: any) {
+    if (e?.code === 9044) {
+      ElMessage.warning('文档集成任务正在处理中，请稍候')
+      refresh()
+      return
+    }
+    ElMessage.error('提交文档集成失败')
   }
 }
 

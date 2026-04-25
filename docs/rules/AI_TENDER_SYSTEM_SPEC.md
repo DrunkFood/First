@@ -11,7 +11,7 @@
 - 项目管理（CRUD + 版本管理 + 状态流转）
 - 业务需求编制（需求创建 + 历史匹配 + AI生成）
 - 评审项管理（三级嵌套结构）
-- 文档集成（调用 ai模块，管理生成记录）
+- 文档集成（创建AI任务，ai模块调用File服务生成Word，结果同步回写）
 - 检测管理（提交检测 + 查看结果 + 重试）
 - AI内容反馈、用户消息、用户政策文件
 - 项目模板快照
@@ -65,8 +65,9 @@
 - `PUT /detections/{projectId}/skip` — 跳过检测
 
 **文档集成**:
-- `POST /document-integration/{projectId}/generate` — 生成文档
-- `GET /document-integration/{projectId}/preview` — 预览文档
+- `POST /v1/documents/integrate/{projectId}` — 提交文档集成（异步，返回AiTask）
+- `GET /v1/documents/preview/{projectId}` — 获取集成预览
+- `PUT /v1/documents/edit/{projectId}` — 编辑集成内容（暂不支持）
 
 **项目模板快照**:
 - `GET /project-templates/{projectId}` — 获取项目模板快照
@@ -239,6 +240,7 @@ AiTaskType 枚举定义了所有AI任务类型：
 - `REQUIREMENT_GENERATE`: 需求生成
 - `PROJECT_REQUIREMENT_GENERATE`: 项目需求生成
 - `REVIEW_ITEM_GENERATE`: 评审项生成
+- `DOCUMENT_INTEGRATION`: 文档集成（调用File服务poi-tl模板引擎生成Word，不调用AI模型）
 - `DETECTION_SENSITIVE_WORD`: 敏感词检测
 - `DETECTION_TYPO`: 错别字检测
 - `DETECTION_POLICY_REVIEW`: 政策文件审查

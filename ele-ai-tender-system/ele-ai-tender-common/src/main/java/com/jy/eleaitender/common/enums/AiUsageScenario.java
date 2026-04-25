@@ -37,7 +37,8 @@ public enum AiUsageScenario {
                  PROJECT_REQUIREMENT_GENERATE,
                  REVIEW_ITEM_GENERATE -> AiUsageScenario.GENERATION;
             // 优化类任务
-            case TEXT_OPTIMIZE -> AiUsageScenario.OPTIMIZATION;
+            case DOCUMENT_INTEGRATION,
+                 TEXT_OPTIMIZE -> AiUsageScenario.OPTIMIZATION;
             // 检测类任务
             case DETECTION_SENSITIVE_WORD,
                  DETECTION_TYPO,
