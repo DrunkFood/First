@@ -34,6 +34,11 @@
 - **占位符语法**: `{{变量名}}`，支持中英文变量名（正则: `\{\{([\w一-龥]+)}}`）
 - **模板数据**: DocumentDataAssembler 组装扁平 Map，评审项转为 `List<Map<String, String>>`
 - **结构解析时机**: Support 模块创建/更新模板时自动调用 File 服务解析 Word 结构，结果存入 `structureDefinition`
+- **模板修订标记预处理**: `WordTemplateEngine.render()` 在传给 poi-tl 之前，必须先执行 `acceptAllRevisions()` 清除修订标记
+  - Word/WPS 编辑模板时可能开启修订追踪，产生的 `<w:ins>` 会包裹 `<w:r>`，使其不再是 `<w:p>` 直接子元素
+  - poi-tl compile 阶段的 `refactorRun` 合并 Run 时 `removeRun` 索引错乱，抛 `IndexOutOfBoundsException`
+  - `acceptAllRevisions()` 通过 DOM 操作解包 `<w:ins>`/`<w:moveTo>`（保留子节点）、删除 `<w:del>`/`<w:moveFrom>` 及属性变更标记（`rPrChange`/`pPrChange`/`sectPrChange` 等），等效于 Word 的"接受所有修订"
+- **poi-tl 版本**: 必须 ≥ 1.12.2（1.12.0 的 `removeRun` 有已知 Bug，1.12.2 修复了普通多 Run 拆分场景但不覆盖修订标记场景）
 
 ## 3. 当前表
 
