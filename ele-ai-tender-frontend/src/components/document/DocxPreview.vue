@@ -8,7 +8,7 @@
       v-show="!loading"
       ref="containerRef"
       class="docx-preview-content"
-      :style="{ transform: `scale(${zoom / 100})`, transformOrigin: 'top left' }"
+      :style="{ zoom: zoom / 100 }"
     />
   </div>
 </template>
@@ -97,7 +97,7 @@ watch(() => props.fileId, (newId) => {
 }
 
 .docx-preview-content {
-  min-height: 500px;
+  min-height: 200px;
 }
 
 .docx-preview-content :deep(.docx-wrapper) {

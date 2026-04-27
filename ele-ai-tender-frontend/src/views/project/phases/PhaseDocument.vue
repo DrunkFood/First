@@ -151,7 +151,9 @@
       </div>
 
       <!-- Word文档预览内容 -->
-      <DocxPreview :file-id="preview?.generatedFileId ?? null" :zoom="zoomLevel" />
+      <div class="preview-scroll-area">
+        <DocxPreview :file-id="preview?.generatedFileId ?? null" :zoom="zoomLevel" />
+      </div>
     </div>
 
     <!-- 未集成时显示空状态 -->
@@ -440,6 +442,16 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 // ========================================
+// 根容器：flex 列布局，填满 step-content
+// ========================================
+.phase-document {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+// ========================================
 // 生成状态卡片
 // ========================================
 .generation-status {
@@ -578,14 +590,20 @@ onMounted(async () => {
   border: 1px solid var(--app-border-light);
   border-radius: var(--app-radius-sm);
   background: var(--app-input-bg);
-  min-height: 600px;
+  flex: 1;
+  min-height: 200px;
+  max-height: 800px;
   position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: visible;
+}
 
-  // 工具栏以下区域裁剪
-  > .preview-content {
-    overflow-y: auto;
-  }
+.preview-scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .preview-toolbar {
