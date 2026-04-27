@@ -1,20 +1,27 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectVersion;
+import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.mapper.TbProjectVersionMapper;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 项目版本服务实现
  */
+@Slf4j
 @Service
 public class ProjectVersionServiceImpl implements IProjectVersionService {
 
@@ -23,6 +30,9 @@ public class ProjectVersionServiceImpl implements IProjectVersionService {
 
     @Autowired
     private IProjectService projectService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public List<TbProjectVersion> getByProjectId(Long projectId) {
@@ -36,9 +46,13 @@ public class ProjectVersionServiceImpl implements IProjectVersionService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TbProjectVersion createVersion(Long projectId, String contentSnapshot, String changeDescription) {
+    public TbProjectVersion createVersion(Long projectId, String changeDescription) throws JsonProcessingException {
         // 校验项目归属
-        projectService.getById(projectId);
+        TbProject project = projectService.getById(projectId);
+        String contentSnapshot = objectMapper.writeValueAsString(Map.of(
+                "generatedFileId", project.getGeneratedFileId() != null ? project.getGeneratedFileId() : 0,
+                "status", project.getStatus()
+        ));
         // 查询当前最大版本号
         LambdaQueryWrapper<TbProjectVersion> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TbProjectVersion::getProjectId, projectId);
@@ -59,6 +73,7 @@ public class ProjectVersionServiceImpl implements IProjectVersionService {
         }
 
         projectVersionMapper.insert(version);
+        log.info("检测完成版本快照创建成功: projectId={}", projectId);
         return version;
     }
 }

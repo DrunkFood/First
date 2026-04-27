@@ -1,5 +1,5 @@
 /** 检测类型（需求级只用 SENSITIVE_WORD/TYPO，项目级用全部） */
-export type DetectionType = 'SENSITIVE_WORD' | 'TYPO' | 'POLICY_REVIEW' | 'FORMAT_CHECK' | 'FAIRNESS' | 'COMPLIANCE'
+export type DetectionType = 'SENSITIVE_WORD' | 'TYPO' | 'POLICY_REVIEW' | 'FORMAT_CHECK'
 
 /** 需求级检测类型 */
 export type RequirementDetectionType = 'SENSITIVE_WORD' | 'TYPO'

@@ -16,6 +16,7 @@ import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.mapper.TbRequirementMapper;
+import com.jy.eleaitender.core.service.IProjectVersionService;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.util.DetectionResultParser;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +25,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+
+import static com.jy.eleaitender.common.util.JsonUtil.*;
 
 /**
  * AI任务结果同步处理器
@@ -52,6 +55,9 @@ public class AiTaskResultSyncHandler {
 
     @Autowired
     private MessageHelper messageHelper;
+
+    @Autowired
+    private IProjectVersionService projectVersionService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -233,7 +239,7 @@ public class AiTaskResultSyncHandler {
 
             for (JsonNode itemNode : itemsNode) {
                 // 一级分类：映射reviewType
-                String categoryName = getText(itemNode, "name");
+                String categoryName = getText(itemNode, "name", "");
                 String reviewType = mapCategoryToReviewType(categoryName);
                 int level = getInt(itemNode, "level", 1);
 
@@ -273,21 +279,20 @@ public class AiTaskResultSyncHandler {
             TbProjectReviewItem item = new TbProjectReviewItem();
             item.setProjectId(projectId);
             parentMap.put(item, parentItem); // 记录父子关系
-            item.setItemName(getText(childNode, "name"));
-            item.setItemContent(getText(childNode, "content"));
+            item.setItemName(getText(childNode, "name", ""));
+            item.setItemContent(getText(childNode, "content", ""));
             item.setLevel(getInt(childNode, "level", childLevel));
             item.setSortOrder(sortOrder[0]++);
             item.setReviewType(reviewType);
             item.setScore(getDecimal(childNode, "score"));
             item.setMaxScore(getDecimal(childNode, "maxScore"));
             item.setWeight(getDecimal(childNode, "weight"));
-            item.setSubjectivity(getText(childNode, "subjectivity"));
+            item.setSubjectivity(getText(childNode, "subjectivity", ""));
             item.setIsRequired(getBooleanAsInt(childNode, "isRequired", 1));
             items.add(item);
 
             // 递归处理更深层的children
-            parseChildren(childNode.get("children"), projectId, item,
-                    reviewType, childLevel + 1, items, sortOrder);
+            parseChildren(childNode.get("children"), projectId, item, reviewType, childLevel + 1, items, sortOrder);
         }
     }
 
@@ -470,6 +475,14 @@ public class AiTaskResultSyncHandler {
                 }
             }
 
+            // 检测完成时自动创建版本备份
+            try {
+                projectVersionService.createVersion(projectId, "检测完成自动备份(" + ProjectStatus.fromCode(project.getStatus()).getLabel() + ")");
+                log.info("检测完成版本快照创建成功: projectId={}", projectId);
+            } catch (Exception e) {
+                log.error("检测完成版本快照创建失败: projectId={}", projectId, e);
+            }
+
             // 发送检测完成通知
             Long userId = project.getCreateId();
             if (userId != null) {
@@ -487,41 +500,4 @@ public class AiTaskResultSyncHandler {
         }
     }
 
-    // ========== JSON 解析辅助 ==========
-
-    private String getText(JsonNode node, String field) {
-        JsonNode fieldNode = node.get(field);
-        return fieldNode != null && !fieldNode.isNull() ? fieldNode.asText() : null;
-    }
-
-    private int getInt(JsonNode node, String field, int defaultValue) {
-        JsonNode fieldNode = node.get(field);
-        return fieldNode != null && fieldNode.isNumber() ? fieldNode.asInt() : defaultValue;
-    }
-
-    private BigDecimal getDecimal(JsonNode node, String field) {
-        JsonNode fieldNode = node.get(field);
-        if (fieldNode != null && fieldNode.isNumber()) {
-            return fieldNode.decimalValue();
-        }
-        return null;
-    }
-
-    /**
-     * 读取布尔/数值字段并转为int（0/1）
-     * AI返回的isRequired可能是boolean(true/false)或int(0/1)
-     */
-    private int getBooleanAsInt(JsonNode node, String field, int defaultValue) {
-        JsonNode fieldNode = node.get(field);
-        if (fieldNode == null || fieldNode.isNull()) {
-            return defaultValue;
-        }
-        if (fieldNode.isBoolean()) {
-            return fieldNode.asBoolean() ? 1 : 0;
-        }
-        if (fieldNode.isNumber()) {
-            return fieldNode.asInt();
-        }
-        return defaultValue;
-    }
 }

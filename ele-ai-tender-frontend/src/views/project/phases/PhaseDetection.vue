@@ -7,8 +7,8 @@
       <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
         <el-checkbox value="SENSITIVE_WORD">敏感词检测</el-checkbox>
         <el-checkbox value="TYPO">错别字检测</el-checkbox>
-        <el-checkbox value="FAIRNESS">公平竞争检测</el-checkbox>
-        <el-checkbox value="COMPLIANCE">合规性检测</el-checkbox>
+        <el-checkbox value="POLICY_REVIEW">政策文件审查</el-checkbox>
+        <el-checkbox value="FORMAT_CHECK">格式规范检测</el-checkbox>
       </el-checkbox-group>
 
       <!-- 政策文件选择 -->
@@ -70,27 +70,30 @@ const submitted = ref(false)
 const isSubmitting = ref(false)
 const showReport = ref(false)
 const hasActiveDetection = ref(false)
+const projectStatus = ref('')
 const selectedPolicyFileIds = ref<number[]>([])
 const selectedDetectionTypes = ref<DetectionType[]>([
-  'FAIRNESS',
-  'COMPLIANCE',
+  'POLICY_REVIEW',
+  'FORMAT_CHECK',
   'TYPO',
   'SENSITIVE_WORD',
 ])
 const projectCategory = ref('')
 
-const canFinish = computed(() => submitted.value)
+const canFinish = computed(() =>
+  projectStatus.value === 'DETECTION_PASSED' || projectStatus.value === 'DETECTION_SKIPPED'
+)
 
 const loadProject = async () => {
   const project = await projectApi.getById(props.projectId)
   projectCategory.value = project.projectCategory || ''
+  projectStatus.value = project.status
   if (['DETECTING', 'DETECTION_PASSED', 'DETECTION_FAILED', 'DETECTION_SKIPPED'].includes(project.status)) {
     submitted.value = true
     if (['DETECTION_PASSED', 'DETECTION_FAILED'].includes(project.status)) {
       showReport.value = true
     }
   }
-  // 项目状态 DETECTING = 有活跃检测任务
   hasActiveDetection.value = project.status === 'DETECTING'
 }
 
@@ -122,16 +125,19 @@ const handleSubmit = async () => {
 const handleAcceptIssue = async (recordId: number, issueIndex: number) => {
   await detectionApi.accept(recordId, issueIndex)
   ElMessage.success('已接受建议')
+  await loadProject()
 }
 
 const handleRejectIssue = async (recordId: number, issueIndex: number) => {
   await detectionApi.reject(recordId, issueIndex)
   ElMessage.success('已拒绝建议')
+  await loadProject()
 }
 
 const handleAcceptAll = async () => {
   await detectionApi.acceptAll(props.projectId)
   ElMessage.success('已接受所有建议')
+  await loadProject()
 }
 
 const handleDetectionCompleted = async (_status: string) => {

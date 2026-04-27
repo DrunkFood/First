@@ -2,8 +2,8 @@ package com.jy.eleaitender.core.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jy.eleaitender.common.dto.FixReplacement;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.enums.DetectionType;
 import com.jy.eleaitender.core.dto.response.DetectionIssueVO;
@@ -13,6 +13,9 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jy.eleaitender.common.util.JsonUtil.getInt;
+import static com.jy.eleaitender.common.util.JsonUtil.getText;
 
 /**
  * 检测结果JSON解析工具类
@@ -46,18 +49,18 @@ public class DetectionResultParser {
                 JsonNode issueNode = issuesNode.get(i);
                 DetectionIssueVO vo = new DetectionIssueVO();
                 vo.setRecordId(record.getId());
-                vo.setDetectionType(getStringValue(issueNode, "detectionType", record.getDetectionType()));
+                vo.setDetectionType(getText(issueNode, "detectionType", record.getDetectionType()));
                 vo.setTypeName(getTypeName(issueNode, record.getDetectionType()));
-                vo.setLocation(getStringValue(issueNode, "position", ""));
-                vo.setOriginal(getStringValue(issueNode, "original", ""));
-                vo.setTargeted(getStringValue(issueNode, "targeted", ""));
+                vo.setLocation(getText(issueNode, "position", ""));
+                vo.setOriginal(getText(issueNode, "original", ""));
+                vo.setTargeted(getText(issueNode, "targeted", ""));
                 vo.setDescription(buildDescription(issueNode));
-                vo.setSuggestion(getStringValue(issueNode, "suggestion", ""));
-                vo.setSeverity(getStringValue(issueNode, "severity", "MEDIUM"));
-                vo.setHandleStatus(getIntValue(issueNode, "handleStatus", 0));
+                vo.setSuggestion(getText(issueNode, "suggestion", ""));
+                vo.setSeverity(getText(issueNode, "severity", "MEDIUM"));
+                vo.setHandleStatus(getInt(issueNode, "handleStatus", 0));
                 vo.setIssueIndex(i);
-                vo.setPolicyReference(getStringValue(issueNode, "policyReference", null));
-                vo.setRuleViolated(getStringValue(issueNode, "ruleViolated", null));
+                vo.setPolicyReference(getText(issueNode, "policyReference", null));
+                vo.setRuleViolated(getText(issueNode, "ruleViolated", null));
                 result.add(vo);
             }
             return result;
@@ -104,9 +107,9 @@ public class DetectionResultParser {
     /**
      * 更新指定issue的handleStatus
      *
-     * @param resultJson    原始result JSON
-     * @param issueIndex    issues数组中的索引
-     * @param handleStatus  新的handleStatus值 (0-未处理 1-已接受 2-已拒绝 3-未找到)
+     * @param resultJson   原始result JSON
+     * @param issueIndex   issues数组中的索引
+     * @param handleStatus 新的handleStatus值 (0-未处理 1-已接受 2-已拒绝 3-未找到)
      * @return 更新后的JSON字符串，失败返回原JSON
      */
     public static String updateIssueHandleStatus(String resultJson, int issueIndex, int handleStatus) {
@@ -157,7 +160,7 @@ public class DetectionResultParser {
     }
 
     private static String getTypeName(JsonNode issueNode, String defaultDetectionType) {
-        String code = getStringValue(issueNode, "detectionType", defaultDetectionType);
+        String code = getText(issueNode, "detectionType", defaultDetectionType);
         try {
             return DetectionType.fromCode(code).getLabel();
         } catch (Exception e) {
@@ -169,8 +172,8 @@ public class DetectionResultParser {
      * 拼接 original + reason 作为 description
      */
     private static String buildDescription(JsonNode issueNode) {
-        String original = getStringValue(issueNode, "original", "");
-        String reason = getStringValue(issueNode, "reason", "");
+        String original = getText(issueNode, "original", "");
+        String reason = getText(issueNode, "reason", "");
         if (StringUtils.hasText(original) && StringUtils.hasText(reason)) {
             return original + "：" + reason;
         }
@@ -192,7 +195,7 @@ public class DetectionResultParser {
             JsonNode issuesNode = root.get("issues");
             if (issuesNode != null && issuesNode.isArray()
                     && issueIndex >= 0 && issueIndex < issuesNode.size()) {
-                return getStringValue(issuesNode.get(issueIndex), field, "");
+                return getText(issuesNode.get(issueIndex), field, "");
             }
             return "";
         } catch (Exception e) {
@@ -201,13 +204,64 @@ public class DetectionResultParser {
         }
     }
 
-    private static String getStringValue(JsonNode node, String field, String defaultValue) {
-        JsonNode fieldNode = node.get(field);
-        return fieldNode != null && !fieldNode.isNull() ? fieldNode.asText(defaultValue) : defaultValue;
+    /**
+     * 从检测记录列表中提取所有已接受问题(handleStatus=1)的原文-替换对
+     *
+     * @param records 检测记录列表
+     * @return 替换对列表
+     */
+    public static List<FixReplacement> parseAcceptedReplacements(List<TbDetectionRecord> records) {
+        List<FixReplacement> replacements = new ArrayList<>();
+        for (TbDetectionRecord record : records) {
+            if (!StringUtils.hasText(record.getResult())) continue;
+            try {
+                JsonNode root = MAPPER.readTree(record.getResult());
+                JsonNode issuesNode = root.get("issues");
+                if (issuesNode == null || !issuesNode.isArray()) continue;
+                for (JsonNode issue : issuesNode) {
+                    int handleStatus = getInt(issue, "handleStatus", 0);
+                    if (handleStatus == 1) {
+                        String original = getText(issue, "original", "");
+                        String targeted = getText(issue, "targeted", "");
+                        if (StringUtils.hasText(original) && StringUtils.hasText(targeted)
+                                && !original.equals(targeted)) {
+                            FixReplacement rep = new FixReplacement();
+                            rep.setOriginal(original);
+                            rep.setTargeted(targeted);
+                            replacements.add(rep);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("解析检测替换对失败, recordId={}", record.getId(), e);
+            }
+        }
+        return replacements;
     }
 
-    private static int getIntValue(JsonNode node, String field, int defaultValue) {
-        JsonNode fieldNode = node.get(field);
-        return fieldNode != null && fieldNode.isNumber() ? fieldNode.asInt() : defaultValue;
+    /**
+     * 检查是否存在未处理的问题(handleStatus=0)
+     *
+     * @param records 检测记录列表
+     * @return true=存在未处理问题
+     */
+    public static boolean hasUnresolvedIssues(List<TbDetectionRecord> records) {
+        for (TbDetectionRecord record : records) {
+            if (!StringUtils.hasText(record.getResult())) continue;
+            try {
+                JsonNode root = MAPPER.readTree(record.getResult());
+                JsonNode issuesNode = root.get("issues");
+                if (issuesNode == null || !issuesNode.isArray()) continue;
+                for (JsonNode issue : issuesNode) {
+                    int handleStatus = getInt(issue, "handleStatus", 0);
+                    if (handleStatus == 0) {
+                        return true;
+                    }
+                }
+            } catch (Exception e) {
+                log.error("检查未处理问题失败, recordId={}", record.getId(), e);
+            }
+        }
+        return false;
     }
 }

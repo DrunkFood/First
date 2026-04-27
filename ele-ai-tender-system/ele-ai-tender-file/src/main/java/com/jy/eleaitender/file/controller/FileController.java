@@ -1,6 +1,8 @@
 package com.jy.eleaitender.file.controller;
 
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
+import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.dto.response.WordStructureVO;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.FileException;
@@ -26,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -127,5 +130,24 @@ public class FileController {
         String fileName = (String) params.get("fileName");
         Long generatedFileId = wordDocumentService.generateDocument(templateFileId, data, fileName);
         return Result.success(generatedFileId);
+    }
+
+    @PostMapping("/fix-doc")
+    @RequireLogin
+    @Operation(summary = "修复Word文档（替换文本）")
+    public Result<WordFixResultVO> fixDocument(@RequestBody Map<String, Object> params) {
+        if (params.get("fileId") == null || params.get("replacements") == null) {
+            return Result.fail(ResponseCode.PARAM_ERROR);
+        }
+        Long fileId = ((Number) params.get("fileId")).longValue();
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> replacementMaps = (List<Map<String, String>>) params.get("replacements");
+        List<FixReplacement> replacements = replacementMaps.stream().map(m -> {
+            FixReplacement r = new FixReplacement();
+            r.setOriginal(m.get("original"));
+            r.setTargeted(m.get("targeted"));
+            return r;
+        }).toList();
+        return Result.success(wordDocumentService.fixDocument(fileId, replacements));
     }
 }

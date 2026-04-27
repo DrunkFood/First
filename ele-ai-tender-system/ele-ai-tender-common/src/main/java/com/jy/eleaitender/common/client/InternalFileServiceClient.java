@@ -1,6 +1,8 @@
 package com.jy.eleaitender.common.client;
 
+import com.jy.eleaitender.common.dto.FixReplacement;
 import com.jy.eleaitender.common.dto.response.FileUploadResponse;
+import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.dto.response.WordStructureVO;
 import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.common.util.JwtUtil;
@@ -11,6 +13,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -155,7 +159,7 @@ public class InternalFileServiceClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
         addAuthHeader(headers);
 
-        Map<String, Object> params = new java.util.HashMap<>();
+        Map<String, Object> params = new HashMap<>();
         params.put("templateFileId", templateFileId);
         params.put("data", data);
         params.put("fileName", fileName);
@@ -168,6 +172,38 @@ public class InternalFileServiceClient {
         } catch (Exception e) {
             log.error("文档生成失败: templateFileId={}, error={}", templateFileId, e.getMessage(), e);
             throw new RuntimeException("文档生成失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 修复Word文档（替换文本）
+     *
+     * @param fileId       原始文件ID
+     * @param replacements 替换列表
+     * @return 修复结果
+     */
+    public WordFixResultVO fixDocument(Long fileId, List<FixReplacement> replacements) {
+        String url = properties.getBaseUrl() + "/api/file/fix-doc";
+        log.info("调用文件服务修复文档: url={}, fileId={}, replacementCount={}",
+                url, fileId, replacements.size());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        addAuthHeader(headers);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("fileId", fileId);
+        params.put("replacements", replacements);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.POST, request, String.class);
+            return parseFixResultResponse(response.getBody());
+        } catch (Exception e) {
+            log.error("文档修复失败: fileId={}, error={}", fileId, e.getMessage(), e);
+            throw new RuntimeException("文档修复失败: " + e.getMessage(), e);
         }
     }
 
@@ -254,6 +290,21 @@ public class InternalFileServiceClient {
             return ((Number) data).longValue();
         } catch (Exception e) {
             throw new RuntimeException("解析生成文件ID响应失败: " + e.getMessage(), e);
+        }
+    }
+
+    private WordFixResultVO parseFixResultResponse(String responseBody) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JavaType type = mapper.getTypeFactory()
+                    .constructParametricType(
+                            com.jy.eleaitender.common.response.Result.class,
+                            WordFixResultVO.class);
+            com.jy.eleaitender.common.response.Result<WordFixResultVO> result =
+                    mapper.readValue(responseBody, type);
+            return result.getData();
+        } catch (Exception e) {
+            throw new RuntimeException("解析文档修复响应失败: " + e.getMessage(), e);
         }
     }
 

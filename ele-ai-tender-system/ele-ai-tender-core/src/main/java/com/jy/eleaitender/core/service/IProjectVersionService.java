@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jy.eleaitender.common.entity.core.TbProjectVersion;
 
 import java.util.List;
@@ -17,5 +18,5 @@ public interface IProjectVersionService {
     /**
      * 创建版本快照
      */
-    TbProjectVersion createVersion(Long projectId, String contentSnapshot, String changeDescription);
+    TbProjectVersion createVersion(Long projectId, String changeDescription) throws JsonProcessingException;
 }

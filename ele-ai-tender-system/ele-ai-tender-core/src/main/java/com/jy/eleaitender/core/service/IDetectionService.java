@@ -50,4 +50,9 @@ public interface IDetectionService {
      * 重新检测
      */
     Map<String, Long> retry(Long projectId);
+
+    /**
+     * 检查是否所有问题已处理，如果是则自动转为 DETECTION_PASSED
+     */
+    void tryTransitionToPassed(Long projectId);
 }

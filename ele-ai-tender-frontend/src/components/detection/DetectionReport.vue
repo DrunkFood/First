@@ -92,9 +92,9 @@ const report = ref<DetectionReportVO | null>(null)
 const summaryItems = computed(() => {
   if (!report.value) return []
   const typeMap: Record<string, string> = {
-    FAIRNESS: '公平竞争检测',
-    COMPLIANCE: '合规性检查',
-    TYPO: '错别字检查',
+    POLICY_REVIEW: '政策文件审查',
+    FORMAT_CHECK: '格式规范检测',
+    TYPO: '错别字检测',
     SENSITIVE_WORD: '敏感词检测',
   }
   const grouped: Record<string, { name: string; issueCount: number }> = {}
@@ -118,9 +118,9 @@ const unresolvedCount = computed(() => {
 const groupedIssues = computed(() => {
   if (!report.value) return []
   const typeMap: Record<string, string> = {
-    FAIRNESS: '公平竞争检测',
-    COMPLIANCE: '合规性检查',
-    TYPO: '错别字检查',
+    POLICY_REVIEW: '政策文件审查',
+    FORMAT_CHECK: '格式规范检测',
+    TYPO: '错别字检测',
     SENSITIVE_WORD: '敏感词检测',
   }
   const groups: Record<string, { name: string; issues: DetectionIssueVO[] }> = {}

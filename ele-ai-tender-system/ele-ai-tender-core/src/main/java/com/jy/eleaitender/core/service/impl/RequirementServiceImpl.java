@@ -242,7 +242,7 @@ public class RequirementServiceImpl implements IRequirementService {
         String original = DetectionResultParser.getIssueField(record.getResult(), issueIndex, "original");
         String targeted = DetectionResultParser.getIssueField(record.getResult(), issueIndex, "targeted");
 
-        boolean updateFlag = false;
+        int handleStatus = 3; // 3=未找到原文
         // 自动修正：将original替换为targeted（仅替换首次出现，避免多处误替换）
         if (StringUtils.hasText(original) && StringUtils.hasText(targeted) && !original.equals(targeted)) {
             String content = requirement.getContent();
@@ -250,22 +250,14 @@ public class RequirementServiceImpl implements IRequirementService {
                 content = content.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(targeted));
                 requirement.setContent(content);
                 requirementMapper.updateById(requirement);
-
-                updateFlag = true;
+                handleStatus = 1;
             } else {
                 log.warn("接受建议时原文已不存在，跳过自动修正: requirementId={}, issueIndex={}", requirementId, issueIndex);
             }
         }
 
         // 更新handleStatus
-        String updatedJson;
-        if (updateFlag) {
-            // 更新handleStatus为1（已接受）
-            updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, 1);
-        } else {
-            // 更新handleStatus为3（未找到）
-            updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, 3);
-        }
+        String updatedJson = DetectionResultParser.updateIssueHandleStatus(record.getResult(), issueIndex, handleStatus);
         if (updatedJson != null) {
             record.setResult(updatedJson);
             detectionRecordMapper.updateById(record);

@@ -20,7 +20,7 @@ public class ProjectStateMachine {
             ProjectStatus.PENDING_DETECTION, Set.of(ProjectStatus.DETECTING, ProjectStatus.IN_PROGRESS, ProjectStatus.CANCELLED),
             ProjectStatus.DETECTING, Set.of(ProjectStatus.DETECTION_PASSED, ProjectStatus.DETECTION_FAILED, ProjectStatus.DETECTION_SKIPPED),
             ProjectStatus.DETECTION_PASSED, Set.of(ProjectStatus.PUBLISHED, ProjectStatus.IN_PROGRESS),
-            ProjectStatus.DETECTION_FAILED, Set.of(ProjectStatus.IN_PROGRESS),
+            ProjectStatus.DETECTION_FAILED, Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.DETECTION_PASSED),
             ProjectStatus.DETECTION_SKIPPED, Set.of(ProjectStatus.PUBLISHED, ProjectStatus.IN_PROGRESS),
             ProjectStatus.PUBLISHED, Set.of(ProjectStatus.ARCHIVED),
             ProjectStatus.ARCHIVED, Set.of(),

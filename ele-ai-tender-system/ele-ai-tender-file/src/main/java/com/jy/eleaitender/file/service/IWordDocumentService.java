@@ -1,7 +1,10 @@
 package com.jy.eleaitender.file.service;
 
+import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.dto.response.WordStructureVO;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,4 +29,13 @@ public interface IWordDocumentService {
      * @return 生成文件ID
      */
     Long generateDocument(Long templateFileId, Map<String, Object> data, String fileName);
+
+    /**
+     * 修复Word文档（替换文本）
+     *
+     * @param fileId       原始文件ID
+     * @param replacements 替换列表
+     * @return 修复结果
+     */
+    WordFixResultVO fixDocument(Long fileId, List<FixReplacement> replacements);
 }
