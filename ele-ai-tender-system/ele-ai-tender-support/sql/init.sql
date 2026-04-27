@@ -510,7 +510,16 @@ INSERT INTO `sup_sys_parameter` (`param_group`, `param_key`, `param_value`, `par
 ('SWITCH', 'enable_detection', 'true', 'BOOLEAN', '启用智能检测功能', '开启后系统将自动进行文档检测', 2, NOW(), NOW()),
 ('SWITCH', 'enable_notification', 'true', 'BOOLEAN', '启用消息通知', '开启后用户将收到系统消息通知', 3, NOW(), NOW()),
 ('AI_RULE', 'fairness_rules', '检查是否指定特定品牌或供应商，是否设置不合理门槛，是否存在地域限制等内容。', 'JSON', '公平竞争检测规则', 'AI公平竞争检测使用的规则文本', 1, NOW(), NOW()),
-('AI_RULE', 'compliance_rules', '检查是否符合相关法律法规要求，是否符合招标文件格式规范，是否存在遗漏必要条款等内容。', 'JSON', '合规性检查规则', 'AI合规性检查使用的规则文本', 2, NOW(), NOW());
+('AI_RULE', 'compliance_rules', '检查是否符合相关法律法规要求，是否符合招标文件格式规范，是否存在遗漏必要条款等内容。', 'JSON', '合规性检查规则', 'AI合规性检查使用的规则文本', 2, NOW(), NOW()),
+('AI_THREAD_POOL', 'ai_core_pool_size', '4', 'NUMBER', '核心线程数', 'AI任务线程池核心线程数', 1, NOW(), NOW()),
+('AI_THREAD_POOL', 'ai_max_pool_size', '8', 'NUMBER', '最大线程数', 'AI任务线程池最大线程数', 2, NOW(), NOW()),
+('AI_THREAD_POOL', 'ai_queue_capacity', '20', 'NUMBER', '任务队列容量', 'AI任务等待队列最大容量', 3, NOW(), NOW()),
+('AI_THREAD_POOL', 'ai_keep_alive_seconds', '60', 'NUMBER', '空闲线程存活时间(秒)', '超过核心线程数的空闲线程存活时间', 4, NOW(), NOW()),
+('AI_THREAD_POOL', 'ai_task_timeout_minutes', '10', 'NUMBER', '单任务超时时间(分钟)', '单个AI任务执行超时时间', 5, NOW(), NOW()),
+('AI_THREAD_POOL', 'user_max_pending_tasks', '5', 'NUMBER', '每用户最多发起任务数', '每个用户可发起的未完成AI任务上限，超过直接拒绝', 6, NOW(), NOW()),
+('AI_THREAD_POOL', 'user_max_concurrent_tasks', '2', 'NUMBER', '每用户同时执行任务数', '每个用户可同时执行的AI任务上限，超过排队等待', 7, NOW(), NOW()),
+('AI_THREAD_POOL', 'global_max_pending_tasks', '100', 'NUMBER', '全局最多发起任务数', '系统全局未完成AI任务上限，超过直接拒绝', 8, NOW(), NOW()),
+('AI_THREAD_POOL', 'global_max_concurrent_tasks', '10', 'NUMBER', '全局同时执行任务数', '系统全局可同时执行的AI任务上限，超过排队等待', 9, NOW(), NOW());
 
 
 -- =====================================================

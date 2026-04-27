@@ -7,7 +7,8 @@ public enum ParamGroup {
 
     SYSTEM("SYSTEM", "系统参数"),
     SWITCH("SWITCH", "功能开关"),
-    AI_RULE("AI_RULE", "AI检测规则");
+    AI_RULE("AI_RULE", "AI检测规则"),
+    AI_THREAD_POOL("AI_THREAD_POOL", "AI线程池");
 
     private final String code;
     private final String desc;
