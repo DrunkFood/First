@@ -80,4 +80,19 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     @Update("UPDATE ai_task SET status = 'AI_UNAVAILABLE', error_msg = #{errorMsg}, completed_at = NOW() " +
             "WHERE status = 'PROCESSING' AND is_delete = 0")
     int markAllProcessingAsAiUnavailable(@Param("errorMsg") String errorMsg);
+
+    /**
+     * 统计用户未完成任务数（PENDING + PROCESSING）
+     */
+    @DataScope(skip = true)
+    @Select("SELECT COUNT(*) FROM ai_task WHERE create_id = #{userId} " +
+            "AND status IN ('PENDING', 'PROCESSING') AND is_delete = 0")
+    int countPendingByUserId(@Param("userId") Long userId);
+
+    /**
+     * 统计全局未完成任务数（PENDING + PROCESSING）
+     */
+    @DataScope(skip = true)
+    @Select("SELECT COUNT(*) FROM ai_task WHERE status IN ('PENDING', 'PROCESSING') AND is_delete = 0")
+    int countPendingGlobal();
 }
