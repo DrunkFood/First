@@ -56,10 +56,6 @@ AI_THREAD_POOL("AI_THREAD_POOL", "AI线程池");
 在 `sup_sys_parameter` INSERT 语句末尾（第513行 `('AI_RULE', 'compliance_rules', ...)` 之后），新增9条AI_THREAD_POOL参数：
 
 ```sql
-('AI_THREAD_POOL', 'ai_core_pool_size', '4', 'NUMBER', '核心线程数', 'AI任务线程池核心线程数', 1, NOW(), NOW()),
-('AI_THREAD_POOL', 'ai_max_pool_size', '8', 'NUMBER', '最大线程数', 'AI任务线程池最大线程数', 2, NOW(), NOW()),
-('AI_THREAD_POOL', 'ai_queue_capacity', '20', 'NUMBER', '任务队列容量', 'AI任务等待队列最大容量', 3, NOW(), NOW()),
-('AI_THREAD_POOL', 'ai_keep_alive_seconds', '60', 'NUMBER', '空闲线程存活时间(秒)', '超过核心线程数的空闲线程存活时间', 4, NOW(), NOW()),
 ('AI_THREAD_POOL', 'ai_task_timeout_minutes', '10', 'NUMBER', '单任务超时时间(分钟)', '单个AI任务执行超时时间', 5, NOW(), NOW()),
 ('AI_THREAD_POOL', 'user_max_pending_tasks', '5', 'NUMBER', '每用户最多发起任务数', '每个用户可发起的未完成AI任务上限，超过直接拒绝', 6, NOW(), NOW()),
 ('AI_THREAD_POOL', 'user_max_concurrent_tasks', '2', 'NUMBER', '每用户同时执行任务数', '每个用户可同时执行的AI任务上限，超过排队等待', 7, NOW(), NOW()),
@@ -293,10 +289,9 @@ public class DynamicThreadPoolManager {
             return map;
         });
 
-        props.setCorePoolSize(getInt(paramMap, "ai_core_pool_size", 4));
-        props.setMaxPoolSize(getInt(paramMap, "ai_max_pool_size", 8));
-        props.setQueueCapacity(getInt(paramMap, "ai_queue_capacity", 20));
-        props.setKeepAliveSeconds(getInt(paramMap, "ai_keep_alive_seconds", 60));
+        props.setCorePoolSize(getInt(paramMap, "global_max_concurrent_tasks", 4));
+        props.setMaxPoolSize(getInt(paramMap, "global_max_concurrent_tasks", 8));
+        props.setQueueCapacity(getInt(paramMap, "global_max_pending_tasks", 20));
         props.setTaskTimeoutMinutes(getInt(paramMap, "ai_task_timeout_minutes", 10));
         props.setUserMaxPendingTasks(getInt(paramMap, "user_max_pending_tasks", 5));
         props.setUserMaxConcurrentTasks(getInt(paramMap, "user_max_concurrent_tasks", 2));

@@ -10,10 +10,6 @@ AI模块 `AiTaskProcessor` 使用单线程 `@Scheduled(fixedDelay=5000)` 轮询�
 
 | param_key | 含义 | 默认值 | param_type |
 |-----------|------|--------|------------|
-| `ai_core_pool_size` | 线程池核心线程数 | 4 | NUMBER |
-| `ai_max_pool_size` | 线程池最大线程数 | 8 | NUMBER |
-| `ai_queue_capacity` | 任务队列容量 | 20 | NUMBER |
-| `ai_keep_alive_seconds` | 空闲线程存活时间(秒) | 60 | NUMBER |
 | `ai_task_timeout_minutes` | 单任务超时时间(分钟) | 10 | NUMBER |
 | `user_max_pending_tasks` | 每用户最多发起任务数 | 5 | NUMBER |
 | `user_max_concurrent_tasks` | 每用户同时执行任务数 | 2 | NUMBER |

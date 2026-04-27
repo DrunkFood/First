@@ -170,10 +170,9 @@ public class DynamicThreadPoolManager {
         ));
 
         ThreadPoolProperties props = new ThreadPoolProperties();
-        props.setCorePoolSize(getInt(paramMap, "ai_core_pool_size", 4));
-        props.setMaxPoolSize(getInt(paramMap, "ai_max_pool_size", 8));
-        props.setQueueCapacity(getInt(paramMap, "ai_queue_capacity", 20));
-        props.setKeepAliveSeconds(getInt(paramMap, "ai_keep_alive_seconds", 60));
+        props.setCorePoolSize(getInt(paramMap, "global_max_concurrent_tasks", 10));
+        props.setMaxPoolSize(getInt(paramMap, "global_max_concurrent_tasks", 10));
+        props.setQueueCapacity(getInt(paramMap, "global_max_pending_tasks", 100));
         props.setTaskTimeoutMinutes(getInt(paramMap, "ai_task_timeout_minutes", 10));
         props.setUserMaxPendingTasks(getInt(paramMap, "user_max_pending_tasks", 5));
         props.setUserMaxConcurrentTasks(getInt(paramMap, "user_max_concurrent_tasks", 2));
