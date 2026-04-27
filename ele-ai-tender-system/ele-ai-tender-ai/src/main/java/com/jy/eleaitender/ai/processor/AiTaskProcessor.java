@@ -129,10 +129,11 @@ public class AiTaskProcessor {
      * 带并发控制和超时的任务提交
      */
     private void submitWithConcurrencyControl(AiTask task, Long userId) {
-        int timeoutMinutes = threadPoolManager.getProperties().getTaskTimeoutMinutes();
+        int timeout = threadPoolManager.getProperties().getTaskTimeoutMinutes();
         if (task.getTimeoutMinutes() != null && task.getTimeoutMinutes() > 0) {
-            timeoutMinutes = task.getTimeoutMinutes();
+            timeout = task.getTimeoutMinutes();
         }
+        final int timeoutMinutes = timeout;
 
         log.info("开始处理AI任务: id={}, type={}, userId={}, timeout={}min",
                 task.getId(), task.getTaskType(), userId, timeoutMinutes);
