@@ -273,6 +273,7 @@ onMounted(refresh)
 }
 
 .issue-group {
+  margin-top: -20px;
   margin-bottom: 24px;
 }
 
