@@ -22,6 +22,7 @@
 |----|------|
 | `WordTemplateEngine` | Word 模板(poi-tl)填充与渲染 |
 | `WordStructureParser` | Word 模板结构解析，提取占位符和结构定义 |
+| `WordDocumentFixEngine` | Word 文档文本替换引擎，基于 Apache POI 实现检测问题修复 |
 
 > **注意**: `MarkdownTemplateEngine` 和 `WordDocumentGenerator` 已移入 core 模块（`com.jy.eleaitender.core.engine`），用于需求导出等 core 内部文档生成场景。
 
@@ -39,6 +40,14 @@
   - poi-tl compile 阶段的 `refactorRun` 合并 Run 时 `removeRun` 索引错乱，抛 `IndexOutOfBoundsException`
   - `acceptAllRevisions()` 通过 DOM 操作解包 `<w:ins>`/`<w:moveTo>`（保留子节点）、删除 `<w:del>`/`<w:moveFrom>` 及属性变更标记（`rPrChange`/`pPrChange`/`sectPrChange` 等），等效于 Word 的"接受所有修订"
 - **poi-tl 版本**: 必须 ≥ 1.12.2（1.12.0 的 `removeRun` 有已知 Bug，1.12.2 修复了普通多 Run 拆分场景但不覆盖修订标记场景）
+
+### WordDocumentFixEngine 约束
+
+- **职责**: 接收 .docx 字节 + 替换列表(`FixReplacement`)，基于 Apache POI XWPFDocument 执行文本替换，返回修复后字节数组 + 成功/失败计数
+- **多 Run 替换策略**: Word 同一段落内同一词组可能被拆分到多个 Run，替换时先合并段落全文 → 执行替换 → 清空所有 Run → 将替换后文本写入第一个 Run。此策略会丢失跨 Run 的局部格式（加粗/颜色等），但对检测修复场景（替换短词组）可接受
+- **遍历范围**: 遍历段落、表格单元格、页眉页脚，确保所有文本区域均被覆盖
+- **文件命名**: 修复后文件名格式 `fixed_时间戳_原始文件名`，若原文件名已有 `fixed_数字_` 前缀则先去除再重新拼接
+- **接口**: `POST /api/file/fix-doc`，接收 `{fileId, replacements}`，返回 `WordFixResultVO { fileId, fixedCount, failedCount }`
 
 ## 3. 当前表
 
@@ -83,7 +92,7 @@ core/support 模块通过 `InternalFileServiceClient` 调用 File 服务，关�
 
 - **错误响应处理**: 客户端必须检查响应 `code` 字段，`code != 200` 时提取 `message` 抛出具体错误，避免误导性的"数据为空"
 - **服务间认证**: 使用 `TOKEN_TYPE_SERVICE` 类型的 JWT，密钥复用 `APP_JWT_SECRET`，服务间调用视为管理员权限
-- **新增端点**: `/api/file/structure/{fileId}`（GET）、`/api/file/generate-doc`（POST）需在 `InternalFileServiceClient` 中同步添加解析逻辑
+- **新增端点**: `/api/file/structure/{fileId}`（GET）、`/api/file/generate-doc`（POST）、`/api/file/fix-doc`（POST）需在 `InternalFileServiceClient` 中同步添加解析逻辑
 
 ## 7. 排障原则
 

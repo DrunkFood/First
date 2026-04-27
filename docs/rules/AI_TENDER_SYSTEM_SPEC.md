@@ -12,7 +12,7 @@
 - 业务需求编制（需求创建 + 历史匹配 + AI生成）
 - 评审项管理（三级嵌套结构）
 - 文档集成（创建AI任务，ai模块调用File服务生成Word，结果同步回写）
-- 检测管理（提交检测 + 查看结果 + 重试）
+- 检测管理（提交检测 + 查看结果 + 接受/拒绝建议 + 一键接受 + 重试）
 - AI内容反馈、用户消息、用户政策文件
 - 项目模板快照
 
@@ -61,6 +61,9 @@
 - `POST /detections/submit` — 提交检测
 - `GET /detections/{projectId}/progress` — 查询检测进度
 - `GET /detections/{projectId}/report` — 获取检测报告
+- `POST /detections/{recordId}/accept?issueIndex=N` — 接受建议（接受即修复：调用文件服务替换Word文本，更新generatedFileId）
+- `POST /detections/{recordId}/reject?issueIndex=N` — 拒绝建议
+- `POST /detections/{projectId}/accept-all` — 一键接受全部（批量替换 + 更新generatedFileId）
 - `POST /detections/{projectId}/retry` — 重试检测
 - `PUT /detections/{projectId}/skip` — 跳过检测
 
@@ -149,6 +152,7 @@ DRAFT → IN_PROGRESS → PENDING_DETECTION → DETECTING → DETECTION_PASSED /
 
 - 状态流转必须在 Service 层进行校验，不允许跳过中间状态
 - 每次状态变更需记录操作日志
+- `DETECTION_FAILED` 可通过 `DETECTION_PASSED`（所有问题处理完毕后自动转换）或 `IN_PROGRESS`（重试检测时）转出
 
 ### 5.1.1 编制阶段流转
 
@@ -274,13 +278,30 @@ Word模板上传 → WordStructureParser解析模板结构 → DocumentDataAssem
 - core 模块的 `WordDocumentGenerator` + `MarkdownTemplateEngine` 用于需求导出等场景（已从 file 模块移入）
 - 生成完成后固化版本快照到 `tb_project_version`
 
-## 9. 排障原则
+## 9. 检测修复流程
+
+```
+4项检测完成 → 自动创建版本备份 → DETECTION_FAILED(有问题) / DETECTION_PASSED(无问题)
+    ↓
+用户接受建议 → 提取original/targeted → 调用文件服务fixDocument → 更新generatedFileId
+    ↓
+所有问题处理完 → 自动转为 DETECTION_PASSED
+```
+
+- **接受即修复**: `acceptIssue` 调用 `InternalFileServiceClient.fixDocument()` 直接修改 Word 文档，成功则 `handleStatus=1`，未找到原文则 `handleStatus=3`
+- **批量修复**: `acceptAll` 先标记所有 handleStatus=1，再收集所有替换项一次性调用 `fixDocument`
+- **版本备份**: 检测完成（DETECTION_PASSED / DETECTION_FAILED）时自动创建 `tb_project_version` 快照，`contentSnapshot` 存储 `{generatedFileId, status}`
+- **自动流转**: 每次接受/拒绝后检查是否仍有 handleStatus=0 的问题，无则自动从 DETECTION_FAILED 转为 DETECTION_PASSED
+
+## 10. 排障原则
 
 - **项目状态异常** → 查 `tb_project.status` 字段，检查状态流转是否合法
 - **阶段推进失败** → 查 PhaseFlowController 日志，检查 canComplete 和转换规则，详见 [PHASE_FLOW_SPEC.md](PHASE_FLOW_SPEC.md)
 - **需求阶段内容为空** → 查 `tb_project.requirement_id` 是否有值：有值则检查对应需求是否有 content；无值则检查 AI 任务 `PROJECT_REQUIREMENT_GENERATE` 是否成功
 - **AI生成失败** → 查 `sup_model_config` 配置是否正确，检查 Token 用量是否超限
 - **检测结果异常** → 查 `tb_detection_record.result` JSON，确认检测类型和输入内容
+- **接受建议后文档未修复** → 检查 issue 的 `original`/`targeted` 是否有效、`WordDocumentFixEngine` 日志是否报告未找到原文、`project.generated_file_id` 是否已更新
+- **检测后状态未流转** → 检查是否所有 detection_record 已终态、是否仍有 handleStatus=0 的问题、DETECTION_FAILED 需全部处理完才会自动转 PASSED
 - **知识库检索不准** → 查 `ai_knowledge_document.vector_ids`，确认向量化是否完成
 - **评审项结构错误** → 查 `tb_project_review_item.parent_id` 和 `level`，确认三级结构完整
 
