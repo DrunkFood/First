@@ -57,13 +57,10 @@ jwt:
   expiration: ${APP_JWT_EXPIRATION:7200}
   external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
 
-# 内部服务客户端配置
+# 内部文件服务客户端配置
 internal:
   file-service:
     base-url: ${INTERNAL_FILE_SERVICE_URL:http://localhost:8081}
-    jwt-secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
-  support-service:
-    base-url: ${INTERNAL_SUPPORT_SERVICE_URL:http://localhost:8080}
     jwt-secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
 
 logging:

@@ -7,7 +7,6 @@ import com.jy.eleaitender.common.entity.support.SysParameter;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.support.mapper.SysParameterMapper;
-import com.jy.eleaitender.support.notifier.ThreadPoolConfigNotifier;
 import com.jy.eleaitender.support.service.ISysParameterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -33,9 +32,6 @@ public class SysParameterServiceImpl implements ISysParameterService {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
-
-    @Autowired
-    private ThreadPoolConfigNotifier threadPoolConfigNotifier;
 
     @Override
     public List<SysParameter> listByGroup(String paramGroup) {
@@ -74,36 +70,14 @@ public class SysParameterServiceImpl implements ISysParameterService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchUpdate(Map<String, String> params) {
-        boolean aiThreadPoolChanged = false;
         for (Map.Entry<String, String> entry : params.entrySet()) {
-            String paramGroup = doUpdateByKey(entry.getKey(), entry.getValue());
-            if ("AI_THREAD_POOL".equals(paramGroup)) {
-                aiThreadPoolChanged = true;
-            }
-        }
-        // 批量更新后统一通知一次
-        if (aiThreadPoolChanged) {
-            threadPoolConfigNotifier.onParameterChanged("AI_THREAD_POOL");
+            updateByKey(entry.getKey(), entry.getValue());
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateByKey(String paramKey, String paramValue) {
-        String paramGroup = doUpdateByKey(paramKey, paramValue);
-        threadPoolConfigNotifier.onParameterChanged(paramGroup);
-    }
-
-    /**
-     * 实际执行参数更新，返回参数分组
-     */
-    private String doUpdateByKey(String paramKey, String paramValue) {
-        LambdaQueryWrapper<SysParameter> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysParameter::getParamKey, paramKey)
-                    .select(SysParameter::getParamGroup);
-        SysParameter existing = sysParameterMapper.selectOne(queryWrapper);
-        String paramGroup = existing != null ? existing.getParamGroup() : null;
-
         LambdaUpdateWrapper<SysParameter> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(SysParameter::getParamKey, paramKey)
                .set(SysParameter::getParamValue, paramValue);
@@ -111,9 +85,8 @@ public class SysParameterServiceImpl implements ISysParameterService {
         if (rows == 0) {
             throw new BusinessException(ResponseCode.SYS_PARAM_NOT_FOUND);
         }
+        // 清除缓存
         String cacheKey = RedisKeyConstant.SYS_PARAM_PREFIX + paramKey;
         redisTemplate.delete(cacheKey);
-
-        return paramGroup;
     }
 }
