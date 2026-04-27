@@ -11,6 +11,7 @@ import com.jy.eleaitender.common.enums.AiUsageScenario;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
+import com.jy.eleaitender.ai.threadpool.DynamicThreadPoolManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -19,8 +20,6 @@ import reactor.core.publisher.Flux;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -41,11 +40,12 @@ public class AiChatServiceImpl implements IAiChatService {
     @Autowired
     private AiCallRecorder aiCallRecorder;
 
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    @Autowired
+    private DynamicThreadPoolManager threadPoolManager;
 
     @Override
     public void streamChat(ChatRequest request, SseEmitter emitter) {
-        executor.execute(() -> {
+        threadPoolManager.execute(() -> {
             try {
                 ChatClient chatClient = modelRouter.route(AiUsageScenario.CHAT);
 
@@ -107,7 +107,7 @@ public class AiChatServiceImpl implements IAiChatService {
 
     @Override
     public void streamOptimize(OptimizeRequest request, SseEmitter emitter) {
-        executor.execute(() -> {
+        threadPoolManager.execute(() -> {
             try {
                 ChatClient chatClient = modelRouter.route(AiUsageScenario.OPTIMIZATION);
 
