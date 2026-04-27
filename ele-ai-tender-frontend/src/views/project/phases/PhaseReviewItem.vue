@@ -380,11 +380,10 @@ const handleNext = async () => {
   // 推进阶段到"文档集成"，后端会自动执行文档集成
   try {
     await projectApi.advancePhase(props.projectId, 4)
+    emit('next')
   } catch (e: any) {
-    ElMessage.warning(e?.message || '阶段推进失败，可手动进入下一步')
+    ElMessage.warning(e?.message || '阶段推进失败，请稍后重试')
   }
-
-  emit('next')
 }
 
 onMounted(loadReviewItems)

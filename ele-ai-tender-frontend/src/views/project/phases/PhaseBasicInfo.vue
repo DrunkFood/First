@@ -428,11 +428,10 @@ const handleSaveAndNext = async () => {
   // 推进阶段到"需求生成"，后端会自动触发AI需求生成任务
   try {
     await projectApi.advancePhase(props.projectId, 2)
+    emit('next')
   } catch (e: any) {
-    ElMessage.warning(e?.message || '阶段推进失败，可手动进入下一步')
+    ElMessage.warning(e?.message || '阶段推进失败，请稍后重试')
   }
-
-  emit('next')
 }
 
 onMounted(() => {

@@ -347,11 +347,10 @@ const handleSaveAndNext = async () => {
   // 推进阶段到"评审项设置"，后端会自动触发AI评审项生成任务
   try {
     await projectApi.advancePhase(props.projectId, 3)
+    emit('next')
   } catch (e: any) {
-    ElMessage.warning(e?.message || '阶段推进失败，可手动进入下一步')
+    ElMessage.warning(e?.message || '阶段推进失败，请稍后重试')
   }
-
-  emit('next')
 }
 
 onBeforeUnmount(() => {
