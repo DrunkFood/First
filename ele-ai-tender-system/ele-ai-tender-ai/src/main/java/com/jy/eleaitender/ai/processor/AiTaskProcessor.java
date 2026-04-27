@@ -6,6 +6,8 @@ import com.jy.eleaitender.ai.processor.generator.DocumentIntegration;
 import com.jy.eleaitender.ai.processor.generator.RequirementGenerator;
 import com.jy.eleaitender.ai.processor.generator.ReviewItemGenerator;
 import com.jy.eleaitender.ai.processor.generator.TextOptimizer;
+import com.jy.eleaitender.ai.threadpool.DynamicThreadPoolManager;
+import com.jy.eleaitender.ai.threadpool.UserConcurrencyManager;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.exception.AiErrorContentException;
@@ -16,10 +18,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * AI任务轮询处理器（定时任务）
- * 负责从ai_task表拉取PENDING任务并分发执行
+ * 负责从ai_task表拉取PENDING任务，经并发控制后提交到动态线程池执行
  */
 @Slf4j
 @Component
@@ -43,21 +48,66 @@ public class AiTaskProcessor {
     @Autowired
     private TextOptimizer textOptimizer;
 
+    @Autowired
+    private DynamicThreadPoolManager threadPoolManager;
+
+    @Autowired
+    private UserConcurrencyManager concurrencyManager;
+
     /**
      * 每5秒轮询待处理任务
      */
     @Scheduled(fixedDelay = 5000)
     public void processPendingTasks() {
         List<AiTask> tasks = aiTaskMapper.selectPendingTasks(10);
-        log.info("待处理AI任务: {}", tasks.size());
+        if (tasks.isEmpty()) {
+            return;
+        }
+        log.debug("待处理AI任务: {}", tasks.size());
+
         for (AiTask task : tasks) {
-            // CAS更新状态为PROCESSING，防止并发
+            Long userId = task.getCreateId();
+            if (userId == null || userId == 0) {
+                submitDirectly(task);
+                continue;
+            }
+
+            // 检查发起数上限
+            if (!concurrencyManager.tryReserve(userId)) {
+                log.warn("任务{}发起数超限，拒绝: userId={}", task.getId(), userId);
+                aiTaskMapper.markFailed(task.getId(), "超过最大发起数限制，请等待已有任务完成");
+                continue;
+            }
+
+            // 检查并发数上限（排队机制：CAS抢占成功后尝试获取许可）
             int updated = aiTaskMapper.casUpdateStatus(task.getId(), "PENDING", "PROCESSING");
             if (updated == 0) {
-                continue; // 已被其他实例抢占
+                continue;
             }
-            log.info("开始处理AI任务: id={}, type={}", task.getId(), task.getTaskType());
 
+            if (!concurrencyManager.tryAcquire(userId)) {
+                // 并发数已满，回退状态为PENDING，下次轮询重试
+                aiTaskMapper.casUpdateStatus(task.getId(), "PROCESSING", "PENDING");
+                log.debug("任务{}并发数已满，排队等待: userId={}", task.getId(), userId);
+                continue;
+            }
+
+            // 获得许可，提交到线程池执行
+            submitWithConcurrencyControl(task, userId);
+        }
+    }
+
+    /**
+     * 无并发控制的直接提交（兼容无用户信息的任务）
+     */
+    private void submitDirectly(AiTask task) {
+        int updated = aiTaskMapper.casUpdateStatus(task.getId(), "PENDING", "PROCESSING");
+        if (updated == 0) {
+            return;
+        }
+        log.info("开始处理AI任务(直接): id={}, type={}", task.getId(), task.getTaskType());
+
+        threadPoolManager.execute(() -> {
             try {
                 String result = dispatch(task);
                 aiTaskMapper.markCompleted(task.getId(), result);
@@ -72,7 +122,48 @@ public class AiTaskProcessor {
                 log.error("AI任务处理失败: id={}, type={}", task.getId(), task.getTaskType(), e);
                 aiTaskMapper.markFailed(task.getId(), truncateErrorMsg(e.getMessage()));
             }
+        });
+    }
+
+    /**
+     * 带并发控制和超时的任务提交
+     */
+    private void submitWithConcurrencyControl(AiTask task, Long userId) {
+        int timeoutMinutes = threadPoolManager.getProperties().getTaskTimeoutMinutes();
+        if (task.getTimeoutMinutes() != null && task.getTimeoutMinutes() > 0) {
+            timeoutMinutes = task.getTimeoutMinutes();
         }
+
+        log.info("开始处理AI任务: id={}, type={}, userId={}, timeout={}min",
+                task.getId(), task.getTaskType(), userId, timeoutMinutes);
+
+        Future<String> future = threadPoolManager.submit(() -> dispatch(task));
+
+        threadPoolManager.execute(() -> {
+            try {
+                String result = future.get(timeoutMinutes, TimeUnit.MINUTES);
+                aiTaskMapper.markCompleted(task.getId(), result);
+                log.info("AI任务处理完成: id={}, type={}", task.getId(), task.getTaskType());
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                log.error("AI任务执行超时: id={}, type={}, timeout={}min", task.getId(), task.getTaskType(), timeoutMinutes);
+                aiTaskMapper.markFailed(task.getId(), "任务执行超时(" + timeoutMinutes + "分钟)");
+            } catch (Exception e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof AiUnavailableException aue) {
+                    log.error("AI服务不可用: id={}, type={}", task.getId(), task.getTaskType(), aue);
+                    aiTaskMapper.markAiUnavailable(task.getId(), aue.getMessage());
+                } else if (cause instanceof AiErrorContentException aece) {
+                    log.error("AI任务内容异常: id={}, type={}", task.getId(), task.getTaskType(), aece);
+                    aiTaskMapper.markFailed(task.getId(), aece.getContent(), truncateErrorMsg(aece.getMessage()));
+                } else {
+                    log.error("AI任务处理失败: id={}, type={}", task.getId(), task.getTaskType(), e);
+                    aiTaskMapper.markFailed(task.getId(), truncateErrorMsg(e.getMessage()));
+                }
+            } finally {
+                concurrencyManager.release(userId);
+            }
+        });
     }
 
     /**
@@ -81,26 +172,18 @@ public class AiTaskProcessor {
     private String dispatch(AiTask task) {
         AiTaskType taskType = AiTaskType.fromCode(task.getTaskType());
         return switch (taskType) {
-            // 需求生成
             case REQUIREMENT_GENERATE,
                  PROJECT_REQUIREMENT_GENERATE -> requirementGenerator.generate(task);
-            // 评审项生成
             case REVIEW_ITEM_GENERATE -> reviewItemGenerator.generate(task);
-            // 检测任务
             case DETECTION_SENSITIVE_WORD,
                  DETECTION_TYPO,
                  DETECTION_POLICY_REVIEW,
                  DETECTION_FORMAT_CHECK -> detectionEngine.detect(task);
-            // 文档集成
             case DOCUMENT_INTEGRATION -> documentIntegration.integration(task);
-            // 文本优化
             case TEXT_OPTIMIZE -> textOptimizer.optimize(task);
         };
     }
 
-    /**
-     * 截断错误信息，防止超长文本写入数据库
-     */
     private String truncateErrorMsg(String msg) {
         if (msg == null) return "未知错误";
         return msg.length() > 500 ? msg.substring(0, 500) : msg;
