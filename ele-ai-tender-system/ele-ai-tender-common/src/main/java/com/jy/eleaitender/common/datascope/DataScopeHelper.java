@@ -29,7 +29,13 @@ public class DataScopeHelper {
     }
 
     /**
-     * 判断表是否需要数据隔离
+     * 判断是否跳过数据隔离
+     * 只检查 SQL 解析前能确定的条件：
+     * 1. 无用户上下文 → 跳过
+     * 2. 管理员 → 跳过
+     * 3. @DataScope(skip=true) → 跳过
+     * <p>
+     * 表级别的过滤由 DataScopeTenantHandler.ignoreTable() 在 SQL 解析阶段处理
      */
     public static boolean isDataScopeTable(String tableName) {
         return tableName != null && DataScopeTable.ISOLATED_TABLES.contains(tableName);
@@ -50,13 +56,14 @@ public class DataScopeHelper {
             return true;
         }
         // 非隔离表跳过
-        if (!isDataScopeTable(tableName)) {
+        if (tableName != null && !isDataScopeTable(tableName)) {
             return true;
         }
         // 方法标记 @DataScope(skip=true) 跳过
         if (ms != null && isDataScopeSkip(ms)) {
             return true;
         }
+        // 其他情况不过滤
         return false;
     }
 
@@ -76,7 +83,10 @@ public class DataScopeHelper {
             return;
         }
         Long currentUserId = getCurrentUserId();
-        if (currentUserId == null || !currentUserId.equals(dataCreateId)) {
+        if (currentUserId == null) {
+            return;
+        }
+        if (!currentUserId.equals(dataCreateId)) {
             throw new BusinessException(ResponseCode.DATA_ACCESS_DENIED);
         }
     }
