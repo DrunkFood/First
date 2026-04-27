@@ -73,6 +73,7 @@
           v-else-if="currentStep === 4"
           :project-id="projectId"
           :readonly="4 < phaseStep"
+          :finishing="isFinishing"
           @prev="handlePrev"
           @finish="handleFinish"
         />
@@ -85,6 +86,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CircleCheck } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { projectApi } from '@/api/project'
 import type { ProjectInfo } from '@/types/project'
 import PhaseBasicInfo from './phases/PhaseBasicInfo.vue'
@@ -114,9 +116,15 @@ const getStepFromPhase = (phase?: number) => {
   return Math.max(0, phase - 1)
 }
 
+const isProjectCompleted = (status?: string) =>
+  status === 'PUBLISHED' || status === 'ARCHIVED'
+
 const loadProject = async () => {
   project.value = await projectApi.getById(projectId.value)
-  phaseStep.value = getStepFromPhase(project.value?.currentPhase)
+  // 已发布/已归档的项目，所有阶段均已完成
+  phaseStep.value = isProjectCompleted(project.value?.status)
+    ? 5
+    : getStepFromPhase(project.value?.currentPhase)
   // 优先使用URL step（用户从时间线点击指定步骤），若超出进度则回退到当前进度
   const urlStep = Number(route.query.step)
   if (!isNaN(urlStep) && urlStep >= 0 && urlStep <= phaseStep.value) {
@@ -180,8 +188,20 @@ const handlePrev = async () => {
   }
 }
 
-const handleFinish = () => {
-  router.push('/project')
+const isFinishing = ref(false)
+
+const handleFinish = async () => {
+  if (isFinishing.value) return
+  isFinishing.value = true
+  try {
+    await projectApi.publish(projectId.value)
+    ElMessage.success('编制完成，项目已发布')
+    router.push('/project')
+  } catch {
+    ElMessage.error('发布项目失败，请稍后重试')
+  } finally {
+    isFinishing.value = false
+  }
 }
 
 onMounted(loadProject)

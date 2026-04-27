@@ -29,7 +29,7 @@ public class InternalAiServiceClient {
      * 通知AI模块刷新线程池参数
      */
     public boolean notifyRefreshThreadPool() {
-        String url = properties.getBaseUrl() + "/actuator/threadpool/refresh";
+        String url = properties.getBaseUrl() + "/api/v1/threadpool/refresh";
         log.info("通知AI模块刷新线程池参数: url={}", url);
 
         HttpHeaders headers = new HttpHeaders();

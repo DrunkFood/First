@@ -75,20 +75,19 @@ public class AiTaskProcessor {
             // 检查发起数上限
             if (!concurrencyManager.tryReserve(userId)) {
                 log.warn("任务{}发起数超限，拒绝: userId={}", task.getId(), userId);
-                aiTaskMapper.markFailed(task.getId(), "超过最大发起数限制，请等待已有任务完成");
                 continue;
             }
 
-            // 检查并发数上限（排队机制：CAS抢占成功后尝试获取许可）
+            // 先获取并发许可，再CAS改状态，避免PROCESSING→PENDING弹跳
+            if (!concurrencyManager.tryAcquire(userId)) {
+                log.warn("任务{}并发数已满，排队等待: userId={}", task.getId(), userId);
+                continue;
+            }
+
             int updated = aiTaskMapper.casUpdateStatus(task.getId(), "PENDING", "PROCESSING");
             if (updated == 0) {
-                continue;
-            }
-
-            if (!concurrencyManager.tryAcquire(userId)) {
-                // 并发数已满，回退状态为PENDING，下次轮询重试
-                aiTaskMapper.casUpdateStatus(task.getId(), "PROCESSING", "PENDING");
-                log.debug("任务{}并发数已满，排队等待: userId={}", task.getId(), userId);
+                // CAS失败（被其他实例抢占），归还许可
+                concurrencyManager.release(userId);
                 continue;
             }
 

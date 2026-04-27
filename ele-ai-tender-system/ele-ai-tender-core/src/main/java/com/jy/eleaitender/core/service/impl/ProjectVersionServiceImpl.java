@@ -71,6 +71,8 @@ public class ProjectVersionServiceImpl implements IProjectVersionService {
         } else {
             version.setChangeDescription("第" + nextVersion + "版");
         }
+        version.setCreateId(project.getCreateId());
+        version.setCreateName(project.getCreateName());
 
         projectVersionMapper.insert(version);
         log.info("检测完成版本快照创建成功: projectId={}", projectId);

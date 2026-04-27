@@ -1,14 +1,22 @@
 package com.jy.eleaitender.ai.threadpool;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.ai.config.ThreadPoolProperties;
+import com.jy.eleaitender.ai.mapper.SysParameterReadMapper;
+import com.jy.eleaitender.common.entity.support.SysParameter;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * 动态线程池管理器
@@ -18,8 +26,13 @@ import java.util.concurrent.*;
 @Component
 public class DynamicThreadPoolManager {
 
+    @Autowired
+    private SysParameterReadMapper sysParameterReadMapper;
+
     private final JdbcTemplate jdbcTemplate;
+    private final AtomicInteger threadCounter = new AtomicInteger(0);
     private volatile ThreadPoolExecutor executor;
+    @Getter
     private volatile ThreadPoolProperties properties;
 
     public DynamicThreadPoolManager(JdbcTemplate jdbcTemplate) {
@@ -93,10 +106,6 @@ public class DynamicThreadPoolManager {
                 newProps.getTaskTimeoutMinutes());
     }
 
-    public ThreadPoolProperties getProperties() {
-        return properties;
-    }
-
     public int getActiveCount() {
         return executor != null ? executor.getActiveCount() : 0;
     }
@@ -117,7 +126,7 @@ public class DynamicThreadPoolManager {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(props.getQueueCapacity()),
                 r -> {
-                    Thread t = new Thread(r, "ai-task-pool-" + System.nanoTime());
+                    Thread t = new Thread(r, "ai-task-pool-" + threadCounter.incrementAndGet());
                     t.setDaemon(false);
                     return t;
                 },
@@ -129,17 +138,16 @@ public class DynamicThreadPoolManager {
      * 从sup_sys_parameter表读取AI_THREAD_POOL组参数
      */
     private ThreadPoolProperties loadFromDb() {
-        ThreadPoolProperties props = new ThreadPoolProperties();
-        String sql = "SELECT param_key, param_value FROM sup_sys_parameter " +
-                "WHERE param_group = 'AI_THREAD_POOL' AND is_delete = 0";
-        Map<String, String> paramMap = jdbcTemplate.query(sql, rs -> {
-            Map<String, String> map = new ConcurrentHashMap<>();
-            while (rs.next()) {
-                map.put(rs.getString("param_key"), rs.getString("param_value"));
-            }
-            return map;
-        });
+        LambdaQueryWrapper<SysParameter> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysParameter::getParamGroup, "AI_THREAD_POOL");
+        List<SysParameter> sysParameters = sysParameterReadMapper.selectList(wrapper);
 
+        Map<String, String> paramMap = sysParameters.stream().collect(Collectors.toMap(
+                SysParameter::getParamKey,
+                SysParameter::getParamValue
+        ));
+
+        ThreadPoolProperties props = new ThreadPoolProperties();
         props.setCorePoolSize(getInt(paramMap, "ai_core_pool_size", 4));
         props.setMaxPoolSize(getInt(paramMap, "ai_max_pool_size", 8));
         props.setQueueCapacity(getInt(paramMap, "ai_queue_capacity", 20));

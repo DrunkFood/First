@@ -74,22 +74,36 @@ public class SysParameterServiceImpl implements ISysParameterService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchUpdate(Map<String, String> params) {
+        boolean aiThreadPoolChanged = false;
         for (Map.Entry<String, String> entry : params.entrySet()) {
-            updateByKey(entry.getKey(), entry.getValue());
+            String paramGroup = doUpdateByKey(entry.getKey(), entry.getValue());
+            if ("AI_THREAD_POOL".equals(paramGroup)) {
+                aiThreadPoolChanged = true;
+            }
+        }
+        // 批量更新后统一通知一次
+        if (aiThreadPoolChanged) {
+            threadPoolConfigNotifier.onParameterChanged("AI_THREAD_POOL");
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateByKey(String paramKey, String paramValue) {
-        // 先查出参数分组
+        String paramGroup = doUpdateByKey(paramKey, paramValue);
+        threadPoolConfigNotifier.onParameterChanged(paramGroup);
+    }
+
+    /**
+     * 实际执行参数更新，返回参数分组
+     */
+    private String doUpdateByKey(String paramKey, String paramValue) {
         LambdaQueryWrapper<SysParameter> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysParameter::getParamKey, paramKey)
                     .select(SysParameter::getParamGroup);
         SysParameter existing = sysParameterMapper.selectOne(queryWrapper);
         String paramGroup = existing != null ? existing.getParamGroup() : null;
 
-        // 更新数据库
         LambdaUpdateWrapper<SysParameter> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(SysParameter::getParamKey, paramKey)
                .set(SysParameter::getParamValue, paramValue);
@@ -97,11 +111,9 @@ public class SysParameterServiceImpl implements ISysParameterService {
         if (rows == 0) {
             throw new BusinessException(ResponseCode.SYS_PARAM_NOT_FOUND);
         }
-        // 清除缓存
         String cacheKey = RedisKeyConstant.SYS_PARAM_PREFIX + paramKey;
         redisTemplate.delete(cacheKey);
 
-        // 通知AI模块刷新线程池参数
-        threadPoolConfigNotifier.onParameterChanged(paramGroup);
+        return paramGroup;
     }
 }

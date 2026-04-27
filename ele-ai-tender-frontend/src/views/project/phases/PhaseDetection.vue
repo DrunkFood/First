@@ -36,7 +36,9 @@
     <!-- 检测报告 -->
     <DetectionReport
       v-if="showReport"
+      ref="reportRef"
       :project-id="projectId"
+      :readonly="readonly"
       @accept="handleAcceptIssue"
       @reject="handleRejectIssue"
       @accept-all="handleAcceptAll"
@@ -45,8 +47,7 @@
     <div class="phase-actions">
       <el-button @click="$emit('prev')">上一步</el-button>
       <div style="flex: 1" />
-      <el-button v-if="showReport" @click="$emit('prev')">返回修改</el-button>
-      <el-button v-if="!readonly" type="success" :disabled="!canFinish" @click="$emit('finish')">
+      <el-button v-if="!readonly" type="success" :disabled="!canFinish" :loading="finishing" @click="$emit('finish')">
         完成编制
       </el-button>
     </div>
@@ -63,7 +64,7 @@ import DetectionProgress from '@/components/detection/DetectionProgress.vue'
 import DetectionReport from '@/components/detection/DetectionReport.vue'
 import type { DetectionType } from '@/types/detection'
 
-const props = defineProps<{ projectId: number; readonly?: boolean }>()
+const props = defineProps<{ projectId: number; readonly?: boolean; finishing?: boolean }>()
 defineEmits<{ prev: []; finish: [] }>()
 
 const submitted = ref(false)
@@ -79,6 +80,7 @@ const selectedDetectionTypes = ref<DetectionType[]>([
   'SENSITIVE_WORD',
 ])
 const projectCategory = ref('')
+const reportRef = ref<InstanceType<typeof DetectionReport> | null>(null)
 
 const canFinish = computed(() =>
   projectStatus.value === 'DETECTION_PASSED' || projectStatus.value === 'DETECTION_SKIPPED'
@@ -88,9 +90,9 @@ const loadProject = async () => {
   const project = await projectApi.getById(props.projectId)
   projectCategory.value = project.projectCategory || ''
   projectStatus.value = project.status
-  if (['DETECTING', 'DETECTION_PASSED', 'DETECTION_FAILED', 'DETECTION_SKIPPED'].includes(project.status)) {
+  if (['DETECTING', 'DETECTION_PASSED', 'DETECTION_FAILED', 'DETECTION_SKIPPED', 'PUBLISHED', 'ARCHIVED'].includes(project.status)) {
     submitted.value = true
-    if (['DETECTION_PASSED', 'DETECTION_FAILED'].includes(project.status)) {
+    if (['DETECTION_PASSED', 'DETECTION_FAILED', 'PUBLISHED', 'ARCHIVED'].includes(project.status)) {
       showReport.value = true
     }
   }
@@ -125,19 +127,19 @@ const handleSubmit = async () => {
 const handleAcceptIssue = async (recordId: number, issueIndex: number) => {
   await detectionApi.accept(recordId, issueIndex)
   ElMessage.success('已接受建议')
-  await loadProject()
+  await Promise.all([loadProject(), reportRef.value?.refresh()])
 }
 
 const handleRejectIssue = async (recordId: number, issueIndex: number) => {
   await detectionApi.reject(recordId, issueIndex)
   ElMessage.success('已拒绝建议')
-  await loadProject()
+  await Promise.all([loadProject(), reportRef.value?.refresh()])
 }
 
 const handleAcceptAll = async () => {
   await detectionApi.acceptAll(props.projectId)
   ElMessage.success('已接受所有建议')
-  await loadProject()
+  await Promise.all([loadProject(), reportRef.value?.refresh()])
 }
 
 const handleDetectionCompleted = async (_status: string) => {

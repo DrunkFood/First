@@ -66,16 +66,6 @@ internal:
     base-url: ${INTERNAL_SUPPORT_SERVICE_URL:http://localhost:8080}
     jwt-secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
 
-# Actuator端点暴露
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,threadpool
-  endpoint:
-    threadpool:
-      enabled: true
-
 logging:
   pattern:
     level: "%5p [traceId:%X{traceId:-}]"
