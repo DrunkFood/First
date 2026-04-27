@@ -108,8 +108,8 @@ public class AiTaskResultSyncHandler {
         }
 
         if (!AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
-            log.info("需求生成任务非成功状态，不更新内容: requirementId={}, taskStatus={}",
-                    requirementId, task.getStatus());
+            log.info("需求生成任务非成功状态: requirementId={}, taskStatus={}", requirementId, task.getStatus());
+            notifyTaskFailure(task, requirement.getRequirementName(), requirement.getCreateId(), requirementId);
             return;
         }
 
@@ -134,8 +134,8 @@ public class AiTaskResultSyncHandler {
         }
 
         if (!AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
-            log.info("项目需求生成任务非成功状态，不更新内容: requirementId={}, taskStatus={}",
-                    projectId, task.getStatus());
+            log.info("项目需求生成任务非成功状态: projectId={}, taskStatus={}", projectId, task.getStatus());
+            notifyTaskFailure(task, project.getProjectName(), project.getCreateId(), projectId);
             return;
         }
 
@@ -175,8 +175,11 @@ public class AiTaskResultSyncHandler {
         Long projectId = task.getBizId();
 
         if (!AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
-            log.info("评审项生成任务非成功状态，跳过: projectId={}, taskStatus={}",
-                    projectId, task.getStatus());
+            log.info("评审项生成任务非成功状态: projectId={}, taskStatus={}", projectId, task.getStatus());
+            TbProject project = projectMapper.selectById(projectId);
+            if (project != null) {
+                notifyTaskFailure(task, project.getProjectName(), project.getCreateId(), projectId);
+            }
             return;
         }
 
@@ -330,8 +333,8 @@ public class AiTaskResultSyncHandler {
         }
 
         if (!AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
-            log.info("项目文档集成任务非成功状态，不更新内容: projectId={}, taskStatus={}",
-                    projectId, task.getStatus());
+            log.info("项目文档集成任务非成功状态: projectId={}, taskStatus={}", projectId, task.getStatus());
+            notifyTaskFailure(task, project.getProjectName(), project.getCreateId(), projectId);
             return;
         }
 
@@ -359,6 +362,14 @@ public class AiTaskResultSyncHandler {
                     "项目「" + project.getProjectName() + "」文档生成完成",
                     "招标文档已生成，请查看并确认",
                     projectId);
+        }
+
+        // 自动创建版本备份
+        try {
+            projectVersionService.createVersion(projectId, "自动创建版本备份(" + ProjectStatus.fromCode(project.getStatus()).getLabel() + ")");
+            log.info("自动创建版本快照创建成功: projectId={}", projectId);
+        } catch (Exception e) {
+            log.error("自动创建版本快照创建失败: projectId={}", projectId, e);
         }
 
         log.info("同步文档集成成功: projectId={}, generatedFileId={}", projectId, generatedFileId);
@@ -475,14 +486,6 @@ public class AiTaskResultSyncHandler {
                 }
             }
 
-            // 检测完成时自动创建版本备份
-            try {
-                projectVersionService.createVersion(projectId, "检测完成自动备份(" + ProjectStatus.fromCode(project.getStatus()).getLabel() + ")");
-                log.info("检测完成版本快照创建成功: projectId={}", projectId);
-            } catch (Exception e) {
-                log.error("检测完成版本快照创建失败: projectId={}", projectId, e);
-            }
-
             // 发送检测完成通知
             Long userId = project.getCreateId();
             if (userId != null) {
@@ -498,6 +501,21 @@ public class AiTaskResultSyncHandler {
         } catch (Exception e) {
             log.error("更新项目检测状态失败: projectId={}", projectId, e);
         }
+    }
+
+    // ========== 通用失败通知 ==========
+
+    private void notifyTaskFailure(AiTask task, String bizName, Long userId, Long bizId) {
+        if (userId == null) {
+            return;
+        }
+        AiTaskType taskType = AiTaskType.fromCode(task.getTaskType());
+        String statusLabel = AiTaskStatus.fromCode(task.getStatus()).getLabel();
+        String detail = task.getErrorMsg() != null ? "，原因：" + task.getErrorMsg() : "";
+        messageHelper.sendWarningNotice(userId,
+                "「" + bizName + "」" + taskType.getLabel() + "失败",
+                "任务状态：" + statusLabel + detail + "，请重试或手动处理",
+                bizId);
     }
 
 }
