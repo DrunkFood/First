@@ -12,6 +12,7 @@
         <el-tab-pane label="系统参数" name="SYSTEM" />
         <el-tab-pane label="功能开关" name="SWITCH" />
         <el-tab-pane label="AI检测规则" name="AI_RULE" />
+        <el-tab-pane label="AI线程池" name="AI_THREAD_POOL" />
       </el-tabs>
 
       <div v-loading="loading" class="param-list">
