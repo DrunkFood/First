@@ -7,6 +7,7 @@ import com.jy.eleaitender.common.entity.support.SysParameter;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.support.mapper.SysParameterMapper;
+import com.jy.eleaitender.support.notifier.ThreadPoolConfigNotifier;
 import com.jy.eleaitender.support.service.ISysParameterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -32,6 +33,9 @@ public class SysParameterServiceImpl implements ISysParameterService {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private ThreadPoolConfigNotifier threadPoolConfigNotifier;
 
     @Override
     public List<SysParameter> listByGroup(String paramGroup) {
@@ -78,6 +82,14 @@ public class SysParameterServiceImpl implements ISysParameterService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateByKey(String paramKey, String paramValue) {
+        // 先查出参数分组
+        LambdaQueryWrapper<SysParameter> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysParameter::getParamKey, paramKey)
+                    .select(SysParameter::getParamGroup);
+        SysParameter existing = sysParameterMapper.selectOne(queryWrapper);
+        String paramGroup = existing != null ? existing.getParamGroup() : null;
+
+        // 更新数据库
         LambdaUpdateWrapper<SysParameter> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(SysParameter::getParamKey, paramKey)
                .set(SysParameter::getParamValue, paramValue);
@@ -88,5 +100,8 @@ public class SysParameterServiceImpl implements ISysParameterService {
         // 清除缓存
         String cacheKey = RedisKeyConstant.SYS_PARAM_PREFIX + paramKey;
         redisTemplate.delete(cacheKey);
+
+        // 通知AI模块刷新线程池参数
+        threadPoolConfigNotifier.onParameterChanged(paramGroup);
     }
 }
