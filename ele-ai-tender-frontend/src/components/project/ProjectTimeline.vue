@@ -27,14 +27,20 @@
 <script setup lang="ts">
 import { CircleCheck } from '@element-plus/icons-vue'
 
+/** 检测已完成的终态 */
+const DETECTION_DONE_STATUSES = ['DETECTION_PASSED', 'DETECTION_SKIPPED', 'PUBLISHED', 'ARCHIVED']
+/** 检测失败的终态 */
+const DETECTION_FAILED_STATUS = 'DETECTION_FAILED'
+
 interface NodeStatus {
-  type: 'primary' | 'success' | 'info'
+  type: 'primary' | 'success' | 'info' | 'warning'
   hollow: boolean
   completed: boolean
 }
 
 const props = defineProps<{
   currentPhase: number
+  status?: string
 }>()
 
 const emit = defineEmits<{
@@ -52,10 +58,27 @@ const nodes = [
 ]
 
 function getNodeStatus(index: number): NodeStatus {
-  if (index < props.currentPhase) {
+  const { currentPhase, status } = props
+
+  // 检测阶段(index=5)和检测通过(index=6)需要结合项目状态判断
+  if (currentPhase === 5 && index >= 5) {
+    if (DETECTION_DONE_STATUSES.includes(status ?? '')) {
+      return { type: 'success', hollow: false, completed: true }
+    }
+    if (status === DETECTION_FAILED_STATUS) {
+      if (index === 5) return { type: 'warning', hollow: false, completed: false }
+      return { type: 'info', hollow: true, completed: false }
+    }
+    // DETECTING / PENDING_DETECTION 等检测进行中状态
+    if (index === 5) return { type: 'primary', hollow: false, completed: false }
+    return { type: 'info', hollow: true, completed: false }
+  }
+
+  // 常规节点：按 currentPhase 判断
+  if (index < currentPhase) {
     return { type: 'success', hollow: false, completed: true }
   }
-  if (index === props.currentPhase) {
+  if (index === currentPhase) {
     return { type: 'primary', hollow: false, completed: false }
   }
   return { type: 'info', hollow: true, completed: false }
@@ -63,7 +86,12 @@ function getNodeStatus(index: number): NodeStatus {
 
 /** 节点是否可点击（已完成或当前进行中） */
 function isNodeAccessible(index: number): boolean {
-  return index <= props.currentPhase
+  const { currentPhase, status } = props
+  // 检测通过后，检测相关节点都可点击
+  if (currentPhase === 5 && index >= 5 && DETECTION_DONE_STATUSES.includes(status ?? '')) {
+    return true
+  }
+  return index <= currentPhase
 }
 
 function handleNodeClick(index: number) {

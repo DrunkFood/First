@@ -140,6 +140,7 @@
       <el-tab-pane label="项目进度" name="progress">
         <ProjectTimeline
           :current-phase="project?.currentPhase ?? 0"
+          :status="project?.status"
           @click="handleTimelineClick"
         />
       </el-tab-pane>
