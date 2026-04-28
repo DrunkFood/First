@@ -57,6 +57,7 @@
         <milvus-sdk.version>2.3.3</milvus-sdk.version>
         <tika.version>2.9.0</tika.version>
         <poi-tl.version>1.12.2</poi-tl.version>
+        <poi.version>5.2.2</poi.version>
         <jsoup.version>1.17.2</jsoup.version>
         <flexmark.version>0.64.0</flexmark.version>
     </properties>
@@ -190,6 +191,23 @@
                 <groupId>com.deepoove</groupId>
                 <artifactId>poi-tl</artifactId>
                 <version>${poi-tl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml-full</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <!-- Markdown处理 -->
+            <dependency>
+                <groupId>com.vladsch.flexmark</groupId>
+                <artifactId>flexmark-all</artifactId>
+                <version>${flexmark.version}</version>
+            </dependency>
+            <!-- jsoup: poi-tl HtmlRenderPolicy 需要 -->
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

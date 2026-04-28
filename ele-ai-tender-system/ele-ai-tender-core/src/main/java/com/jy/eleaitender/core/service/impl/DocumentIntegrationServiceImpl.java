@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.jy.eleaitender.common.dto.FillData;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,10 +62,14 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
             throw new BusinessException(ResponseCode.TEMPLATE_NOT_FOUND, "项目未绑定模板或模板无文件");
         }
 
-        // 组装扁平化文档数据
-        Map<String, Object> params = dataAssembler.assemble(projectId);
+        // 组装结构化文档数据（FillData 列表）
+        List<FillData> fillDataList = dataAssembler.assemble(projectId);
+
+        // 将元数据和填充数据一起序列化传递给AI任务
+        Map<String, Object> params = new LinkedHashMap<>();
         params.put("templateFileId", pt.getFileId());
         params.put("projectName", project.getProjectName());
+        params.put("fillDataList", fillDataList);
 
         return aiTaskService.createTask(AiTaskType.DOCUMENT_INTEGRATION,
                 project.getId(), project.getId(), "PROJECT", params, null);

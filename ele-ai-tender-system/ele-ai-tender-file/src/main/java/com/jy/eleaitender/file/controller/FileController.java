@@ -121,14 +121,15 @@ public class FileController {
     @RequireLogin
     @Operation(summary = "基于模板生成文档")
     public Result<Long> generateDocument(@RequestBody Map<String, Object> params) {
-        if (params.get("templateFileId") == null || params.get("data") == null) {
+        if (params.get("templateFileId") == null) {
             return Result.fail(ResponseCode.PARAM_ERROR);
         }
         Long templateFileId = ((Number) params.get("templateFileId")).longValue();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> data = (Map<String, Object>) params.get("data");
         String fileName = (String) params.get("fileName");
-        Long generatedFileId = wordDocumentService.generateDocument(templateFileId, data, fileName);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> fillDataRaw = (List<Map<String, Object>>) params.get("fillDataList");
+
+        Long generatedFileId = wordDocumentService.generateDocument(templateFileId, fillDataRaw, fileName);
         return Result.success(generatedFileId);
     }
 

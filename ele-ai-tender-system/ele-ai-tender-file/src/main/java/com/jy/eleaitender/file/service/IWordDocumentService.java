@@ -24,11 +24,11 @@ public interface IWordDocumentService {
      * 基于模板生成文档
      *
      * @param templateFileId 模板文件ID
-     * @param data           填充数据
+     * @param fillDataRaw    填充数据
      * @param fileName       生成文件名
      * @return 生成文件ID
      */
-    Long generateDocument(Long templateFileId, Map<String, Object> data, String fileName);
+    Long generateDocument(Long templateFileId, List<Map<String, Object>> fillDataRaw, String fileName);
 
     /**
      * 修复Word文档（替换文本）

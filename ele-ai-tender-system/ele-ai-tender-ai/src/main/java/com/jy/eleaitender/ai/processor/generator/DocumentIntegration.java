@@ -5,6 +5,7 @@ import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
+import com.jy.eleaitender.common.dto.FillData;
 import com.jy.eleaitender.common.dto.response.WordStructureVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
@@ -55,20 +56,47 @@ public class DocumentIntegration {
         Long templateFileId = getLong(params, "templateFileId");
         String projectName = getString(params, "projectName");
 
-        // 分离元数据字段和填充数据
-        Map<String, Object> fillData = new LinkedHashMap<>(params);
-        fillData.remove("templateFileId");
-
         // TODO 通过AI模型匹配占位符和数据key，生成符合Word模板占位符名称的填充数据，列表数据无法正确匹配
         //WordStructureVO fileStructure = fileServiceClient.getFileStructure(templateFileId);
         //Map<String, Object> data = matchPlaceholders(fileStructure.getPlaceholders(), fillData, task);
-        Map<String, Object> data = new LinkedHashMap<>(fillData);
 
-        // 调用File服务生成Word文档
-        Long generatedFileId = fileServiceClient.generateDocument(templateFileId, data, projectName + ".docx");
+        // 提取 FillData 列表
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> fillDataRaw = (List<Map<String, Object>>) params.get("fillDataList");
+        List<FillData> fillDataList = deserializeFillDataList(fillDataRaw);
+
+        // 调用File服务生成Word文档（新接口：List<FillData>）
+        Long generatedFileId = fileServiceClient.generateDocument(templateFileId, fillDataList, projectName + ".docx");
 
         log.info("文档集成完成: taskId={}, generatedFileId={}", task.getId(), generatedFileId);
         return String.valueOf(generatedFileId);
+    }
+
+    private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper();
+
+    /**
+     * 将 JSON 反序列化后的 Map 列表转为 FillData 列表
+     * Jackson 反序列化 List<FillData> 时 value 会变成 LinkedHashMap，需按 type 转为具体类型
+     */
+    private List<FillData> deserializeFillDataList(List<Map<String, Object>> rawList) {
+        if (rawList == null) return List.of();
+        return rawList.stream().map(raw -> {
+            try {
+                FillData fd = MAPPER.convertValue(raw, FillData.class);
+                if (fd.getValue() != null && fd.getType() != null) {
+                    fd.setValue(switch (fd.getType()) {
+                        case TABLE -> MAPPER.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.TableData.class);
+                        case IMAGE -> MAPPER.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.ImageData.class);
+                        case TEXT, MARKDOWN -> fd.getValue() instanceof String s ? s : String.valueOf(fd.getValue());
+                    });
+                }
+                return fd;
+            } catch (Exception e) {
+                log.warn("FillData 反序列化失败: {}", raw, e);
+                return null;
+            }
+        }).filter(java.util.Objects::nonNull).toList();
     }
 
     /**

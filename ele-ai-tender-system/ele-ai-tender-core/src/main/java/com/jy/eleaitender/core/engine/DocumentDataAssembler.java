@@ -51,7 +51,7 @@ public class DocumentDataAssembler {
         fillDataList.add(FillData.text("contactPerson", nullSafe(project.getContactPerson())));
         fillDataList.add(FillData.text("contactPhone", nullSafe(project.getContactPhone())));
         fillDataList.add(FillData.text("projectDescription", nullSafe(project.getProjectDescription())));
-        fillDataList.add(FillData.text("requirementContent", nullSafe(project.getRequirementContent())));
+        fillDataList.add(FillData.markdown("requirementContent", nullSafe(project.getRequirementContent())));
         fillDataList.add(FillData.text("reviewType", nullSafe(project.getReviewType())));
 
         // 评审项（按类型分组）

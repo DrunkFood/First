@@ -1,5 +1,6 @@
 package com.jy.eleaitender.common.client;
 
+import com.jy.eleaitender.common.dto.FillData;
 import com.jy.eleaitender.common.dto.FixReplacement;
 import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
@@ -144,16 +145,16 @@ public class InternalFileServiceClient {
     }
 
     /**
-     * 生成文档（基于模板和数据）
+     * 生成文档（基于模板和结构化填充数据）
      *
      * @param templateFileId 模板文件ID
-     * @param data           模板填充数据
+     * @param fillDataList   结构化填充数据列表
      * @param fileName       生成文件名
      * @return 生成的文件ID
      */
-    public Long generateDocument(Long templateFileId, Map<String, Object> data, String fileName) {
+    public Long generateDocument(Long templateFileId, List<FillData> fillDataList, String fileName) {
         String url = properties.getBaseUrl() + "/api/file/generate-doc";
-        log.info("调用文件服务生成文档: url={}, templateFileId={}", url, templateFileId);
+        log.info("调用文件服务生成文档(FillData): url={}, templateFileId={}", url, templateFileId);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -161,7 +162,7 @@ public class InternalFileServiceClient {
 
         Map<String, Object> params = new HashMap<>();
         params.put("templateFileId", templateFileId);
-        params.put("data", data);
+        params.put("fillDataList", fillDataList);
         params.put("fileName", fileName);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
