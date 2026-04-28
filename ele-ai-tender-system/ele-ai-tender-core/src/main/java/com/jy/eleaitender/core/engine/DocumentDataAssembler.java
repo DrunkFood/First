@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.engine;
 
+import com.jy.eleaitender.common.dto.*;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -10,12 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 文档数据组装器
- * 收集项目基础信息、需求内容、评审项数据，组装为文档模板所需的数据模型
+ * 收集项目基础信息、需求内容、评审项数据，组装为文档模板所需的 FillData 列表
  */
 @Slf4j
 @Component
@@ -28,31 +30,31 @@ public class DocumentDataAssembler {
     private TbProjectReviewItemMapper reviewItemMapper;
 
     /**
-     * 组装文档数据
+     * 组装文档数据（新接口，返回结构化 FillData 列表）
      */
-    public Map<String, Object> assemble(Long projectId) {
+    public List<FillData> assemble(Long projectId) {
         TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             throw new BusinessException(ResponseCode.PROJECT_NOT_FOUND);
         }
 
-        Map<String, Object> data = new LinkedHashMap<>();
+        List<FillData> fillDataList = new ArrayList<>();
 
-        // 项目基础信息
-        data.put("projectName", project.getProjectName());
-        data.put("projectCode", project.getProjectCode());
-        data.put("projectCategory", project.getProjectCategory());
-        data.put("projectType", project.getProjectType());
-        data.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : "");
-        data.put("tenderUnit", project.getTenderUnit());
-        data.put("projectLocation", project.getProjectLocation());
-        data.put("contactPerson", project.getContactPerson());
-        data.put("contactPhone", project.getContactPhone());
-        data.put("projectDescription", project.getProjectDescription());
-        data.put("requirementContent", project.getRequirementContent());
-        data.put("reviewType", project.getReviewType());
+        // 项目基础信息（TEXT 类型）
+        fillDataList.add(FillData.text("projectName", nullSafe(project.getProjectName())));
+        fillDataList.add(FillData.text("projectCode", nullSafe(project.getProjectCode())));
+        fillDataList.add(FillData.text("projectCategory", nullSafe(project.getProjectCategory())));
+        fillDataList.add(FillData.text("projectType", nullSafe(project.getProjectType())));
+        fillDataList.add(FillData.text("budget", project.getBudget() != null ? project.getBudget().toPlainString() : ""));
+        fillDataList.add(FillData.text("tenderUnit", nullSafe(project.getTenderUnit())));
+        fillDataList.add(FillData.text("projectLocation", nullSafe(project.getProjectLocation())));
+        fillDataList.add(FillData.text("contactPerson", nullSafe(project.getContactPerson())));
+        fillDataList.add(FillData.text("contactPhone", nullSafe(project.getContactPhone())));
+        fillDataList.add(FillData.text("projectDescription", nullSafe(project.getProjectDescription())));
+        fillDataList.add(FillData.text("requirementContent", nullSafe(project.getRequirementContent())));
+        fillDataList.add(FillData.text("reviewType", nullSafe(project.getReviewType())));
 
-        // 评审项（按类型分组，列表提升到顶层以便poi-tl {{#list}} 访问）
+        // 评审项（按类型分组）
         List<TbProjectReviewItem> reviewItems = reviewItemMapper.selectByProjectId(projectId);
         Map<String, List<TbProjectReviewItem>> grouped = reviewItems.stream()
                 .collect(Collectors.groupingBy(
@@ -60,41 +62,85 @@ public class DocumentDataAssembler {
                         LinkedHashMap::new,
                         Collectors.toList()
                 ));
-        data.put("complianceItems", toFlatList(grouped.getOrDefault("COMPLIANCE", Collections.emptyList())));
-        data.put("technicalItems", toFlatList(grouped.getOrDefault("TECHNICAL", Collections.emptyList())));
-        data.put("creditItems", toFlatList(grouped.getOrDefault("CREDIT", Collections.emptyList())));
-        data.put("commercialItems", toFlatList(grouped.getOrDefault("COMMERCIAL", Collections.emptyList())));
 
-        return data;
+        // 各类型评审项表格（TABLE 类型）
+        fillDataList.add(FillData.table("complianceItems",
+                buildReviewItemTable(grouped.getOrDefault("COMPLIANCE", Collections.emptyList()))));
+        fillDataList.add(FillData.table("technicalItems",
+                buildReviewItemTable(grouped.getOrDefault("TECHNICAL", Collections.emptyList()))));
+        fillDataList.add(FillData.table("creditItems",
+                buildReviewItemTable(grouped.getOrDefault("CREDIT", Collections.emptyList()))));
+        fillDataList.add(FillData.table("commercialItems",
+                buildReviewItemTable(grouped.getOrDefault("COMMERCIAL", Collections.emptyList()))));
+
+        // 方式一：评审汇总表（TABLE 类型，含单元格合并规则）
+        fillDataList.add(FillData.table("allReviewItems", buildReviewSummaryTable(grouped)));
+
+        return fillDataList;
+    }
+
+    // ==================== TABLE 数据构建 ====================
+
+    /**
+     * 构建评审项表格数据（各类型独立表格）
+     */
+    private TableData buildReviewItemTable(List<TbProjectReviewItem> items) {
+        TableData tableData = new TableData();
+        tableData.setColumns(List.of(
+                new ColumnDef("serialNo", "序号"),
+                new ColumnDef("itemName", "评审项名称"),
+                new ColumnDef("itemContent", "评审项内容"),
+                new ColumnDef("score", "分值"),
+                new ColumnDef("maxScore", "满分"),
+                new ColumnDef("weight", "权重"),
+                new ColumnDef("subjectivity", "主观/客观"),
+                new ColumnDef("isRequired", "是否必审")
+        ));
+        tableData.setRows(toFlatList(items));
+        tableData.setMergeRules(Collections.emptyList());
+        return tableData;
     }
 
     /**
+     * 构建评审汇总表数据（方式一：资信标→技术标→商务标，含合并规则）
+     */
+    private TableData buildReviewSummaryTable(Map<String, List<TbProjectReviewItem>> grouped) {
+        TableData tableData = new TableData();
+        tableData.setColumns(List.of(
+                new ColumnDef("categoryName", "类别"),
+                new ColumnDef("reviewStandard", "评审标准"),
+                new ColumnDef("maxScore", "分值"),
+                new ColumnDef("subjectivity", "主观/客观")
+        ));
+        tableData.setRows(toReviewSummaryList(grouped));
+        // 第一列（categoryName）按相同文本合并
+        tableData.setMergeRules(List.of(
+                new MergeRule(0, MergeStrategy.BY_SAME_TEXT)
+        ));
+        return tableData;
+    }
+
+    // ==================== 数据转换 ====================
+
+    /**
      * 将评审项实体列表转为扁平化的Map列表，递归构建树形结构并生成多级序号
-     * 序号格式: 1 → 1.1 → 1.1.1 → ...，层级越深缩进越多
-     * 非叶子节点(分类行): 有maxScore/weight，无itemContent/score/subjectivity/isRequired
-     * 叶子节点(具体项): 所有字段完整填充
      */
     private List<Map<String, String>> toFlatList(List<TbProjectReviewItem> items) {
         if (items == null || items.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 构建 parentId -> children 映射（保持sortOrder顺序）
         Map<Long, List<TbProjectReviewItem>> childrenMap = items.stream()
                 .filter(item -> item.getParentId() != null && item.getParentId() > 0)
                 .collect(Collectors.groupingBy(
                         TbProjectReviewItem::getParentId,
-                        LinkedHashMap::new,
-                        Collectors.toList()
-                ));
+                        LinkedHashMap::new, Collectors.toList()));
 
-        // 筛选根节点，按sortOrder排序
         List<TbProjectReviewItem> roots = items.stream()
                 .filter(item -> item.getParentId() == null || item.getParentId() == 0)
                 .sorted(Comparator.comparingInt(item -> item.getSortOrder() != null ? item.getSortOrder() : 0))
                 .toList();
 
-        // 递归前序遍历
         List<Map<String, String>> result = new ArrayList<>();
         int[] rootCounter = {1};
         for (TbProjectReviewItem root : roots) {
@@ -104,15 +150,6 @@ public class DocumentDataAssembler {
         return result;
     }
 
-    /**
-     * 递归扁平化单个节点及其子树
-     *
-     * @param node        当前节点
-     * @param serialNo    当前节点序号（如 "1"、"1.2"、"1.2.3"）
-     * @param depth       当前深度（1=根）
-     * @param childrenMap parentId -> children 映射
-     * @param result      累积结果列表
-     */
     private void flattenNode(TbProjectReviewItem node, String serialNo, int depth,
                              Map<Long, List<TbProjectReviewItem>> childrenMap,
                              List<Map<String, String>> result) {
@@ -121,28 +158,28 @@ public class DocumentDataAssembler {
 
         Map<String, String> map = new LinkedHashMap<>();
         map.put("serialNo", serialNo);
-        map.put("itemName", indent(depth - 1) + (node.getItemName() != null ? node.getItemName() : ""));
+        map.put("itemName", nullSafe(node.getItemName()));
 
         if (hasChildren) {
-            // 非叶子节点(分类行): 只填充分类维度字段
             map.put("itemContent", "");
             map.put("score", "");
-            map.put("maxScore", node.getMaxScore() != null ? node.getMaxScore().toPlainString() : "");
+            // maxScore 为空时取子节点 score 之和
+            String maxScoreVal = resolveMaxScore(node, hasChildren, childrenMap);
+            map.put("maxScore", maxScoreVal);
             map.put("weight", node.getWeight() != null ? node.getWeight().toPlainString() + "%" : "");
             map.put("subjectivity", "");
             map.put("isRequired", "");
         } else {
-            // 叶子节点(具体项): 完整填充
-            map.put("itemContent", node.getItemContent() != null ? node.getItemContent() : "");
+            map.put("itemContent", nullSafe(node.getItemContent()));
             map.put("score", node.getScore() != null ? node.getScore().toPlainString() : "");
-            map.put("maxScore", node.getMaxScore() != null ? node.getMaxScore().toPlainString() : "");
+            // maxScore 为空时取 score 兜底
+            map.put("maxScore", resolveMaxScore(node, false, childrenMap));
             map.put("weight", node.getWeight() != null ? node.getWeight().toPlainString() + "%" : "");
             map.put("subjectivity", formatSubjectivity(node.getSubjectivity()));
             map.put("isRequired", formatRequired(node.getIsRequired()));
         }
         result.add(map);
 
-        // 递归处理子节点
         if (hasChildren) {
             List<TbProjectReviewItem> children = childrenMap.get(node.getId());
             int childIndex = 1;
@@ -151,6 +188,96 @@ public class DocumentDataAssembler {
                 childIndex++;
             }
         }
+    }
+
+    private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped) {
+        List<Map<String, String>> result = new ArrayList<>();
+
+        List<String> orderedTypes = List.of("CREDIT", "TECHNICAL", "COMMERCIAL");
+        Map<String, String> typeLabels = Map.of(
+            "CREDIT", "资信标", "TECHNICAL", "技术标", "COMMERCIAL", "商务标");
+
+        for (String reviewType : orderedTypes) {
+            List<TbProjectReviewItem> items = grouped.getOrDefault(reviewType, Collections.emptyList());
+            if (items.isEmpty()) continue;
+
+            // 分类总分：取所有叶子节点 score 之和
+            Set<Long> parentIds = items.stream()
+                .map(TbProjectReviewItem::getParentId)
+                .filter(pid -> pid != null && pid > 0)
+                .collect(Collectors.toSet());
+            BigDecimal categoryScore = items.stream()
+                .filter(i -> !parentIds.contains(i.getId()))
+                .map(TbProjectReviewItem::getScore)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 若叶子 score 都为空，回退到根节点 maxScore 之和
+            if (categoryScore.compareTo(BigDecimal.ZERO) == 0) {
+                categoryScore = items.stream()
+                    .filter(i -> i.getParentId() == null || i.getParentId() == 0)
+                    .map(TbProjectReviewItem::getMaxScore)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            }
+
+            String categoryLabel = typeLabels.get(reviewType) + "（" + categoryScore.toPlainString() + "分）";
+
+            Map<Long, List<TbProjectReviewItem>> childrenMap = items.stream()
+                .filter(i -> i.getParentId() != null && i.getParentId() > 0)
+                .collect(Collectors.groupingBy(TbProjectReviewItem::getParentId,
+                    LinkedHashMap::new, Collectors.toList()));
+
+            List<TbProjectReviewItem> roots = items.stream()
+                .filter(i -> i.getParentId() == null || i.getParentId() == 0)
+                .sorted(Comparator.comparingInt(i -> i.getSortOrder() != null ? i.getSortOrder() : 0))
+                .toList();
+
+            for (TbProjectReviewItem root : roots) {
+                flattenForSummary(root, categoryLabel, childrenMap, result);
+            }
+        }
+        return result;
+    }
+
+    private void flattenForSummary(TbProjectReviewItem node, String categoryLabel,
+            Map<Long, List<TbProjectReviewItem>> childrenMap,
+            List<Map<String, String>> result) {
+        boolean hasChildren = childrenMap.containsKey(node.getId())
+            && !childrenMap.get(node.getId()).isEmpty();
+
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("categoryName", categoryLabel);
+        map.put("reviewStandard", node.getItemStandard());
+        map.put("maxScore", resolveMaxScore(node, hasChildren, childrenMap));
+        map.put("subjectivity", hasChildren ? "" : formatSubjectivity(node.getSubjectivity()));
+        result.add(map);
+
+        if (hasChildren) {
+            for (TbProjectReviewItem child : childrenMap.get(node.getId())) {
+                flattenForSummary(child, categoryLabel, childrenMap, result);
+            }
+        }
+    }
+
+    /**
+     * 解析节点的满分值：maxScore 有值直接取，否则叶子节点取 score，父节点取子节点 score 之和
+     */
+    private String resolveMaxScore(TbProjectReviewItem node, boolean hasChildren,
+                                   Map<Long, List<TbProjectReviewItem>> childrenMap) {
+        if (node.getMaxScore() != null) {
+            return node.getMaxScore().toPlainString();
+        }
+        if (hasChildren) {
+            List<TbProjectReviewItem> children = childrenMap.get(node.getId());
+            BigDecimal sum = children.stream()
+                    .map(TbProjectReviewItem::getScore)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            return sum.compareTo(BigDecimal.ZERO) > 0 ? sum.toPlainString() : "";
+        }
+        // 叶子节点：maxScore 为空时取 score 兜底
+        return node.getScore() != null ? node.getScore().toPlainString() : "";
     }
 
     private String formatSubjectivity(String subjectivity) {
@@ -167,4 +294,7 @@ public class DocumentDataAssembler {
         return isRequired == 1 ? "是" : "否";
     }
 
+    private String nullSafe(String value) {
+        return value != null ? value : "";
+    }
 }
