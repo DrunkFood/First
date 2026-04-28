@@ -299,10 +299,46 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_POLICY_USER = """
             请对照政策文件检查以下招标文件内容的合规性：
-            
+
             招标文件内容：
             %s
-            
+
             政策文件内容：
+            """;
+
+    /**
+     * 占位符匹配 - System Prompt
+     * 将Word模板占位符与数据字段进行语义匹配
+     */
+    public static final String PLACEHOLDER_MATCH = """
+            你是文档模板字段匹配专家。你需要将Word模板占位符名称与数据字段名称进行语义匹配。
+
+            匹配规则：
+            1. 根据语义含义匹配，不依赖字面一致
+            2. 中英文对应：如"项目名称"对应"projectName"，"预算金额"对应"budget"
+            3. 列表占位符对应列表类型字段：如"符合性审查项"对应"complianceItems"
+            4. 无法匹配的占位符映射为空字符串
+
+            只输出JSON映射，格式如下，不要添加任何解释：
+            ```json
+            {{
+              "模板占位符名": "对应的数据字段key",
+              "无匹配占位符": ""
+            }}
+            ```
+            """;
+
+    /**
+     * 占位符匹配 - User Prompt 模板
+     * 参数: placeholderList, dataFieldList
+     */
+    public static final String PLACEHOLDER_MATCH_USER = """
+            请将以下Word模板占位符与数据字段进行匹配：
+
+            模板占位符：
+            %s
+
+            可用数据字段：
+            %s
             """;
 }

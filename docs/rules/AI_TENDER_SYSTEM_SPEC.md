@@ -244,7 +244,7 @@ AiTaskType 枚举定义了所有AI任务类型：
 - `REQUIREMENT_GENERATE`: 需求生成
 - `PROJECT_REQUIREMENT_GENERATE`: 项目需求生成
 - `REVIEW_ITEM_GENERATE`: 评审项生成
-- `DOCUMENT_INTEGRATION`: 文档集成（调用File服务poi-tl模板引擎生成Word，不调用AI模型）
+- `DOCUMENT_INTEGRATION`: 文档集成（AI语义匹配占位符与数据key + 调用File服务poi-tl生成Word）
 - `DETECTION_SENSITIVE_WORD`: 敏感词检测
 - `DETECTION_TYPO`: 错别字检测
 - `DETECTION_POLICY_REVIEW`: 政策文件审查

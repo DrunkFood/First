@@ -60,6 +60,15 @@ public final class PromptBuilder {
                 defaultStr(content));
     }
 
+    /**
+     * 构建占位符匹配的User Prompt
+     */
+    public static String buildPlaceholderMatch(String placeholders, String dataFields) {
+        return String.format(PromptTemplates.PLACEHOLDER_MATCH_USER,
+                defaultStr(placeholders),
+                defaultStr(dataFields));
+    }
+
     private static String defaultStr(String value) {
         return value != null ? value : "";
     }
