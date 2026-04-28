@@ -2,7 +2,8 @@ package com.jy.eleaitender.file.engine;
 
 import com.deepoove.poi.XWPFTemplate;
 import com.deepoove.poi.config.Configure;
-import com.deepoove.poi.plugin.HtmlRenderPolicy;
+import com.deepoove.poi.config.ConfigureBuilder;
+import com.deepoove.poi.policy.DocumentRenderPolicy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.stereotype.Component;
@@ -39,10 +40,10 @@ public class WordTemplateEngine {
      * @return 生成文档的字节数组
      */
     public byte[] render(InputStream templateStream, Map<String, Object> data, Set<String> markdownKeys) {
-        Configure.ConfigureBuilder builder = Configure.builder();
+        ConfigureBuilder builder = Configure.builder();
         if (markdownKeys != null) {
             for (String key : markdownKeys) {
-                builder.bind(key, new HtmlRenderPolicy());
+                builder.bind(key, new DocumentRenderPolicy());
             }
         }
         Configure config = builder.build();

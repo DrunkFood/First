@@ -246,17 +246,18 @@ public class DocumentDataAssembler {
         boolean hasChildren = childrenMap.containsKey(node.getId())
             && !childrenMap.get(node.getId()).isEmpty();
 
-        Map<String, String> map = new LinkedHashMap<>();
-        map.put("categoryName", categoryLabel);
-        map.put("reviewStandard", node.getItemStandard());
-        map.put("maxScore", resolveMaxScore(node, hasChildren, childrenMap));
-        map.put("subjectivity", hasChildren ? "" : formatSubjectivity(node.getSubjectivity()));
-        result.add(map);
-
         if (hasChildren) {
+            // 有子节点时跳过自身行，避免与类别列重复分组
             for (TbProjectReviewItem child : childrenMap.get(node.getId())) {
                 flattenForSummary(child, categoryLabel, childrenMap, result);
             }
+        } else {
+            Map<String, String> map = new LinkedHashMap<>();
+            map.put("categoryName", categoryLabel);
+            map.put("reviewStandard", node.getItemStandard());
+            map.put("maxScore", resolveMaxScore(node, false, childrenMap));
+            map.put("subjectivity", formatSubjectivity(node.getSubjectivity()));
+            result.add(map);
         }
     }
 

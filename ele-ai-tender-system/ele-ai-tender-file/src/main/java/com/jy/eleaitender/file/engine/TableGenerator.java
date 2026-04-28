@@ -7,9 +7,9 @@ import com.jy.eleaitender.common.dto.TableData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xwpf.usermodel.*;
 import org.apache.xmlbeans.XmlCursor;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTVMerge;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
+
+import java.math.BigInteger;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -216,6 +216,7 @@ public class TableGenerator {
 
     private void applyDefaultStyle(XWPFTable table) {
         table.setWidth("100%");
+        applyTableBorders(table);
 
         for (XWPFTableRow row : table.getRows()) {
             for (XWPFTableCell cell : row.getTableCells()) {
@@ -243,5 +244,26 @@ public class TableGenerator {
                 }
             }
         }
+    }
+
+    private void applyTableBorders(XWPFTable table) {
+        CTTblPr tblPr = table.getCTTbl().getTblPr();
+        if (tblPr == null) tblPr = table.getCTTbl().addNewTblPr();
+
+        CTTblBorders borders = tblPr.isSetTblBorders() ? tblPr.getTblBorders() : tblPr.addNewTblBorders();
+
+        setBorder(borders.isSetTop() ? borders.getTop() : borders.addNewTop());
+        setBorder(borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom());
+        setBorder(borders.isSetLeft() ? borders.getLeft() : borders.addNewLeft());
+        setBorder(borders.isSetRight() ? borders.getRight() : borders.addNewRight());
+        setBorder(borders.isSetInsideH() ? borders.getInsideH() : borders.addNewInsideH());
+        setBorder(borders.isSetInsideV() ? borders.getInsideV() : borders.addNewInsideV());
+    }
+
+    private void setBorder(CTBorder border) {
+        border.setVal(STBorder.SINGLE);
+        border.setSz(BigInteger.valueOf(4));
+        border.setSpace(BigInteger.ZERO);
+        border.setColor("auto");
     }
 }

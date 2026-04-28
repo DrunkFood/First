@@ -5,6 +5,7 @@ import com.jy.eleaitender.common.dto.*;
 import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.dto.response.WordStructureVO;
+import com.jy.eleaitender.file.engine.MarkdownToDocumentConverter;
 import com.jy.eleaitender.file.engine.TableGenerator;
 import com.jy.eleaitender.file.engine.WordDocumentFixEngine;
 import com.jy.eleaitender.file.engine.WordStructureParser;
@@ -15,11 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
-import com.vladsch.flexmark.util.ast.Node;
-import com.vladsch.flexmark.util.data.MutableDataSet;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -50,6 +46,9 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
 
     @Autowired
     private TableGenerator tableGenerator;
+
+    @Autowired
+    private MarkdownToDocumentConverter markdownConverter;
 
     @Override
     public WordStructureVO getFileStructure(Long fileId) {
@@ -88,8 +87,7 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
                     case TEXT -> poiData.put(fd.getKey(), fd.getValue());
                     case IMAGE -> poiData.put(fd.getKey(), toPictureRenderData((ImageData) fd.getValue()));
                     case MARKDOWN -> {
-                        String html = markdownToHtml((String) fd.getValue());
-                        poiData.put(fd.getKey(), html);
+                        poiData.put(fd.getKey(), markdownConverter.convert((String) fd.getValue()));
                         markdownKeys.add(fd.getKey());
                     }
                     case TABLE -> {
@@ -131,15 +129,6 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
         // URL 模式暂不支持，返回占位文本
         log.warn("图片URL模式暂不支持: {}", imageData.getUrl());
         return "[图片]";
-    }
-
-    private String markdownToHtml(String markdown) {
-        if (markdown == null || markdown.isBlank()) return "";
-        MutableDataSet options = new MutableDataSet();
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-        Node document = parser.parse(markdown);
-        return renderer.render(document);
     }
 
     private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =

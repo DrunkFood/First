@@ -20,9 +20,11 @@
 
 | 类 | 职责 |
 |----|------|
-| `WordTemplateEngine` | Word 模板(poi-tl)填充与渲染 |
+| `WordTemplateEngine` | Word 模板(poi-tl)填充与渲染，支持 markdownKeys 绑定 DocumentRenderPolicy |
 | `WordStructureParser` | Word 模板结构解析，提取占位符和结构定义 |
 | `WordDocumentFixEngine` | Word 文档文本替换引擎，基于 Apache POI 实现检测问题修复 |
+| `MarkdownToDocumentConverter` | Markdown AST → DocumentRenderData 转换器（flexmark 解析，支持标题/加粗/斜体/列表/引用/代码） |
+| `TableGenerator` | POI 编程生成表格（含单元格合并+边框），绕开 poi-tl 循环标签 |
 
 > **注意**: `MarkdownTemplateEngine` 和 `WordDocumentGenerator` 已移入 core 模块（`com.jy.eleaitender.core.engine`），用于需求导出等 core 内部文档生成场景。
 
@@ -54,7 +56,11 @@
   | `{{image}}` | `{{@image}}` | 图片缺少 `@` 前缀 |
   | `{% for item in items %}` | `{{?items}}` | Jinja2 语法，poi-tl 不认 |
 
-- **模板数据**: DocumentDataAssembler 组装扁平 Map，评审项转为 `List<Map<String, String>>`
+- **模板数据**: DocumentDataAssembler 组装 `List<FillData>`（TEXT/TABLE/IMAGE/MARKDOWN 四种类型），按类型分派渲染
+- **两阶段渲染**: 阶段一 poi-tl 渲染文本/图片/Markdown（TABLE 渲染为占位文本 `__TABLE_PLACEHOLDER__key`）；阶段二 POI 扫描占位段落用 TableGenerator 替换为真实表格
+- **Markdown 渲染**: `FillData.markdown()` → `MarkdownToDocumentConverter`（flexmark AST）→ `DocumentRenderData` → poi-tl `DocumentRenderPolicy` 渲染为 Word 格式化段落
+- **表格生成约束**: `insertNewTbl(XmlCursor)` 创建的表格**默认无边框**，必须通过 `CTTblBorders` 设置 6 种边框（top/bottom/left/right/insideH/insideV）
+- **poi-tl 相邻标签合并**: refactorRun 会将 `{{?items}}{{col}}` 合并为一个标签导致 `Mismatched start/end tags`，此为引擎内部行为无法绕开，TABLE 类型已通过 POI 编程生成彻底绕开循环标签
 - **结构解析时机**: Support 模块创建/更新模板时自动调用 File 服务解析 Word 结构，结果存入 `structureDefinition`
 - **模板修订标记预处理**: `WordTemplateEngine.render()` 在传给 poi-tl 之前，必须先执行 `acceptAllRevisions()` 清除修订标记
   - Word/WPS 编辑模板时可能开启修订追踪，产生的 `<w:ins>` 会包裹 `<w:r>`，使其不再是 `<w:p>` 直接子元素
