@@ -1,15 +1,12 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
-import com.jy.eleaitender.common.entity.core.TbRequirement;
+import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
-import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
@@ -39,9 +36,6 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     @Autowired
     private IProjectService projectService;
 
-    @Autowired
-    private TbRequirementMapper requirementMapper;
-
     @Override
     public List<TbProjectReviewItem> getTreeByProjectId(Long projectId) {
         // 校验项目归属
@@ -55,6 +49,29 @@ public class ReviewItemServiceImpl implements IReviewItemService {
     public TbProjectReviewItem create(TbProjectReviewItem reviewItem) {
         // 校验项目归属
         projectService.getById(reviewItem.getProjectId());
+
+        // 根据 parentId 自动计算 level（忽略请求中的 level 字段）
+        if (reviewItem.getParentId() != null && reviewItem.getParentId() > 0) {
+            TbProjectReviewItem parent = reviewItemMapper.selectById(reviewItem.getParentId());
+            if (parent == null) {
+                throw new BusinessException(ResponseCode.REVIEW_ITEM_NOT_FOUND);
+            }
+            int childLevel = parent.getLevel() + 1;
+            if (childLevel > 3) {
+                throw new BusinessException(ResponseCode.REVIEW_ITEM_MAX_LEVEL_EXCEEDED);
+            }
+            reviewItem.setLevel(childLevel);
+            // 子项继承父项的 reviewType
+            if (reviewItem.getReviewType() == null) {
+                reviewItem.setReviewType(parent.getReviewType());
+            }
+        } else {
+            reviewItem.setParentId(null);
+            if (reviewItem.getLevel() == null) {
+                reviewItem.setLevel(1);
+            }
+        }
+
         // 默认排序号
         if (reviewItem.getSortOrder() == null) {
             reviewItem.setSortOrder(0);

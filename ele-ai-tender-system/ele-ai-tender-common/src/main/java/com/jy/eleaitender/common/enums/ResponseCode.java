@@ -96,6 +96,7 @@ public enum ResponseCode {
     REVIEW_ITEM_NOT_FOUND(8031, "评审项不存在"),
     REVIEW_ITEM_TREE_ERROR(8032, "评审项树构建失败"),
     REVIEW_ITEM_CASCADE_DELETE_ERROR(8033, "评审项级联删除失败"),
+    REVIEW_ITEM_MAX_LEVEL_EXCEEDED(8034, "评审项层级不能超过3级"),
 
     // 版本相关 8041-8049
     VERSION_SNAPSHOT_ERROR(8041, "版本快照创建失败"),
