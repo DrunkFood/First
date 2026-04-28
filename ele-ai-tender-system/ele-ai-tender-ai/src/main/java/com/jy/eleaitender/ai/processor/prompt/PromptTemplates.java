@@ -135,6 +135,7 @@ public final class PromptTemplates {
               "score": 85
             }}
             ```
+            重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，每个HIGH问题-10分，MEDIUM问题-5分，LOW问题-2分。
             """;
 
@@ -165,6 +166,7 @@ public final class PromptTemplates {
               "score": 95
             }}
             ```
+            重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，每个错误-3分。
             """;
 
@@ -197,6 +199,7 @@ public final class PromptTemplates {
               "score": 80
             }}
             ```
+            重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，HIGH问题-15分，MEDIUM问题-8分，LOW问题-3分。
             """;
 
@@ -228,6 +231,7 @@ public final class PromptTemplates {
               "score": 90
             }}
             ```
+            重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，每个格式问题-5分。
             """;
 

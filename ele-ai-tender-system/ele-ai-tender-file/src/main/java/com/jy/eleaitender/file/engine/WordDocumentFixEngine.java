@@ -93,26 +93,97 @@ public class WordDocumentFixEngine {
 
     /**
      * 替换段落中的文本
-     * 策略：合并所有Run文本，若包含原文则清空所有Run并将替换后文本写入第一个Run
+     * 策略：两级匹配
+     *   Level 1: 精确匹配（原文直接包含）
+     *   Level 2: 规范化匹配（移除空白后匹配，还原实际子串范围）
      */
     private boolean replaceInParagraph(XWPFParagraph para, String original, String targeted) {
         String fullText = para.getText();
-        if (fullText == null || !fullText.contains(original)) {
+        if (fullText == null) {
             return false;
         }
 
+        // Level 1: 精确匹配
+        if (fullText.contains(original)) {
+            doReplace(para, fullText, original, targeted);
+            return true;
+        }
+
+        // Level 2: 规范化匹配
+        String actualOriginal = findActualOriginal(fullText, original);
+        if (actualOriginal != null) {
+            doReplace(para, fullText, actualOriginal, targeted);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 执行实际替换：清空所有Run，将替换后文本写入第一个Run
+     */
+    private void doReplace(XWPFParagraph para, String fullText, String actualOriginal, String targeted) {
         List<XWPFRun> runs = para.getRuns();
-        if (runs.isEmpty()) return false;
+        if (runs.isEmpty()) return;
 
         XWPFRun firstRun = runs.get(0);
-        String replaced = fullText.replace(original, targeted);
+        String replaced = fullText.replace(actualOriginal, targeted);
 
         for (XWPFRun run : runs) {
             run.setText("", 0);
         }
         firstRun.setText(replaced, 0);
+    }
 
-        return true;
+    /**
+     * 规范化文本：移除所有空白字符（空格、换行、制表符、全角空格、不间断空格等）
+     */
+    static String normalize(String text) {
+        if (text == null) return "";
+        // \s 不覆盖不间断空格(U+00A0)和全角空格(U+3000)，需显式补充
+        return text.replaceAll("[\\s\\u00A0\\u3000]+", "");
+    }
+
+    /**
+     * 在原始文本中找到与 original 规范化等价的子串
+     * 通过位置映射还原原文实际范围，保留原文中的空白字符
+     *
+     * @param rawText  文档中的实际文本
+     * @param original AI检测给出的原文（可能与文档文本有空白差异）
+     * @return 文档中与 original 规范化等价的实际子串，无匹配返回 null
+     */
+    static String findActualOriginal(String rawText, String original) {
+        String normalizedRaw = normalize(rawText);
+        String normalizedOriginal = normalize(original);
+
+        int normStart = normalizedRaw.indexOf(normalizedOriginal);
+        if (normStart < 0) return null;
+        int normEnd = normStart + normalizedOriginal.length();
+
+        // 构建位置映射：normToRaw[i] = 规范化文本第i个字符在原始文本中的起始位置
+        int[] normToRaw = new int[normalizedRaw.length() + 1];
+        int rawIdx = 0;
+        int normIdx = 0;
+
+        while (normIdx <= normalizedRaw.length() && rawIdx <= rawText.length()) {
+            if (rawIdx < rawText.length() && isWhitespaceChar(rawText.charAt(rawIdx))) {
+                rawIdx++;
+                continue;
+            }
+            normToRaw[normIdx] = rawIdx;
+            if (normIdx == normalizedRaw.length()) break;
+            rawIdx++;
+            normIdx++;
+        }
+
+        return rawText.substring(normToRaw[normStart], normToRaw[normEnd]);
+    }
+
+    /**
+     * 判断字符是否为空白（包括不间断空格和全角空格）
+     */
+    private static boolean isWhitespaceChar(char c) {
+        return Character.isWhitespace(c) || c == '\u00A0' || c == '\u3000';
     }
 
     @Data
