@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.collections4.MapUtils.getInteger;
 
 /**
  * 动态线程池管理器
@@ -44,7 +47,7 @@ public class DynamicThreadPoolManager {
     @PostConstruct
     public void init() {
         this.properties = loadFromDb();
-        this.cachedParamHash = computeHash(this.properties);
+        this.cachedParamHash = this.properties.computeHash();
         this.executor = createExecutor(properties);
         log.info("动态线程池初始化完成: core={}, max={}, queue={}, keepAlive={}s",
                 properties.getCorePoolSize(), properties.getMaxPoolSize(),
@@ -66,7 +69,7 @@ public class DynamicThreadPoolManager {
     public void checkAndRefreshIfNeeded() {
         try {
             ThreadPoolProperties newProps = loadFromDb();
-            String newHash = computeHash(newProps);
+            String newHash = newProps.computeHash();
             if (newHash.equals(cachedParamHash)) {
                 return;
             }
@@ -170,46 +173,16 @@ public class DynamicThreadPoolManager {
         ));
 
         ThreadPoolProperties props = new ThreadPoolProperties();
-        props.setCorePoolSize(getInt(paramMap, "global_max_concurrent_tasks", 10));
-        props.setMaxPoolSize(getInt(paramMap, "global_max_concurrent_tasks", 10));
-        props.setQueueCapacity(getInt(paramMap, "global_max_pending_tasks", 100));
-        props.setTaskTimeoutMinutes(getInt(paramMap, "ai_task_timeout_minutes", 10));
-        props.setUserMaxPendingTasks(getInt(paramMap, "user_max_pending_tasks", 5));
-        props.setUserMaxConcurrentTasks(getInt(paramMap, "user_max_concurrent_tasks", 2));
-        props.setGlobalMaxPendingTasks(getInt(paramMap, "global_max_pending_tasks", 100));
-        props.setGlobalMaxConcurrentTasks(getInt(paramMap, "global_max_concurrent_tasks", 10));
+        props.setCorePoolSize(getInteger(paramMap, "global_max_concurrent_tasks", 10));
+        props.setMaxPoolSize(getInteger(paramMap, "global_max_concurrent_tasks", 10));
+        props.setQueueCapacity(getInteger(paramMap, "global_max_pending_tasks", 100));
+        props.setTaskTimeoutMinutes(getInteger(paramMap, "ai_task_timeout_minutes", 10));
+        props.setUserMaxPendingTasks(getInteger(paramMap, "user_max_pending_tasks", 5));
+        props.setUserMaxConcurrentTasks(getInteger(paramMap, "user_max_concurrent_tasks", 2));
+        props.setGlobalMaxPendingTasks(getInteger(paramMap, "global_max_pending_tasks", 100));
+        props.setGlobalMaxConcurrentTasks(getInteger(paramMap, "global_max_concurrent_tasks", 10));
 
         return props;
     }
 
-    /**
-     * 计算参数Hash（所有key=value拼接后取hashCode）
-     */
-    private String computeHash(ThreadPoolProperties props) {
-        String raw = String.join("|",
-                "core=" + props.getCorePoolSize(),
-                "max=" + props.getMaxPoolSize(),
-                "queue=" + props.getQueueCapacity(),
-                "keepAlive=" + props.getKeepAliveSeconds(),
-                "timeout=" + props.getTaskTimeoutMinutes(),
-                "userMaxPending=" + props.getUserMaxPendingTasks(),
-                "userMaxConcurrent=" + props.getUserMaxConcurrentTasks(),
-                "globalMaxPending=" + props.getGlobalMaxPendingTasks(),
-                "globalMaxConcurrent=" + props.getGlobalMaxConcurrentTasks()
-        );
-        return Integer.toHexString(raw.hashCode());
-    }
-
-    private int getInt(Map<String, String> map, String key, int defaultValue) {
-        String value = map.get(key);
-        if (value == null || value.isBlank()) {
-            return defaultValue;
-        }
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            log.warn("参数{}值无效: {}, 使用默认值: {}", key, value, defaultValue);
-            return defaultValue;
-        }
-    }
 }
