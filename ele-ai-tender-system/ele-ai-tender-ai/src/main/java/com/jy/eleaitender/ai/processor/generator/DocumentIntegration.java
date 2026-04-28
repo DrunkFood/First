@@ -59,9 +59,10 @@ public class DocumentIntegration {
         Map<String, Object> fillData = new LinkedHashMap<>(params);
         fillData.remove("templateFileId");
 
-        // 通过AI模型匹配占位符和数据key，生成符合Word模板占位符名称的填充数据
-        WordStructureVO fileStructure = fileServiceClient.getFileStructure(templateFileId);
-        Map<String, Object> data = matchPlaceholders(fileStructure.getPlaceholders(), fillData, task);
+        // TODO 通过AI模型匹配占位符和数据key，生成符合Word模板占位符名称的填充数据，列表数据无法正确匹配
+        //WordStructureVO fileStructure = fileServiceClient.getFileStructure(templateFileId);
+        //Map<String, Object> data = matchPlaceholders(fileStructure.getPlaceholders(), fillData, task);
+        Map<String, Object> data = new LinkedHashMap<>(fillData);
 
         // 调用File服务生成Word文档
         Long generatedFileId = fileServiceClient.generateDocument(templateFileId, data, projectName + ".docx");
