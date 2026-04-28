@@ -116,7 +116,7 @@ public class AiTaskProcessor {
                 aiTaskMapper.markAiUnavailable(task.getId(), e.getMessage());
             } catch (AiErrorContentException e) {
                 log.error("AI任务内容异常: id={}, type={}", task.getId(), task.getTaskType(), e);
-                aiTaskMapper.markFailed(task.getId(), e.getContent(), truncateErrorMsg(e.getMessage()));
+                aiTaskMapper.markAiErrorContent(task.getId(), e.getContent(), truncateErrorMsg(e.getMessage()));
             } catch (Exception e) {
                 log.error("AI任务处理失败: id={}, type={}", task.getId(), task.getTaskType(), e);
                 aiTaskMapper.markFailed(task.getId(), truncateErrorMsg(e.getMessage()));
@@ -155,7 +155,7 @@ public class AiTaskProcessor {
                     aiTaskMapper.markAiUnavailable(task.getId(), aue.getMessage());
                 } else if (cause instanceof AiErrorContentException aece) {
                     log.error("AI任务内容异常: id={}, type={}", task.getId(), task.getTaskType(), aece);
-                    aiTaskMapper.markFailed(task.getId(), aece.getContent(), truncateErrorMsg(aece.getMessage()));
+                    aiTaskMapper.markAiErrorContent(task.getId(), aece.getContent(), truncateErrorMsg(aece.getMessage()));
                 } else {
                     log.error("AI任务处理失败: id={}, type={}", task.getId(), task.getTaskType(), e);
                     aiTaskMapper.markFailed(task.getId(), truncateErrorMsg(e.getMessage()));
