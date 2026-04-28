@@ -414,11 +414,24 @@ function collectLeaves(nodes: ReviewItemTree[]): ReviewItemTree[] {
   return result
 }
 
-// 按 reviewType 分组的树形数据
-const complianceTree = computed(() => allItems.value.filter(i => i.reviewType === 'COMPLIANCE'))
-const creditTree = computed(() => allItems.value.filter(i => i.reviewType === 'CREDIT'))
-const technicalTree = computed(() => allItems.value.filter(i => i.reviewType === 'TECHNICAL'))
-const commercialTree = computed(() => allItems.value.filter(i => i.reviewType === 'COMMERCIAL'))
+/** 展开分类根节点：若level=1节点有子项，直接显示其子项（避免与Tab标签重复） */
+function unwrapCategoryRoots(roots: ReviewItemTree[]): ReviewItemTree[] {
+  const result: ReviewItemTree[] = []
+  for (const node of roots) {
+    if (node.level === 1 && node.children?.length) {
+      result.push(...node.children)
+    } else {
+      result.push(node)
+    }
+  }
+  return result
+}
+
+// 按 reviewType 分组的树形数据（展开分类根节点，避免与Tab标签重复）
+const complianceTree = computed(() => unwrapCategoryRoots(allItems.value.filter(i => i.reviewType === 'COMPLIANCE')))
+const creditTree = computed(() => unwrapCategoryRoots(allItems.value.filter(i => i.reviewType === 'CREDIT')))
+const technicalTree = computed(() => unwrapCategoryRoots(allItems.value.filter(i => i.reviewType === 'TECHNICAL')))
+const commercialTree = computed(() => unwrapCategoryRoots(allItems.value.filter(i => i.reviewType === 'COMMERCIAL')))
 
 // 评分计算：只统计叶子节点
 const creditScore = computed(() => collectLeaves(creditTree.value).reduce((sum, i) => sum + (i.score || 0), 0))
@@ -471,18 +484,30 @@ const handleGenerate = async () => {
   }
 }
 
-/** 添加顶级评审项 */
+/** 添加评审项（优先添加为分类根节点的子项，避免创建重复的分类层级） */
 const handleAddItem = async (type: ReviewCategory) => {
   try {
-    await reviewApi.create({
-      projectId: props.projectId,
-      itemName: '',
-      level: 1,
-      sortOrder: allItems.value.filter(i => i.reviewType === type).length,
-      reviewType: type,
-      subjectivity: 'OBJECTIVE',
-      score: 0,
-    })
+    const categoryRoot = allItems.value.find(i => i.reviewType === type && i.level === 1)
+    if (categoryRoot) {
+      await reviewApi.create({
+        projectId: props.projectId,
+        parentId: categoryRoot.id,
+        itemName: '',
+        reviewType: type,
+        subjectivity: 'OBJECTIVE',
+        score: 0,
+      })
+    } else {
+      await reviewApi.create({
+        projectId: props.projectId,
+        itemName: '',
+        level: 1,
+        sortOrder: allItems.value.filter(i => i.reviewType === type).length,
+        reviewType: type,
+        subjectivity: 'OBJECTIVE',
+        score: 0,
+      })
+    }
     await loadReviewItems()
   } catch {
     ElMessage.error('添加失败')
