@@ -33,6 +33,27 @@
   - 缺失字段会抛 `SpelEvaluationException: Property or field 'xxx' cannot be found`
   - 原生引擎通过 `Map.get()` 访问数据，缺失字段返回空字符串，天然容错
 - **占位符语法**: `{{变量名}}`，支持中英文变量名（正则: `\{\{([\w一-龥]+)}}`）
+- **完整标签语法表**:
+
+  | 标签类型 | 语法 | 数据类型 | 示例 |
+  |----------|------|----------|------|
+  | 文本 | `{{var}}` | String / TextRenderData | `{{title}}` |
+  | 循环（区块对） | `{{?items}}...{{/items}}` | `List<?>` | `{{?sections}}...{{/sections}}` |
+  | 图片 | `{{@var}}` | PictureRenderData | `{{@logo}}` |
+  | 包含（子模板） | `{{+var}}` | Include | `{{+header}}` |
+  | 条件（区块对） | `{{var}}...{{var}}` | Boolean | `{{showDetail}}...{{showDetail}}` |
+
+  > **区块对规则**: 开始标签以 `?` 标识（循环）或变量名标识（条件），结束标签以 `/` 标识。循环必须用 `{{?}}`，条件用同名变量包裹。
+
+- **AI 常见标签错误**（生成模板/代码时务必避免）:
+
+  | 错误写法 | 正确写法 | 错因 |
+  |----------|----------|------|
+  | `{{#items}}...{{/items}}` | `{{?items}}...{{/items}}` | `#` 是 Jinja2/Thymeleaf 语法，poi-tl 不认 |
+  | `{{/list}}` | `{{/items}}` | 结束标签必须与开始标签同名 |
+  | `{{image}}` | `{{@image}}` | 图片缺少 `@` 前缀 |
+  | `{% for item in items %}` | `{{?items}}` | Jinja2 语法，poi-tl 不认 |
+
 - **模板数据**: DocumentDataAssembler 组装扁平 Map，评审项转为 `List<Map<String, String>>`
 - **结构解析时机**: Support 模块创建/更新模板时自动调用 File 服务解析 Word 结构，结果存入 `structureDefinition`
 - **模板修订标记预处理**: `WordTemplateEngine.render()` 在传给 poi-tl 之前，必须先执行 `acceptAllRevisions()` 清除修订标记

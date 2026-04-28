@@ -46,7 +46,7 @@
         </div>
         <div class="status-info">
           <div class="status-title">待执行文档集成</div>
-          <div class="status-desc">请先选择政策文件，然后执行文档集成</div>
+          <div class="status-desc">请先执行文档集成，成功后可选择政策文件并提交检测</div>
         </div>
         <button v-if="!readonly" class="btn btn-primary generate-btn" :disabled="isIntegrating || !canCreateNew" @click="handleIntegrate">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -160,7 +160,6 @@
     <div v-else class="empty-state">
       <el-icon :size="48" color="var(--app-text-tertiary)"><Document /></el-icon>
       <p>请先执行文档集成</p>
-      <button v-if="!readonly" class="btn btn-secondary" @click="policyModalVisible = true">选择政策文件</button>
     </div>
 
     <!-- 底部操作栏 -->

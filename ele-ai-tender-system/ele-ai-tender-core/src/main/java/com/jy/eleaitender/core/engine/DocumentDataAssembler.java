@@ -153,10 +153,6 @@ public class DocumentDataAssembler {
         }
     }
 
-    private String indent(int level) {
-        return "　　".repeat(Math.max(0, level));
-    }
-
     private String formatSubjectivity(String subjectivity) {
         if (subjectivity == null) return "";
         return switch (subjectivity) {

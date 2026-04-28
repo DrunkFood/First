@@ -53,4 +53,10 @@ public class TbProjectReviewItem extends BaseEntity {
 
     @Schema(description = "是否必审项: 0-否 1-是")
     private Integer isRequired;
+
+    public String getItemStandard() {
+        String reviewName =  this.getItemName() != null ? this.getItemName() : "";
+        String reviewContent =  this.getItemContent() != null ? this.getItemContent() : "";
+        return reviewName + ": " + reviewContent;
+    }
 }
