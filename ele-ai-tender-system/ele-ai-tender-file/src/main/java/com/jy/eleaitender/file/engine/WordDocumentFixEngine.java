@@ -1,6 +1,7 @@
 package com.jy.eleaitender.file.engine;
 
 import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.dto.LocationRefVO;
 import com.jy.eleaitender.common.util.TextNormalizeUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,7 +37,18 @@ public class WordDocumentFixEngine {
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             for (FixReplacement rep : replacements) {
-                boolean found = replaceInDocument(doc, rep.getOriginal(), rep.getTargeted());
+                boolean found = false;
+
+                // 优先使用locationRef定位
+                if (rep.getLocationRef() != null) {
+                    found = replaceWithLocationRef(doc, rep);
+                }
+
+                // locationRef定位失败或无locationRef，走全文档匹配
+                if (!found) {
+                    found = replaceInDocument(doc, rep.getOriginal(), rep.getTargeted());
+                }
+
                 if (found) {
                     fixedCount++;
                 } else {
@@ -51,6 +63,49 @@ public class WordDocumentFixEngine {
         } catch (Exception e) {
             throw new RuntimeException("Word文档修复失败: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * 使用locationRef定位后替换
+     */
+    private boolean replaceWithLocationRef(XWPFDocument doc, FixReplacement rep) {
+        LocationRefVO ref = rep.getLocationRef();
+        List<IBodyElement> bodyElements = doc.getBodyElements();
+
+        if (ref.getElementIndex() == null || ref.getElementIndex() < 0
+                || ref.getElementIndex() >= bodyElements.size()) {
+            return false;
+        }
+
+        IBodyElement element = bodyElements.get(ref.getElementIndex());
+
+        if ("paragraph".equals(ref.getType()) && element instanceof XWPFParagraph para) {
+            return replaceInParagraph(para, rep.getOriginal(), rep.getTargeted());
+        } else if ("table".equals(ref.getType()) && element instanceof XWPFTable table) {
+            return replaceInTableCell(table, ref, rep.getOriginal(), rep.getTargeted());
+        }
+
+        return false;
+    }
+
+    /**
+     * 在表格单元格中替换文本
+     */
+    private boolean replaceInTableCell(XWPFTable table, LocationRefVO ref, String original, String targeted) {
+        if (ref.getRowIndex() == null || ref.getCellIndex() == null) {
+            return false;
+        }
+        if (ref.getRowIndex() >= table.getNumberOfRows()) return false;
+        XWPFTableRow row = table.getRow(ref.getRowIndex());
+        if (ref.getCellIndex() >= row.getTableCells().size()) return false;
+        XWPFTableCell cell = row.getTableCells().get(ref.getCellIndex());
+
+        for (XWPFParagraph para : cell.getParagraphs()) {
+            if (replaceInParagraph(para, original, targeted)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean replaceInDocument(XWPFDocument doc, String original, String targeted) {

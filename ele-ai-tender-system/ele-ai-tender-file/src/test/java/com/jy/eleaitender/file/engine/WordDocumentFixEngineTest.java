@@ -1,6 +1,7 @@
 package com.jy.eleaitender.file.engine;
 
 import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.dto.LocationRefVO;
 import org.apache.poi.xwpf.usermodel.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -303,6 +304,74 @@ class WordDocumentFixEngineTest {
             assertEquals(0, result.getFailedCount());
             assertDocContains(result.getDocumentBytes(), "政府采购服务");
             assertDocContains(result.getDocumentBytes(), "公开招标");
+        }
+
+        @Test
+        @DisplayName("locationRef定位段落替换")
+        void locationRefParagraphReplace() throws Exception {
+            XWPFDocument doc = new XWPFDocument();
+            doc.createParagraph().createRun().setText("第一段");
+            doc.createParagraph().createRun().setText("第二段原文");
+            doc.createParagraph().createRun().setText("第三段");
+            byte[] docBytes = toBytes(doc);
+
+            FixReplacement rep = new FixReplacement();
+            rep.setOriginal("原文");
+            rep.setTargeted("修改");
+            LocationRefVO ref = new LocationRefVO();
+            ref.setType("paragraph");
+            ref.setElementIndex(1);
+            rep.setLocationRef(ref);
+
+            WordDocumentFixEngine.FixResult result = engine.fix(docBytes, List.of(rep));
+            assertEquals(1, result.getFixedCount());
+            assertDocContains(result.getDocumentBytes(), "第二段修改");
+        }
+
+        @Test
+        @DisplayName("locationRef定位失败时回退全文档匹配")
+        void locationRefFallbackToFullDocument() throws Exception {
+            XWPFDocument doc = new XWPFDocument();
+            doc.createParagraph().createRun().setText("第一段");
+            doc.createParagraph().createRun().setText("第二段");
+            byte[] docBytes = toBytes(doc);
+
+            FixReplacement rep = new FixReplacement();
+            rep.setOriginal("第一段");
+            rep.setTargeted("替换段");
+            LocationRefVO ref = new LocationRefVO();
+            ref.setType("paragraph");
+            ref.setElementIndex(999);
+            rep.setLocationRef(ref);
+
+            WordDocumentFixEngine.FixResult result = engine.fix(docBytes, List.of(rep));
+            assertEquals(1, result.getFixedCount());
+        }
+
+        @Test
+        @DisplayName("locationRef为null时走全文档匹配")
+        void nullLocationRefFullDocument() throws Exception {
+            XWPFDocument doc = new XWPFDocument();
+            doc.createParagraph().createRun().setText("原文内容");
+            byte[] docBytes = toBytes(doc);
+
+            FixReplacement rep = replacement("原文", "替换");
+
+            WordDocumentFixEngine.FixResult result = engine.fix(docBytes, List.of(rep));
+            assertEquals(1, result.getFixedCount());
+            assertDocContains(result.getDocumentBytes(), "替换内容");
+        }
+    }
+
+    // ==================== locationRef测试辅助 ====================
+
+    private byte[] toBytes(XWPFDocument doc) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            doc.write(out);
+            doc.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("序列化文档失败", e);
         }
     }
 }

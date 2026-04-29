@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.dto.LocationRefVO;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
@@ -228,6 +229,9 @@ public class DetectionServiceImpl implements IDetectionService {
                 FixReplacement replacement = new FixReplacement();
                 replacement.setOriginal(original);
                 replacement.setTargeted(targeted);
+                // 传入locationRef供修复引擎精准定位
+                LocationRefVO locationRef = DetectionResultParser.parseLocationRef(record.getResult(), issueIndex);
+                replacement.setLocationRef(locationRef);
                 WordFixResultVO fixResult = fileServiceClient.fixDocument(
                         project.getGeneratedFileId(), List.of(replacement));
                 if (fixResult.getFixedCount() > 0) {
