@@ -1,12 +1,16 @@
 package com.jy.eleaitender.core.scheduler;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
+import com.jy.eleaitender.common.dto.ReviewConfig;
+import com.jy.eleaitender.common.dto.ReviewTypeConfig;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
@@ -15,6 +19,7 @@ import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.helper.MessageHelper;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import com.jy.eleaitender.core.mapper.ProjectTemplateMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.service.IProjectVersionService;
@@ -47,6 +52,9 @@ public class AiTaskResultSyncHandler {
 
     @Autowired
     private TbProjectReviewItemMapper reviewItemMapper;
+
+    @Autowired
+    private ProjectTemplateMapper projectTemplateMapper;
 
     @Autowired
     private TbDetectionRecordMapper detectionRecordMapper;
@@ -189,15 +197,38 @@ public class AiTaskResultSyncHandler {
 
         parentMap.clear();
         List<TbProjectReviewItem> items = parseReviewItemsFromResult(task.getResult(), projectId);
-        if (items.isEmpty()) {
-            log.warn("评审项生成结果为空，跳过同步: projectId={}", projectId);
-            return;
-        }
 
         // 先删除该项目下已有评审项（AI全量生成模式）
         List<TbProjectReviewItem> existing = reviewItemMapper.selectByProjectId(projectId);
         for (TbProjectReviewItem existingItem : existing) {
             reviewItemMapper.deleteById(existingItem.getId());
+        }
+
+        // 读取评审项配置，为 generateStandard=false 的启用类型插入占位节点
+        String reviewConfigJson = parseReviewConfigFromRequestParams(task.getRequestParams());
+        if (!StringUtils.hasText(reviewConfigJson)) {
+            // 兜底：从项目模板获取
+            TbProjectTemplate pt = projectTemplateMapper.selectOne(
+                    new LambdaQueryWrapper<TbProjectTemplate>()
+                            .eq(TbProjectTemplate::getProjectId, projectId)
+                            .last("LIMIT 1"));
+            if (pt != null) {
+                reviewConfigJson = pt.getReviewConfig();
+            }
+        }
+        if (StringUtils.hasText(reviewConfigJson)) {
+            ReviewConfig config = ReviewConfig.fromJson(reviewConfigJson);
+            for (ReviewTypeConfig typeConfig : config.getEnabledTypes()) {
+                if (!typeConfig.isGenerateStandard()) {
+                    TbProjectReviewItem placeholder = new TbProjectReviewItem();
+                    placeholder.setProjectId(projectId);
+                    placeholder.setItemName("详见评审文件");
+                    placeholder.setLevel(1);
+                    placeholder.setReviewType(typeConfig.getReviewType());
+                    placeholder.setSortOrder(items.size());
+                    items.add(placeholder);
+                }
+            }
         }
 
         // 按 level 排序确保父节点先插入
@@ -537,6 +568,26 @@ public class AiTaskResultSyncHandler {
                 "「" + bizName + "」" + taskType.getLabel() + "失败",
                 "任务状态：" + statusLabel + detail + "，请重试或手动处理",
                 bizId);
+    }
+
+    /**
+     * 从任务请求参数中解析 reviewConfig 字段
+     */
+    private String parseReviewConfigFromRequestParams(String requestParamsJson) {
+        if (!StringUtils.hasText(requestParamsJson)) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(requestParamsJson);
+            JsonNode configNode = root.get("reviewConfig");
+            if (configNode != null && !configNode.isNull()) {
+                return configNode.asText();
+            }
+            return null;
+        } catch (Exception e) {
+            log.warn("解析requestParams中的reviewConfig失败", e);
+            return null;
+        }
     }
 
 }
