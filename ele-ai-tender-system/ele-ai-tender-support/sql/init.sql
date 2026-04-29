@@ -445,6 +445,7 @@ CREATE TABLE IF NOT EXISTS `sup_template` (
                                               `file_id`               BIGINT       DEFAULT NULL COMMENT '模板文件ID(关联file_info)',
                                               `content`               LONGTEXT     DEFAULT NULL COMMENT '模板用途说明',
                                               `structure_definition`  JSON         DEFAULT NULL COMMENT '模板结构定义JSON',
+                                              `review_config`         JSON         DEFAULT NULL COMMENT '评审项配置JSON',
                                               `version_no`            INT          NOT NULL DEFAULT 1 COMMENT '版本号',
                                               `is_default`            TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否默认模板: 0-否 1-是',
                                               `status`                VARCHAR(30)  NOT NULL DEFAULT 'ENABLED' COMMENT '状态: ENABLED/DISABLED',

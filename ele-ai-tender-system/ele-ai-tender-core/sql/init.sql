@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS `tb_project_template` (
     `file_id`               BIGINT       DEFAULT NULL COMMENT '模板文件ID(快照，引用sup_template.file_id)',
     `content`               TEXT         DEFAULT NULL COMMENT '模板用途说明(快照)',
     `structure_definition`  JSON         DEFAULT NULL COMMENT 'Word章节结构JSON(快照)',
+    `review_config`         JSON         DEFAULT NULL COMMENT '评审项配置JSON(快照)',
     `version_no`            INT          NOT NULL DEFAULT 1 COMMENT '模板版本号(快照)',
     `create_time`           DATETIME     NOT NULL COMMENT '创建时间',
     `create_id`             BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人ID',
