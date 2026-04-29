@@ -1,61 +1,26 @@
 <template>
   <div class="phase-document">
     <!-- 生成状态卡片 -->
-    <div class="generation-status">
-      <!-- 已集成完成 -->
-      <template v-if="preview?.integrated">
-        <div class="status-icon completed">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </div>
-        <div class="status-info">
-          <div class="status-title">文档集成完成</div>
-          <div class="status-desc">招标文件已成功生成，请预览确认</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 100%" />
-            </div>
-            <div class="progress-text">100%</div>
-          </div>
-        </div>
-      </template>
-      <!-- 集成中 -->
-      <template v-else-if="isIntegrating">
-        <div class="status-icon spinning">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
-        </div>
-        <div class="status-info">
-          <div class="status-title">正在集成中</div>
-          <div class="status-desc">正在生成招标文件，请稍候...</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 60%" />
-            </div>
-            <div class="progress-text">60%</div>
-          </div>
-        </div>
-      </template>
-      <!-- 待集成 -->
-      <template v-else>
-        <div class="status-icon idle">
-          <el-icon :size="24"><Document /></el-icon>
-        </div>
-        <div class="status-info">
-          <div class="status-title">待执行文档集成</div>
-          <div class="status-desc">请先执行文档集成，成功后可选择政策文件并提交检测</div>
-        </div>
-        <button v-if="!readonly" class="btn btn-primary generate-btn" :disabled="isIntegrating || !canCreateNew" @click="handleIntegrate">
+    <GenerationStatusCard
+      :task="latestTask"
+      :can-create-new="canCreateNew"
+      :progress-percent="progressPercent"
+      generating-title="正在集成中"
+      generating-desc="正在生成招标文件，请稍候..."
+      completed-title="文档集成完成"
+      completed-desc="招标文件已成功生成，请预览确认"
+      idle-title="文档集成"
+      idle-desc="请先执行文档集成，成功后可选择政策文件并提交检测"
+    >
+      <template #idle-action>
+        <button v-if="!readonly" class="btn btn-primary generate-btn" :disabled="!canCreateNew" @click="handleIntegrate">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
           执行集成
         </button>
       </template>
-    </div>
+    </GenerationStatusCard>
 
     <!-- 文档信息栏 -->
     <div v-if="preview?.integrated" class="document-info">
@@ -247,11 +212,13 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document } from '@element-plus/icons-vue'
 import DocxPreview from '@/components/document/DocxPreview.vue'
+import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 import { documentApi } from '@/api/document'
 import { fileApi } from '@/api/file'
 import { policyFileApi } from '@/api/policy-file'
 import { projectApi } from '@/api/project'
 import { useLatestTask } from '@/composables/useLatestTask'
+import { getTaskProgress } from '@/types/ai-task'
 import { PROJECT_CATEGORY_MAP } from '@/constants/status-maps'
 import type { DocumentPreviewVO } from '@/types/document'
 import type { KnowledgeDocumentPolicyVO, PolicyFileVO } from '@/types/policy-file'
@@ -271,19 +238,15 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'DOCUMENT_INTEGRATION',
   projectIdRef,
   'PROJECT',
-  (task) => {
-    // AI任务完成后，带重试刷新预览（后端同步结果可能有延迟）
-    if (task.status === 'COMPLETED') {
-      loadPreviewWithRetry()
-    } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
-      ElMessage.error('文档集成失败，请重试')
-    }
+  () => {
+    // resultSynced=1 时业务数据已同步，刷新预览
+    loadPreview()
   },
 )
 
-const isIntegrating = computed(() =>
-  latestTask.value?.status === 'PENDING' || latestTask.value?.status === 'PROCESSING'
-)
+const progressPercent = computed(() => {
+  return getTaskProgress(latestTask.value)
+})
 
 // --- 文档目录 ---
 const tocData = [
@@ -376,15 +339,6 @@ const loadPreview = async () => {
   preview.value = await documentApi.getPreview(props.projectId)
 }
 
-/** 带重试的预览加载：AI任务完成后后端同步可能有延迟，最多重试3次 */
-const loadPreviewWithRetry = async (retries = 3, delayMs = 2000) => {
-  for (let i = 0; i < retries; i++) {
-    await new Promise(r => setTimeout(r, delayMs))
-    await loadPreview()
-    if (preview.value?.integrated) return
-  }
-}
-
 const handleIntegrate = async () => {
   // 刷新最新任务状态，确保校验是最新的
   await refresh()
@@ -451,90 +405,8 @@ onMounted(async () => {
 }
 
 // ========================================
-// 生成状态卡片
+// 生成按钮（在 GenerationStatusCard slot 中使用）
 // ========================================
-.generation-status {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: var(--app-bg-tertiary);
-  border-radius: var(--app-radius-sm);
-  margin-bottom: 20px;
-}
-
-.status-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-
-  &.completed {
-    background: var(--app-color-success);
-  }
-
-  &.spinning {
-    background: var(--app-brand-color);
-    animation: spin 1s linear infinite;
-  }
-
-  &.idle {
-    background: var(--app-brand-color);
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.status-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.status-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-  margin-bottom: 4px;
-}
-
-.status-desc {
-  font-size: 13px;
-  color: var(--app-text-secondary);
-}
-
-.progress-bar-container {
-  margin-top: 12px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--app-bg-elevated);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--app-brand-color), var(--app-auxiliary-color));
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 12px;
-  color: var(--app-text-secondary);
-  margin-top: 4px;
-  text-align: right;
-}
-
 .generate-btn {
   flex-shrink: 0;
   padding: 10px 20px;

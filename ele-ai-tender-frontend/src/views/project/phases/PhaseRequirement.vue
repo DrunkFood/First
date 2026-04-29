@@ -131,7 +131,7 @@ import { projectApi } from '@/api/project'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useFeedback } from '@/composables/useFeedback'
-import { getTaskProgress } from '@/types/ai-task'
+import { getTaskProgress, isTaskSucceeded } from '@/types/ai-task'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
@@ -154,34 +154,14 @@ const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   projectIdRef,
   'REQUIREMENT',
   async (task) => {
-    if (task.status !== 'COMPLETED') return
-
-    // 优先从任务结果中直接提取内容（实时可用，避免后端同步延迟）
-    let contentLoaded = false
-    if (task.result) {
-      try {
-        const resultObj = JSON.parse(task.result)
-        if (resultObj.content) {
-          content.value = resultObj.content
-          contentLoaded = true
-          // 同步到项目
-          await projectApi.update(props.projectId, { requirementContent: resultObj.content })
-        }
-      } catch { /* JSON解析失败，走fallback */ }
-    }
-
-    // Fallback: 从项目接口读取
-    if (!contentLoaded) {
-      setTimeout(async () => {
-        try {
-          const proj = await projectApi.getById(props.projectId)
-          if (proj.requirementContent) {
-            content.value = proj.requirementContent
-          }
-        } catch {
-          // 忽略刷新失败，用户可手动刷新
-        }
-      }, 1500)
+    // resultSynced=1 时业务数据已同步，直接从项目接口读取
+    try {
+      const proj = await projectApi.getById(props.projectId)
+      if (proj.requirementContent) {
+        content.value = proj.requirementContent
+      }
+    } catch {
+      // 忽略刷新失败，用户可手动刷新
     }
   },
 )
@@ -206,7 +186,7 @@ const {
 
 // 任务终态时加载反馈状态
 watch(latestTask, (task) => {
-  if (task && ['COMPLETED', 'FAILED', 'AI_UNAVAILABLE', 'SKIPPED'].includes(task.status)) {
+  if (task && isTaskSucceeded(task)) {
     loadGenFeedback()
   }
 })
@@ -238,8 +218,7 @@ function stopAutoSave() {
 }
 
 const progressPercent = computed(() => {
-  if (!latestTask.value) return 0
-  return getTaskProgress(latestTask.value.status)
+  return getTaskProgress(latestTask.value)
 })
 
 const loadData = async () => {

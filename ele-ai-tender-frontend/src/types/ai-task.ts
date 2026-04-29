@@ -18,8 +18,8 @@ export type AiTaskStatus =
   | 'AI_UNAVAILABLE'
   | 'SKIPPED'
 
-/** 终态集合 */
-export const TERMINAL_STATUSES: AiTaskStatus[] = ['COMPLETED', 'FAILED', 'AI_UNAVAILABLE', 'SKIPPED']
+/** 终态状态集合（status维度，不含COMPLETED——COMPLETED需看resultSynced） */
+export const TERMINAL_STATUSES: AiTaskStatus[] = ['FAILED', 'AI_UNAVAILABLE', 'SKIPPED']
 
 export interface AiTaskVO {
   id: number
@@ -37,30 +37,50 @@ export interface AiTaskVO {
   startedAt?: string
   completedAt?: string
   createTime: string
+  /** 结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败 */
+  resultSynced?: number
+}
+
+/** 任务是否真正完成（resultSynced=1 才算成功，可读取业务数据） */
+export function isTaskSucceeded(task: AiTaskVO | null): boolean {
+  return task?.status === 'COMPLETED' && task.resultSynced === 1
+}
+
+/** 任务是否处于终态（无需继续轮询） */
+export function isTaskTerminal(task: AiTaskVO | null): boolean {
+  if (!task) return true
+  if (TERMINAL_STATUSES.includes(task.status)) return true
+  // COMPLETED 需等 resultSynced 有值（0=还在同步，1=成功，2=失败）
+  if (task.status === 'COMPLETED') return task.resultSynced !== 0
+  return false
 }
 
 /** 标准化任务进度百分比 */
-export function getTaskProgress(status: AiTaskStatus): number {
-  switch (status) {
+export function getTaskProgress(task: AiTaskVO | null): number {
+  if (!task) return 0
+  switch (task.status) {
     case 'PENDING': return 10
     case 'PROCESSING': return 60
-    case 'COMPLETED': return 100
+    case 'COMPLETED':
+      if (task.resultSynced === 1) return 100
+      if (task.resultSynced === 2) return 0
+      return 90
     default: return 0
   }
 }
 
 /** 标准化进度条样式 */
-export function getProgressStatus(status: AiTaskStatus): '' | 'success' | 'warning' | 'exception' {
-  switch (status) {
-    case 'COMPLETED': return 'success'
-    case 'FAILED': return 'exception'
-    case 'AI_UNAVAILABLE': return 'warning'
-    default: return ''
-  }
+export function getProgressStatus(task: AiTaskVO | null): '' | 'success' | 'warning' | 'exception' {
+  if (!task) return ''
+  if (task.status === 'COMPLETED' && task.resultSynced === 2) return 'exception'
+  if (task.status === 'COMPLETED' && task.resultSynced === 1) return 'success'
+  if (task.status === 'FAILED') return 'exception'
+  if (task.status === 'AI_UNAVAILABLE') return 'warning'
+  return ''
 }
 
 /** 是否可发起新任务（上一个任务已结束或不存在） */
 export function canCreateNewTask(latestTask: AiTaskVO | null): boolean {
   if (!latestTask) return true
-  return TERMINAL_STATUSES.includes(latestTask.status)
+  return isTaskTerminal(latestTask)
 }

@@ -235,7 +235,7 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useFeedback } from '@/composables/useFeedback'
-import { getTaskProgress, getProgressStatus } from '@/types/ai-task'
+import { getTaskProgress, getProgressStatus, isTaskSucceeded } from '@/types/ai-task'
 import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -269,9 +269,9 @@ const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
-  (task) => {
-    // AI任务完成后，重试读取需求内容（后端定时同步可能有延迟）
-    if (task.status === 'COMPLETED' && requirementId.value) {
+  async (task) => {
+    // resultSynced=1 时业务数据已同步，直接读取
+    if (requirementId.value) {
       // 清除进度模拟计时器
       if (generateProgressTimer) {
         clearInterval(generateProgressTimer)
@@ -281,32 +281,14 @@ const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
       ElMessage.success('AI生成完成')
       sseGenerating.value = false
 
-      // 重试读取内容，最多5次，间隔3秒
-      const retryLoadContent = async (retries = 0) => {
-        try {
-          const req = await requirementApi.getById(requirementId.value!)
-          if (req.content) {
-            content.value = req.content
-            return
-          }
-        } catch {
-          // 忽略单次失败
+      try {
+        const req = await requirementApi.getById(requirementId.value!)
+        if (req.content) {
+          content.value = req.content
         }
-        if (retries < 5) {
-          setTimeout(() => retryLoadContent(retries + 1), 3000)
-        } else {
-          ElMessage.warning('内容加载超时，请刷新页面重试')
-        }
+      } catch {
+        ElMessage.warning('内容加载失败，请刷新页面重试')
       }
-      setTimeout(retryLoadContent, 2000)
-    } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
-      // 任务失败
-      if (generateProgressTimer) {
-        clearInterval(generateProgressTimer)
-        generateProgressTimer = null
-      }
-      ElMessage.error('AI生成失败，请稍后重试')
-      sseGenerating.value = false
     }
   },
 )
@@ -329,9 +311,9 @@ const {
   () => latestTask.value?.id,
 )
 
-// 任务终态时加载反馈状态
+// 任务成功后加载反馈状态
 watch(latestTask, (task) => {
-  if (task && ['COMPLETED', 'FAILED', 'AI_UNAVAILABLE', 'SKIPPED'].includes(task.status)) {
+  if (task && isTaskSucceeded(task)) {
     loadGenFeedback()
   }
 })
@@ -346,7 +328,7 @@ const progressPercent = computed(() => {
   // SSE 正在流式输出
   if (sseGenerating.value) return sseProgress.value
   // 有任务状态
-  if (latestTask.value) return getTaskProgress(latestTask.value.status)
+  if (latestTask.value) return getTaskProgress(latestTask.value)
   // 有内容但无任务 = 历史已完成
   if (content.value) return 100
   return 0
@@ -354,7 +336,7 @@ const progressPercent = computed(() => {
 
 const progressStatus = computed(() => {
   if (sseGenerating.value) return ''
-  if (latestTask.value) return getProgressStatus(latestTask.value.status)
+  if (latestTask.value) return getProgressStatus(latestTask.value)
   return ''
 })
 

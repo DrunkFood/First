@@ -29,6 +29,7 @@ const props = defineProps<{
 
 const statusTagType = computed(() => {
   if (!props.task) return 'info'
+  if (props.task.status === 'COMPLETED' && props.task.resultSynced === 2) return 'danger'
   const map: Record<AiTaskStatus, string> = {
     PENDING: 'info',
     PROCESSING: '',
@@ -41,13 +42,11 @@ const statusTagType = computed(() => {
 })
 
 const progressPercent = computed(() => {
-  if (!props.task) return 0
-  return getTaskProgress(props.task.status)
+  return getTaskProgress(props.task)
 })
 
 const progressStatusValue = computed(() => {
-  if (!props.task) return ''
-  return getProgressStatus(props.task.status)
+  return getProgressStatus(props.task)
 })
 </script>
 

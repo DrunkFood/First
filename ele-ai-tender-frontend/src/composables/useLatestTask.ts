@@ -2,7 +2,7 @@ import { ref, computed, watch, onMounted, type Ref } from 'vue'
 import { aiTaskApi } from '@/api/ai-task'
 import { useTaskPolling } from '@/composables/useTaskPolling'
 import type { AiTaskVO } from '@/types/ai-task'
-import { TERMINAL_STATUSES, canCreateNewTask } from '@/types/ai-task'
+import { isTaskTerminal, isTaskSucceeded, canCreateNewTask } from '@/types/ai-task'
 
 /**
  * 最新任务查询组合式函数
@@ -12,13 +12,13 @@ import { TERMINAL_STATUSES, canCreateNewTask } from '@/types/ai-task'
  * @param taskType 任务类型编码
  * @param bizId 业务实体ID（响应式）
  * @param bizType 业务类型
- * @param onTaskCompleted 任务进入终态时的回调（可选）
+ * @param onTaskSucceeded 任务成功完成（resultSynced=1）时的回调，此时可读取业务数据
  */
 export function useLatestTask(
   taskType: string,
   bizId: Ref<number>,
   bizType: string,
-  onTaskCompleted?: (task: AiTaskVO) => void
+  onTaskSucceeded?: (task: AiTaskVO) => void
 ) {
   const latestTaskId = ref<number | null>(null)
   const latestTask = ref<AiTaskVO | null>(null)
@@ -38,8 +38,8 @@ export function useLatestTask(
       if (result && result.id) {
         latestTaskId.value = result.id
         latestTask.value = result
-        // 非终态自动启动轮询（任务进行中，后续变终态应通知用户）
-        if (!TERMINAL_STATUSES.includes(result.status)) {
+        // 非终态自动启动轮询（任务进行中或COMPLETED等待同步，后续变终态应通知用户）
+        if (!isTaskTerminal(result)) {
           firstSync = false
           startPolling()
         }
@@ -80,10 +80,9 @@ export function useLatestTask(
         firstSync = false
         return
       }
-      // 任务从非终态变为终态时触发回调
-      if (TERMINAL_STATUSES.includes(t.status) &&
-          (!oldT || !TERMINAL_STATUSES.includes(oldT.status))) {
-        onTaskCompleted?.(t)
+      // 任务成功完成（resultSynced=1）时触发回调，此时业务数据可读
+      if (isTaskSucceeded(t) && !isTaskSucceeded(oldT ?? null)) {
+        onTaskSucceeded?.(t)
       }
     }
   })

@@ -197,7 +197,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Loading, RefreshRight, CircleCheck } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { useTaskPolling } from '@/composables/useTaskPolling'
-import { getTaskProgress, TERMINAL_STATUSES } from '@/types/ai-task'
+import { getTaskProgress } from '@/types/ai-task'
 import type { AiTaskVO, AiTaskStatus } from '@/types/ai-task'
 import type { DetectionIssueVO, RequirementDetectionRecord } from '@/types/detection'
 
@@ -283,7 +283,7 @@ const isRequirementCompleted = computed(() => requirementStatus.value === 'COMPL
 /** 是否可以重新检测（需求未完成 + 所有任务终态） */
 const canReDetect = computed(() => {
   if (isRequirementCompleted.value) return false
-  return detectCards.value.every(c => !c.taskId || TERMINAL_STATUSES.includes(c.status as AiTaskStatus) || c.completed || c.failed)
+  return detectCards.value.every(c => !c.taskId || c.completed || c.failed)
 })
 
 /** 查看原文：展示original内容并高亮 */
@@ -381,10 +381,17 @@ function updateCardFromTask(index: number, task: AiTaskVO) {
   card.status = task.status
 
   if (task.status === 'COMPLETED') {
-    if (card.completed) return
-    card.completed = true
-    card.percentage = 100
-    parseTaskResult(card, task.result)
+    if (task.resultSynced === 1) {
+      if (card.completed) return
+      card.completed = true
+      card.percentage = 100
+      parseTaskResult(card, task.result)
+    } else if (task.resultSynced === 2) {
+      card.failed = true
+      card.percentage = 0
+    } else {
+      card.percentage = 90
+    }
   } else if (task.status === 'FAILED' || task.status === 'AI_UNAVAILABLE') {
     card.failed = true
     card.percentage = 100
@@ -392,7 +399,7 @@ function updateCardFromTask(index: number, task: AiTaskVO) {
     card.completed = true
     card.percentage = 100
   } else {
-    card.percentage = getTaskProgress(task.status)
+    card.percentage = getTaskProgress(task)
   }
 }
 

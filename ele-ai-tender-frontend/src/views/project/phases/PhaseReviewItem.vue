@@ -401,10 +401,9 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'REVIEW_ITEM_GENERATE',
   projectIdRef,
   'PROJECT',
-  (task) => {
-    if (task.status === 'COMPLETED') {
-      loadReviewItemsWithRetry()
-    }
+  () => {
+    // resultSynced=1 时业务数据已同步，直接加载
+    loadReviewItems()
   },
 )
 
@@ -523,13 +522,12 @@ const scoreTotal = computed(() => {
 })
 
 const progressPercent = computed(() => {
-  if (!latestTask.value) return 0
-  return getTaskProgress(latestTask.value.status)
+  return getTaskProgress(latestTask.value)
 })
 
 const isGenerating = computed(() => {
   const status = latestTask.value?.status
-  return status === 'PENDING' || status === 'PROCESSING'
+  return status === 'PENDING' || status === 'PROCESSING' || (status === 'COMPLETED' && latestTask.value?.resultSynced === 0)
 })
 
 const isEditingDisabled = computed(() => props.readonly || isGenerating.value)

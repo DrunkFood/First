@@ -1,6 +1,6 @@
 <template>
   <div class="generation-status">
-    <!-- 进行中 -->
+    <!-- 进行中（含 COMPLETED+synced=0 等待同步） -->
     <template v-if="task && !canCreateNew">
       <div class="status-icon spinning">
         <el-icon :size="24"><Loading /></el-icon>
@@ -16,8 +16,8 @@
         </div>
       </div>
     </template>
-    <!-- 已完成 -->
-    <template v-else-if="task && task.status === 'COMPLETED'">
+    <!-- 已完成（resultSynced=1） -->
+    <template v-else-if="task && isTaskSucceeded(task)">
       <div class="status-icon completed">
         <el-icon :size="24"><CircleCheck /></el-icon>
       </div>
@@ -32,8 +32,8 @@
         </div>
       </div>
     </template>
-    <!-- 失败 -->
-    <template v-else-if="task && task.status === 'FAILED'">
+    <!-- 失败（含 COMPLETED+resultSynced=2 同步失败） -->
+    <template v-else-if="task && (task.status === 'FAILED' || (task.status === 'COMPLETED' && task.resultSynced === 2))">
       <div class="status-icon failed">
         <el-icon :size="24"><CircleClose /></el-icon>
       </div>
@@ -59,6 +59,7 @@
 <script setup lang="ts">
 import { Loading, CircleCheck, CircleClose, Document } from '@element-plus/icons-vue'
 import type { AiTaskVO } from '@/types/ai-task'
+import { isTaskSucceeded, isTaskTerminal } from '@/types/ai-task'
 
 withDefaults(defineProps<{
   task: AiTaskVO | null
