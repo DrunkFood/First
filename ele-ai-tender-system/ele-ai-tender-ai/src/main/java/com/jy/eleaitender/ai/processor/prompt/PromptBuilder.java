@@ -1,5 +1,7 @@
 package com.jy.eleaitender.ai.processor.prompt;
 
+import com.jy.eleaitender.common.enums.ReviewType;
+
 /**
  * Prompt动态构建器
  * 根据不同场景组装User Prompt
@@ -22,21 +24,6 @@ public final class PromptBuilder {
     }
 
     /**
-     * 构建评审项生成的User Prompt
-     */
-    public static String buildReviewItemGenerate(String projectName, String projectType,
-                                                 String projectCategory, String budget,
-                                                 String requirementContent, String reviewMethod) {
-        return String.format(PromptTemplates.REVIEW_ITEM_GENERATE_USER,
-                defaultStr(projectName),
-                defaultStr(projectType),
-                defaultStr(projectCategory),
-                defaultStr(budget),
-                defaultStr(requirementContent),
-                defaultStr(reviewMethod, "综合评分法"));
-    }
-
-    /**
      * 构建评审项生成的 User Prompt（带评审类型配置）
      */
     public static String buildReviewItemGenerate(String projectName, String projectType,
@@ -50,7 +37,7 @@ public final class PromptBuilder {
                 defaultStr(budget),
                 defaultStr(requirementContent),
                 defaultStr(reviewMethod, "综合评分法"),
-                defaultStr(enabledTypes, "符合性审查、技术标评审、资信标评审、商务评审"));
+                defaultStr(enabledTypes, ReviewType.getLabels()));
     }
 
     /**

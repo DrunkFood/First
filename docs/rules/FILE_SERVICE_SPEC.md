@@ -13,6 +13,7 @@
 - `GET /api/file/download/{fileId}`
 - `GET /api/file/info/{fileId}`
 - `DELETE /api/file/delete/{fileId}`
+- `POST /api/file/extract-text`
 
 ## 2.1 文档生成引擎
 
@@ -22,7 +23,8 @@
 |----|------|
 | `WordTemplateEngine` | Word 模板(poi-tl)填充与渲染，支持 markdownKeys 绑定 DocumentRenderPolicy |
 | `WordStructureParser` | Word 模板结构解析，提取占位符和结构定义 |
-| `WordDocumentFixEngine` | Word 文档文本替换引擎，基于 Apache POI 实现检测问题修复 |
+| `WordDocumentFixEngine` | Word 文档文本替换引擎，基于 Apache POI 实现检测问题修复，支持 locationRef 精准定位 |
+| `WordTextExtractor` | Word 文档文本提取器，提取段落级文本+位置索引（segments + fullText），供检测位置匹配使用 |
 | `MarkdownToDocumentConverter` | Markdown AST → DocumentRenderData 转换器（flexmark 解析，支持标题/加粗/斜体/列表/引用/代码） |
 | `TableGenerator` | POI 编程生成表格（含单元格合并+边框），绕开 poi-tl 循环标签 |
 
@@ -75,6 +77,19 @@
 - **遍历范围**: 遍历段落、表格单元格、页眉页脚，确保所有文本区域均被覆盖
 - **文件命名**: 修复后文件名格式 `fixed_时间戳_原始文件名`，若原文件名已有 `fixed_数字_` 前缀则先去除再重新拼接
 - **接口**: `POST /api/file/fix-doc`，接收 `{fileId, replacements}`，返回 `WordFixResultVO { fileId, fixedCount, failedCount }`
+- **locationRef 精准定位**: `FixReplacement` 携带 `LocationRefVO {type, elementIndex, tableIndex?, rowIndex?, cellIndex?}` 时优先精准定位
+  - **elementIndex = IBodyElement 序号**: 段落和表格共享同一索引空间，`doc.getBodyElements().get(elementIndex)` O(1) 定位
+  - 段落类型: 直接在目标段落替换；表格类型: 定位到 tableIndex/rowIndex/cellIndex 后替换
+  - locationRef 为空或定位失败时降级到全文档匹配（遍历段落+表格+页眉页脚）
+- **两级匹配**: 精确匹配优先 → 规范化匹配兜底（`TextNormalizeUtil.normalize()` 移除所有空白后匹配，还原实际子串范围保留原文空白）
+
+### WordTextExtractor 约束
+
+- **职责**: 从 XWPFDocument 提取文本段落 + 位置索引，返回 `ExtractResult { segments, fullText }`
+- **segment 结构**: 每个 segment 包含 `{type, elementIndex, fullTextOffset, text}`，表格类型额外含 `tableIndex, rowIndex, cellIndex`
+- **elementIndex 映射**: 与 `doc.getBodyElements()` 的序列号一一对应，段落和表格共享索引空间
+- **接口**: `POST /api/file/extract-text`，接收 `{fileId}`，返回 `{fullText, segments}`
+- **用途**: core 模块在检测完成后调用此接口获取文本+位置索引，供 `DetectionResultParser.fillLocationRefs()` 为每个 issue 填充 locationRef
 
 ## 3. 当前表
 
@@ -119,13 +134,17 @@ core/support 模块通过 `InternalFileServiceClient` 调用 File 服务，关�
 
 - **错误响应处理**: 客户端必须检查响应 `code` 字段，`code != 200` 时提取 `message` 抛出具体错误，避免误导性的"数据为空"
 - **服务间认证**: 使用 `TOKEN_TYPE_SERVICE` 类型的 JWT，密钥复用 `APP_JWT_SECRET`，服务间调用视为管理员权限
-- **新增端点**: `/api/file/structure/{fileId}`（GET）、`/api/file/generate-doc`（POST）、`/api/file/fix-doc`（POST）需在 `InternalFileServiceClient` 中同步添加解析逻辑
+- **新增端点**: `/api/file/structure/{fileId}`（GET）、`/api/file/generate-doc`（POST）、`/api/file/fix-doc`（POST）、`/api/file/extract-text`（POST）需在 `InternalFileServiceClient` 中同步添加解析逻辑
+- **ObjectMapper 复用**: `InternalFileServiceClient` 中的 `ObjectMapper` 必须为 `static final` 常量，禁止每次方法调用 `new ObjectMapper()`
+- **fix-doc locationRef**: `fixDocument` 接口的 `replacements` 参数反序列化必须用 `Map<String, Object>`（不能用 `Map<String, String>`），否则嵌套的 `locationRef` 对象会被静默丢弃
 
 ## 7. 排障原则
 
 - **文件上传失败** → 检查文件扩展名是否在白名单内、文件大小是否超过 500MB、`file.storage.base-path` 目录是否有写权限
 - **下载 404** → 确认 `file_info.file_path` 对应文件在磁盘上实际存在，检查 `file.storage.base-path` 配置是否正确
 - **fileSha256 校验失败** → 确认调用方计算方式与服务端一致（SHA-256 十六进制字符串，字节序列使用 UTF-8）
+- **locationRef 定位失败** → 检查 `elementIndex` 是否越界（段落/表格共享索引空间）、`WordTextExtractor` 是否已执行、`DetectionResultParser.fillLocationRefs()` 日志是否报匹配失败
+- **检测修复替换了错误位置** → 检查 `FixReplacement.locationRef` 是否为空（为空走全文档替换会替换所有匹配项）、`elementIndex` 对应的 IBodyElement 类型是否与 `type` 字段一致
 
 日志与链路追踪规范见 [PROJECT_SPEC_FINAL.md](PROJECT_SPEC_FINAL.md)（日志中不得记录文件二进制内容，需透传 `X-Trace-Id`）。
 

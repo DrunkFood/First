@@ -3,6 +3,9 @@ package com.jy.eleaitender.common.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * 评审类型枚举
  */
@@ -25,5 +28,9 @@ public enum ReviewType {
             }
         }
         throw new IllegalArgumentException("未知的评审类型: " + code);
+    }
+
+    public static String getLabels() {
+        return Arrays.stream(ReviewType.values()).map(ReviewType::getLabel).collect(Collectors.joining("、"));
     }
 }

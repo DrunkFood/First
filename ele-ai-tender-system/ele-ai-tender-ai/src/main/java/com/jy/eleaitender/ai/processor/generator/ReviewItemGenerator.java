@@ -8,6 +8,7 @@ import com.jy.eleaitender.common.dto.ReviewConfig;
 import com.jy.eleaitender.common.dto.ReviewTypeConfig;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.ReviewType;
 import com.jy.eleaitender.common.exception.AiErrorContentException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -56,16 +58,7 @@ public class ReviewItemGenerator {
             ReviewConfig config = ReviewConfig.fromJson(reviewConfigJson);
             enabledTypes = config.getEnabledTypes().stream()
                     .filter(ReviewTypeConfig::isGenerateStandard)
-                    .map(t -> {
-                        String label = switch (t.getReviewType()) {
-                            case "COMPLIANCE" -> "符合性审查";
-                            case "TECHNICAL" -> "技术标评审";
-                            case "CREDIT" -> "资信标评审";
-                            case "COMMERCIAL" -> "商务评审";
-                            default -> t.getReviewType();
-                        };
-                        return label;
-                    })
+                    .map(t -> ReviewType.fromCode(t.getReviewType()).getLabel())
                     .collect(Collectors.joining("、"));
 
             if (!StringUtils.hasText(enabledTypes)) {
@@ -73,7 +66,7 @@ public class ReviewItemGenerator {
                 return "{\"reviewItems\":[]}";
             }
         } else {
-            enabledTypes = "符合性审查、技术标评审、资信标评审、商务评审";
+            enabledTypes = ReviewType.getLabels();
         }
 
         // 构建Prompt

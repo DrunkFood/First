@@ -201,6 +201,32 @@ flowchart TD
 - 第三级：`level=3`, `parent_id=二级ID`
 - 删除父级时必须检查是否存在子级
 
+### 5.2.1 评审项模板配置（review_config）
+
+评审项的生成受模板 `review_config` JSON 字段控制，配置存储在 `sup_template` 和 `tb_project_template` 中：
+
+```json
+{
+  "reviewTypes": [
+    {"reviewType": "COMPLIANCE", "enabled": true, "generateStandard": true},
+    {"reviewType": "TECHNICAL", "enabled": true, "generateStandard": false},
+    {"reviewType": "CREDIT", "enabled": false, "generateStandard": true},
+    {"reviewType": "COMMERCIAL", "enabled": true, "generateStandard": false}
+  ]
+}
+```
+
+| 字段 | 作用 |
+|------|------|
+| `enabled` | 控制该评审类型是否启用，不启用的类型不生成/不输出/不显示Tab |
+| `generateStandard` | false时，AI不生成该类型的评审项，插入占位一级节点（item_name="详见评审文件"，isRequired=0） |
+
+**数据流**：支撑中心模板编辑页配置 → 项目绑定时快照 → AI生成读取配置只生成启用+需标准的类型 → 结果同步插入占位节点+过滤违规 → 文档集成只输出启用类型表格 → 前端动态Tab
+
+**向后兼容**：`review_config` 为 null 时全链路回退到"全部启用"默认行为。
+
+**DTO**：`ReviewConfig`（fromJson/isEnabled/isGenerateStandard/getEnabledTypes/defaultConfig）、`ReviewTypeConfig`
+
 ### 5.3 AI流式响应
 
 - SSE接口必须设置合理的超时时间（推荐60秒）
@@ -283,13 +309,17 @@ Word模板上传 → WordStructureParser解析模板结构 → DocumentDataAssem
 ```
 4项检测完成 → 自动创建版本备份 → DETECTION_FAILED(有问题) / DETECTION_PASSED(无问题)
     ↓
-用户接受建议 → 提取original/targeted → 调用文件服务fixDocument → 更新generatedFileId
+自动填充locationRef → 调用extractText获取segments → fillLocationRefs匹配每个issue
+    ↓
+用户接受建议 → 提取original/targeted+locationRef → 调用文件服务fixDocument → 更新generatedFileId
     ↓
 所有问题处理完 → 自动转为 DETECTION_PASSED
 ```
 
-- **接受即修复**: `acceptIssue` 调用 `InternalFileServiceClient.fixDocument()` 直接修改 Word 文档，成功则 `handleStatus=1`，未找到原文则 `handleStatus=3`
-- **批量修复**: `acceptAll` 先标记所有 handleStatus=1，再收集所有替换项一次性调用 `fixDocument`
+- **locationRef 自动填充**: 检测完成后 `AiTaskResultSyncHandler.syncDetection()` 自动调用文件服务 `extractText` 获取文本+位置索引，再通过 `DetectionResultParser.fillLocationRefs()` 为每个 issue 填充 `locationRef`（嵌入 result JSON，不改表结构）
+- **locationRef 结构**: `{type: "paragraph"|"table", elementIndex, tableIndex?, rowIndex?, cellIndex?}`，elementIndex 是 IBodyElement 序号（段落和表格共享索引空间）
+- **接受即修复**: `acceptIssue` 调用 `InternalFileServiceClient.fixDocument()` 直接修改 Word 文档，携带 locationRef 精准定位，成功则 `handleStatus=1`，未找到原文则 `handleStatus=3`
+- **批量修复**: `acceptAll` 先标记所有 handleStatus=1，再收集所有替换项（含 locationRef）一次性调用 `fixDocument`
 - **版本备份**: 检测完成（DETECTION_PASSED / DETECTION_FAILED）时自动创建 `tb_project_version` 快照，`contentSnapshot` 存储 `{generatedFileId, status}`
 - **自动流转**: 每次接受/拒绝后检查是否仍有 handleStatus=0 的问题，无则自动从 DETECTION_FAILED 转为 DETECTION_PASSED
 
@@ -300,7 +330,8 @@ Word模板上传 → WordStructureParser解析模板结构 → DocumentDataAssem
 - **需求阶段内容为空** → 查 `tb_project.requirement_id` 是否有值：有值则检查对应需求是否有 content；无值则检查 AI 任务 `PROJECT_REQUIREMENT_GENERATE` 是否成功
 - **AI生成失败** → 查 `sup_model_config` 配置是否正确，检查 Token 用量是否超限
 - **检测结果异常** → 查 `tb_detection_record.result` JSON，确认检测类型和输入内容
-- **接受建议后文档未修复** → 检查 issue 的 `original`/`targeted` 是否有效、`WordDocumentFixEngine` 日志是否报告未找到原文、`project.generated_file_id` 是否已更新
+- **接受建议后文档未修复** → 检查 issue 的 `original`/`targeted` 是否有效、`WordDocumentFixEngine` 日志是否报告未找到原文、`project.generated_file_id` 是否已更新、`locationRef` 是否正确传递（`FixReplacement.locationRef` 不能为空才能精准定位）
+- **locationRef 未填充** → 检查 `AiTaskResultSyncHandler` 日志是否报 `extractText` 或 `fillLocationRefs` 失败、`project.generated_file_id` 是否有值
 - **检测后状态未流转** → 检查是否所有 detection_record 已终态、是否仍有 handleStatus=0 的问题、DETECTION_FAILED 需全部处理完才会自动转 PASSED
 - **知识库检索不准** → 查 `ai_knowledge_document.vector_ids`，确认向量化是否完成
 - **评审项结构错误** → 查 `tb_project_review_item.parent_id` 和 `level`，确认三级结构完整

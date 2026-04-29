@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.processor;
+package com.jy.eleaitender.ai.handler;
 
 import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import jakarta.annotation.PostConstruct;
