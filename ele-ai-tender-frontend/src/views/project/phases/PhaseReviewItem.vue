@@ -14,24 +14,26 @@
 
     <!-- 评分摘要栏 -->
     <div class="score-summary">
-      <div class="score-item">
-        <div class="score-label">符合性审查</div>
-        <div class="score-value info">通过/不通过</div>
-      </div>
-      <div class="score-item">
-        <div class="score-label">资信评审</div>
-        <div class="score-value">{{ creditScore }}分</div>
-      </div>
-      <div class="score-item">
-        <div class="score-label">技术评审</div>
-        <div class="score-value">{{ technicalScore }}分</div>
-      </div>
-      <div class="score-item">
-        <div class="score-label">商务评审</div>
-        <div class="score-value">{{ commercialScore }}分</div>
-      </div>
-      <div class="score-item">
-        <div class="score-label">三项合计总分</div>
+      <template v-for="typeConfig in enabledTypes" :key="typeConfig.reviewType">
+        <div v-if="typeConfig.reviewType === 'COMPLIANCE'" class="score-item">
+          <div class="score-label">符合性审查</div>
+          <div class="score-value info">通过/不通过</div>
+        </div>
+        <div v-else-if="typeConfig.reviewType === 'CREDIT'" class="score-item">
+          <div class="score-label">资信评审</div>
+          <div class="score-value">{{ creditScore }}分</div>
+        </div>
+        <div v-else-if="typeConfig.reviewType === 'TECHNICAL'" class="score-item">
+          <div class="score-label">技术评审</div>
+          <div class="score-value">{{ technicalScore }}分</div>
+        </div>
+        <div v-else-if="typeConfig.reviewType === 'COMMERCIAL'" class="score-item">
+          <div class="score-label">商务评审</div>
+          <div class="score-value">{{ commercialScore }}分</div>
+        </div>
+      </template>
+      <div v-if="scoringTypes.length > 0" class="score-item">
+        <div class="score-label">合计总分</div>
         <div class="score-value" :class="scoreTotal === 100 ? 'success' : scoreTotal > 0 ? 'warning' : ''">
           {{ scoreTotal }}分
         </div>
@@ -39,257 +41,278 @@
     </div>
 
     <!-- 评分说明 -->
-    <div class="score-notice info-notice">
-      <strong>评分说明：</strong>资信评审、技术评审、商务评审三项合计总分必须为100分。允许其中一项或两项为0分。
+    <div v-if="scoringTypes.length > 0" class="score-notice info-notice">
+      <strong>评分说明：</strong>{{ scoringTypes.map(t => REVIEW_TYPE_LABELS[t.reviewType]).join('、') }}合计总分必须为100分。允许其中一项或两项为0分。
     </div>
 
     <!-- 评分建议 -->
-    <div class="score-notice warning-notice">
+    <div v-if="scoringTypes.length > 0" class="score-notice warning-notice">
       <strong>评分建议：</strong>建议货物类项目商务分30-60，资信10-25分；建议服务类项目商务分10-30，资信10-25分。
     </div>
 
     <!-- 评审类型Tabs -->
     <div class="review-tabs-wrap">
       <el-tabs v-model="activeReviewType" class="review-tabs">
-        <!-- 符合性审查 -->
-        <el-tab-pane label="符合性审查" name="COMPLIANCE">
-          <div class="table-container">
-            <el-table
-              :data="complianceTree"
-              row-key="id"
-              :tree-props="{ children: 'children' }"
-              class="review-table"
-              :border="true"
-              default-expand-all
-            >
-              <el-table-column label="评审标准" min-width="500">
-                <template #default="{ row }">
-                  <el-input
-                    v-model="row.itemName"
-                    type="textarea"
-                    :rows="2"
-                    placeholder="请输入评审标准"
-                    class="table-textarea"
-                    :disabled="readonly"
-                  />
-                </template>
-              </el-table-column>
-              <el-table-column v-if="!readonly" label="操作" width="130" align="center">
-                <template #default="{ row }">
-                  <el-button
-                    v-if="row.level < MAX_LEVEL"
-                    link
-                    type="primary"
-                    class="add-child-btn"
-                    @click="handleAddChild(row)"
-                  >
-                    <el-icon :size="14"><Plus /></el-icon> 子项
-                  </el-button>
-                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
-                    <el-icon :size="16"><Delete /></el-icon>
-                  </el-button>
-                </template>
-              </el-table-column>
+        <el-tab-pane
+          v-for="typeConfig in enabledTypes"
+          :key="typeConfig.reviewType"
+          :label="REVIEW_TYPE_LABELS[typeConfig.reviewType]"
+          :name="typeConfig.reviewType"
+        >
+          <!-- generateStandard=false: 占位只读展示 -->
+          <template v-if="!typeConfig.generateStandard">
+            <el-table :data="getPlaceholderData(typeConfig.reviewType)" border class="review-table">
+              <el-table-column prop="itemName" label="评审项名称" />
+              <el-table-column prop="score" label="分值" width="100" align="center" />
             </el-table>
-          </div>
-          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
-            <el-icon><Plus /></el-icon> 添加评审项
-          </div>
-        </el-tab-pane>
+            <div class="placeholder-notice">
+              未生成评审标准，不可手动添加
+            </div>
+          </template>
 
-        <!-- 资信评审 -->
-        <el-tab-pane label="资信评审" name="CREDIT">
-          <div class="table-container">
-            <el-table
-              :data="creditTree"
-              row-key="id"
-              :tree-props="{ children: 'children' }"
-              class="review-table"
-              :border="true"
-              default-expand-all
-            >
-              <el-table-column label="评审标准" min-width="300">
-                <template #default="{ row }">
-                  <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
-                </template>
-              </el-table-column>
-              <el-table-column label="主观/客观" width="120" align="center">
-                <template #default="{ row }">
-                  <el-select
-                    v-if="isLeaf(row)"
-                    v-model="row.subjectivity"
-                    size="small"
-                    class="subjective-select"
-                    :disabled="readonly"
-                  >
-                    <el-option value="OBJECTIVE" label="客观" />
-                    <el-option value="SUBJECTIVE" label="主观" />
-                  </el-select>
-                  <span v-else class="summary-text">&mdash;</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="分值" width="100" align="center">
-                <template #default="{ row }">
-                  <el-input-number
-                    v-if="isLeaf(row)"
-                    v-model="row.score"
-                    :min="0"
-                    :max="100"
-                    :precision="1"
-                    size="small"
-                    class="score-input"
-                    controls-position="right"
-                    :disabled="readonly"
-                  />
-                  <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column v-if="!readonly" label="操作" width="130" align="center">
-                <template #default="{ row }">
-                  <el-button
-                    v-if="row.level < MAX_LEVEL"
-                    link
-                    type="primary"
-                    class="add-child-btn"
-                    @click="handleAddChild(row)"
-                  >
-                    <el-icon :size="14"><Plus /></el-icon> 子项
-                  </el-button>
-                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
-                    <el-icon :size="16"><Delete /></el-icon>
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('CREDIT')">
-            <el-icon><Plus /></el-icon> 添加评审项
-          </div>
-        </el-tab-pane>
+          <!-- generateStandard=true: 正常评审项表格 -->
+          <template v-else>
+            <!-- 符合性审查：只有评审标准+操作 -->
+            <template v-if="typeConfig.reviewType === 'COMPLIANCE'">
+              <div class="table-container">
+                <el-table
+                  :data="complianceTree"
+                  row-key="id"
+                  :tree-props="{ children: 'children' }"
+                  class="review-table"
+                  :border="true"
+                  default-expand-all
+                >
+                  <el-table-column label="评审标准" min-width="500">
+                    <template #default="{ row }">
+                      <el-input
+                        v-model="row.itemName"
+                        type="textarea"
+                        :rows="2"
+                        placeholder="请输入评审标准"
+                        class="table-textarea"
+                        :disabled="readonly"
+                      />
+                    </template>
+                  </el-table-column>
+                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                    <template #default="{ row }">
+                      <el-button
+                        v-if="row.level < MAX_LEVEL"
+                        link
+                        type="primary"
+                        class="add-child-btn"
+                        @click="handleAddChild(row)"
+                      >
+                        <el-icon :size="14"><Plus /></el-icon> 子项
+                      </el-button>
+                      <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
+                        <el-icon :size="16"><Delete /></el-icon>
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
+                <el-icon><Plus /></el-icon> 添加评审项
+              </div>
+            </template>
 
-        <!-- 技术评审 -->
-        <el-tab-pane label="技术评审" name="TECHNICAL">
-          <div class="table-container">
-            <el-table
-              :data="technicalTree"
-              row-key="id"
-              :tree-props="{ children: 'children' }"
-              class="review-table"
-              :border="true"
-              default-expand-all
-            >
-              <el-table-column label="评审标准" min-width="300">
-                <template #default="{ row }">
-                  <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
-                </template>
-              </el-table-column>
-              <el-table-column label="主观/客观" width="120" align="center">
-                <template #default="{ row }">
-                  <el-select
-                    v-if="isLeaf(row)"
-                    v-model="row.subjectivity"
-                    size="small"
-                    class="subjective-select"
-                    :disabled="readonly"
-                  >
-                    <el-option value="OBJECTIVE" label="客观" />
-                    <el-option value="SUBJECTIVE" label="主观" />
-                  </el-select>
-                  <span v-else class="summary-text">&mdash;</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="分值" width="100" align="center">
-                <template #default="{ row }">
-                  <el-input-number
-                    v-if="isLeaf(row)"
-                    v-model="row.score"
-                    :min="0"
-                    :max="100"
-                    :precision="1"
-                    size="small"
-                    class="score-input"
-                    controls-position="right"
-                    :disabled="readonly"
-                  />
-                  <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column v-if="!readonly" label="操作" width="130" align="center">
-                <template #default="{ row }">
-                  <el-button
-                    v-if="row.level < MAX_LEVEL"
-                    link
-                    type="primary"
-                    class="add-child-btn"
-                    @click="handleAddChild(row)"
-                  >
-                    <el-icon :size="14"><Plus /></el-icon> 子项
-                  </el-button>
-                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
-                    <el-icon :size="16"><Delete /></el-icon>
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('TECHNICAL')">
-            <el-icon><Plus /></el-icon> 添加评审项
-          </div>
-        </el-tab-pane>
+            <!-- 资信评审：评审标准+主观/客观+分值 -->
+            <template v-else-if="typeConfig.reviewType === 'CREDIT'">
+              <div class="table-container">
+                <el-table
+                  :data="creditTree"
+                  row-key="id"
+                  :tree-props="{ children: 'children' }"
+                  class="review-table"
+                  :border="true"
+                  default-expand-all
+                >
+                  <el-table-column label="评审标准" min-width="300">
+                    <template #default="{ row }">
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="主观/客观" width="120" align="center">
+                    <template #default="{ row }">
+                      <el-select
+                        v-if="isLeaf(row)"
+                        v-model="row.subjectivity"
+                        size="small"
+                        class="subjective-select"
+                        :disabled="readonly"
+                      >
+                        <el-option value="OBJECTIVE" label="客观" />
+                        <el-option value="SUBJECTIVE" label="主观" />
+                      </el-select>
+                      <span v-else class="summary-text">&mdash;</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="分值" width="100" align="center">
+                    <template #default="{ row }">
+                      <el-input-number
+                        v-if="isLeaf(row)"
+                        v-model="row.score"
+                        :min="0"
+                        :max="100"
+                        :precision="1"
+                        size="small"
+                        class="score-input"
+                        controls-position="right"
+                        :disabled="readonly"
+                      />
+                      <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                    <template #default="{ row }">
+                      <el-button
+                        v-if="row.level < MAX_LEVEL"
+                        link
+                        type="primary"
+                        class="add-child-btn"
+                        @click="handleAddChild(row)"
+                      >
+                        <el-icon :size="14"><Plus /></el-icon> 子项
+                      </el-button>
+                      <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
+                        <el-icon :size="16"><Delete /></el-icon>
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('CREDIT')">
+                <el-icon><Plus /></el-icon> 添加评审项
+              </div>
+            </template>
 
-        <!-- 商务评审 -->
-        <el-tab-pane label="商务评审" name="COMMERCIAL">
-          <div class="table-container">
-            <el-table
-              :data="commercialTree"
-              row-key="id"
-              :tree-props="{ children: 'children' }"
-              class="review-table"
-              :border="true"
-              default-expand-all
-            >
-              <el-table-column label="评审标准" min-width="400">
-                <template #default="{ row }">
-                  <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
-                </template>
-              </el-table-column>
-              <el-table-column label="分值" width="100" align="center">
-                <template #default="{ row }">
-                  <el-input-number
-                    v-if="isLeaf(row)"
-                    v-model="row.score"
-                    :min="0"
-                    :max="100"
-                    :precision="1"
-                    size="small"
-                    class="score-input"
-                    controls-position="right"
-                    :disabled="readonly"
-                  />
-                  <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column v-if="!readonly" label="操作" width="130" align="center">
-                <template #default="{ row }">
-                  <el-button
-                    v-if="row.level < MAX_LEVEL"
-                    link
-                    type="primary"
-                    class="add-child-btn"
-                    @click="handleAddChild(row)"
-                  >
-                    <el-icon :size="14"><Plus /></el-icon> 子项
-                  </el-button>
-                  <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
-                    <el-icon :size="16"><Delete /></el-icon>
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-          <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
-            <el-icon><Plus /></el-icon> 添加评审项
-          </div>
+            <!-- 技术评审：评审标准+主观/客观+分值 -->
+            <template v-else-if="typeConfig.reviewType === 'TECHNICAL'">
+              <div class="table-container">
+                <el-table
+                  :data="technicalTree"
+                  row-key="id"
+                  :tree-props="{ children: 'children' }"
+                  class="review-table"
+                  :border="true"
+                  default-expand-all
+                >
+                  <el-table-column label="评审标准" min-width="300">
+                    <template #default="{ row }">
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="主观/客观" width="120" align="center">
+                    <template #default="{ row }">
+                      <el-select
+                        v-if="isLeaf(row)"
+                        v-model="row.subjectivity"
+                        size="small"
+                        class="subjective-select"
+                        :disabled="readonly"
+                      >
+                        <el-option value="OBJECTIVE" label="客观" />
+                        <el-option value="SUBJECTIVE" label="主观" />
+                      </el-select>
+                      <span v-else class="summary-text">&mdash;</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="分值" width="100" align="center">
+                    <template #default="{ row }">
+                      <el-input-number
+                        v-if="isLeaf(row)"
+                        v-model="row.score"
+                        :min="0"
+                        :max="100"
+                        :precision="1"
+                        size="small"
+                        class="score-input"
+                        controls-position="right"
+                        :disabled="readonly"
+                      />
+                      <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                    <template #default="{ row }">
+                      <el-button
+                        v-if="row.level < MAX_LEVEL"
+                        link
+                        type="primary"
+                        class="add-child-btn"
+                        @click="handleAddChild(row)"
+                      >
+                        <el-icon :size="14"><Plus /></el-icon> 子项
+                      </el-button>
+                      <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
+                        <el-icon :size="16"><Delete /></el-icon>
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('TECHNICAL')">
+                <el-icon><Plus /></el-icon> 添加评审项
+              </div>
+            </template>
+
+            <!-- 商务评审：评审标准+分值 -->
+            <template v-else-if="typeConfig.reviewType === 'COMMERCIAL'">
+              <div class="table-container">
+                <el-table
+                  :data="commercialTree"
+                  row-key="id"
+                  :tree-props="{ children: 'children' }"
+                  class="review-table"
+                  :border="true"
+                  default-expand-all
+                >
+                  <el-table-column label="评审标准" min-width="400">
+                    <template #default="{ row }">
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="分值" width="100" align="center">
+                    <template #default="{ row }">
+                      <el-input-number
+                        v-if="isLeaf(row)"
+                        v-model="row.score"
+                        :min="0"
+                        :max="100"
+                        :precision="1"
+                        size="small"
+                        class="score-input"
+                        controls-position="right"
+                        :disabled="readonly"
+                      />
+                      <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                    <template #default="{ row }">
+                      <el-button
+                        v-if="row.level < MAX_LEVEL"
+                        link
+                        type="primary"
+                        class="add-child-btn"
+                        @click="handleAddChild(row)"
+                      >
+                        <el-icon :size="14"><Plus /></el-icon> 子项
+                      </el-button>
+                      <el-button link type="danger" class="delete-btn" @click="handleDeleteItem(row)">
+                        <el-icon :size="16"><Delete /></el-icon>
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
+                <el-icon><Plus /></el-icon> 添加评审项
+              </div>
+            </template>
+          </template>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -314,15 +337,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, ArrowLeft, ArrowRight, RefreshRight } from '@element-plus/icons-vue'
 import { reviewApi } from '@/api/review'
 import { projectApi } from '@/api/project'
+import { projectTemplateApi } from '@/api/projectTemplate'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { getTaskProgress } from '@/types/ai-task'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
-import type { ReviewItemTree } from '@/types/review'
+import type { ReviewItemTree, ReviewConfig, ReviewTypeConfig } from '@/types/review'
+import { REVIEW_TYPE_LABELS } from '@/types/review'
 
 type ReviewCategory = 'COMPLIANCE' | 'TECHNICAL' | 'CREDIT' | 'COMMERCIAL'
 
@@ -332,7 +357,30 @@ const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const allItems = ref<ReviewItemTree[]>([])
-const activeReviewType = ref<ReviewCategory>('COMPLIANCE')
+const activeReviewType = ref<string>('COMPLIANCE')
+
+// 评审项配置
+const reviewConfig = ref<ReviewConfig | null>(null)
+
+/** 获取启用的评审类型配置列表 */
+const enabledTypes = computed<ReviewTypeConfig[]>(() => {
+  if (!reviewConfig.value) {
+    // 兜底：无配置时全部启用
+    return Object.keys(REVIEW_TYPE_LABELS).map(type => ({
+      reviewType: type,
+      enabled: true,
+      generateStandard: true,
+    }))
+  }
+  return reviewConfig.value.reviewTypes.filter(t => t.enabled)
+})
+
+/** 当 enabledTypes 变化时，修正 activeReviewType 为首个启用的类型 */
+watch(enabledTypes, (types) => {
+  if (types?.length > 0 && !types.some(t => t.reviewType === activeReviewType.value)) {
+    activeReviewType.value = types[0]!.reviewType
+  }
+}, { immediate: true })
 
 // 使用 useLatestTask 查询最新任务状态
 const projectIdRef = computed(() => props.projectId)
@@ -433,11 +481,48 @@ const creditTree = computed(() => unwrapCategoryRoots(allItems.value.filter(i =>
 const technicalTree = computed(() => unwrapCategoryRoots(allItems.value.filter(i => i.reviewType === 'TECHNICAL')))
 const commercialTree = computed(() => unwrapCategoryRoots(allItems.value.filter(i => i.reviewType === 'COMMERCIAL')))
 
-// 评分计算：只统计叶子节点
+/** 获取指定评审类型的树形数据 */
+const getTreeByType = (reviewType: string): ReviewItemTree[] => {
+  const map: Record<string, any> = {
+    COMPLIANCE: complianceTree,
+    CREDIT: creditTree,
+    TECHNICAL: technicalTree,
+    COMMERCIAL: commercialTree,
+  }
+  return map[reviewType]?.value || []
+}
+
+/** 获取占位评审项数据（generateStandard=false时使用） */
+const getPlaceholderData = (reviewType: string) => {
+  const items = allItems.value.filter(
+    item => item.reviewType === reviewType && item.level === 1
+  )
+  if (items.length === 0) {
+    return [{ itemName: '详见评审文件', score: '-' }]
+  }
+  // 展开分类根节点的子项
+  return unwrapCategoryRoots(items).map(item => ({
+    itemName: item.itemName || '详见评审文件',
+    score: isLeaf(item) ? (item.score || '-') : calcNodeScore(item),
+  }))
+}
+
+// 评分计算：只统计启用的、且生成评审标准的类型叶子节点
 const creditScore = computed(() => collectLeaves(creditTree.value).reduce((sum, i) => sum + (i.score || 0), 0))
 const technicalScore = computed(() => collectLeaves(technicalTree.value).reduce((sum, i) => sum + (i.score || 0), 0))
 const commercialScore = computed(() => collectLeaves(commercialTree.value).reduce((sum, i) => sum + (i.score || 0), 0))
-const scoreTotal = computed(() => creditScore.value + technicalScore.value + commercialScore.value)
+
+/** 获取参与评分合计的类型列表（启用且生成评审标准的类型） */
+const scoringTypes = computed(() =>
+  enabledTypes.value.filter(t => t.generateStandard && t.reviewType !== 'COMPLIANCE')
+)
+
+const scoreTotal = computed(() => {
+  return scoringTypes.value.reduce((sum, t) => {
+    const tree = getTreeByType(t.reviewType)
+    return sum + collectLeaves(tree).reduce((s, i) => s + (i.score || 0), 0)
+  }, 0)
+})
 
 const progressPercent = computed(() => {
   if (!latestTask.value) return 0
@@ -553,9 +638,12 @@ const handleDeleteItem = async (row: ReviewItemTree) => {
 
 /** 确认评审项并推进阶段 */
 const handleNext = async () => {
-  // 校验100分
+  // 校验100分（仅校验启用且生成评审标准的非符合性类型）
+  const scoringTypeNames = scoringTypes.value
+    .map(t => REVIEW_TYPE_LABELS[t.reviewType] || t.reviewType)
+    .join('+')
   if (scoreTotal.value > 0 && scoreTotal.value !== 100) {
-    ElMessage.warning(`资信+技术+商务评审合计应为100分，当前为${scoreTotal.value}分`)
+    ElMessage.warning(`${scoringTypeNames}评审合计应为100分，当前为${scoreTotal.value}分`)
     return
   }
 
@@ -598,7 +686,24 @@ const handleNext = async () => {
   }
 }
 
-onMounted(loadReviewItems)
+/** 加载项目模板的评审项配置 */
+const loadReviewConfig = async () => {
+  try {
+    const pt = await projectTemplateApi.getByProject(props.projectId)
+    if (pt?.reviewConfig) {
+      reviewConfig.value = typeof pt.reviewConfig === 'string'
+        ? JSON.parse(pt.reviewConfig)
+        : pt.reviewConfig
+    }
+  } catch {
+    // 无模板配置，使用默认（全部启用）
+  }
+}
+
+onMounted(() => {
+  loadReviewConfig()
+  loadReviewItems()
+})
 </script>
 
 <style scoped lang="scss">
@@ -849,6 +954,17 @@ onMounted(loadReviewItems)
       background: var(--app-color-danger-light);
     }
   }
+}
+
+// ============================================================
+// 占位提示
+// ============================================================
+.placeholder-notice {
+  color: var(--app-text-secondary, #909399);
+  margin-top: 8px;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px 0;
 }
 
 // ============================================================
