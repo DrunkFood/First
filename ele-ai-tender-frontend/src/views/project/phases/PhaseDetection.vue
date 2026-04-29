@@ -118,6 +118,7 @@ import PolicyFileSelect from '@/components/detection/PolicyFileSelect.vue'
 import DetectionProgress from '@/components/detection/DetectionProgress.vue'
 import DetectionReport from '@/components/detection/DetectionReport.vue'
 import DocxPreview from '@/components/document/DocxPreview.vue'
+import { useDetectionHighlight } from '@/composables/useDetectionHighlight'
 import type { DetectionType, DetectionIssueVO } from '@/types/detection'
 
 const props = defineProps<{ projectId: number; readonly?: boolean; finishing?: boolean }>()
@@ -142,24 +143,13 @@ const reportRef = ref<InstanceType<typeof DetectionReport> | null>(null)
 const docxPreviewRef = ref<InstanceType<typeof DocxPreview> | null>(null)
 const generatedFileId = ref<number | null>(null)
 
+// DocxPreview 容器 ref（响应式包装）
+const docxContainerRef = computed(() => docxPreviewRef.value?.containerRef ?? null)
+const { scrollToAndHighlight } = useDetectionHighlight({ containerRef: docxContainerRef as any })
+
 // 定位到文档对应段落并高亮
 function handleLocate(issue: DetectionIssueVO) {
-  const containerRef = docxPreviewRef.value?.containerRef
-  if (!containerRef) return
-
-  // containerRef 是 DocxPreview 暴露的 ref<HTMLElement | null>，取 .value 获取 DOM 元素
-  const containerEl = (containerRef as any)?.value ?? containerRef
-  if (!(containerEl instanceof HTMLElement)) return
-
-  const paragraphs = containerEl.querySelectorAll('p')
-  if (issue.locationRef?.elementIndex == null || issue.locationRef.elementIndex >= paragraphs.length) return
-
-  const targetPara = paragraphs[issue.locationRef.elementIndex]
-  if (!targetPara) return
-  targetPara.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  targetPara.style.transition = 'background-color 0.3s'
-  targetPara.style.backgroundColor = 'rgba(255, 152, 0, 0.1)'
-  setTimeout(() => { targetPara.style.backgroundColor = '' }, 3000)
+  scrollToAndHighlight(issue)
 }
 
 const canFinish = computed(() =>

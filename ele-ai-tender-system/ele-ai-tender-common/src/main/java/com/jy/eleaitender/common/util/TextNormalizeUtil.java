@@ -19,7 +19,7 @@ public final class TextNormalizeUtil {
 
     /**
      * 判断字符是否为空白（包括不间断空格和全角空格）
-     * 注意：U+00A0 和 U+3000 必须用转义写法，字面量在源码中不可见
+     * 注意：U+00A0 和 U+3000 必须用转义写法，字面量在源码中不可见易误改
      */
     public static boolean isWhitespaceChar(char c) {
         return Character.isWhitespace(c) || c == ' ' || c == '　';

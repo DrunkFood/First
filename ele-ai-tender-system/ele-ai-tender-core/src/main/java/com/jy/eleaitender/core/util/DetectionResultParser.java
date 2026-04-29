@@ -246,6 +246,21 @@ public class DetectionResultParser {
                             FixReplacement rep = new FixReplacement();
                             rep.setOriginal(original);
                             rep.setTargeted(targeted);
+                            // 传递locationRef供精准定位
+                            JsonNode locRefNode = issue.get("locationRef");
+                            if (locRefNode != null && !locRefNode.isNull()) {
+                                LocationRefVO locRef = new LocationRefVO();
+                                locRef.setType(getText(locRefNode, "type", null));
+                                locRef.setElementIndex(locRefNode.has("elementIndex")
+                                        ? locRefNode.get("elementIndex").asInt() : null);
+                                locRef.setTableIndex(locRefNode.has("tableIndex")
+                                        ? locRefNode.get("tableIndex").asInt() : null);
+                                locRef.setRowIndex(locRefNode.has("rowIndex")
+                                        ? locRefNode.get("rowIndex").asInt() : null);
+                                locRef.setCellIndex(locRefNode.has("cellIndex")
+                                        ? locRefNode.get("cellIndex").asInt() : null);
+                                rep.setLocationRef(locRef);
+                            }
                             replacements.add(rep);
                         }
                     }
@@ -389,20 +404,20 @@ public class DetectionResultParser {
 
     /**
      * 简化的规范化偏移映射：找到规范化文本中第normStart个字符在原始文本中的位置
+     * 逻辑与 WordTextExtractor.buildNormToRawMapping 保持一致
      */
     private static int mapNormToRaw(String rawText, int normStart) {
         int rawIdx = 0;
         int normIdx = 0;
         while (rawIdx < rawText.length() && normIdx < normStart) {
-            char c = rawText.charAt(rawIdx);
-            if (TextNormalizeUtil.isWhitespaceChar(c)) {
+            if (TextNormalizeUtil.isWhitespaceChar(rawText.charAt(rawIdx))) {
                 rawIdx++;
                 continue;
             }
             rawIdx++;
             normIdx++;
         }
-        // 跳过前导空白
+        // 跳过 rawIdx 处的空白字符，定位到匹配子串的第一个非空白字符
         while (rawIdx < rawText.length() && TextNormalizeUtil.isWhitespaceChar(rawText.charAt(rawIdx))) {
             rawIdx++;
         }

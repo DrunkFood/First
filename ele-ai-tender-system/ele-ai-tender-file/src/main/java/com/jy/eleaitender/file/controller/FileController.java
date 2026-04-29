@@ -2,6 +2,7 @@ package com.jy.eleaitender.file.controller;
 
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.dto.LocationRefVO;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.dto.response.WordStructureVO;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -142,11 +143,21 @@ public class FileController {
         }
         Long fileId = ((Number) params.get("fileId")).longValue();
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> replacementMaps = (List<Map<String, String>>) params.get("replacements");
+        List<Map<String, Object>> replacementMaps = (List<Map<String, Object>>) params.get("replacements");
         List<FixReplacement> replacements = replacementMaps.stream().map(m -> {
             FixReplacement r = new FixReplacement();
-            r.setOriginal(m.get("original"));
-            r.setTargeted(m.get("targeted"));
+            r.setOriginal((String) m.get("original"));
+            r.setTargeted((String) m.get("targeted"));
+            Object locRefObj = m.get("locationRef");
+            if (locRefObj instanceof Map<?, ?> locRefMap) {
+                LocationRefVO locRef = new LocationRefVO();
+                locRef.setType((String) locRefMap.get("type"));
+                if (locRefMap.get("elementIndex") != null) locRef.setElementIndex(((Number) locRefMap.get("elementIndex")).intValue());
+                if (locRefMap.get("tableIndex") != null) locRef.setTableIndex(((Number) locRefMap.get("tableIndex")).intValue());
+                if (locRefMap.get("rowIndex") != null) locRef.setRowIndex(((Number) locRefMap.get("rowIndex")).intValue());
+                if (locRefMap.get("cellIndex") != null) locRef.setCellIndex(((Number) locRefMap.get("cellIndex")).intValue());
+                r.setLocationRef(locRef);
+            }
             return r;
         }).toList();
         return Result.success(wordDocumentService.fixDocument(fileId, replacements));
