@@ -148,15 +148,23 @@ public class ReviewItemServiceImpl implements IReviewItemService {
         params.put("reviewMethod", project.getReviewType());
         params.put("requirementContent", project.getRequirementContent());
 
-        // 读取项目模板的评审项配置
+        String projectTemplateFileId = null;
+        // 读取项目模板数据
         TbProjectTemplate projectTemplate = projectTemplateService.getByProjectId(projectId);
-        if (projectTemplate != null && projectTemplate.getReviewConfig() != null) {
-            params.put("reviewConfig", projectTemplate.getReviewConfig());
+        if (projectTemplate != null) {
+            // 项目模板文件ID
+            if (projectTemplate.getFileId() != null) {
+                projectTemplateFileId = String.valueOf(projectTemplate.getFileId());
+            }
+            // 评审项配置
+            if (projectTemplate.getReviewConfig() != null) {
+                params.put("reviewConfig", projectTemplate.getReviewConfig());
+            }
         }
 
         log.info("提交评审项生成: projectId={}, projectName={}", projectId, project.getProjectName());
         return aiTaskService.createTask(AiTaskType.REVIEW_ITEM_GENERATE,
-                projectId, projectId, "PROJECT", params, null);
+                projectId, projectId, "PROJECT", params, projectTemplateFileId);
     }
 
     @Override
