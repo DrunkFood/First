@@ -211,45 +211,33 @@ public class AiTaskResultSyncHandler {
                 if (typeConfig.isEnabled() && !typeConfig.isGenerateStandard()) {
                     String rt = typeConfig.getReviewType();
 
-                    // 找到该类型的所有一级节点
-                    List<TbProjectReviewItem> level1Items = items.stream()
+                    // 找到该类型的一级节点（每种评审类型只有一个一级节点）
+                    TbProjectReviewItem level1Item = items.stream()
                             .filter(item -> rt.equals(item.getReviewType()) && item.getLevel() != null && item.getLevel() == 1)
-                            .toList();
+                            .findFirst().orElse(null);
+                    if (level1Item == null) continue;
 
-                    // 先计算每个一级节点下子节点的分值总和，再删除子节点
-                    List<TbProjectReviewItem> placeholders = new ArrayList<>();
-                    for (TbProjectReviewItem level1Item : level1Items) {
-                        BigDecimal childScore = items.stream()
-                                .filter(item -> rt.equals(item.getReviewType())
-                                        && item.getLevel() != null && item.getLevel() > 1
-                                        && isChildOf(item, level1Item, items))
-                                .map(item -> item.getScore() != null ? item.getScore() : BigDecimal.ZERO)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    // 计算该类型所有二级以下节点的分值总和
+                    BigDecimal childScore = items.stream()
+                            .filter(item -> rt.equals(item.getReviewType()) && item.getLevel() != null && item.getLevel() > 1)
+                            .map(item -> item.getScore() != null ? item.getScore() : BigDecimal.ZERO)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                        TbProjectReviewItem placeholder = new TbProjectReviewItem();
-                        placeholder.setProjectId(projectId);
-                        placeholder.setItemName("详见评审文件");
-                        placeholder.setLevel(2);
-                        placeholder.setReviewType(rt);
-                        placeholder.setScore(childScore);
-                        placeholder.setIsRequired(0);
-                        placeholder.setSortOrder(0);
-                        parentMap.put(placeholder, level1Item);
-                        placeholders.add(placeholder);
-                    }
-
-                    // 删除该类型的二级及以下节点（AI生成的详细内容）
+                    // 删除该类型的二级及以下节点
                     items.removeIf(item -> rt.equals(item.getReviewType())
                             && item.getLevel() != null && item.getLevel() > 1);
 
                     // 添加占位二级节点
-                    int maxSortOrder = items.stream()
-                            .mapToInt(item -> item.getSortOrder() != null ? item.getSortOrder() : 0)
-                            .max().orElse(-1);
-                    for (TbProjectReviewItem p : placeholders) {
-                        p.setSortOrder(++maxSortOrder);
-                        items.add(p);
-                    }
+                    TbProjectReviewItem placeholder = new TbProjectReviewItem();
+                    placeholder.setProjectId(projectId);
+                    placeholder.setItemName("详见评审文件");
+                    placeholder.setLevel(2);
+                    placeholder.setReviewType(rt);
+                    placeholder.setScore(childScore);
+                    placeholder.setIsRequired(0);
+                    placeholder.setSortOrder(items.size());
+                    items.add(placeholder);
+                    parentMap.put(placeholder, level1Item);
                 }
             }
         }
@@ -361,19 +349,6 @@ public class AiTaskResultSyncHandler {
      * 一级分类名称 → reviewType 枚举值映射
      * AI返回中文分类名，需映射为数据库存储的英文枚举值
      */
-    /**
-     * 判断 item 是否是 parentItem 的子孙节点（通过 parentMap 链路追溯）
-     */
-    private boolean isChildOf(TbProjectReviewItem item, TbProjectReviewItem parentItem,
-                              List<TbProjectReviewItem> allItems) {
-        TbProjectReviewItem current = parentMap.get(item);
-        while (current != null) {
-            if (current == parentItem) return true;
-            current = parentMap.get(current);
-        }
-        return false;
-    }
-
     private String mapCategoryToReviewType(String categoryName) {
         if (categoryName == null) {
             return "COMPLIANCE";
