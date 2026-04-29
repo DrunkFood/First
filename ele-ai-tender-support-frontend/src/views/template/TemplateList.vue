@@ -190,7 +190,7 @@
           </el-table-column>
           <el-table-column label="启用" width="80" align="center">
             <template #default="{ row }">
-              <el-switch v-model="row.enabled" size="small" />
+              <el-switch v-model="row.enabled" size="small" @change="(val: boolean) => { if (!val) row.generateStandard = true }" />
             </template>
           </el-table-column>
           <el-table-column label="生成评审标准" width="120" align="center">

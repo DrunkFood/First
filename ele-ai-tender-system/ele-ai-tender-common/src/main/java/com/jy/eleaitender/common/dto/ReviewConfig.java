@@ -1,6 +1,9 @@
 package com.jy.eleaitender.common.dto;
 
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 /**
@@ -8,6 +11,8 @@ import java.util.List;
  */
 @Data
 public class ReviewConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(ReviewConfig.class);
 
     /** 各评审类型配置列表 */
     private List<ReviewTypeConfig> reviewTypes;
@@ -36,6 +41,7 @@ public class ReviewConfig {
         try {
             return objectMapper.readValue(json, ReviewConfig.class);
         } catch (Exception e) {
+            log.warn("ReviewConfig JSON解析失败，回退默认配置: {}", e.getMessage());
             return defaultConfig();
         }
     }

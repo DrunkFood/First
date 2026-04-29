@@ -218,6 +218,9 @@ public class AiTaskResultSyncHandler {
         }
         if (StringUtils.hasText(reviewConfigJson)) {
             ReviewConfig config = ReviewConfig.fromJson(reviewConfigJson);
+            // 过滤掉AI可能违规返回的未启用类型
+            items.removeIf(item -> !config.isEnabled(item.getReviewType()));
+            // 为 generateStandard=false 的启用类型插入占位节点
             for (ReviewTypeConfig typeConfig : config.getEnabledTypes()) {
                 if (!typeConfig.isGenerateStandard()) {
                     TbProjectReviewItem placeholder = new TbProjectReviewItem();
