@@ -216,8 +216,9 @@ public class AiTaskResultSyncHandler {
                             .filter(item -> rt.equals(item.getReviewType()) && item.getLevel() != null && item.getLevel() == 1)
                             .toList();
 
+                    // 先计算每个一级节点下子节点的分值总和，再删除子节点
+                    List<TbProjectReviewItem> placeholders = new ArrayList<>();
                     for (TbProjectReviewItem level1Item : level1Items) {
-                        // 计算该一级节点下所有子节点的分值总和
                         BigDecimal childScore = items.stream()
                                 .filter(item -> rt.equals(item.getReviewType())
                                         && item.getLevel() != null && item.getLevel() > 1
@@ -225,7 +226,6 @@ public class AiTaskResultSyncHandler {
                                 .map(item -> item.getScore() != null ? item.getScore() : BigDecimal.ZERO)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                        // 创建占位二级节点（用parentMap记录父子关系，等父节点插入后回填parentId）
                         TbProjectReviewItem placeholder = new TbProjectReviewItem();
                         placeholder.setProjectId(projectId);
                         placeholder.setItemName("详见评审文件");
@@ -233,15 +233,23 @@ public class AiTaskResultSyncHandler {
                         placeholder.setReviewType(rt);
                         placeholder.setScore(childScore);
                         placeholder.setIsRequired(0);
-                        placeholder.setSortOrder(items.size());
-                        items.add(placeholder);
+                        placeholder.setSortOrder(0);
                         parentMap.put(placeholder, level1Item);
+                        placeholders.add(placeholder);
                     }
 
                     // 删除该类型的二级及以下节点（AI生成的详细内容）
                     items.removeIf(item -> rt.equals(item.getReviewType())
-                            && item.getLevel() != null && item.getLevel() > 1
-                            && !parentMap.containsKey(item));
+                            && item.getLevel() != null && item.getLevel() > 1);
+
+                    // 添加占位二级节点
+                    int maxSortOrder = items.stream()
+                            .mapToInt(item -> item.getSortOrder() != null ? item.getSortOrder() : 0)
+                            .max().orElse(-1);
+                    for (TbProjectReviewItem p : placeholders) {
+                        p.setSortOrder(++maxSortOrder);
+                        items.add(p);
+                    }
                 }
             }
         }
