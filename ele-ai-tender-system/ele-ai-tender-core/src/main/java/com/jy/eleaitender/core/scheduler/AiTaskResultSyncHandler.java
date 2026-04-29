@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.scheduler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
@@ -61,6 +62,9 @@ public class AiTaskResultSyncHandler {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private InternalFileServiceClient fileServiceClient;
 
     /**
      * 按任务类型分发同步逻辑
@@ -391,6 +395,23 @@ public class AiTaskResultSyncHandler {
         // COMPLETED: 同步结果和完成时间，注入recordId供前端使用
         if (AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
             String enrichedResult = enrichResultWithRecordId(task.getResult(), record.getId());
+
+            // 填充locationRef：检测完成后从文档中提取位置索引
+            if (StringUtils.hasText(enrichedResult)) {
+                try {
+                    TbProject project = projectMapper.selectById(record.getProjectId());
+                    if (project != null && project.getGeneratedFileId() != null) {
+                        Map<String, Object> extractResult = fileServiceClient.extractText(project.getGeneratedFileId());
+                        String fullText = (String) extractResult.get("fullText");
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> segments = (List<Map<String, Object>>) extractResult.get("segments");
+                        enrichedResult = DetectionResultParser.fillLocationRefs(enrichedResult, fullText, segments);
+                    }
+                } catch (Exception e) {
+                    log.warn("填充locationRef失败，不影响主流程: recordId={}", recordId, e);
+                }
+            }
+
             record.setResult(enrichedResult);
             record.setCompletedAt(LocalDateTime.now());
         } else if (AiTaskStatus.FAILED.getCode().equals(task.getStatus())
