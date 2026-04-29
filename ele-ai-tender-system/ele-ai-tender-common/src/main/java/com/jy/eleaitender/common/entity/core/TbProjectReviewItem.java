@@ -42,9 +42,6 @@ public class TbProjectReviewItem extends BaseEntity {
     @Schema(description = "分值(评审分值)")
     private BigDecimal score;
 
-    @Schema(description = "满分值(商务评审专用)")
-    private BigDecimal maxScore;
-
     @Schema(description = "权重(百分比)")
     private BigDecimal weight;
 

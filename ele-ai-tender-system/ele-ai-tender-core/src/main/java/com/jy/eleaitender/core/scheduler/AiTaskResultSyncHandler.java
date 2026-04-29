@@ -334,7 +334,6 @@ public class AiTaskResultSyncHandler {
             item.setSortOrder(sortOrder[0]++);
             item.setReviewType(reviewType);
             item.setScore(getDecimal(childNode, "score"));
-            item.setMaxScore(getDecimal(childNode, "maxScore"));
             item.setWeight(getDecimal(childNode, "weight"));
             item.setSubjectivity(getText(childNode, "subjectivity", ""));
             item.setIsRequired(getBooleanAsInt(childNode, "isRequired", 1));
