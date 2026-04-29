@@ -91,11 +91,11 @@
                         :rows="2"
                         placeholder="请输入评审标准"
                         class="table-textarea"
-                        :disabled="readonly"
+                        :disabled="isEditingDisabled"
                       />
                     </template>
                   </el-table-column>
-                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                  <el-table-column v-if="!isEditingDisabled" label="操作" width="130" align="center">
                     <template #default="{ row }">
                       <el-button
                         v-if="row.level < MAX_LEVEL"
@@ -113,7 +113,7 @@
                   </el-table-column>
                 </el-table>
               </div>
-              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
+              <div v-if="!isEditingDisabled" class="add-item-btn" @click="handleAddItem('COMPLIANCE')">
                 <el-icon><Plus /></el-icon> 添加评审项
               </div>
             </template>
@@ -131,7 +131,7 @@
                 >
                   <el-table-column label="评审标准" min-width="300">
                     <template #default="{ row }">
-                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
                   <el-table-column label="主观/客观" width="120" align="center">
@@ -141,7 +141,7 @@
                         v-model="row.subjectivity"
                         size="small"
                         class="subjective-select"
-                        :disabled="readonly"
+                        :disabled="isEditingDisabled"
                       >
                         <el-option value="OBJECTIVE" label="客观" />
                         <el-option value="SUBJECTIVE" label="主观" />
@@ -160,12 +160,12 @@
                         size="small"
                         class="score-input"
                         controls-position="right"
-                        :disabled="readonly"
+                        :disabled="isEditingDisabled"
                       />
                       <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                  <el-table-column v-if="!isEditingDisabled" label="操作" width="130" align="center">
                     <template #default="{ row }">
                       <el-button
                         v-if="row.level < MAX_LEVEL"
@@ -183,7 +183,7 @@
                   </el-table-column>
                 </el-table>
               </div>
-              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('CREDIT')">
+              <div v-if="!isEditingDisabled" class="add-item-btn" @click="handleAddItem('CREDIT')">
                 <el-icon><Plus /></el-icon> 添加评审项
               </div>
             </template>
@@ -201,7 +201,7 @@
                 >
                   <el-table-column label="评审标准" min-width="300">
                     <template #default="{ row }">
-                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
                   <el-table-column label="主观/客观" width="120" align="center">
@@ -211,7 +211,7 @@
                         v-model="row.subjectivity"
                         size="small"
                         class="subjective-select"
-                        :disabled="readonly"
+                        :disabled="isEditingDisabled"
                       >
                         <el-option value="OBJECTIVE" label="客观" />
                         <el-option value="SUBJECTIVE" label="主观" />
@@ -230,12 +230,12 @@
                         size="small"
                         class="score-input"
                         controls-position="right"
-                        :disabled="readonly"
+                        :disabled="isEditingDisabled"
                       />
                       <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                  <el-table-column v-if="!isEditingDisabled" label="操作" width="130" align="center">
                     <template #default="{ row }">
                       <el-button
                         v-if="row.level < MAX_LEVEL"
@@ -253,7 +253,7 @@
                   </el-table-column>
                 </el-table>
               </div>
-              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('TECHNICAL')">
+              <div v-if="!isEditingDisabled" class="add-item-btn" @click="handleAddItem('TECHNICAL')">
                 <el-icon><Plus /></el-icon> 添加评审项
               </div>
             </template>
@@ -271,7 +271,7 @@
                 >
                   <el-table-column label="评审标准" min-width="400">
                     <template #default="{ row }">
-                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="readonly" />
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
                   <el-table-column label="分值" width="100" align="center">
@@ -285,12 +285,12 @@
                         size="small"
                         class="score-input"
                         controls-position="right"
-                        :disabled="readonly"
+                        :disabled="isEditingDisabled"
                       />
                       <span v-else class="summary-text">{{ calcNodeScore(row) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column v-if="!readonly" label="操作" width="130" align="center">
+                  <el-table-column v-if="!isEditingDisabled" label="操作" width="130" align="center">
                     <template #default="{ row }">
                       <el-button
                         v-if="row.level < MAX_LEVEL"
@@ -308,7 +308,7 @@
                   </el-table-column>
                 </el-table>
               </div>
-              <div v-if="!readonly" class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
+              <div v-if="!isEditingDisabled" class="add-item-btn" @click="handleAddItem('COMMERCIAL')">
                 <el-icon><Plus /></el-icon> 添加评审项
               </div>
             </template>
@@ -323,11 +323,11 @@
         <el-button @click="$emit('prev')">
           <el-icon><ArrowLeft /></el-icon> 上一步
         </el-button>
-        <el-button v-if="!readonly" type="warning" :disabled="!canCreateNew" @click="handleGenerate">
+        <el-button v-if="!isEditingDisabled" type="warning" :disabled="!canCreateNew" @click="handleGenerate">
           <el-icon><RefreshRight /></el-icon> 重新生成
         </el-button>
       </div>
-      <div v-if="!readonly" class="actions-right">
+      <div v-if="!isEditingDisabled" class="actions-right">
         <el-button type="primary" :disabled="!canCreateNew" @click="handleNext">
           确认评审项 <el-icon><ArrowRight /></el-icon>
         </el-button>
@@ -528,6 +528,13 @@ const progressPercent = computed(() => {
   if (!latestTask.value) return 0
   return getTaskProgress(latestTask.value.status)
 })
+
+const isGenerating = computed(() => {
+  const status = latestTask.value?.status
+  return status === 'PENDING' || status === 'PROCESSING'
+})
+
+const isEditingDisabled = computed(() => props.readonly || isGenerating.value)
 
 const loadReviewItems = async () => {
   const data = await reviewApi.getTree(props.projectId)
