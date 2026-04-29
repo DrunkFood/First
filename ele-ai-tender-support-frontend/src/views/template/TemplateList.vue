@@ -180,6 +180,32 @@
         <el-form-item label="备注">
           <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
+        <!-- 评审项配置 -->
+        <el-divider content-position="left">评审项配置</el-divider>
+        <el-table :data="formData.reviewConfig.reviewTypes" border size="small">
+          <el-table-column label="评审类型" prop="reviewType" width="150">
+            <template #default="{ row }">
+              {{ REVIEW_TYPE_LABELS[row.reviewType] || row.reviewType }}
+            </template>
+          </el-table-column>
+          <el-table-column label="启用" width="80" align="center">
+            <template #default="{ row }">
+              <el-switch v-model="row.enabled" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="生成评审标准" width="120" align="center">
+            <template #default="{ row }">
+              <el-switch v-model="row.generateStandard" size="small" :disabled="!row.enabled" />
+            </template>
+          </el-table-column>
+          <el-table-column label="说明">
+            <template #default="{ row }">
+              <span v-if="!row.enabled" style="color: #909399">该类型不参与评审</span>
+              <span v-else-if="!row.generateStandard" style="color: #E6A23C">item_name 将填充"详见评审文件"</span>
+              <span v-else style="color: #909399">AI 生成详细评审项内容</span>
+            </template>
+          </el-table-column>
+        </el-table>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -196,7 +222,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Delete } from '@element-plus/icons-vue'
 import { templateApi, fileApi } from '@/api/template'
-import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams } from '@/types/template'
+import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams, ReviewConfig } from '@/types/template'
+import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig } from '@/types/template'
 
 const loading = ref(false)
 const tableData = ref<TemplateInfo[]>([])
@@ -217,13 +244,14 @@ const submitLoading = ref(false)
 const formRef = ref<FormInstance>()
 const fileList = ref<any[]>([])
 const uploadingFile = ref<File | null>(null)
-const formData = reactive<TemplateCreateParams & { id?: number }>({
+const formData = reactive<Omit<TemplateCreateParams, 'reviewConfig'> & { id?: number; reviewConfig: ReviewConfig }>({
   templateName: '',
   projectCategory: '',
   projectType: '',
   fileId: undefined,
   content: '',
   description: '',
+  reviewConfig: buildDefaultReviewConfig(),
 })
 
 const formRules = reactive<FormRules>({
@@ -273,6 +301,7 @@ const handleReset = () => {
 
 const handleAdd = () => {
   dialogTitle.value = '新增模板'
+  formData.reviewConfig = buildDefaultReviewConfig()
   dialogVisible.value = true
 }
 
@@ -289,6 +318,14 @@ const handleEdit = (row: TemplateInfo) => {
   })
   if (row.fileId) {
     fileList.value = [{ name: '已上传模板文件', url: '' }]
+  }
+  // 解析评审项配置
+  if (row.reviewConfig) {
+    formData.reviewConfig = typeof row.reviewConfig === 'string'
+      ? JSON.parse(row.reviewConfig)
+      : row.reviewConfig
+  } else {
+    formData.reviewConfig = buildDefaultReviewConfig()
   }
   dialogVisible.value = true
 }
@@ -365,10 +402,16 @@ const handleSubmit = async () => {
       }
 
       if (formData.id) {
-        await templateApi.update(formData as TemplateUpdateParams)
+        await templateApi.update({
+          ...formData,
+          reviewConfig: JSON.stringify(formData.reviewConfig),
+        } as TemplateUpdateParams)
         ElMessage.success('更新成功')
       } else {
-        await templateApi.create(formData)
+        await templateApi.create({
+          ...formData,
+          reviewConfig: JSON.stringify(formData.reviewConfig),
+        })
         ElMessage.success('创建成功')
       }
       dialogVisible.value = false
@@ -391,6 +434,7 @@ const handleDialogClosed = () => {
     fileId: undefined,
     content: '',
     description: '',
+    reviewConfig: buildDefaultReviewConfig(),
   })
   fileList.value = []
   uploadingFile.value = null
