@@ -12,9 +12,7 @@
         <el-col :span="12">
           <el-form-item label="项目类别" prop="projectCategory">
             <el-select v-model="form.projectCategory" placeholder="请选择" style="width: 100%" @change="handleCategoryChange">
-              <el-option label="限额以下" value="LIMITED_BELOW" />
-              <el-option label="产权交易" value="PROPERTY_TRADE" />
-              <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+              <el-option v-for="(item, key) in PROJECT_CATEGORY_MAP" :key="key" :label="item.label" :value="key" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -23,9 +21,7 @@
         <el-col :span="12">
           <el-form-item label="项目类型" prop="projectType">
             <el-select v-model="form.projectType" placeholder="请选择" style="width: 100%" @change="handleTypeChange">
-              <el-option label="工程" value="ENGINEERING" />
-              <el-option label="货物" value="GOODS" />
-              <el-option label="服务" value="SERVICE" />
+              <el-option v-for="(item, key) in PROJECT_TYPE_MAP" :key="key" :label="item.label" :value="key" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -242,6 +238,7 @@ import { projectTemplateApi } from '@/api/projectTemplate'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { UploadFilled, Calendar, View } from '@element-plus/icons-vue'
 import { toWanYuan, toYuan } from '@/utils/budget'
+import { PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import DocxPreview from '@/components/document/DocxPreview.vue'
 import type { TemplateInfo, WordStructure } from '@/types/template'
 import type { AiMatchResult } from '@/types/ai'
