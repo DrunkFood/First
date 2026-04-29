@@ -12,7 +12,7 @@ const SEVERITY_COLORS: Record<string, { bg: string; border: string }> = {
 }
 
 export function useDetectionHighlight({ containerRef }: HighlightOptions) {
-  const highlightedMarks: HTMLMarkElement[] = []
+  const highlightedMarks: HTMLElement[] = []
 
   function clearHighlights() {
     for (const mark of highlightedMarks) {
@@ -47,7 +47,7 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
     elementIndex?: number,
   ): HTMLParagraphElement | null {
     if (elementIndex == null || elementIndex < 0 || elementIndex >= paragraphs.length) return null
-    return paragraphs[elementIndex]
+    return paragraphs[elementIndex] ?? null
   }
 
   function highlightTextInElement(element: HTMLElement, issue: DetectionIssueVO) {
@@ -77,10 +77,10 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
 
       const mark = document.createElement('mark')
       const severity = (issue.severity || 'MEDIUM').toUpperCase()
-      const colors = SEVERITY_COLORS[severity] || SEVERITY_COLORS.MEDIUM
+      const colors = SEVERITY_COLORS[severity] ?? SEVERITY_COLORS.MEDIUM!
       mark.className = 'detection-highlight'
-      mark.style.backgroundColor = colors.bg
-      mark.style.borderBottom = `2px solid ${colors.border}`
+      mark.style.backgroundColor = colors!.bg
+      mark.style.borderBottom = `2px solid ${colors!.border}`
       mark.style.borderRadius = '2px'
       mark.style.padding = '0 2px'
       mark.style.cursor = 'pointer'

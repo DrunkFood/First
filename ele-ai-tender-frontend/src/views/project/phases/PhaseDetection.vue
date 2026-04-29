@@ -155,6 +155,7 @@ function handleLocate(issue: DetectionIssueVO) {
   if (issue.locationRef?.elementIndex == null || issue.locationRef.elementIndex >= paragraphs.length) return
 
   const targetPara = paragraphs[issue.locationRef.elementIndex]
+  if (!targetPara) return
   targetPara.scrollIntoView({ behavior: 'smooth', block: 'center' })
   targetPara.style.transition = 'background-color 0.3s'
   targetPara.style.backgroundColor = 'rgba(255, 152, 0, 0.1)'
