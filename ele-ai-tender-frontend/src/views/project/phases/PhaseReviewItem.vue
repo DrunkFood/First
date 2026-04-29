@@ -59,20 +59,7 @@
           :label="REVIEW_TYPE_LABELS[typeConfig.reviewType]"
           :name="typeConfig.reviewType"
         >
-          <!-- generateStandard=false: 占位只读展示 -->
-          <template v-if="!typeConfig.generateStandard">
-            <el-table :data="getPlaceholderData(typeConfig.reviewType)" border class="review-table">
-              <el-table-column prop="itemName" label="评审项名称" />
-              <el-table-column prop="score" label="分值" width="100" align="center" />
-            </el-table>
-            <div class="placeholder-notice">
-              未生成评审标准，不可手动添加
-            </div>
-          </template>
-
-          <!-- generateStandard=true: 正常评审项表格 -->
-          <template v-else>
-            <!-- 符合性审查：只有评审标准+操作 -->
+          <!-- 符合性审查：只有评审标准+操作 -->
             <template v-if="typeConfig.reviewType === 'COMPLIANCE'">
               <div class="table-container">
                 <el-table
@@ -312,7 +299,6 @@
                 <el-icon><Plus /></el-icon> 添加评审项
               </div>
             </template>
-          </template>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -492,29 +478,14 @@ const getTreeByType = (reviewType: string): ReviewItemTree[] => {
   return map[reviewType]?.value || []
 }
 
-/** 获取占位评审项数据（generateStandard=false时使用） */
-const getPlaceholderData = (reviewType: string) => {
-  const items = allItems.value.filter(
-    item => item.reviewType === reviewType && item.level === 1
-  )
-  if (items.length === 0) {
-    return [{ itemName: '详见评审文件', score: '-' }]
-  }
-  // 展开分类根节点的子项
-  return unwrapCategoryRoots(items).map(item => ({
-    itemName: item.itemName || '详见评审文件',
-    score: isLeaf(item) ? (item.score || '-') : calcNodeScore(item),
-  }))
-}
-
-// 评分计算：只统计启用的、且生成评审标准的类型叶子节点
+// 评分计算：只统计启用的非符合性类型叶子节点
 const creditScore = computed(() => collectLeaves(creditTree.value).reduce((sum, i) => sum + (i.score || 0), 0))
 const technicalScore = computed(() => collectLeaves(technicalTree.value).reduce((sum, i) => sum + (i.score || 0), 0))
 const commercialScore = computed(() => collectLeaves(commercialTree.value).reduce((sum, i) => sum + (i.score || 0), 0))
 
-/** 获取参与评分合计的类型列表（启用且生成评审标准的类型） */
+/** 获取参与评分合计的类型列表（启用的非符合性类型） */
 const scoringTypes = computed(() =>
-  enabledTypes.value.filter(t => t.generateStandard && t.reviewType !== 'COMPLIANCE')
+  enabledTypes.value.filter(t => t.reviewType !== 'COMPLIANCE')
 )
 
 const scoreTotal = computed(() => {
@@ -966,14 +937,6 @@ onMounted(() => {
 // ============================================================
 // 占位提示
 // ============================================================
-.placeholder-notice {
-  color: var(--app-text-secondary, #909399);
-  margin-top: 8px;
-  font-size: 13px;
-  text-align: center;
-  padding: 8px 0;
-}
-
 // ============================================================
 // 添加评审项按钮
 // ============================================================
