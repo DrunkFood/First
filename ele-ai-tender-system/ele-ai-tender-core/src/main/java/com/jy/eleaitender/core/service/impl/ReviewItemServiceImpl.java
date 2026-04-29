@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
+import com.jy.eleaitender.core.service.IProjectTemplateService;
 import com.jy.eleaitender.core.service.IReviewItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class ReviewItemServiceImpl implements IReviewItemService {
 
     @Autowired
     private IProjectService projectService;
+
+    @Autowired
+    private IProjectTemplateService projectTemplateService;
 
     @Override
     public List<TbProjectReviewItem> getTreeByProjectId(Long projectId) {
@@ -142,6 +147,12 @@ public class ReviewItemServiceImpl implements IReviewItemService {
         params.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : null);
         params.put("reviewMethod", project.getReviewType());
         params.put("requirementContent", project.getRequirementContent());
+
+        // 读取项目模板的评审项配置
+        TbProjectTemplate projectTemplate = projectTemplateService.getByProjectId(projectId);
+        if (projectTemplate != null && projectTemplate.getReviewConfig() != null) {
+            params.put("reviewConfig", projectTemplate.getReviewConfig());
+        }
 
         log.info("提交评审项生成: projectId={}, projectName={}", projectId, project.getProjectName());
         return aiTaskService.createTask(AiTaskType.REVIEW_ITEM_GENERATE,

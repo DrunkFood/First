@@ -37,6 +37,23 @@ public final class PromptBuilder {
     }
 
     /**
+     * 构建评审项生成的 User Prompt（带评审类型配置）
+     */
+    public static String buildReviewItemGenerate(String projectName, String projectType,
+                                                 String projectCategory, String budget,
+                                                 String requirementContent, String reviewMethod,
+                                                 String enabledTypes) {
+        return String.format(PromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG,
+                defaultStr(projectName),
+                defaultStr(projectType),
+                defaultStr(projectCategory),
+                defaultStr(budget),
+                defaultStr(requirementContent),
+                defaultStr(reviewMethod, "综合评分法"),
+                defaultStr(enabledTypes, "符合性审查、技术标评审、资信标评审、商务评审"));
+    }
+
+    /**
      * 构建文本优化的User Prompt
      */
     public static String buildTextOptimize(String content, String requirement) {

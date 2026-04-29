@@ -260,17 +260,41 @@ public final class PromptTemplates {
      */
     public static final String REVIEW_ITEM_GENERATE_USER = """
             请根据以下项目信息和需求内容生成评审标准：
-            
+
             项目名称：%s
             项目类型：%s
             项目类别：%s
             项目预算：%s元
-            
+
             业务需求内容：
             %s
-            
+
             评审方式：%s
-            
+
+            请确保总分值为100分，合理分配各评审项的分值。
+            """;
+
+    /**
+     * 评审项生成 - User Prompt 模板（带评审类型配置）
+     * 参数: projectName, projectType, projectCategory, budget, requirementContent, reviewMethod, enabledTypes
+     */
+    public static final String REVIEW_ITEM_GENERATE_USER_WITH_CONFIG = """
+            请根据以下项目信息和需求内容生成评审标准：
+
+            项目名称：%s
+            项目类型：%s
+            项目类别：%s
+            项目预算：%s元
+
+            业务需求内容：
+            %s
+
+            评审方式：%s
+
+            评审类型配置：
+            %s
+
+            请只生成以上启用的评审类型，不要生成未列出的类型。
             请确保总分值为100分，合理分配各评审项的分值。
             """;
 

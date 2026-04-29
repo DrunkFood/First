@@ -4,6 +4,8 @@ import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
+import com.jy.eleaitender.common.dto.ReviewConfig;
+import com.jy.eleaitender.common.dto.ReviewTypeConfig;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.exception.AiErrorContentException;
@@ -11,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.collections4.MapUtils.getString;
 
@@ -44,6 +48,34 @@ public class ReviewItemGenerator {
 
         Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
 
+        String reviewConfigJson = getString(params, "reviewConfig");
+        String enabledTypes;
+
+        if (StringUtils.hasText(reviewConfigJson)) {
+            // 有配置：只生成启用的、需生成标准的类型
+            ReviewConfig config = ReviewConfig.fromJson(reviewConfigJson);
+            enabledTypes = config.getEnabledTypes().stream()
+                    .filter(ReviewTypeConfig::isGenerateStandard)
+                    .map(t -> {
+                        String label = switch (t.getReviewType()) {
+                            case "COMPLIANCE" -> "符合性审查";
+                            case "TECHNICAL" -> "技术标评审";
+                            case "CREDIT" -> "资信标评审";
+                            case "COMMERCIAL" -> "商务评审";
+                            default -> t.getReviewType();
+                        };
+                        return label;
+                    })
+                    .collect(Collectors.joining("、"));
+
+            if (!StringUtils.hasText(enabledTypes)) {
+                log.info("无启用的且需生成评审标准的类型，跳过AI调用: taskId={}", task.getId());
+                return "{\"reviewItems\":[]}";
+            }
+        } else {
+            enabledTypes = "符合性审查、技术标评审、资信标评审、商务评审";
+        }
+
         // 构建Prompt
         String userPrompt = PromptBuilder.buildReviewItemGenerate(
                 getString(params, "projectName"),
@@ -51,7 +83,8 @@ public class ReviewItemGenerator {
                 getString(params, "projectCategory"),
                 getString(params, "budget"),
                 getString(params, "requirementContent"),
-                getString(params, "reviewMethod")
+                getString(params, "reviewMethod"),
+                enabledTypes
         );
 
         // 路由到合适的模型
