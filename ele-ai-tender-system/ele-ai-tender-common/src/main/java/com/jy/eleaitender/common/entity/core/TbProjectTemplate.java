@@ -40,6 +40,9 @@ public class TbProjectTemplate extends BaseEntity {
     @Schema(description = "Word章节结构JSON(快照)")
     private String structureDefinition;
 
+    @Schema(description = "评审项配置JSON(快照)")
+    private String reviewConfig;
+
     @Schema(description = "模板版本号(快照)")
     private Integer versionNo;
 }

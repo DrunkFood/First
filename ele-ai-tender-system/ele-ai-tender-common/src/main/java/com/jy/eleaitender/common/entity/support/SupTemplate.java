@@ -37,6 +37,9 @@ public class SupTemplate extends BaseEntity {
     @Schema(description = "Word章节结构JSON")
     private String structureDefinition;
 
+    @Schema(description = "评审项配置JSON")
+    private String reviewConfig;
+
     @Schema(description = "版本号")
     private Integer versionNo;
 
