@@ -81,6 +81,7 @@ watch(() => props.fileId, (newId) => {
 
 defineExpose({
   containerRef,
+  loading,
 })
 </script>
 

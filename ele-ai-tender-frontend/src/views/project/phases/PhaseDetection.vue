@@ -1,7 +1,6 @@
 <template>
   <div class="phase-detection">
     <div class="detection-layout">
-      <!-- 左侧：检测报告区 -->
       <div class="detection-left">
         <div class="form-container">
           <!-- 表单头部 -->
@@ -92,24 +91,27 @@
           </div>
         </div>
       </div>
-
-      <!-- 右侧：文档预览区 -->
-      <div v-if="generatedFileId" class="detection-right">
-        <div class="preview-container">
-          <div class="preview-header">
-            <span class="preview-title">文档预览</span>
-          </div>
-          <div class="preview-scroll-area">
-            <DocxPreview ref="docxPreviewRef" :file-id="generatedFileId" />
-          </div>
-        </div>
-      </div>
     </div>
+
+    <!-- 文档预览弹窗 -->
+    <el-dialog
+      v-model="previewDialogVisible"
+      title="文档预览"
+      width="80%"
+      top="5vh"
+      destroy-on-close
+      :close-on-click-modal="false"
+      class="preview-dialog"
+    >
+      <div class="preview-scroll-area">
+        <DocxPreview v-if="previewDialogVisible" ref="docxPreviewRef" :file-id="generatedFileId" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, CircleCheck, RefreshRight } from '@element-plus/icons-vue'
 import { detectionApi } from '@/api/detection'
@@ -142,15 +144,31 @@ const projectCategory = ref('')
 const reportRef = ref<InstanceType<typeof DetectionReport> | null>(null)
 const docxPreviewRef = ref<InstanceType<typeof DocxPreview> | null>(null)
 const generatedFileId = ref<number | null>(null)
+const previewDialogVisible = ref(false)
+const pendingLocateIssue = ref<DetectionIssueVO | null>(null)
 
 // DocxPreview 容器 ref（响应式包装）
 const docxContainerRef = computed(() => docxPreviewRef.value?.containerRef ?? null)
 const { scrollToAndHighlight } = useDetectionHighlight({ containerRef: docxContainerRef as any })
 
-// 定位到文档对应段落并高亮
+// 打开弹窗并定位到文档对应段落
 function handleLocate(issue: DetectionIssueVO) {
-  scrollToAndHighlight(issue)
+  pendingLocateIssue.value = issue
+  previewDialogVisible.value = true
 }
+
+// DocxPreview 渲染完成后执行定位高亮
+watch(
+  () => docxPreviewRef.value?.loading,
+  async (loading) => {
+    if (loading === false && pendingLocateIssue.value) {
+      const issue = pendingLocateIssue.value
+      pendingLocateIssue.value = null
+      await nextTick()
+      scrollToAndHighlight(issue)
+    }
+  },
+)
 
 const canFinish = computed(() =>
   projectStatus.value === 'DETECTION_PASSED' || projectStatus.value === 'DETECTION_SKIPPED'
@@ -257,13 +275,14 @@ onMounted(loadProject)
 .phase-detection {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100vh - 200px);
 }
 
 .detection-layout {
   display: flex;
   gap: 16px;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .detection-left {
@@ -287,7 +306,8 @@ onMounted(loadProject)
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .preview-header {
@@ -315,7 +335,8 @@ onMounted(loadProject)
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-header {

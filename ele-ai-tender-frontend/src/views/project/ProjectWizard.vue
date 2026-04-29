@@ -213,6 +213,8 @@ onMounted(loadProject)
   flex-direction: column;
   gap: 16px;
   padding: 20px;
+  height: 100%;
+  overflow: hidden;
 }
 
 .wizard-header {
@@ -232,7 +234,8 @@ onMounted(loadProject)
 .wizard-body {
   display: flex;
   gap: 16px;
-  min-height: 600px;
+  flex: 1;
+  min-height: 0;
 }
 
 .step-nav {
@@ -332,6 +335,8 @@ onMounted(loadProject)
 .step-content {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background: var(--app-bg-primary);
   border-radius: var(--app-radius-sm);
   padding: 24px;
