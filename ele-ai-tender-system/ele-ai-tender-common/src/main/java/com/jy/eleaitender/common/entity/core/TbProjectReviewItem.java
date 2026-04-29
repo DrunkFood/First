@@ -5,6 +5,7 @@ import com.jy.eleaitender.common.entity.base.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 
@@ -53,7 +54,13 @@ public class TbProjectReviewItem extends BaseEntity {
 
     public String getItemStandard() {
         String reviewName =  this.getItemName() != null ? this.getItemName() : "";
+        if (StringUtils.isBlank(reviewName)) {
+            return "";
+        }
         String reviewContent =  this.getItemContent() != null ? this.getItemContent() : "";
+        if (StringUtils.isBlank(reviewContent)) {
+            return reviewName;
+        }
         return reviewName + ": " + reviewContent;
     }
 }

@@ -67,7 +67,10 @@ public class DocumentDataAssembler {
                         Collectors.toList()
                 ));
 
-        // TODO 符合性审查项列表 complianceItems
+        // 符合性审查项列表（MARKDOWN，忽略一级节点，二级+三级列表展示）
+        List<TbProjectReviewItem> complianceItems = grouped.getOrDefault("COMPLIANCE", Collections.emptyList());
+        fillDataList.add(FillData.markdown("complianceItems",
+                buildComplianceMarkdown(complianceItems), "符合性审查项列表"));
 
         // 评审项汇总表格
         fillDataList.add(FillData.table("allReviewItems",
@@ -96,6 +99,46 @@ public class DocumentDataAssembler {
                 new MergeRule(0, MergeStrategy.BY_SAME_TEXT)
         ));
         return tableData;
+    }
+
+    // ==================== 符合性审查 MARKDOWN 构建 ====================
+
+    /**
+     * 构建符合性审查项 Markdown（列表形式，忽略一级节点）
+     * 格式：
+     * - 二级项名称
+     *   - 三级项内容
+     *   - 三级项内容
+     */
+    private String buildComplianceMarkdown(List<TbProjectReviewItem> items) {
+        if (items == null || items.isEmpty()) return "";
+
+        Map<Long, List<TbProjectReviewItem>> childrenMap = items.stream()
+                .filter(i -> i.getParentId() != null && i.getParentId() > 0)
+                .collect(Collectors.groupingBy(TbProjectReviewItem::getParentId,
+                        LinkedHashMap::new, Collectors.toList()));
+
+        List<TbProjectReviewItem> roots = items.stream()
+                .filter(i -> i.getParentId() == null || i.getParentId() == 0)
+                .sorted(Comparator.comparingInt(i -> i.getSortOrder() != null ? i.getSortOrder() : 0))
+                .toList();
+
+        StringBuilder sb = new StringBuilder();
+        for (TbProjectReviewItem root : roots) {
+            // 一级节点跳过，直接遍历其子节点（二级项）
+            List<TbProjectReviewItem> level2Items = childrenMap.getOrDefault(root.getId(), Collections.emptyList());
+            for (TbProjectReviewItem level2 : level2Items) {
+                sb.append("- ").append(nullSafe(level2.getItemStandard()));
+                sb.append("\n");
+                // 三级项
+                List<TbProjectReviewItem> level3Items = childrenMap.getOrDefault(level2.getId(), Collections.emptyList());
+                for (TbProjectReviewItem level3 : level3Items) {
+                    sb.append("  - ").append(nullSafe(level3.getItemStandard()));
+                    sb.append("\n");
+                }
+            }
+        }
+        return sb.toString().trim();
     }
 
     // ==================== 数据转换 ====================
@@ -147,8 +190,7 @@ public class DocumentDataAssembler {
                                    boolean hasSubjectivity,
                                    Map<Long, List<TbProjectReviewItem>> childrenMap,
                                    List<Map<String, String>> result) {
-        boolean hasChildren = childrenMap.containsKey(node.getId())
-                && !childrenMap.get(node.getId()).isEmpty();
+        boolean hasChildren = childrenMap.containsKey(node.getId()) && !childrenMap.get(node.getId()).isEmpty();
 
         if (hasChildren) {
             // 有子节点时跳过自身行，避免与类别列重复分组
