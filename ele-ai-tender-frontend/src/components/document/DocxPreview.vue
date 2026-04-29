@@ -78,6 +78,10 @@ watch(() => props.fileId, (newId) => {
     }
   }
 }, { immediate: true })
+
+defineExpose({
+  containerRef,
+})
 </script>
 
 <style scoped>

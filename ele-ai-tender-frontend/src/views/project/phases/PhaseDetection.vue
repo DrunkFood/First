@@ -1,89 +1,107 @@
 <template>
   <div class="phase-detection">
-    <div class="form-container">
-      <!-- 表单头部 -->
-      <div class="form-header">
-        <h3 class="form-title">
-          {{ showReport ? '检测报告' : '智能检测' }}
-          <span v-if="showReport && issueCount > 0" class="issue-badge" :class="{ resolved: issueCount === 0 }">
-            {{ issueCount }}个问题
-          </span>
-        </h3>
-      </div>
+    <div class="detection-layout">
+      <!-- 左侧：检测报告区 -->
+      <div class="detection-left">
+        <div class="form-container">
+          <!-- 表单头部 -->
+          <div class="form-header">
+            <h3 class="form-title">
+              {{ showReport ? '检测报告' : '智能检测' }}
+              <span v-if="showReport && issueCount > 0" class="issue-badge" :class="{ resolved: issueCount === 0 }">
+                {{ issueCount }}个问题
+              </span>
+            </h3>
+          </div>
 
-      <!-- 表单内容 -->
-      <div class="form-section">
-        <!-- 状态1：提交检测 -->
-        <template v-if="!submitted && !readonly">
-          <div class="section-title">选择检测类型</div>
-          <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
-            <el-checkbox value="SENSITIVE_WORD">敏感词检测</el-checkbox>
-            <el-checkbox value="TYPO">错别字检测</el-checkbox>
-            <el-checkbox value="POLICY_REVIEW">政策文件审查</el-checkbox>
-            <el-checkbox value="FORMAT_CHECK">格式规范检测</el-checkbox>
-          </el-checkbox-group>
+          <!-- 表单内容 -->
+          <div class="form-section">
+            <!-- 状态1：提交检测 -->
+            <template v-if="!submitted && !readonly">
+              <div class="section-title">选择检测类型</div>
+              <el-checkbox-group v-model="selectedDetectionTypes" class="detection-type-group">
+                <el-checkbox value="SENSITIVE_WORD">敏感词检测</el-checkbox>
+                <el-checkbox value="TYPO">错别字检测</el-checkbox>
+                <el-checkbox value="POLICY_REVIEW">政策文件审查</el-checkbox>
+                <el-checkbox value="FORMAT_CHECK">格式规范检测</el-checkbox>
+              </el-checkbox-group>
 
-          <div class="section-title">选择政策文件</div>
-          <PolicyFileSelect
-            v-model="selectedPolicyFileIds"
-            :applicable-category="projectCategory"
-          />
-        </template>
+              <div class="section-title">选择政策文件</div>
+              <PolicyFileSelect
+                v-model="selectedPolicyFileIds"
+                :applicable-category="projectCategory"
+              />
+            </template>
 
-        <!-- 状态2：检测进度 -->
-        <DetectionProgress
-          v-if="submitted && !showReport"
-          :project-id="projectId"
-          @completed="handleDetectionCompleted"
-        />
+            <!-- 状态2：检测进度 -->
+            <DetectionProgress
+              v-if="submitted && !showReport"
+              :project-id="projectId"
+              @completed="handleDetectionCompleted"
+            />
 
-        <!-- 状态3：检测报告 -->
-        <DetectionReport
-          v-if="showReport"
-          ref="reportRef"
-          :project-id="projectId"
-          :readonly="readonly"
-          @accept="handleAcceptIssue"
-          @reject="handleRejectIssue"
-          @accept-all="handleAcceptAll"
-          @loaded="handleReportLoaded"
-        />
-      </div>
+            <!-- 状态3：检测报告 -->
+            <DetectionReport
+              v-if="showReport"
+              ref="reportRef"
+              :project-id="projectId"
+              :readonly="readonly"
+              @accept="handleAcceptIssue"
+              @reject="handleRejectIssue"
+              @accept-all="handleAcceptAll"
+              @loaded="handleReportLoaded"
+              @locate="handleLocate"
+            />
+          </div>
 
-      <!-- 底部操作栏 -->
-      <div class="form-actions">
-        <div class="form-actions-left">
-          <el-button @click="$emit('prev')">
-            <el-icon><ArrowLeft /></el-icon>
-            上一步
-          </el-button>
+          <!-- 底部操作栏 -->
+          <div class="form-actions">
+            <div class="form-actions-left">
+              <el-button @click="$emit('prev')">
+                <el-icon><ArrowLeft /></el-icon>
+                上一步
+              </el-button>
+            </div>
+            <div class="form-actions-right">
+              <!-- 未提交状态 -->
+              <el-button
+                v-if="!submitted && !readonly"
+                type="primary"
+                :loading="isSubmitting || hasActiveDetection"
+                :disabled="!selectedDetectionTypes.length || hasActiveDetection"
+                @click="handleSubmit"
+              >
+                提交检测
+              </el-button>
+
+              <!-- 报告状态（非只读） -->
+              <template v-if="showReport && !readonly">
+                <el-button type="warning" :disabled="issueCount === 0" @click="handleAcceptAll">
+                  <el-icon><CircleCheck /></el-icon>
+                  一键接受全部
+                </el-button>
+                <el-button :loading="isRetrying" @click="handleRetry">
+                  <el-icon><RefreshRight /></el-icon>
+                  重新检测
+                </el-button>
+                <el-button type="success" :disabled="!canFinish" :loading="finishing" @click="$emit('finish')">
+                  完成编制
+                </el-button>
+              </template>
+            </div>
+          </div>
         </div>
-        <div class="form-actions-right">
-          <!-- 未提交状态 -->
-          <el-button
-            v-if="!submitted && !readonly"
-            type="primary"
-            :loading="isSubmitting || hasActiveDetection"
-            :disabled="!selectedDetectionTypes.length || hasActiveDetection"
-            @click="handleSubmit"
-          >
-            提交检测
-          </el-button>
+      </div>
 
-          <!-- 报告状态（非只读） -->
-          <template v-if="showReport && !readonly">
-            <el-button type="warning" :disabled="issueCount === 0" @click="handleAcceptAll">
-              <el-icon><CircleCheck /></el-icon>
-              一键接受全部
-            </el-button>
-            <el-button :loading="isRetrying" @click="handleRetry">
-              <el-icon><RefreshRight /></el-icon>
-              重新检测
-            </el-button>
-            <el-button type="success" :disabled="!canFinish" :loading="finishing" @click="$emit('finish')">
-              完成编制
-            </el-button>
-          </template>
+      <!-- 右侧：文档预览区 -->
+      <div v-if="generatedFileId" class="detection-right">
+        <div class="preview-container">
+          <div class="preview-header">
+            <span class="preview-title">文档预览</span>
+          </div>
+          <div class="preview-scroll-area">
+            <DocxPreview ref="docxPreviewRef" :file-id="generatedFileId" />
+          </div>
         </div>
       </div>
     </div>
@@ -99,7 +117,8 @@ import { projectApi } from '@/api/project'
 import PolicyFileSelect from '@/components/detection/PolicyFileSelect.vue'
 import DetectionProgress from '@/components/detection/DetectionProgress.vue'
 import DetectionReport from '@/components/detection/DetectionReport.vue'
-import type { DetectionType } from '@/types/detection'
+import DocxPreview from '@/components/document/DocxPreview.vue'
+import type { DetectionType, DetectionIssueVO } from '@/types/detection'
 
 const props = defineProps<{ projectId: number; readonly?: boolean; finishing?: boolean }>()
 defineEmits<{ prev: []; finish: [] }>()
@@ -120,6 +139,27 @@ const selectedDetectionTypes = ref<DetectionType[]>([
 ])
 const projectCategory = ref('')
 const reportRef = ref<InstanceType<typeof DetectionReport> | null>(null)
+const docxPreviewRef = ref<InstanceType<typeof DocxPreview> | null>(null)
+const generatedFileId = ref<number | null>(null)
+
+// 定位到文档对应段落并高亮
+function handleLocate(issue: DetectionIssueVO) {
+  const containerRef = docxPreviewRef.value?.containerRef
+  if (!containerRef) return
+
+  // containerRef 是 DocxPreview 暴露的 ref<HTMLElement | null>，取 .value 获取 DOM 元素
+  const containerEl = (containerRef as any)?.value ?? containerRef
+  if (!(containerEl instanceof HTMLElement)) return
+
+  const paragraphs = containerEl.querySelectorAll('p')
+  if (issue.locationRef?.elementIndex == null || issue.locationRef.elementIndex >= paragraphs.length) return
+
+  const targetPara = paragraphs[issue.locationRef.elementIndex]
+  targetPara.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  targetPara.style.transition = 'background-color 0.3s'
+  targetPara.style.backgroundColor = 'rgba(255, 152, 0, 0.1)'
+  setTimeout(() => { targetPara.style.backgroundColor = '' }, 3000)
+}
 
 const canFinish = computed(() =>
   projectStatus.value === 'DETECTION_PASSED' || projectStatus.value === 'DETECTION_SKIPPED'
@@ -129,6 +169,7 @@ const loadProject = async () => {
   const project = await projectApi.getById(props.projectId)
   projectCategory.value = project.projectCategory || ''
   projectStatus.value = project.status
+  generatedFileId.value = project.generatedFileId ?? null
   if (['DETECTING', 'DETECTION_PASSED', 'DETECTION_FAILED', 'DETECTION_SKIPPED', 'PUBLISHED', 'ARCHIVED'].includes(project.status)) {
     submitted.value = true
     if (['DETECTION_PASSED', 'DETECTION_FAILED', 'PUBLISHED', 'ARCHIVED'].includes(project.status)) {
@@ -227,11 +268,62 @@ onMounted(loadProject)
   flex-direction: column;
 }
 
+.detection-layout {
+  display: flex;
+  gap: 16px;
+  height: 100%;
+}
+
+.detection-left {
+  flex: 0 0 40%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.detection-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-container {
+  background: var(--app-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.preview-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--app-border-light);
+  background: var(--app-bg-tertiary);
+}
+
+.preview-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+}
+
+.preview-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
 .form-container {
   background: var(--app-bg-secondary);
   border-radius: 8px;
   border: 1px solid var(--app-border-light);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .form-header {
@@ -264,6 +356,8 @@ onMounted(loadProject)
 
 .form-section {
   padding: 24px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .section-title {
