@@ -13,4 +13,7 @@ public class FixReplacement {
 
     /** 替换文本 */
     private String targeted;
+
+    /** 位置索引（可为null，兼容旧数据） */
+    private LocationRefVO locationRef;
 }
