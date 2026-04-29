@@ -151,4 +151,15 @@ public class FileController {
         }).toList();
         return Result.success(wordDocumentService.fixDocument(fileId, replacements));
     }
+
+    @PostMapping("/extract-text")
+    @RequireLogin
+    @Operation(summary = "提取Word文档文本+位置索引")
+    public Result<Map<String, Object>> extractText(@RequestBody Map<String, Object> params) {
+        if (params.get("fileId") == null) {
+            return Result.fail(ResponseCode.PARAM_ERROR);
+        }
+        Long fileId = ((Number) params.get("fileId")).longValue();
+        return Result.success(wordDocumentService.extractText(fileId));
+    }
 }

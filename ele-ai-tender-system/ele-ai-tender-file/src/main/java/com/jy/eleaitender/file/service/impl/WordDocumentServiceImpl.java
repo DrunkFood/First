@@ -10,6 +10,7 @@ import com.jy.eleaitender.file.engine.TableGenerator;
 import com.jy.eleaitender.file.engine.WordDocumentFixEngine;
 import com.jy.eleaitender.file.engine.WordStructureParser;
 import com.jy.eleaitender.file.engine.WordTemplateEngine;
+import com.jy.eleaitender.file.engine.WordTextExtractor;
 import com.jy.eleaitender.file.service.IFileStorageService;
 import com.jy.eleaitender.file.service.IWordDocumentService;
 import lombok.extern.slf4j.Slf4j;
@@ -188,6 +189,40 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
             return vo;
         } catch (Exception e) {
             throw new RuntimeException("修复Word文档失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public Map<String, Object> extractText(Long fileId) {
+        String filePath = fileStorageService.getFilePath(fileId);
+        try {
+            byte[] docBytes = Files.readAllBytes(Paths.get(filePath));
+            try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(docBytes))) {
+                WordTextExtractor.ExtractResult result = WordTextExtractor.extract(doc);
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("fullText", result.getFullText());
+
+                List<Map<String, Object>> segmentList = new ArrayList<>();
+                for (WordTextExtractor.TextSegment seg : result.getSegments()) {
+                    Map<String, Object> segMap = new HashMap<>();
+                    segMap.put("type", seg.getType());
+                    segMap.put("elementIndex", seg.getElementIndex());
+                    segMap.put("text", seg.getText());
+                    segMap.put("fullTextOffset", seg.getFullTextOffset());
+                    if (seg.getTableIndex() != null) {
+                        segMap.put("tableIndex", seg.getTableIndex());
+                        segMap.put("rowIndex", seg.getRowIndex());
+                        segMap.put("cellIndex", seg.getCellIndex());
+                    }
+                    segmentList.add(segMap);
+                }
+                response.put("segments", segmentList);
+
+                return response;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("提取文档文本失败: " + e.getMessage(), e);
         }
     }
 }

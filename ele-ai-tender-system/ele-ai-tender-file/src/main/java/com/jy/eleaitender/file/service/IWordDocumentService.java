@@ -38,4 +38,12 @@ public interface IWordDocumentService {
      * @return 修复结果
      */
     WordFixResultVO fixDocument(Long fileId, List<FixReplacement> replacements);
+
+    /**
+     * 提取Word文档文本+位置索引
+     *
+     * @param fileId 文件ID
+     * @return 提取结果（fullText + segments）
+     */
+    Map<String, Object> extractText(Long fileId);
 }
