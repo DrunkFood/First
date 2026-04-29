@@ -7,14 +7,12 @@
     <el-menu-item index="/dashboard">
       <span>首页</span>
     </el-menu-item>
-    <el-sub-menu index="/requirement-group">
-      <template #title><span>业务需求管理</span></template>
-      <el-menu-item index="/requirement">业务需求列表</el-menu-item>
-    </el-sub-menu>
-    <el-sub-menu index="/project-group">
-      <template #title><span>招标文件管理</span></template>
-      <el-menu-item index="/project">项目列表</el-menu-item>
-    </el-sub-menu>
+    <el-menu-item index="/requirement">
+      <span>业务需求管理</span>
+    </el-menu-item>
+    <el-menu-item index="/project">
+      <span>招标文件管理</span>
+    </el-menu-item>
     <el-menu-item index="/policy-file">
       <span>政策文件管理</span>
     </el-menu-item>
@@ -86,17 +84,6 @@ onBeforeUnmount(() => {
     border-left-color: var(--app-brand-color);
   }
 
-  // 子菜单
-  :deep(.el-sub-menu) {
-    .el-menu-item {
-      padding-left: 52px !important;
-    }
-  }
-
-  // 子菜单标题图标
-  :deep(.el-sub-menu__icon-arrow) {
-    color: var(--app-text-tertiary);
-  }
 }
 
 .msg-badge {
