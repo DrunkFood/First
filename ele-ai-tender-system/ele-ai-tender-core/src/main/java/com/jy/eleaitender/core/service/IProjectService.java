@@ -16,7 +16,7 @@ public interface IProjectService {
     /**
      * 分页查询项目列表
      */
-    Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory);
+    Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory, String projectType);
 
     /**
      * 根据ID获取项目详情

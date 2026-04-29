@@ -1,6 +1,7 @@
 package com.jy.eleaitender.file.engine;
 
 import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.util.TextNormalizeUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -139,9 +140,7 @@ public class WordDocumentFixEngine {
      * 规范化文本：移除所有空白字符（空格、换行、制表符、全角空格、不间断空格等）
      */
     static String normalize(String text) {
-        if (text == null) return "";
-        // \s 不覆盖不间断空格(U+00A0)和全角空格(U+3000)，需显式补充
-        return text.replaceAll("[\\s\\u00A0\\u3000]+", "");
+        return TextNormalizeUtil.normalize(text);
     }
 
     /**
@@ -183,7 +182,7 @@ public class WordDocumentFixEngine {
      * 判断字符是否为空白（包括不间断空格和全角空格）
      */
     private static boolean isWhitespaceChar(char c) {
-        return Character.isWhitespace(c) || c == '\u00A0' || c == '\u3000';
+        return TextNormalizeUtil.isWhitespaceChar(c);
     }
 
     @Data

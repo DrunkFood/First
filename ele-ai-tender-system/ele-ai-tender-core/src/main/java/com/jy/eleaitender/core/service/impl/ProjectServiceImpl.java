@@ -84,7 +84,7 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    public Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory) {
+    public Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory, String projectType) {
         Page<TbProject> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
 
@@ -96,6 +96,9 @@ public class ProjectServiceImpl implements IProjectService {
         }
         if (StringUtils.hasText(projectCategory)) {
             wrapper.eq(TbProject::getProjectCategory, projectCategory);
+        }
+        if (StringUtils.hasText(projectType)) {
+            wrapper.eq(TbProject::getProjectType, projectType);
         }
 
         wrapper.orderByDesc(TbProject::getCreateTime);
