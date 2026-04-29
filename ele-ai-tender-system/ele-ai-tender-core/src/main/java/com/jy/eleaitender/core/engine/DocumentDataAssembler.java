@@ -1,10 +1,13 @@
 package com.jy.eleaitender.core.engine;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.dto.*;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.core.mapper.ProjectTemplateMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +31,9 @@ public class DocumentDataAssembler {
 
     @Autowired
     private TbProjectReviewItemMapper reviewItemMapper;
+
+    @Autowired
+    private ProjectTemplateMapper projectTemplateMapper;
 
     /**
      * 组装文档数据（新接口，返回结构化 FillData 列表）
@@ -63,23 +69,48 @@ public class DocumentDataAssembler {
                         Collectors.toList()
                 ));
 
-        // 各类型评审项表格（TABLE 类型）
-        fillDataList.add(FillData.table("complianceItems",
-                buildReviewItemTable(grouped.getOrDefault("COMPLIANCE", Collections.emptyList())), "符合性审查项表格"));
-        fillDataList.add(FillData.table("technicalItems",
-                buildReviewItemTable(grouped.getOrDefault("TECHNICAL", Collections.emptyList())), "技术标评审项表格"));
-        fillDataList.add(FillData.table("creditItems",
-                buildReviewItemTable(grouped.getOrDefault("CREDIT", Collections.emptyList())), "资信标评审项表格"));
-        fillDataList.add(FillData.table("commercialItems",
-                buildReviewItemTable(grouped.getOrDefault("COMMERCIAL", Collections.emptyList())), "商务评审项表格"));
+        // 读取评审项配置
+        ReviewConfig reviewConfig = getReviewConfig(projectId);
 
-        // 评审项汇总表格（TABLE 类型，含单元格合并规则）
-        fillDataList.add(FillData.table("allReviewItems", buildReviewSummaryTable(grouped), "评审项汇总表格"));
+        // 各类型评审项表格 — 只输出启用的类型
+        if (reviewConfig == null || reviewConfig.isEnabled("COMPLIANCE")) {
+            fillDataList.add(FillData.table("complianceItems",
+                    buildReviewItemTable(grouped.getOrDefault("COMPLIANCE", Collections.emptyList())), "符合性审查项表格"));
+        }
+        if (reviewConfig == null || reviewConfig.isEnabled("TECHNICAL")) {
+            fillDataList.add(FillData.table("technicalItems",
+                    buildReviewItemTable(grouped.getOrDefault("TECHNICAL", Collections.emptyList())), "技术标评审项表格"));
+        }
+        if (reviewConfig == null || reviewConfig.isEnabled("CREDIT")) {
+            fillDataList.add(FillData.table("creditItems",
+                    buildReviewItemTable(grouped.getOrDefault("CREDIT", Collections.emptyList())), "资信标评审项表格"));
+        }
+        if (reviewConfig == null || reviewConfig.isEnabled("COMMERCIAL")) {
+            fillDataList.add(FillData.table("commercialItems",
+                    buildReviewItemTable(grouped.getOrDefault("COMMERCIAL", Collections.emptyList())), "商务评审项表格"));
+        }
+
+        // 评审项汇总表格 — 只汇总启用的类型
+        fillDataList.add(FillData.table("allReviewItems",
+                buildReviewSummaryTable(grouped, reviewConfig), "评审项汇总表格"));
 
         return fillDataList;
     }
 
     // ==================== TABLE 数据构建 ====================
+
+    /**
+     * 读取项目的评审项配置
+     */
+    private ReviewConfig getReviewConfig(Long projectId) {
+        LambdaQueryWrapper<TbProjectTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TbProjectTemplate::getProjectId, projectId);
+        TbProjectTemplate pt = projectTemplateMapper.selectOne(wrapper);
+        if (pt != null && pt.getReviewConfig() != null) {
+            return ReviewConfig.fromJson(pt.getReviewConfig());
+        }
+        return null;
+    }
 
     /**
      * 构建评审项表格数据（各类型独立表格）
@@ -104,7 +135,8 @@ public class DocumentDataAssembler {
     /**
      * 构建评审汇总表数据（方式一：资信标→技术标→商务标，含合并规则）
      */
-    private TableData buildReviewSummaryTable(Map<String, List<TbProjectReviewItem>> grouped) {
+    private TableData buildReviewSummaryTable(Map<String, List<TbProjectReviewItem>> grouped,
+                                               ReviewConfig reviewConfig) {
         TableData tableData = new TableData();
         tableData.setColumns(List.of(
                 new ColumnDef("categoryName", "类别"),
@@ -113,7 +145,7 @@ public class DocumentDataAssembler {
                 new ColumnDef("subjectivity", "主观分/客观分属性"),
                 new ColumnDef("responseFileCatalog", "响应文件中评审标准相应的资信、技术资料目录")
         ));
-        tableData.setRows(toReviewSummaryList(grouped));
+        tableData.setRows(toReviewSummaryList(grouped, reviewConfig));
         // 第一列（categoryName）按相同文本合并
         tableData.setMergeRules(List.of(
                 new MergeRule(0, MergeStrategy.BY_SAME_TEXT)
@@ -191,7 +223,8 @@ public class DocumentDataAssembler {
         }
     }
 
-    private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped) {
+    private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped,
+                                                           ReviewConfig reviewConfig) {
         List<Map<String, String>> result = new ArrayList<>();
 
         List<String> orderedTypes = List.of("CREDIT", "TECHNICAL", "COMMERCIAL");
@@ -199,6 +232,11 @@ public class DocumentDataAssembler {
                 "CREDIT", "资信标", "TECHNICAL", "技术标", "COMMERCIAL", "商务标");
 
         for (String reviewType : orderedTypes) {
+            // 跳过未启用的类型
+            if (reviewConfig != null && !reviewConfig.isEnabled(reviewType)) {
+                continue;
+            }
+
             List<TbProjectReviewItem> items = grouped.getOrDefault(reviewType, Collections.emptyList());
             if (items.isEmpty()) continue;
 
