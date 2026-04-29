@@ -228,6 +228,7 @@ public class AiTaskResultSyncHandler {
                     placeholder.setItemName("详见评审文件");
                     placeholder.setLevel(1);
                     placeholder.setReviewType(typeConfig.getReviewType());
+                    placeholder.setIsRequired(0);
                     placeholder.setSortOrder(items.size());
                     items.add(placeholder);
                 }

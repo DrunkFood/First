@@ -1,15 +1,14 @@
 package com.jy.eleaitender.core.engine;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.dto.*;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.core.mapper.ProjectTemplateMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
+import com.jy.eleaitender.core.service.IProjectTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,7 +32,7 @@ public class DocumentDataAssembler {
     private TbProjectReviewItemMapper reviewItemMapper;
 
     @Autowired
-    private ProjectTemplateMapper projectTemplateMapper;
+    private IProjectTemplateService projectTemplateService;
 
     /**
      * 组装文档数据（新接口，返回结构化 FillData 列表）
@@ -103,9 +102,7 @@ public class DocumentDataAssembler {
      * 读取项目的评审项配置
      */
     private ReviewConfig getReviewConfig(Long projectId) {
-        LambdaQueryWrapper<TbProjectTemplate> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(TbProjectTemplate::getProjectId, projectId);
-        TbProjectTemplate pt = projectTemplateMapper.selectOne(wrapper);
+        TbProjectTemplate pt = projectTemplateService.getByProjectId(projectId);
         if (pt != null && pt.getReviewConfig() != null) {
             return ReviewConfig.fromJson(pt.getReviewConfig());
         }
