@@ -41,18 +41,18 @@ public class DocumentDataAssembler {
         List<FillData> fillDataList = new ArrayList<>();
 
         // 项目基础信息（TEXT 类型）
-        fillDataList.add(FillData.text("projectName", nullSafe(project.getProjectName())));
-        fillDataList.add(FillData.text("projectCode", nullSafe(project.getProjectCode())));
-        fillDataList.add(FillData.text("projectCategory", nullSafe(project.getProjectCategory())));
-        fillDataList.add(FillData.text("projectType", nullSafe(project.getProjectType())));
-        fillDataList.add(FillData.text("budget", project.getBudget() != null ? project.getBudget().toPlainString() : ""));
-        fillDataList.add(FillData.text("tenderUnit", nullSafe(project.getTenderUnit())));
-        fillDataList.add(FillData.text("projectLocation", nullSafe(project.getProjectLocation())));
-        fillDataList.add(FillData.text("contactPerson", nullSafe(project.getContactPerson())));
-        fillDataList.add(FillData.text("contactPhone", nullSafe(project.getContactPhone())));
-        fillDataList.add(FillData.text("projectDescription", nullSafe(project.getProjectDescription())));
-        fillDataList.add(FillData.markdown("requirementContent", nullSafe(project.getRequirementContent())));
-        fillDataList.add(FillData.text("reviewType", nullSafe(project.getReviewType())));
+        fillDataList.add(FillData.text("projectCode", nullSafe(project.getProjectCode()), "项目编号"));
+        fillDataList.add(FillData.text("projectName", nullSafe(project.getProjectName()), "项目名称"));
+        fillDataList.add(FillData.text("projectCategory", nullSafe(project.getProjectCategory()), "项目类别"));
+        fillDataList.add(FillData.text("projectType", nullSafe(project.getProjectType()), "项目类型"));
+        fillDataList.add(FillData.text("budget", project.getBudget() != null ? project.getBudget().toPlainString() : "", "预算金额"));
+        fillDataList.add(FillData.text("tenderUnit", nullSafe(project.getTenderUnit()), "招标单位"));
+        fillDataList.add(FillData.text("projectLocation", nullSafe(project.getProjectLocation()), "项目地点"));
+        fillDataList.add(FillData.text("contactPerson", nullSafe(project.getContactPerson()), "联系人"));
+        fillDataList.add(FillData.text("contactPhone", nullSafe(project.getContactPhone()), "联系电话"));
+        fillDataList.add(FillData.text("projectDescription", nullSafe(project.getProjectDescription()), "项目基本情况描述"));
+        fillDataList.add(FillData.markdown("requirementContent", nullSafe(project.getRequirementContent()), "招标需求内容"));
+        fillDataList.add(FillData.text("reviewType", nullSafe(project.getReviewType()), "评审类型"));
 
         // 评审项（按类型分组）
         List<TbProjectReviewItem> reviewItems = reviewItemMapper.selectByProjectId(projectId);
@@ -65,16 +65,16 @@ public class DocumentDataAssembler {
 
         // 各类型评审项表格（TABLE 类型）
         fillDataList.add(FillData.table("complianceItems",
-                buildReviewItemTable(grouped.getOrDefault("COMPLIANCE", Collections.emptyList()))));
+                buildReviewItemTable(grouped.getOrDefault("COMPLIANCE", Collections.emptyList())), "符合性审查项表格"));
         fillDataList.add(FillData.table("technicalItems",
-                buildReviewItemTable(grouped.getOrDefault("TECHNICAL", Collections.emptyList()))));
+                buildReviewItemTable(grouped.getOrDefault("TECHNICAL", Collections.emptyList())), "技术标评审项表格"));
         fillDataList.add(FillData.table("creditItems",
-                buildReviewItemTable(grouped.getOrDefault("CREDIT", Collections.emptyList()))));
+                buildReviewItemTable(grouped.getOrDefault("CREDIT", Collections.emptyList())), "资信标评审项表格"));
         fillDataList.add(FillData.table("commercialItems",
-                buildReviewItemTable(grouped.getOrDefault("COMMERCIAL", Collections.emptyList()))));
+                buildReviewItemTable(grouped.getOrDefault("COMMERCIAL", Collections.emptyList())), "商务评审项表格"));
 
-        // 方式一：评审汇总表（TABLE 类型，含单元格合并规则）
-        fillDataList.add(FillData.table("allReviewItems", buildReviewSummaryTable(grouped)));
+        // 评审项汇总表格（TABLE 类型，含单元格合并规则）
+        fillDataList.add(FillData.table("allReviewItems", buildReviewSummaryTable(grouped), "评审项汇总表格"));
 
         return fillDataList;
     }
@@ -109,8 +109,9 @@ public class DocumentDataAssembler {
         tableData.setColumns(List.of(
                 new ColumnDef("categoryName", "类别"),
                 new ColumnDef("reviewStandard", "评审标准"),
-                new ColumnDef("maxScore", "分值"),
-                new ColumnDef("subjectivity", "主观/客观")
+                new ColumnDef("maxScore", "最高分值"),
+                new ColumnDef("subjectivity", "主观分/客观分属性"),
+                new ColumnDef("responseFileCatalog", "响应文件中评审标准相应的资信、技术资料目录")
         ));
         tableData.setRows(toReviewSummaryList(grouped));
         // 第一列（categoryName）按相同文本合并
@@ -195,7 +196,7 @@ public class DocumentDataAssembler {
 
         List<String> orderedTypes = List.of("CREDIT", "TECHNICAL", "COMMERCIAL");
         Map<String, String> typeLabels = Map.of(
-            "CREDIT", "资信标", "TECHNICAL", "技术标", "COMMERCIAL", "商务标");
+                "CREDIT", "资信标", "TECHNICAL", "技术标", "COMMERCIAL", "商务标");
 
         for (String reviewType : orderedTypes) {
             List<TbProjectReviewItem> items = grouped.getOrDefault(reviewType, Collections.emptyList());
@@ -203,35 +204,35 @@ public class DocumentDataAssembler {
 
             // 分类总分：取所有叶子节点 score 之和
             Set<Long> parentIds = items.stream()
-                .map(TbProjectReviewItem::getParentId)
-                .filter(pid -> pid != null && pid > 0)
-                .collect(Collectors.toSet());
+                    .map(TbProjectReviewItem::getParentId)
+                    .filter(pid -> pid != null && pid > 0)
+                    .collect(Collectors.toSet());
             BigDecimal categoryScore = items.stream()
-                .filter(i -> !parentIds.contains(i.getId()))
-                .map(TbProjectReviewItem::getScore)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .filter(i -> !parentIds.contains(i.getId()))
+                    .map(TbProjectReviewItem::getScore)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             // 若叶子 score 都为空，回退到根节点 maxScore 之和
             if (categoryScore.compareTo(BigDecimal.ZERO) == 0) {
                 categoryScore = items.stream()
-                    .filter(i -> i.getParentId() == null || i.getParentId() == 0)
-                    .map(TbProjectReviewItem::getMaxScore)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        .filter(i -> i.getParentId() == null || i.getParentId() == 0)
+                        .map(TbProjectReviewItem::getMaxScore)
+                        .filter(Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
             }
 
             String categoryLabel = typeLabels.get(reviewType) + "（" + categoryScore.toPlainString() + "分）";
 
             Map<Long, List<TbProjectReviewItem>> childrenMap = items.stream()
-                .filter(i -> i.getParentId() != null && i.getParentId() > 0)
-                .collect(Collectors.groupingBy(TbProjectReviewItem::getParentId,
-                    LinkedHashMap::new, Collectors.toList()));
+                    .filter(i -> i.getParentId() != null && i.getParentId() > 0)
+                    .collect(Collectors.groupingBy(TbProjectReviewItem::getParentId,
+                            LinkedHashMap::new, Collectors.toList()));
 
             List<TbProjectReviewItem> roots = items.stream()
-                .filter(i -> i.getParentId() == null || i.getParentId() == 0)
-                .sorted(Comparator.comparingInt(i -> i.getSortOrder() != null ? i.getSortOrder() : 0))
-                .toList();
+                    .filter(i -> i.getParentId() == null || i.getParentId() == 0)
+                    .sorted(Comparator.comparingInt(i -> i.getSortOrder() != null ? i.getSortOrder() : 0))
+                    .toList();
 
             for (TbProjectReviewItem root : roots) {
                 flattenForSummary(root, categoryLabel, childrenMap, result);
@@ -241,10 +242,10 @@ public class DocumentDataAssembler {
     }
 
     private void flattenForSummary(TbProjectReviewItem node, String categoryLabel,
-            Map<Long, List<TbProjectReviewItem>> childrenMap,
-            List<Map<String, String>> result) {
+                                   Map<Long, List<TbProjectReviewItem>> childrenMap,
+                                   List<Map<String, String>> result) {
         boolean hasChildren = childrenMap.containsKey(node.getId())
-            && !childrenMap.get(node.getId()).isEmpty();
+                && !childrenMap.get(node.getId()).isEmpty();
 
         if (hasChildren) {
             // 有子节点时跳过自身行，避免与类别列重复分组
@@ -257,6 +258,7 @@ public class DocumentDataAssembler {
             map.put("reviewStandard", node.getItemStandard());
             map.put("maxScore", resolveMaxScore(node, false, childrenMap));
             map.put("subjectivity", formatSubjectivity(node.getSubjectivity()));
+            map.put("responseFileCatalog", "");
             result.add(map);
         }
     }
