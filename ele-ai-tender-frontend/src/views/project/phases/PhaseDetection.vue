@@ -99,12 +99,10 @@
       title="文档预览"
       width="80%"
       top="5vh"
-      destroy-on-close
       :close-on-click-modal="false"
-      class="preview-dialog"
     >
       <div class="preview-scroll-area">
-        <DocxPreview v-if="previewDialogVisible" ref="docxPreviewRef" :file-id="generatedFileId" />
+        <DocxPreview v-if="generatedFileId" ref="docxPreviewRef" :file-id="generatedFileId" />
       </div>
     </el-dialog>
   </div>
@@ -152,16 +150,23 @@ const docxContainerRef = computed(() => docxPreviewRef.value?.containerRef ?? nu
 const { scrollToAndHighlight } = useDetectionHighlight({ containerRef: docxContainerRef as any })
 
 // 打开弹窗并定位到文档对应段落
-function handleLocate(issue: DetectionIssueVO) {
-  pendingLocateIssue.value = issue
+async function handleLocate(issue: DetectionIssueVO) {
   previewDialogVisible.value = true
+  // 文档已渲染完毕，直接跳转
+  if (docxPreviewRef.value?.loading === false) {
+    await nextTick()
+    scrollToAndHighlight(issue)
+  } else {
+    // 文档仍在加载，等待渲染完成
+    pendingLocateIssue.value = issue
+  }
 }
 
-// DocxPreview 渲染完成后执行定位高亮
+// DocxPreview 渲染完成后执行待处理的定位高亮
 watch(
   () => docxPreviewRef.value?.loading,
-  async (loading) => {
-    if (loading === false && pendingLocateIssue.value) {
+  async (loading, prevLoading) => {
+    if (loading === false && prevLoading === true && pendingLocateIssue.value) {
       const issue = pendingLocateIssue.value
       pendingLocateIssue.value = null
       await nextTick()
@@ -275,57 +280,16 @@ onMounted(loadProject)
 .phase-detection {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 200px);
 }
 
 .detection-layout {
-  display: flex;
-  gap: 16px;
   flex: 1;
   min-height: 0;
 }
 
 .detection-left {
-  flex: 0 0 40%;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-}
-
-.detection-right {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.preview-container {
-  background: var(--app-bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--app-border-light);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.preview-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-bg-tertiary);
-}
-
-.preview-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-}
-
-.preview-scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
 }
 
 .form-container {
@@ -404,5 +368,11 @@ onMounted(loadProject)
 .form-actions-right {
   display: flex;
   gap: 12px;
+}
+
+.preview-scroll-area {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 16px;
 }
 </style>

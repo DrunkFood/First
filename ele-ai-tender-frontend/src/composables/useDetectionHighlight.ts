@@ -180,9 +180,9 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
       const targetRect = targetEl.getBoundingClientRect()
       const scrollOffset = targetRect.top - containerRect.top + scrollContainer.scrollTop
         - containerRect.height / 2 + targetRect.height / 2
-      scrollContainer.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+      scrollContainer.scrollTo({ top: scrollOffset, behavior: 'instant' })
     } else {
-      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      targetEl.scrollIntoView({ behavior: 'instant', block: 'center' })
     }
 
     // 临时背景闪烁提示
