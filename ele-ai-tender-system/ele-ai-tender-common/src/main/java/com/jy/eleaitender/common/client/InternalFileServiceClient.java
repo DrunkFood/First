@@ -209,6 +209,43 @@ public class InternalFileServiceClient {
     }
 
     /**
+     * 提取Word文档文本+位置索引
+     *
+     * @param fileId 文件ID
+     * @return 提取结果（含fullText和segments）
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> extractText(Long fileId) {
+        String url = properties.getBaseUrl() + "/api/file/extract-text";
+        log.info("调用文件服务提取文档文本: url={}, fileId={}", url, fileId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        addAuthHeader(headers);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("fileId", fileId);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.POST, request, String.class);
+
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<String, Object> result = mapper.readValue(response.getBody(), java.util.Map.class);
+            Object data = result.get("data");
+            if (data instanceof Map) {
+                return (Map<String, Object>) data;
+            }
+            throw new RuntimeException("文件服务返回数据格式异常");
+        } catch (Exception e) {
+            log.error("提取文档文本失败: fileId={}, error={}", fileId, e.getMessage(), e);
+            throw new RuntimeException("提取文档文本失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * 生成或获取缓存的服务间调用JWT Token
      */
     private void addAuthHeader(HttpHeaders headers) {
