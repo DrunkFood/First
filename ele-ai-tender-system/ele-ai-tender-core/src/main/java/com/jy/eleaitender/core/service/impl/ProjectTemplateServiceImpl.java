@@ -58,6 +58,7 @@ public class ProjectTemplateServiceImpl implements IProjectTemplateService {
         pt.setFileId(supTemplate.getFileId());
         pt.setContent(supTemplate.getContent());
         pt.setStructureDefinition(supTemplate.getStructureDefinition());
+        pt.setReviewConfig(supTemplate.getReviewConfig());         // 评审项配置JSON(快照)
         pt.setVersionNo(supTemplate.getVersionNo());
         projectTemplateMapper.insert(pt);
 
