@@ -26,6 +26,8 @@ import java.util.Map;
 public class InternalFileServiceClient {
 
     private static final String SERVICE_NAME = "ele-ai-tender-core";
+    private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper();
 
     private final RestTemplate restTemplate;
     private final InternalFileServiceProperties properties;
@@ -232,8 +234,7 @@ public class InternalFileServiceClient {
             ResponseEntity<String> response = restTemplate.exchange(
                     url, HttpMethod.POST, request, String.class);
 
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            java.util.Map<String, Object> result = mapper.readValue(response.getBody(), java.util.Map.class);
+            java.util.Map<String, Object> result = MAPPER.readValue(response.getBody(), java.util.Map.class);
             Object data = result.get("data");
             if (data instanceof Map) {
                 return (Map<String, Object>) data;
@@ -267,8 +268,7 @@ public class InternalFileServiceClient {
     @SuppressWarnings("unchecked")
     private FileUploadResponse parseUploadResponse(String responseBody) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            java.util.Map<String, Object> result = mapper.readValue(responseBody, java.util.Map.class);
+            java.util.Map<String, Object> result = MAPPER.readValue(responseBody, java.util.Map.class);
             java.util.Map<String, Object> data = (java.util.Map<String, Object>) result.get("data");
             if (data == null) {
                 throw new RuntimeException("文件服务返回数据为空");
@@ -287,10 +287,9 @@ public class InternalFileServiceClient {
 
     private FileInfo parseInfoResponse(String responseBody) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JavaType type = mapper.getTypeFactory()
+            com.fasterxml.jackson.databind.JavaType type = MAPPER.getTypeFactory()
                     .constructParametricType(com.jy.eleaitender.common.response.Result.class, FileInfo.class);
-            com.jy.eleaitender.common.response.Result<FileInfo> result = mapper.readValue(responseBody, type);
+            com.jy.eleaitender.common.response.Result<FileInfo> result = MAPPER.readValue(responseBody, type);
             return result.getData();
         } catch (Exception e) {
             throw new RuntimeException("解析文件信息响应失败: " + e.getMessage(), e);
@@ -299,13 +298,12 @@ public class InternalFileServiceClient {
 
     private WordStructureVO parseStructureResponse(String responseBody) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JavaType type = mapper.getTypeFactory()
+            com.fasterxml.jackson.databind.JavaType type = MAPPER.getTypeFactory()
                     .constructParametricType(
                             com.jy.eleaitender.common.response.Result.class,
                             WordStructureVO.class);
             com.jy.eleaitender.common.response.Result<WordStructureVO> result =
-                    mapper.readValue(responseBody, type);
+                    MAPPER.readValue(responseBody, type);
             return result.getData();
         } catch (Exception e) {
             throw new RuntimeException("解析文档结构响应失败: " + e.getMessage(), e);
@@ -314,8 +312,7 @@ public class InternalFileServiceClient {
 
     private Long parseGeneratedFileId(String responseBody) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            java.util.Map<String, Object> result = mapper.readValue(responseBody, java.util.Map.class);
+            java.util.Map<String, Object> result = MAPPER.readValue(responseBody, java.util.Map.class);
             Integer code = (Integer) result.get("code");
             if (code == null || code != 200) {
                 String msg = (String) result.getOrDefault("message", "未知错误");
@@ -333,13 +330,12 @@ public class InternalFileServiceClient {
 
     private WordFixResultVO parseFixResultResponse(String responseBody) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JavaType type = mapper.getTypeFactory()
+            com.fasterxml.jackson.databind.JavaType type = MAPPER.getTypeFactory()
                     .constructParametricType(
                             com.jy.eleaitender.common.response.Result.class,
                             WordFixResultVO.class);
             com.jy.eleaitender.common.response.Result<WordFixResultVO> result =
-                    mapper.readValue(responseBody, type);
+                    MAPPER.readValue(responseBody, type);
             return result.getData();
         } catch (Exception e) {
             throw new RuntimeException("解析文档修复响应失败: " + e.getMessage(), e);
