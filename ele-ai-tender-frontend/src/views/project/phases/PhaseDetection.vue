@@ -257,6 +257,7 @@ onMounted(loadProject)
 .phase-detection {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .detection-layout {

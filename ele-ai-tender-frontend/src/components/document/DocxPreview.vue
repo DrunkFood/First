@@ -104,12 +104,12 @@ defineExpose({
   min-height: 200px;
 }
 
-.docx-preview-content :deep(.docx-wrapper) {
+.docx-preview-content :deep(section > article) {
   background: white;
   padding: 0;
 }
 
-.docx-preview-content :deep(.docx-wrapper > section.docx) {
+.docx-preview-content :deep(section) {
   box-shadow: none;
   margin-bottom: 0;
   padding: 0;

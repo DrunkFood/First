@@ -22,6 +22,23 @@
       </div>
     </div>
 
+    <!-- 检测文件 -->
+    <template v-if="report && report.detectionFiles?.length">
+      <div class="section-title">检测文件</div>
+      <div class="detection-files">
+        <div class="detection-files-label">本次检测的文件：</div>
+        <ul class="detection-files-list">
+          <li v-for="file in report.detectionFiles" :key="file.fileId" class="detection-file-item">
+            <el-icon :size="16" class="file-icon"><Document /></el-icon>
+            <div class="file-info">
+              <span class="file-name">{{ file.fileName || '未知文件' }}</span>
+              <span class="file-type">{{ file.fileType }}</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </template>
+
     <!-- 问题列表 -->
     <template v-if="report && groupedIssues.length">
       <div class="section-title">问题列表</div>
@@ -103,7 +120,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { CircleCheck, WarningFilled, Close, View } from '@element-plus/icons-vue'
+import { CircleCheck, WarningFilled, Close, View, Document } from '@element-plus/icons-vue'
 import { detectionApi } from '@/api/detection'
 import type { DetectionReportVO, DetectionIssueVO } from '@/types/detection'
 
@@ -118,25 +135,30 @@ const emit = defineEmits<{
 
 const report = ref<DetectionReportVO | null>(null)
 
+const TYPE_MAP: Record<string, string> = {
+  SENSITIVE_WORD: '敏感词检测',
+  TYPO: '错别字检测',
+  POLICY_REVIEW: '政策文件审查',
+  FORMAT_CHECK: '格式规范检测',
+}
+const ALL_TYPES = Object.keys(TYPE_MAP)
+
 const summaryItems = computed(() => {
   if (!report.value) return []
-  const typeMap: Record<string, string> = {
-    POLICY_REVIEW: '政策文件审查',
-    FORMAT_CHECK: '格式规范检测',
-    TYPO: '错别字检测',
-    SENSITIVE_WORD: '敏感词检测',
+  const countMap: Record<string, number> = {}
+  for (const type of ALL_TYPES) {
+    countMap[type] = 0
   }
-  const grouped: Record<string, { name: string; issueCount: number }> = {}
   for (const issue of report.value.issues) {
-    const type = issue.detectionType
-    if (!grouped[type]) {
-      grouped[type] = { name: typeMap[type] || type, issueCount: 0 }
-    }
     if (issue.handleStatus !== 1) {
-      grouped[type].issueCount++
+      countMap[issue.detectionType] = (countMap[issue.detectionType] || 0) + 1
     }
   }
-  return Object.entries(grouped).map(([type, data]) => ({ type, ...data }))
+  return ALL_TYPES.map(type => ({
+    type,
+    name: TYPE_MAP[type],
+    issueCount: countMap[type] ?? 0,
+  }))
 })
 
 const unresolvedCount = computed(() => {
@@ -146,17 +168,11 @@ const unresolvedCount = computed(() => {
 
 const groupedIssues = computed(() => {
   if (!report.value) return []
-  const typeMap: Record<string, string> = {
-    POLICY_REVIEW: '政策文件审查',
-    FORMAT_CHECK: '格式规范检测',
-    TYPO: '错别字检测',
-    SENSITIVE_WORD: '敏感词检测',
-  }
   const groups: Record<string, { name: string; issues: DetectionIssueVO[] }> = {}
   for (const issue of report.value.issues) {
     const type = issue.detectionType
     if (!groups[type]) {
-      groups[type] = { name: typeMap[type] || type, issues: [] }
+      groups[type] = { name: TYPE_MAP[type] || type, issues: [] }
     }
     groups[type].issues.push(issue)
   }
@@ -425,5 +441,56 @@ onMounted(refresh)
 
 .issue-status {
   display: flex;
+}
+
+.detection-files {
+  border: 1px solid var(--app-border-light);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: -8px;
+}
+
+.detection-files-label {
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: var(--app-text-primary);
+}
+
+.detection-files-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.detection-file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--app-border-light);
+
+  &:last-child { border-bottom: none; }
+}
+
+.file-icon {
+  color: var(--app-brand-color);
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.file-name {
+  font-size: 13px;
+  color: var(--app-text-primary);
+}
+
+.file-type {
+  font-size: 12px;
+  color: var(--app-text-tertiary);
 }
 </style>

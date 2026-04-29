@@ -8,17 +8,22 @@ import com.jy.eleaitender.common.dto.LocationRefVO;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbPolicyFile;
 import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.core.dto.request.DetectionSubmitRequest;
+import com.jy.eleaitender.core.dto.response.DetectionFileInfoVO;
 import com.jy.eleaitender.core.dto.response.DetectionIssueVO;
 import com.jy.eleaitender.core.dto.response.DetectionProgressVO;
 import com.jy.eleaitender.core.dto.response.DetectionReportVO;
 import com.jy.eleaitender.core.helper.MessageHelper;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
+import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
@@ -47,6 +52,12 @@ public class DetectionServiceImpl implements IDetectionService {
 
     @Autowired
     private TbDetectionRecordMapper detectionRecordMapper;
+
+    @Autowired
+    private TbPolicyFileMapper policyFileMapper;
+
+    @Autowired
+    private SupPolicyFileMapper supPolicyFileMapper;
 
     @Autowired
     private IAiTaskService aiTaskService;
@@ -206,7 +217,67 @@ public class DetectionServiceImpl implements IDetectionService {
         report.setTotalIssueCount(totalIssueCount);
         report.setOverallStatus(totalIssueCount > 0 ? "FAILED" : "PASSED");
 
+        // 填充检测文件信息
+        report.setDetectionFiles(buildDetectionFiles(project, records));
+
         return report;
+    }
+
+    private List<DetectionFileInfoVO> buildDetectionFiles(TbProject project, List<TbDetectionRecord> records) {
+        List<DetectionFileInfoVO> files = new ArrayList<>();
+
+        // 主招标文件
+        if (project.getGeneratedFileId() != null) {
+            try {
+                var fileInfo = fileServiceClient.info(project.getGeneratedFileId());
+                if (fileInfo != null && fileInfo.getFileName() != null) {
+                    DetectionFileInfoVO vo = new DetectionFileInfoVO();
+                    vo.setFileId(project.getGeneratedFileId());
+                    vo.setFileName(fileInfo.getFileName());
+                    vo.setFileType("主招标文件");
+                    files.add(vo);
+                }
+            } catch (Exception e) {
+                log.error("获取主招标文件信息失败: fileId={}", project.getGeneratedFileId(), e);
+            }
+        }
+
+        // 收集所有政策文件ID
+        Set<Long> policyIds = new LinkedHashSet<>();
+        for (TbDetectionRecord record : records) {
+            if (!StringUtils.hasText(record.getPolicyFileIds())) continue;
+            for (String idStr : record.getPolicyFileIds().split(",")) {
+                try {
+                    policyIds.add(Long.parseLong(idStr.trim()));
+                } catch (NumberFormatException e) {
+                    log.debug("政策文件ID格式异常: '{}'", idStr.trim());
+                }
+            }
+        }
+
+        // 批量查询政策文件名称
+        if (!policyIds.isEmpty()) {
+            Map<Long, String> nameMap = new LinkedHashMap<>();
+            // 先查用户级
+            policyFileMapper.selectBatchIds(policyIds)
+                    .forEach(f -> nameMap.put(f.getId(), f.getFileName()));
+            // 再查系统级（未被用户级覆盖的）
+            supPolicyFileMapper.selectBatchIds(policyIds).stream()
+                    .filter(f -> !nameMap.containsKey(f.getId()))
+                    .forEach(f -> nameMap.put(f.getId(), f.getFileName()));
+            for (Long id : policyIds) {
+                String fileName = nameMap.get(id);
+                if (fileName != null) {
+                    DetectionFileInfoVO vo = new DetectionFileInfoVO();
+                    vo.setFileId(id);
+                    vo.setFileName(fileName);
+                    vo.setFileType("政策文件");
+                    files.add(vo);
+                }
+            }
+        }
+
+        return files;
     }
 
     @Override

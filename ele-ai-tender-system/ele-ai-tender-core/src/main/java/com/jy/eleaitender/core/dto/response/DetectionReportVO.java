@@ -28,6 +28,9 @@ public class DetectionReportVO {
     @Schema(description = "总得分")
     private BigDecimal totalScore;
 
+    @Schema(description = "检测文件列表")
+    private List<DetectionFileInfoVO> detectionFiles;
+
     @Schema(description = "问题列表")
     private List<DetectionIssueVO> issues;
 }

@@ -50,7 +50,15 @@ export interface DetectionReportVO {
   overallStatus: string
   totalIssueCount: number
   totalScore?: number
+  detectionFiles: DetectionFileInfoVO[]
   issues: DetectionIssueVO[]
+}
+
+/** 检测文件信息 */
+export interface DetectionFileInfoVO {
+  fileId: number
+  fileName: string
+  fileType: string
 }
 
 /** 检测提交请求 */
