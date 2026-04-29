@@ -33,6 +33,14 @@ export interface DetectionIssueVO {
   severity: 'HIGH' | 'MEDIUM' | 'LOW'
   handleStatus: number
   issueIndex: number
+  /** 位置索引 */
+  locationRef?: {
+    type: 'paragraph' | 'table'
+    elementIndex?: number
+    tableIndex?: number
+    rowIndex?: number
+    cellIndex?: number
+  }
 }
 
 /** 检测报告 */

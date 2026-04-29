@@ -132,10 +132,9 @@
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleView(row.id)">查看</el-button>
-            <el-button link type="primary" @click="handleEdit(row.id)">编辑</el-button>
             <el-popconfirm title="确定删除该项目？" @confirm="handleDelete(row.id)">
               <template #reference>
                 <el-button link type="danger">删除</el-button>
@@ -274,9 +273,6 @@ function handleView(id: number) {
   router.push(`/project/${id}`)
 }
 
-function handleEdit(id: number) {
-  router.push(`/project/edit/${id}`)
-}
 
 function handleSelectionChange(rows: ProjectInfo[]) {
   selectedIds.value = rows.map(r => r.id)

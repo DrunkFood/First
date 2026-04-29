@@ -74,6 +74,14 @@
                 <el-icon :size="12"><View /></el-icon>
                 查看原文
               </el-button>
+              <el-button
+                v-if="issue.locationRef"
+                type="warning"
+                size="small"
+                @click="$emit('locate', issue)"
+              >
+                定位到文档
+              </el-button>
             </div>
             <div v-else class="issue-status">
               <el-tag
@@ -105,6 +113,7 @@ const emit = defineEmits<{
   reject: [recordId: number, issueIndex: number]
   'accept-all': []
   loaded: [data: { totalIssueCount: number; unresolvedCount: number }]
+  locate: [issue: DetectionIssueVO]
 }>()
 
 const report = ref<DetectionReportVO | null>(null)
