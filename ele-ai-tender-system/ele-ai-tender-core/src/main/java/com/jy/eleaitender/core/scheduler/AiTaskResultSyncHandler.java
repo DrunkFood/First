@@ -1,6 +1,5 @@
 package com.jy.eleaitender.core.scheduler;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
@@ -10,18 +9,13 @@ import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
-import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ProjectPhase;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.helper.MessageHelper;
-import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
-import com.jy.eleaitender.core.mapper.TbProjectMapper;
-import com.jy.eleaitender.core.mapper.ProjectTemplateMapper;
-import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
-import com.jy.eleaitender.core.mapper.TbRequirementMapper;
+import com.jy.eleaitender.core.mapper.*;
 import com.jy.eleaitender.core.service.IProjectVersionService;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.util.DetectionResultParser;
@@ -31,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -206,31 +201,40 @@ public class AiTaskResultSyncHandler {
 
         // 读取评审项配置，为 generateStandard=false 的启用类型插入占位节点
         String reviewConfigJson = parseReviewConfigFromRequestParams(task.getRequestParams());
-        if (!StringUtils.hasText(reviewConfigJson)) {
-            // 兜底：从项目模板获取
-            TbProjectTemplate pt = projectTemplateMapper.selectOne(
-                    new LambdaQueryWrapper<TbProjectTemplate>()
-                            .eq(TbProjectTemplate::getProjectId, projectId)
-                            .last("LIMIT 1"));
-            if (pt != null) {
-                reviewConfigJson = pt.getReviewConfig();
-            }
-        }
+
         if (StringUtils.hasText(reviewConfigJson)) {
             ReviewConfig config = ReviewConfig.fromJson(reviewConfigJson);
             // 过滤掉AI可能违规返回的未启用类型
             items.removeIf(item -> !config.isEnabled(item.getReviewType()));
             // 为 generateStandard=false 的启用类型插入占位节点
             for (ReviewTypeConfig typeConfig : config.getEnabledTypes()) {
-                if (!typeConfig.isGenerateStandard()) {
-                    TbProjectReviewItem placeholder = new TbProjectReviewItem();
-                    placeholder.setProjectId(projectId);
-                    placeholder.setItemName("详见评审文件");
-                    placeholder.setLevel(1);
-                    placeholder.setReviewType(typeConfig.getReviewType());
-                    placeholder.setIsRequired(0);
-                    placeholder.setSortOrder(items.size());
-                    items.add(placeholder);
+                if (typeConfig.isEnabled() && !typeConfig.isGenerateStandard()) {
+                    BigDecimal totalScore = items.stream()
+                            .filter(item -> item.getReviewType().equals(typeConfig.getReviewType()) && item.getLevel() != 1)
+                            .map(item -> item.getScore() != null ? item.getScore() : BigDecimal.ZERO)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    // 过滤掉AI可能违规返回的不需要评审标准类型
+                    items.removeIf(item -> item.getReviewType().equals(typeConfig.getReviewType()) && item.getLevel() != 1);
+
+                    TbProjectReviewItem parentItem = items.stream()
+                            .filter(item -> item.getReviewType().equals(typeConfig.getReviewType()) && item.getLevel() == 1)
+                            .findFirst()
+                            .orElse(null);
+                    if (parentItem != null) {
+                        TbProjectReviewItem placeholder = new TbProjectReviewItem();
+                        placeholder.setProjectId(projectId);
+                        placeholder.setParentId(parentItem.getId());
+                        placeholder.setItemName("详见评审文件");
+                        placeholder.setLevel(2);
+                        placeholder.setReviewType(typeConfig.getReviewType());
+                        placeholder.setScore(totalScore);
+                        placeholder.setIsRequired(0);
+                        placeholder.setSortOrder(items.size());
+                        // 添加占位节点
+                        items.add(placeholder);
+                        // 记录父子关系
+                        parentMap.put(placeholder, parentItem);
+                    }
                 }
             }
         }

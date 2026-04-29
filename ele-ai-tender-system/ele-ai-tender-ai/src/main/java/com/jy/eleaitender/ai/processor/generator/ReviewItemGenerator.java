@@ -5,7 +5,6 @@ import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.dto.ReviewConfig;
-import com.jy.eleaitender.common.dto.ReviewTypeConfig;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ReviewType;
@@ -54,15 +53,14 @@ public class ReviewItemGenerator {
         String enabledTypes;
 
         if (StringUtils.hasText(reviewConfigJson)) {
-            // 有配置：只生成启用的、需生成标准的类型
+            // 有配置：生成所有启用的类型（generateStandard=false的类型由同步处理器替换二级节点为占位）
             ReviewConfig config = ReviewConfig.fromJson(reviewConfigJson);
             enabledTypes = config.getEnabledTypes().stream()
-                    .filter(ReviewTypeConfig::isGenerateStandard)
                     .map(t -> ReviewType.fromCode(t.getReviewType()).getLabel())
                     .collect(Collectors.joining("、"));
 
             if (!StringUtils.hasText(enabledTypes)) {
-                log.info("无启用的且需生成评审标准的类型，跳过AI调用: taskId={}", task.getId());
+                log.info("无启用的评审类型，跳过AI调用: taskId={}", task.getId());
                 return "{\"reviewItems\":[]}";
             }
         } else {

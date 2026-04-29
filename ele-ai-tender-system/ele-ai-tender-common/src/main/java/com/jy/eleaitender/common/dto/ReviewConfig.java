@@ -14,7 +14,9 @@ public class ReviewConfig {
 
     private static final Logger log = LoggerFactory.getLogger(ReviewConfig.class);
 
-    /** 各评审类型配置列表 */
+    /**
+     * 各评审类型配置列表
+     */
     private List<ReviewTypeConfig> reviewTypes;
 
     private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
@@ -59,10 +61,7 @@ public class ReviewConfig {
      */
     public boolean isGenerateStandard(String reviewType) {
         return reviewTypes != null && reviewTypes.stream()
-                .filter(t -> reviewType.equals(t.getReviewType()))
-                .findFirst()
-                .map(ReviewTypeConfig::isGenerateStandard)
-                .orElse(true);
+                .anyMatch(t -> reviewType.equals(t.getReviewType()) && t.isGenerateStandard());
     }
 
     /**
