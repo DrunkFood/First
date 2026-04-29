@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jy.eleaitender.common.dto.FixReplacement;
+import com.jy.eleaitender.common.dto.LocationRefVO;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.enums.DetectionType;
+import com.jy.eleaitender.common.util.TextNormalizeUtil;
 import com.jy.eleaitender.core.dto.response.DetectionIssueVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -13,6 +15,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.jy.eleaitender.common.util.JsonUtil.getInt;
 import static com.jy.eleaitender.common.util.JsonUtil.getText;
@@ -61,6 +64,21 @@ public class DetectionResultParser {
                 vo.setIssueIndex(i);
                 vo.setPolicyReference(getText(issueNode, "policyReference", null));
                 vo.setRuleViolated(getText(issueNode, "ruleViolated", null));
+                // 解析locationRef
+                JsonNode locationRefNode = issueNode.get("locationRef");
+                if (locationRefNode != null && !locationRefNode.isNull()) {
+                    LocationRefVO locationRef = new LocationRefVO();
+                    locationRef.setType(getText(locationRefNode, "type", null));
+                    locationRef.setElementIndex(locationRefNode.has("elementIndex")
+                            ? locationRefNode.get("elementIndex").asInt() : null);
+                    locationRef.setTableIndex(locationRefNode.has("tableIndex")
+                            ? locationRefNode.get("tableIndex").asInt() : null);
+                    locationRef.setRowIndex(locationRefNode.has("rowIndex")
+                            ? locationRefNode.get("rowIndex").asInt() : null);
+                    locationRef.setCellIndex(locationRefNode.has("cellIndex")
+                            ? locationRefNode.get("cellIndex").asInt() : null);
+                    vo.setLocationRef(locationRef);
+                }
                 result.add(vo);
             }
             return result;
@@ -263,5 +281,149 @@ public class DetectionResultParser {
             }
         }
         return false;
+    }
+
+    /**
+     * 为检测结果JSON中的每个issue填充locationRef
+     *
+     * @param resultJson 原始result JSON
+     * @param fullText   文档全文
+     * @param segments   位置索引段列表
+     * @return 填充后的JSON字符串
+     */
+    public static String fillLocationRefs(String resultJson, String fullText, List<Map<String, Object>> segments) {
+        if (!StringUtils.hasText(resultJson) || !StringUtils.hasText(fullText)) {
+            return resultJson;
+        }
+        try {
+            ObjectNode root = (ObjectNode) MAPPER.readTree(resultJson);
+            JsonNode issuesNode = root.get("issues");
+            if (issuesNode == null || !issuesNode.isArray()) {
+                return resultJson;
+            }
+
+            // 构建offsets列表用于二分查找
+            List<int[]> offsets = new ArrayList<>();
+            for (Map<String, Object> seg : segments) {
+                int offset = ((Number) seg.get("fullTextOffset")).intValue();
+                offsets.add(new int[]{offset, ((Number) seg.get("elementIndex")).intValue()});
+            }
+
+            for (JsonNode issueNode : issuesNode) {
+                // 跳过已有locationRef的issue
+                if (issueNode.has("locationRef") && !issueNode.get("locationRef").isNull()) {
+                    continue;
+                }
+
+                String original = getText(issueNode, "original", "");
+                if (!StringUtils.hasText(original)) continue;
+
+                int offset = fullText.indexOf(original);
+
+                // 规范化匹配
+                if (offset < 0) {
+                    String normalizedFull = TextNormalizeUtil.normalize(fullText);
+                    String normalizedOriginal = TextNormalizeUtil.normalize(original);
+                    int normStart = normalizedFull.indexOf(normalizedOriginal);
+                    if (normStart >= 0) {
+                        offset = mapNormToRaw(fullText, normStart);
+                    }
+                }
+
+                if (offset < 0) continue;
+
+                // 二分查找segment
+                int segIdx = findSegmentIndex(offsets, offset);
+                if (segIdx < 0) continue;
+
+                Map<String, Object> targetSeg = segments.get(segIdx);
+                ObjectNode locationRef = MAPPER.createObjectNode();
+                locationRef.put("type", (String) targetSeg.get("type"));
+                locationRef.put("elementIndex", ((Number) targetSeg.get("elementIndex")).intValue());
+                if ("table".equals(targetSeg.get("type"))) {
+                    locationRef.put("tableIndex", ((Number) targetSeg.get("tableIndex")).intValue());
+                    locationRef.put("rowIndex", ((Number) targetSeg.get("rowIndex")).intValue());
+                    locationRef.put("cellIndex", ((Number) targetSeg.get("cellIndex")).intValue());
+                }
+                ((ObjectNode) issueNode).set("locationRef", locationRef);
+            }
+
+            return MAPPER.writeValueAsString(root);
+        } catch (Exception e) {
+            log.error("填充locationRef失败", e);
+            return resultJson;
+        }
+    }
+
+    /**
+     * 获取指定issue的locationRef
+     */
+    public static LocationRefVO parseLocationRef(String resultJson, int issueIndex) {
+        if (!StringUtils.hasText(resultJson)) return null;
+        try {
+            JsonNode root = MAPPER.readTree(resultJson);
+            JsonNode issuesNode = root.get("issues");
+            if (issuesNode != null && issuesNode.isArray()
+                    && issueIndex >= 0 && issueIndex < issuesNode.size()) {
+                JsonNode locationRefNode = issuesNode.get(issueIndex).get("locationRef");
+                if (locationRefNode != null && !locationRefNode.isNull()) {
+                    LocationRefVO ref = new LocationRefVO();
+                    ref.setType(getText(locationRefNode, "type", null));
+                    ref.setElementIndex(locationRefNode.has("elementIndex")
+                            ? locationRefNode.get("elementIndex").asInt() : null);
+                    ref.setTableIndex(locationRefNode.has("tableIndex")
+                            ? locationRefNode.get("tableIndex").asInt() : null);
+                    ref.setRowIndex(locationRefNode.has("rowIndex")
+                            ? locationRefNode.get("rowIndex").asInt() : null);
+                    ref.setCellIndex(locationRefNode.has("cellIndex")
+                            ? locationRefNode.get("cellIndex").asInt() : null);
+                    return ref;
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("解析locationRef失败, issueIndex={}", issueIndex, e);
+            return null;
+        }
+    }
+
+    /**
+     * 简化的规范化偏移映射：找到规范化文本中第normStart个字符在原始文本中的位置
+     */
+    private static int mapNormToRaw(String rawText, int normStart) {
+        int rawIdx = 0;
+        int normIdx = 0;
+        while (rawIdx < rawText.length() && normIdx < normStart) {
+            char c = rawText.charAt(rawIdx);
+            if (TextNormalizeUtil.isWhitespaceChar(c)) {
+                rawIdx++;
+                continue;
+            }
+            rawIdx++;
+            normIdx++;
+        }
+        // 跳过前导空白
+        while (rawIdx < rawText.length() && TextNormalizeUtil.isWhitespaceChar(rawText.charAt(rawIdx))) {
+            rawIdx++;
+        }
+        return rawIdx;
+    }
+
+    /**
+     * 二分查找：根据fullTextOffset找到segment索引
+     */
+    private static int findSegmentIndex(List<int[]> offsets, int targetOffset) {
+        int lo = 0, hi = offsets.size() - 1;
+        int result = -1;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            if (offsets.get(mid)[0] <= targetOffset) {
+                result = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return result;
     }
 }

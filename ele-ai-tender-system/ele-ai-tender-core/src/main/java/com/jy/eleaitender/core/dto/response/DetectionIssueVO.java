@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.dto.response;
 
+import com.jy.eleaitender.common.dto.LocationRefVO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -48,4 +49,7 @@ public class DetectionIssueVO {
 
     @Schema(description = "违反的格式规则（格式检测专用）")
     private String ruleViolated;
+
+    /** 位置索引（可为null，兼容旧数据） */
+    private LocationRefVO locationRef;
 }
