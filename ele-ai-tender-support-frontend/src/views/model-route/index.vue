@@ -214,10 +214,10 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     if (isEdit.value && editId.value) {
-      await modelRouteApi.update(editId.value, form)
+      await modelRouteApi.update(editId.value, { ...form, primaryModelId: form.primaryModelId! })
       ElMessage.success('更新成功')
     } else {
-      await modelRouteApi.create(form)
+      await modelRouteApi.create({ ...form, primaryModelId: form.primaryModelId! })
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false

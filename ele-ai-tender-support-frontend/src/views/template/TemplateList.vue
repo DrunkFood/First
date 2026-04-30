@@ -221,7 +221,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, Refresh, Plus, Delete } from '@element-plus/icons-vue'
-import { templateApi, fileApi } from '@/api/template'
+import { templateApi, templateFileApi } from '@/api/template'
 import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams, ReviewConfig } from '@/types/template'
 import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig } from '@/types/template'
 
@@ -397,7 +397,7 @@ const handleSubmit = async () => {
     try {
       // 先上传文件
       if (uploadingFile.value) {
-        const uploadRes = await fileApi.upload(uploadingFile.value, 'template')
+        const uploadRes = await templateFileApi.upload(uploadingFile.value, 'template')
         formData.fileId = uploadRes.data.fileId
       }
 

@@ -32,6 +32,7 @@ export interface ModelConfigQueryParams {
   modelType?: string
   provider?: string
   usageScenario?: string
+  isActive?: number
 }
 
 // AI模型配置创建参数

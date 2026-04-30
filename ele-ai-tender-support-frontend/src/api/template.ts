@@ -66,8 +66,8 @@ export const templateApi = {
   },
 }
 
-// 文件上传 API
-export const fileApi = {
+// 模板文件上传 API
+export const templateFileApi = {
   upload(file: File, bizType: string) {
     const formData = new FormData()
     formData.append('file', file)
