@@ -39,7 +39,6 @@ replay_pid*
 
 # Local configuration
 application-local.yml
-application-dev.yml
 application-prod.yml
 *-local.yml
 
