@@ -18,7 +18,7 @@ public class FileStorageConfig {
     /**
      * 存储根路径
      */
-    private String basePath = "/data/ele-tender/files";
+    private String basePath = "/data/ele-ai-tender/files";
 
     /**
      * 允许的文件类型（逗号分隔）

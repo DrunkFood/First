@@ -64,7 +64,7 @@ public class LoggingAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "ele-tender.logging.access", name = "persist-enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = "ele-ai-tender.logging.access", name = "persist-enabled", havingValue = "true", matchIfMissing = true)
     @ConditionalOnMissingBean
     public AccessLogPersistenceService accessLogPersistenceService(ObjectProvider<SysAccessLogMapper> accessLogMapperProvider,
                                                                    @Qualifier("accessLogTaskExecutor") TaskExecutor accessLogTaskExecutor,

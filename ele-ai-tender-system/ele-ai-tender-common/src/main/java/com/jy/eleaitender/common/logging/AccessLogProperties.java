@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * 访问日志配置
  */
 @Data
-@ConfigurationProperties(prefix = "ele-tender.logging.access")
+@ConfigurationProperties(prefix = "ele-ai-tender.logging.access")
 public class AccessLogProperties {
 
     private boolean enabled = true;

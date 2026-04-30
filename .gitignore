@@ -18,9 +18,9 @@ build
 *.local
 
 # Frontend package/build artifacts
-ele-tender-support-frontend/node_modules/
-ele-tender-support-frontend/dist/
-ele-tender-support-frontend/.vite/
+ele-ai-tender-support-frontend/node_modules/
+ele-ai-tender-support-frontend/dist/
+ele-ai-tender-support-frontend/.vite/
 
 # Editor directories and files
 .vscode/*
@@ -57,7 +57,7 @@ target/
 *.war
 *.ear
 .mvn/wrapper/maven-wrapper.jar
-ele-tender-demo-business-system/
+ele-ai-tender-demo-business-system/
 
 # IDE
 *.iml

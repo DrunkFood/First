@@ -15,9 +15,9 @@
           </el-form-item>
           <el-form-item label="服务名称">
             <el-select v-model="queryParams.serviceName" placeholder="请选择服务" clearable style="width: 180px">
-              <el-option label="支撑中心" value="ele-tender-support" />
-              <el-option label="文件服务" value="ele-tender-file" />
-              <el-option label="招标文件编制" value="ele-tender-tender-document" />
+              <el-option label="支撑中心" value="ele-ai-tender-support" />
+              <el-option label="文件服务" value="ele-ai-tender-file" />
+              <el-option label="招标文件编制" value="ele-ai-tender-tender-document" />
             </el-select>
           </el-form-item>
           <el-form-item label="状态码">

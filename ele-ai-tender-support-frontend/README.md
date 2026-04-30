@@ -1,8 +1,8 @@
-# ele-tender-support-frontend
+# ele-ai-tender-support-frontend
 
 ## 模块定位
 
-`ele-tender-support-frontend` 是电子标系统支撑中心前端，负责登录、首页、用户、角色、菜单、访问日志、外部系统和版本管理页面。
+`ele-ai-tender-support-frontend` 是招标文件ai编制支撑中心前端，负责登录、首页、用户、角色、菜单、访问日志、外部系统和版本管理页面。
 
 ## 技术栈
 
@@ -31,15 +31,15 @@ npm run build
 生产构建默认 `base` 为：
 
 ```text
-/ele-tender-support/
+/ele-ai-tender-support/
 ```
 
 ## 代理配置
 
-- `/support-api -> ele-tender-support`
-- `/file-api -> ele-tender-file`
-- `/file-esign-api -> ele-tender-file`
-- `/crypto-api -> ele-tender-crypto`
+- `/support-api -> ele-ai-tender-support`
+- `/file-api -> ele-ai-tender-file`
+- `/file-esign-api -> ele-ai-tender-file`
+- `/crypto-api -> ele-ai-tender-crypto`
 
 其中：
 
@@ -69,5 +69,5 @@ npm run build
 
 - 支撑中心接口统一走 `/support-api`
 - 访问日志菜单与页面已经落地，不再是占位入口
-- 生产部署到子路径时必须保留 `/ele-tender-support/` base 配置
+- 生产部署到子路径时必须保留 `/ele-ai-tender-support/` base 配置
 - 文件服务接口与签章上传接口都不走 `/support-api`
