@@ -1,3 +1,6 @@
+server:
+  port: 28080
+
 # 支撑中心 - test环境配置
 spring:
   datasource:
