@@ -4,8 +4,8 @@ pipeline {
         APP_NAME = 'ele-ai-tender-web'
         APP_DIR = 'ele-ai-tender-frontend'
 
-        HTML_REPO = 'E:\\tender-document-tool\\frontend\\nginx-1.28.3\\html'
-        BAK_REPO = 'E:\\tender-document-tool\\bak'
+        HTML_REPO = 'E:\\java\\tender-document-tool\\frontend\\nginx-1.28.3\\html'
+        BAK_REPO = 'E:\\java\\tender-document-tool\\bak'
     }
     tools {
         nodejs "NodeJS22.21.1"
