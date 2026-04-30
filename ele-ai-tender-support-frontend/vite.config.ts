@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   const isProd = mode === 'production'
   
   return {
-    base: isProd ? '/ele-ai-tender-support/' : '/',
+    base: isProd ? '/ele-ai-tender-support-web/' : '/',
     plugins: [vue()],
     resolve: {
       alias: {

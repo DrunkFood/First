@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        APP_NAME = 'ele-ai-tender-core'
+        APP_NAME = 'ele-ai-tender-core-web'
         APP_PORT = '8082'
 
         APP_REPO = 'E:\\java\\tender-document-tool\\ele-ai-tender-core'
