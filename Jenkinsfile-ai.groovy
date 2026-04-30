@@ -4,8 +4,8 @@ pipeline {
         APP_NAME = 'ele-ai-tender-ai'
         APP_PORT = '8083'
 
-        APP_REPO = 'E:\\java\\ele-ai-tender-ai'
-        BAK_REPO = 'E:\\java\\ele-ai-tender_bak'
+        APP_REPO = 'E:\\java\\tender-document-tool\\ele-ai-tender-ai'
+        BAK_REPO = 'E:\\java\\tender-document-tool\\bak'
 
         // JAR 选项
         JAR_OPTS = '-Xmx2G -Dfile.encoding=utf-8'
