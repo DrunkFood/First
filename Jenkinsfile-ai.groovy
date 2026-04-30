@@ -10,7 +10,7 @@ pipeline {
         // JAR 选项
         JAR_OPTS = '-Xmx2G -Dfile.encoding=utf-8'
         // 最大尝试次数
-        MAX_ATTEMPTS = 10
+        MAX_ATTEMPTS = 5
         // 等待时间
         INTERVAL = 30
     }
