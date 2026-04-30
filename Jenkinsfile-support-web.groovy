@@ -8,7 +8,7 @@ pipeline {
         BAK_REPO = 'E:\\20\\ele-ai-tender_bak'
     }
     tools {
-        nodejs "NodeJS18.17.0"
+        nodejs "NodeJS22.21.1"
     }
     options {
         buildDiscarder(logRotator(daysToKeepStr: '3', numToKeepStr: '10'))
