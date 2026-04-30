@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
+// https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const isProd = mode === 'production'
@@ -31,7 +32,6 @@ export default defineConfig(({ mode }) => {
         '/file-api': {
           target: env.VITE_FILE_API_URL || 'http://localhost:8081',
           changeOrigin: true,
-          timeout: 60000,
           rewrite: (path) => path.replace(/^\/file-api/, '/api'),
         },
         '/support-api': {

@@ -6,7 +6,7 @@ import { resolve } from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const isProd = mode === 'production'
-  
+
   return {
     base: isProd ? '/ele-ai-tender-support-web/' : '/',
     plugins: [vue()],
@@ -19,15 +19,15 @@ export default defineConfig(({ mode }) => {
       port: 3060,
       host: true,
       proxy: {
+        '/file-api': {
+          target: env.VITE_FILE_API_URL || 'http://localhost:8081',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/file-api/, '/api'),
+        },
         '/support-api': {
           target: env.VITE_SUPPORT_API_URL || 'http://localhost:8080',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/support-api/, '/api'),
-        },
-        '/file-api': {
-          target: env.VITE_FILE_API_URL || 'http://localhost:8081',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/file-api/, ''),
         },
       },
     },
