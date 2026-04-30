@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { Loading, CircleCheck, CircleClose, Document } from '@element-plus/icons-vue'
 import type { AiTaskVO } from '@/types/ai-task'
-import { isTaskSucceeded, isTaskTerminal } from '@/types/ai-task'
+import { isTaskSucceeded } from '@/types/ai-task'
 
 withDefaults(defineProps<{
   task: AiTaskVO | null

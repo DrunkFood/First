@@ -153,7 +153,7 @@ const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   'PROJECT_REQUIREMENT_GENERATE',
   projectIdRef,
   'REQUIREMENT',
-  async (task) => {
+  async (_task) => {
     // resultSynced=1 时业务数据已同步，直接从项目接口读取
     try {
       const proj = await projectApi.getById(props.projectId)

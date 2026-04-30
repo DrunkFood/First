@@ -269,7 +269,7 @@ const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   'REQUIREMENT_GENERATE',
   requirementId,
   'REQUIREMENT',
-  async (task) => {
+  async (_task) => {
     // resultSynced=1 时业务数据已同步，直接读取
     if (requirementId.value) {
       // 清除进度模拟计时器

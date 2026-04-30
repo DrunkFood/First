@@ -407,14 +407,6 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   },
 )
 
-/** 带重试的评审项加载 */
-const loadReviewItemsWithRetry = async (retries = 3, delayMs = 2000) => {
-  for (let i = 0; i < retries; i++) {
-    await new Promise(r => setTimeout(r, delayMs))
-    await loadReviewItems()
-    if (allItems.value.length > 0) return
-  }
-}
 
 /** 将扁平列表组装为树形结构 */
 function buildTree(flatList: any[]): ReviewItemTree[] {
