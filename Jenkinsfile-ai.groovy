@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         APP_NAME = 'ele-ai-tender-ai'
-        APP_PORT = '8083'
+        APP_PORT = '28083'
 
         APP_REPO = 'E:\\java\\tender-document-tool\\ele-ai-tender-ai'
         BAK_REPO = 'E:\\java\\tender-document-tool\\bak'

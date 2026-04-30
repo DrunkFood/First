@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: 'dist',
+      outDir: 'ele-ai-tender-support-web',
       sourcemap: false,
       chunkSizeWarningLimit: 1500,
       rollupOptions: {

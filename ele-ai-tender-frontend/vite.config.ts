@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const isProd = mode === 'production'
 
   return {
-    base: isProd ? '/ele-ai-tender-core-web/' : '/',
+    base: isProd ? '/ele-ai-tender-web/' : '/',
     plugins: [vue()],
     resolve: {
       alias: {
@@ -38,6 +38,19 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_SUPPORT_API_URL || 'http://localhost:8080',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/support-api/, '/api'),
+        },
+      },
+    },
+    build: {
+      outDir: 'ele-ai-tender-web',
+      sourcemap: false,
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'element-plus': ['element-plus'],
+            'vue-vendor': ['vue', 'vue-router', 'pinia'],
+          },
         },
       },
     },

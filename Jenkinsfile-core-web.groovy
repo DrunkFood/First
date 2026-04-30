@@ -4,8 +4,8 @@ pipeline {
         APP_NAME = 'ele-ai-tender-web'
         APP_DIR = 'ele-ai-tender-frontend'
 
-        HTML_REPO = 'E:\\20\\Nginx\\html'
-        BAK_REPO = 'E:\\20\\ele-ai-tender_bak'
+        HTML_REPO = 'E:\\tender-document-tool\\fronted\\nginx-1.28.3\\html'
+        BAK_REPO = 'E:\\tender-document-tool\\bak'
     }
     tools {
         nodejs "NodeJS22.21.1"
@@ -82,7 +82,7 @@ pipeline {
                         setlocal enabledelayedexpansion
 
                         cd ${env.APP_DIR}
-                        "C:\\Program Files\\7-Zip\\7z.exe" a -tzip ../${env.APP_NAME}.zip dist
+                        "C:\\Program Files\\7-Zip\\7z.exe" a -tzip ../${env.APP_NAME}.zip ${env.APP_NAME}
 
                         endlocal
                     """
