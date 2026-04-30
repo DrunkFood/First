@@ -7,6 +7,7 @@
     </button>
     <div v-if="visible" class="ai-sidebar-body">
       <AiChatPanel
+        ref="chatPanelRef"
         show-close
         :greeting="greeting"
         :context="context"
@@ -26,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Close, ChatDotRound } from '@element-plus/icons-vue'
 import AiChatPanel from './AiChatPanel.vue'
 import type { AiChatMessage } from '@/types/ai'
@@ -47,6 +49,14 @@ const emit = defineEmits<{
 }>()
 
 const messages = defineModel<AiChatMessage[]>('messages', { default: () => [] })
+const chatPanelRef = ref<InstanceType<typeof AiChatPanel>>()
+
+/** 透传快捷操作发送方法 */
+function sendQuickAction(text: string) {
+  chatPanelRef.value?.sendQuickAction(text)
+}
+
+defineExpose({ sendQuickAction })
 
 function toggleVisible() {
   emit('update:visible', !props.visible)

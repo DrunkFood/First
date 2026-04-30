@@ -103,6 +103,7 @@
 
     <!-- AI助手侧边栏 -->
     <AiAssistantSidebar
+      ref="aiSidebarRef"
       v-if="!readonly"
       v-model:visible="chatVisible"
       v-model:messages="chatMessages"
@@ -294,12 +295,10 @@ const handleFeedback = async (type: 'like' | 'dislike') => {
   await submitGenFeedback(type)
 }
 
+const aiSidebarRef = ref<InstanceType<typeof AiAssistantSidebar>>()
+
 const sendQuickAction = (action: string) => {
-  chatMessages.value.push({
-    role: 'user',
-    content: action,
-    timestamp: Date.now(),
-  })
+  aiSidebarRef.value?.sendQuickAction(action)
 }
 
 const handleChatFeedback = async (type: 'like' | 'dislike', msg: AiChatMessage) => {

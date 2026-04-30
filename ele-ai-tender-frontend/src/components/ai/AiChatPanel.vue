@@ -9,12 +9,6 @@
 
     <!-- 消息列表 -->
     <div ref="messageListRef" class="chat-messages">
-      <!-- 欢迎语（消息为空时显示） -->
-      <div v-if="messages.length === 0 && greeting" class="chat-message message-assistant">
-        <div class="message-bubble">
-          <div class="message-content">{{ greeting }}</div>
-        </div>
-      </div>
       <div
         v-for="(msg, index) in messages"
         :key="index"
@@ -30,8 +24,15 @@
             </div>
           </template>
           <template v-else-if="msg.role === 'assistant' && msg.content && sending && index === messages.length - 1">
-            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-content markdown-body">
+              <MdPreview :modelValue="msg.content" :theme="themeStore.mode" />
+            </div>
             <span class="output-cursor">▌</span>
+          </template>
+          <template v-else-if="msg.role === 'assistant'">
+            <div class="message-content markdown-body">
+              <MdPreview :modelValue="msg.content" :theme="themeStore.mode" />
+            </div>
           </template>
           <template v-else>
             <div class="message-content">{{ msg.content }}</div>
@@ -40,8 +41,8 @@
           <div v-if="msg.role === 'assistant' && msg.error" class="message-error">
             AI对话失败，请稍后重试
           </div>
-          <!-- AI消息反馈按钮（非发送中且有内容时才显示） -->
-          <div v-if="msg.role === 'assistant' && msg.content && !sending" class="message-actions">
+          <!-- AI消息反馈按钮（欢迎语和发送中不显示） -->
+          <div v-if="msg.role === 'assistant' && msg.content && !sending && !msg.isGreeting" class="message-actions">
             <template v-if="msg.uid && chatFeedbackMap[msg.uid]">
               <span class="feedback-indicator">
                 {{ chatFeedbackMap[msg.uid!] === 'LIKE' ? '已赞' : '已反馈不满意' }}
@@ -91,10 +92,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick, onBeforeUnmount } from 'vue'
+import { ref, reactive, nextTick, onBeforeUnmount, watch } from 'vue'
 import { Close, CircleCheck, CircleClose, Promotion } from '@element-plus/icons-vue'
+import { MdPreview } from 'md-editor-v3'
+import 'md-editor-v3/lib/preview.css'
+import { useThemeStore } from '@/store/theme'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import type { AiChatMessage } from '@/types/ai'
+
+const themeStore = useThemeStore()
 
 const props = defineProps<{
   context?: string
@@ -105,6 +111,19 @@ const props = defineProps<{
 }>()
 
 const messages = defineModel<AiChatMessage[]>('messages', { default: () => [] })
+
+/** 消息为空时，将 greeting 作为首条 assistant 消息插入 */
+watch([() => messages.value.length, () => props.greeting], ([len, greetingText]) => {
+  if (len === 0 && greetingText) {
+    messages.value = [{
+      role: 'assistant',
+      content: greetingText,
+      timestamp: Date.now(),
+      uid: 'greeting',
+      isGreeting: true,
+    }]
+  }
+}, { immediate: true })
 
 const emit = defineEmits<{
   close: []
@@ -153,9 +172,9 @@ function handleSend() {
   const text = inputText.value.trim()
   if (!text || sending.value) return
 
-  // 构建对话历史（发送前构建，不包含当前消息）
+  // 构建对话历史（发送前构建，排除欢迎语和当前消息）
   const history = messages.value
-    .filter(msg => msg.content && !msg.error)
+    .filter(msg => msg.content && !msg.error && !msg.isGreeting)
     .map(msg => ({ role: msg.role, content: msg.content }))
     .slice(-10)
 
@@ -221,6 +240,15 @@ function handleSend() {
 
   scrollToBottom()
 }
+
+/** 快捷操作：设置输入内容并发送 */
+function sendQuickAction(text: string) {
+  if (sending.value || !text.trim()) return
+  inputText.value = text
+  handleSend()
+}
+
+defineExpose({ sendQuickAction })
 
 /** 组件卸载时关闭SSE连接 */
 onBeforeUnmount(() => {
@@ -311,8 +339,58 @@ onBeforeUnmount(() => {
 }
 
 .message-content {
-  white-space: pre-wrap;
   line-height: 1.6;
+}
+
+// Markdown预览组件样式覆盖
+.message-content.markdown-body {
+  :deep(.md-editor-preview-wrapper) {
+    padding: 0;
+  }
+
+  :deep(.md-editor-preview) {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  :deep(.md-editor-preview p) {
+    margin: 0 0 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  :deep(.md-editor-preview pre) {
+    margin: 8px 0;
+    border-radius: 4px;
+  }
+
+  :deep(.md-editor-preview code) {
+    font-size: 13px;
+  }
+
+  :deep(.md-editor-preview ul),
+  :deep(.md-editor-preview ol) {
+    padding-left: 20px;
+    margin: 4px 0;
+  }
+
+  :deep(.md-editor-preview blockquote) {
+    margin: 8px 0;
+    padding: 4px 12px;
+  }
+
+  :deep(.md-editor-preview table) {
+    margin: 8px 0;
+  }
+
+  :deep(.md-editor-preview h1),
+  :deep(.md-editor-preview h2),
+  :deep(.md-editor-preview h3),
+  :deep(.md-editor-preview h4) {
+    margin: 12px 0 6px;
+  }
 }
 
 .message-actions {

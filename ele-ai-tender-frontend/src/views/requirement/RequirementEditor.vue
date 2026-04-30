@@ -40,6 +40,7 @@
 
     <!-- AI助手侧边栏 -->
     <AiAssistantSidebar
+      ref="aiSidebarRef"
       v-model:visible="chatVisible"
       v-model:messages="chatMessages"
       greeting="您好！我是您的AI助手，可以帮助您优化和修改业务需求内容。请选择快捷操作或输入您的需求。"
@@ -277,12 +278,10 @@ function handleChatMessage(_msg: string) {
   // 消息已通过 v-model 同步到 chatMessages
 }
 
+const aiSidebarRef = ref<InstanceType<typeof AiAssistantSidebar>>()
+
 function sendQuickAction(action: string) {
-  chatMessages.value.push({
-    role: 'user',
-    content: action,
-    timestamp: Date.now(),
-  })
+  aiSidebarRef.value?.sendQuickAction(action)
 }
 
 // ---- 自动保存 ----

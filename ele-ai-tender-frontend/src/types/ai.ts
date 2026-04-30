@@ -14,6 +14,8 @@ export interface AiChatMessage {
   error?: boolean
   /** 消息唯一标识，用于反馈关联 */
   uid?: string
+  /** 是否为欢迎语（不显示反馈按钮、不作为对话历史发送） */
+  isGreeting?: boolean
 }
 
 /** AI优化请求 */
