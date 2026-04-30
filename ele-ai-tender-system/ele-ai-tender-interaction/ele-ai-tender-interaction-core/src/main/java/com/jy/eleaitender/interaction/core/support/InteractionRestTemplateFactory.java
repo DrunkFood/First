@@ -1,6 +1,6 @@
 package com.jy.eleaitender.interaction.core.support;
 
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -18,7 +18,7 @@ public final class InteractionRestTemplateFactory {
     private InteractionRestTemplateFactory() {
     }
 
-    public static RestTemplate create(EleTenderInteractionProperties properties, ClientHttpRequestInterceptor interceptor) {
+    public static RestTemplate create(EleAiTenderInteractionProperties properties, ClientHttpRequestInterceptor interceptor) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout((int) properties.getConnectTimeout().toMillis());
         requestFactory.setReadTimeout((int) properties.getReadTimeout().toMillis());

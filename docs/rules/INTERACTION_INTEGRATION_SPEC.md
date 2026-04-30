@@ -18,7 +18,7 @@
 
 ## 4. 固定路径
 
-统一前缀：`/api/eleTender/interaction`
+统一前缀：`/api/eleAiTender/interaction`
 
 当前固定接口：
 

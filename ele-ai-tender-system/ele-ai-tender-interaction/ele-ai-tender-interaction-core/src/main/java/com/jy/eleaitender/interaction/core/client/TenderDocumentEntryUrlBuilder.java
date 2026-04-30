@@ -2,7 +2,7 @@ package com.jy.eleaitender.interaction.core.client;
 
 import com.jy.eleaitender.common.interaction.dto.TenderEntryContext;
 import com.jy.eleaitender.common.interaction.util.InteractionValidationUtils;
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionLogMasker;
 import com.jy.eleaitender.interaction.core.support.InteractionTraceSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +14,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 public class TenderDocumentEntryUrlBuilder {
 
-    private final EleTenderInteractionProperties properties;
+    private final EleAiTenderInteractionProperties properties;
 
-    public TenderDocumentEntryUrlBuilder(EleTenderInteractionProperties properties) {
+    public TenderDocumentEntryUrlBuilder(EleAiTenderInteractionProperties properties) {
         this.properties = properties;
     }
 

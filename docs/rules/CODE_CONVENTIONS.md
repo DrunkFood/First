@@ -279,6 +279,9 @@ public void doSomething() { ... }
 |----|------|
 | `BusinessException(code, message)` | 可预期的业务错误（如资源不存在、状态非法） |
 | `AuthException(code, message)` | 认证/鉴权失败 |
+| `FileException(code, message)` | 文件操作异常（上传/下载/格式等） |
+| `AiUnavailableException(code, message)` | AI服务不可用 |
+| `AiErrorContentException(code, message)` | AI返回错误内容 |
 | 原生 `RuntimeException` | 不可预期的系统错误（由全局处理器兜底） |
 
 ```java
@@ -304,6 +307,16 @@ throw new BusinessException(7002, "投标文件 " + fileId + " 不存在");
 
 - HTTP 状态码**统一返回 200**，不通过 HTTP 状态码区分业务错误
 - 兜底异常 message 为空时，使用异常类名（避免返回空 message）
+
+### 4.3 common 模块核心 DTO
+
+| DTO | 用途 |
+|-----|------|
+| `FillData` / `FillType` | 文档填充数据项（TEXT/TABLE/IMAGE/MARKDOWN 四种类型） |
+| `TableData` / `ColumnDef` / `MergeRule` / `MergeStrategy` | 表格填充数据 |
+| `ImageData` | 图片填充数据（base64/url + 宽高） |
+| `FixReplacement` / `LocationRefVO` | 文档修复替换项 + Word元素位置索引 |
+| `ReviewConfig` / `ReviewTypeConfig` | 评审项模板配置（review_config JSON 映射） |
 
 ---
 
@@ -376,28 +389,4 @@ SignatureUtil.verify(data, signature, secret)
 
 ---
 
-## 7. 前端规范
-
-### 7.1 组件
-
-- 统一使用 Vue 3 `<script setup>` Composition API
-- 组件文件名 PascalCase，路由文件名 kebab-case
-
-### 7.2 状态管理
-
-- 状态变更必须通过 Pinia store
-- 禁止在组件中直接读写 `localStorage`（store 文件内除外）
-
-### 7.3 API 调用
-
-- 所有后端调用在 `src/api/` 添加对应函数
-- 修改后端路径/参数/代理规则时，必须同步更新 `src/api/*`
-
-### 7.4 代理规则
-
-| 前端路径前缀 | 目标服务 | 路径重写 |
-|-------------|----------|----------|
-| `/support-api/*` | support :8080 | `/support-api/` → `/api/` |
-| `/file-api/*` | file :8081 | `/file-api/` → `/api/` |
-| `/core-api/*` | core :8082 | `/core-api/` → `/api/` |
-| `/ai-api/*` | ai :8083 | `/ai-api/` → `/api/` |
+前端规范见 [FRONTEND_CONVENTIONS.md](FRONTEND_CONVENTIONS.md)。

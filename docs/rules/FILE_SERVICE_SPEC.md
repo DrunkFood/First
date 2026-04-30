@@ -107,8 +107,6 @@
 
 继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`create_id`、`modify_id`、`ver`、`is_delete` 等）。
 
-继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`is_delete` 等）。
-
 ## 4. 上传约束
 
 - 通用上传必须提供 `file` 和 `bizType`

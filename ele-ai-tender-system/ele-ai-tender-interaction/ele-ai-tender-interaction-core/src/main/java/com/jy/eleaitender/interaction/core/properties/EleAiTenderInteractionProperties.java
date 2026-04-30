@@ -9,8 +9,8 @@ import java.time.Duration;
  * 电子标交互配置
  */
 @Data
-@ConfigurationProperties(prefix = "ele-tender.interaction")
-public class EleTenderInteractionProperties {
+@ConfigurationProperties(prefix = "ele-ai-tender.interaction")
+public class EleAiTenderInteractionProperties {
 
     private boolean enabled = true;
     private String apiBaseUrl;

@@ -2,7 +2,7 @@ package com.jy.eleaitender.interaction.core.support;
 
 import com.jy.eleaitender.common.interaction.constant.InteractionHeaderConstants;
 import com.jy.eleaitender.common.interaction.util.InteractionSignatureUtil;
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import org.springframework.http.HttpHeaders;
 
 /**
@@ -10,9 +10,9 @@ import org.springframework.http.HttpHeaders;
  */
 public class InteractionRequestSigner {
 
-    private final EleTenderInteractionProperties properties;
+    private final EleAiTenderInteractionProperties properties;
 
-    public InteractionRequestSigner(EleTenderInteractionProperties properties) {
+    public InteractionRequestSigner(EleAiTenderInteractionProperties properties) {
         this.properties = properties;
     }
 

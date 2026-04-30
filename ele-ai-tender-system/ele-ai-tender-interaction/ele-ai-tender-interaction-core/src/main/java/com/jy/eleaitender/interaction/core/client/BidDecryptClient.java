@@ -8,7 +8,7 @@ import com.jy.eleaitender.common.interaction.enums.InteractionResponseCode;
 import com.jy.eleaitender.common.interaction.exception.InteractionException;
 import com.jy.eleaitender.common.interaction.util.InteractionResultExtractor;
 import com.jy.eleaitender.common.interaction.util.InteractionValidationUtils;
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
 import com.jy.eleaitender.interaction.core.support.InteractionTraceSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +29,11 @@ import java.util.Collections;
 public class BidDecryptClient {
 
     private final RestTemplate restTemplate;
-    private final EleTenderInteractionProperties properties;
+    private final EleAiTenderInteractionProperties properties;
     private final InteractionRequestSigner signer;
 
     public BidDecryptClient(RestTemplate restTemplate,
-                            EleTenderInteractionProperties properties,
+                            EleAiTenderInteractionProperties properties,
                             InteractionRequestSigner signer) {
         this.restTemplate = restTemplate;
         this.properties = properties;

@@ -70,13 +70,13 @@
                   :border="true"
                   default-expand-all
                 >
-                  <el-table-column label="评审名称" min-width="100">
+                  <el-table-column label="评审项" min-width="100">
                     <template #default="{ row }">
                       <el-input
                         v-model="row.itemName"
                         type="textarea"
                         :rows="2"
-                        placeholder="请输入评审名称"
+                        placeholder="请输入评审项"
                         class="table-textarea"
                         :disabled="isEditingDisabled"
                       />
@@ -117,7 +117,7 @@
               </div>
             </template>
 
-            <!-- 资信评审：评审名称+评审标准+主观/客观+分值 -->
+            <!-- 资信评审：评审项+评审标准+主观/客观+分值 -->
             <template v-else-if="typeConfig.reviewType === 'CREDIT'">
               <div class="table-container">
                 <el-table
@@ -128,9 +128,9 @@
                   :border="true"
                   default-expand-all
                 >
-                  <el-table-column label="评审名称" min-width="100">
+                  <el-table-column label="评审项" min-width="100">
                     <template #default="{ row }">
-                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审名称" class="table-textarea" :disabled="isEditingDisabled" />
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审项" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
                   <el-table-column label="评审标准" min-width="450">
@@ -192,7 +192,7 @@
               </div>
             </template>
 
-            <!-- 技术评审：评审名称+评审标准+主观/客观+分值 -->
+            <!-- 技术评审：评审项+评审标准+主观/客观+分值 -->
             <template v-else-if="typeConfig.reviewType === 'TECHNICAL'">
               <div class="table-container">
                 <el-table
@@ -203,9 +203,9 @@
                   :border="true"
                   default-expand-all
                 >
-                  <el-table-column label="评审名称" min-width="100">
+                  <el-table-column label="评审项" min-width="100">
                     <template #default="{ row }">
-                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审名称" class="table-textarea" :disabled="isEditingDisabled" />
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审项" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
                   <el-table-column label="评审标准" min-width="450">
@@ -267,7 +267,7 @@
               </div>
             </template>
 
-            <!-- 商务评审：评审名称+评审标准+分值 -->
+            <!-- 商务评审：评审项+评审标准+分值 -->
             <template v-else-if="typeConfig.reviewType === 'COMMERCIAL'">
               <div class="table-container">
                 <el-table
@@ -278,9 +278,9 @@
                   :border="true"
                   default-expand-all
                 >
-                  <el-table-column label="评审名称" min-width="100">
+                  <el-table-column label="评审项" min-width="100">
                     <template #default="{ row }">
-                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审名称" class="table-textarea" :disabled="isEditingDisabled" />
+                      <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审项" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
                   <el-table-column label="评审标准" min-width="450">

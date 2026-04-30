@@ -24,26 +24,26 @@
 | `ele-ai-tender-support` | 8080 | 认证(含外部系统对接)、用户、角色、菜单、模板配置、知识库配置、模型配置与路由、系统参数、政策文件、消息通知、统计分析、访问/操作日志、版本管理 | 支撑中心 |
 | `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除、文档生成(Markdown→Word引擎) | 含MarkdownTemplateEngine/WordTemplateEngine/WordDocumentGenerator |
 | `ele-ai-tender-core` | 8082 | 项目管理、业务需求编制、AI编制任务、AI内容反馈、检测管理、评审项管理、文档集成、用户消息、政策文件(用户级)、项目模板快照 | 核心业务模块 |
-| `ele-ai-tender-ai` | 8083 | AI对话、知识库管理、文档匹配 | 检测引擎(DetectionEngine)和模型路由(ModelRouter)在Service层 |
+| `ele-ai-tender-ai` | 8083 | AI对话、知识库管理、文档匹配、智能检测、模型路由 | 检测引擎(DetectionEngine)和模型路由(ModelRouter)在Service层 |
 
 ## 术语规范
 
-| 中文 | 代码术语 | 表名 |
-|------|----------|------|
-| AI编制 | AiTender | — |
-| 项目 | Project (TbProject) | tb_project |
-| 业务需求 | Requirement (TbRequirement) | tb_requirement |
-| 招标需求内容 | RequirementContent | tb_project.requirement_content |
-| 模板 | Template (SupTemplate) | sup_template |
-| 项目模板快照 | ProjectTemplate (TbProjectTemplate) | tb_project_template |
-| 知识库文档 | KnowledgeDocument | ai_knowledge_document |
-| 检测记录 | DetectionRecord (TbDetectionRecord) | tb_detection_record |
-| 评审项 | ReviewItem (TbProjectReviewItem) | tb_project_review_item |
-| AI模型配置 | ModelConfig | sup_model_config |
-| AI内容反馈 | AiContentFeedback | ai_content_feedback |
-| AI响应日志 | AiResponseLog | ai_response_log |
-| 用户政策文件 | PolicyFile (TbPolicyFile) | tb_policy_file |
-| 平台政策文件 | SupPolicyFile | sup_policy_file |
+| 中文 | 代码术语 |
+|------|----------|
+| AI编制 | AiTender |
+| 项目 | Project (TbProject) |
+| 业务需求 | Requirement (TbRequirement) |
+| 招标需求内容 | RequirementContent |
+| 模板 | Template (SupTemplate) |
+| 项目模板快照 | ProjectTemplate (TbProjectTemplate) |
+| 知识库文档 | KnowledgeDocument |
+| 检测记录 | DetectionRecord (TbDetectionRecord) |
+| 评审项 | ReviewItem (TbProjectReviewItem) |
+| AI模型配置 | ModelConfig |
+| AI内容反馈 | AiContentFeedback |
+| AI响应日志 | AiResponseLog |
+| 用户政策文件 | PolicyFile (TbPolicyFile) |
+| 平台政策文件 | SupPolicyFile |
 
 **表前缀规范**: `tb_`(核心服务) / `ai_`(AI服务) / `sup_`(支撑中心) / `file_`(文件服务)
 
@@ -146,37 +146,7 @@ spring.config.import: optional:file:${user.home}/.ele-ai-tender/{module}-local.y
 
 **链路追踪**: 所有服务传播 `X-Trace-Id`，MDC 键 `traceId`
 
-## AI能力架构
-
-### 混合模型路由
-
-```
-任务类型 → ModelRouter → 本地模型(LOCAL) / 云端模型(CLOUD) / 私有化模型(PRIVATE)
-```
-
-- **LOCAL(本地微调)**: 处理大批量生成任务，降低Token成本
-- **CLOUD(云端大模型)**(DeepSeek等): 处理优化和检测任务，保证质量
-- **PRIVATE(私有化部署)**: 私有化场景部署
-
-模型路由由 `ModelRouter`(ai模块) + `DynamicChatClientFactory` 动态选择，配置通过 `sup_model_config` 和 `sup_model_route_rule` 管理。
-
-### 知识库向量化流程
-
-```
-文档上传 → Apache Tika解析 → 文本分块(500-1000字/块) → Embedding API向量化 → Milvus存储 → 相似度检索 → Top-K返回
-```
-
-### 流式响应
-
-AI助手和文本优化接口使用 SSE (Server-Sent Events) 实现流式响应，前端通过 `EventSource` 接收。
-
-### 文档生成
-
-Word模板上传 → WordStructureParser解析模板结构 → poi-tl填充数据 → 导出.docx
-
-文档生成引擎位于 file 模块：`MarkdownTemplateEngine`、`WordTemplateEngine`、`WordDocumentGenerator`、`WordStructureParser`。core 模块通过 `DocumentDataAssembler` 组装填充数据。
-
-### 服务调用关系
+## 服务调用关系
 
 - **core模块 → support模块**: 用户认证、权限校验
 - **core模块 → file模块**: 文件上传/下载
@@ -204,11 +174,14 @@ Word模板上传 → WordStructureParser解析模板结构 → poi-tl填充数�
 | 规范 | 文件 | 加载时机 |
 |------|------|----------|
 | **编码规范**（数据库字段、接口格式、分层、异常、安全） | [CODE_CONVENTIONS.md](docs/rules/CODE_CONVENTIONS.md) | 写代码时参考 |
-| **全局项目规范**（模块、端口、安全、日志、文档治理） | [PROJECT_SPEC_FINAL.md](docs/rules/PROJECT_SPEC_FINAL.md) | 了解项目整体约束时参考 |
-| **AI编制系统规范**（项目、需求、模板、评审项、检测） | [AI_TENDER_SYSTEM_SPEC.md](docs/rules/AI_TENDER_SYSTEM_SPEC.md) | 开发AI编制业务功能时参考 |
-| **阶段流程控制器规范**（PhaseTrigger/PhaseFlowController/触发器/Phase-Status联动/前端集成） | [PHASE_FLOW_SPEC.md](docs/rules/PHASE_FLOW_SPEC.md) | 开发编制阶段流转、阶段触发器、AI任务自动触发时参考 |
-| **文件服务规范** | [FILE_SERVICE_SPEC.md](docs/rules/FILE_SERVICE_SPEC.md) | 开发文件相关功能时参考 |
-| **支撑中心规范** | [SUPPORT_SYSTEM_SPEC.md](docs/rules/SUPPORT_SYSTEM_SPEC.md) | 开发认证、权限、用户管理时参考 |
-| **交互集成规范** | [INTERACTION_INTEGRATION_SPEC.md](docs/rules/INTERACTION_INTEGRATION_SPEC.md) | 开发第三方系统接入时参考 |
+| **前端编码规范**（组件、状态管理、API调用、代理规则） | [FRONTEND_CONVENTIONS.md](docs/rules/FRONTEND_CONVENTIONS.md) | 前端开发时参考 |
+| **全局项目规范**（模块清单、技术基线、表前缀、文档治理） | [PROJECT_SPEC_FINAL.md](docs/rules/PROJECT_SPEC_FINAL.md) | 了解项目整体约束时参考 |
+| **核心业务模块规范**（项目、需求、评审项、文档集成、AI任务） | [CORE_MODULE_SPEC.md](docs/rules/CORE_MODULE_SPEC.md) | 开发 core 模块功能时参考 |
+| **AI服务模块规范**（处理器、生成器、检测器、线程池、模型路由） | [AI_MODULE_SPEC.md](docs/rules/AI_MODULE_SPEC.md) | 开发 ai 模块功能时参考 |
+| **检测全链路规范**（提交→检测→定位→修复→状态流转） | [DETECTION_FLOW_SPEC.md](docs/rules/DETECTION_FLOW_SPEC.md) | 开发检测相关功能时参考 |
+| **阶段流程控制器规范**（PhaseTrigger/PhaseFlowController/触发器） | [PHASE_FLOW_SPEC.md](docs/rules/PHASE_FLOW_SPEC.md) | 开发编制阶段流转时参考 |
+| **文件服务规范**（上传下载、文档生成引擎、Word修复引擎） | [FILE_SERVICE_SPEC.md](docs/rules/FILE_SERVICE_SPEC.md) | 开发文件相关功能时参考 |
+| **支撑中心规范**（认证、权限、用户、模板、模型配置管理） | [SUPPORT_SYSTEM_SPEC.md](docs/rules/SUPPORT_SYSTEM_SPEC.md) | 开发支撑中心功能时参考 |
+| **交互集成规范**（第三方系统接入、SPI、DTO） | [INTERACTION_INTEGRATION_SPEC.md](docs/rules/INTERACTION_INTEGRATION_SPEC.md) | 开发第三方系统接入时参考 |
 
 > 代码实现 > `docs/rules/` > 其他文档，三者冲突时以代码为准。

@@ -7,7 +7,7 @@ import com.jy.eleaitender.common.interaction.dto.IdentityQueryResponse;
 import com.jy.eleaitender.common.interaction.dto.InteractionResult;
 import com.jy.eleaitender.common.interaction.spi.InteractionEventLogger;
 import com.jy.eleaitender.common.interaction.spi.InteractionIdentityService;
-import com.jy.eleaitender.interaction.core.client.EleTenderInteractionClient;
+import com.jy.eleaitender.interaction.core.client.EleAiTenderInteractionClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class InteractionIdentityController {
 
-    private final EleTenderInteractionClient interactionClient;
+    private final EleAiTenderInteractionClient interactionClient;
     private final InteractionIdentityService identityService;
     private final InteractionEventLogger eventLogger;
 
-    public InteractionIdentityController(EleTenderInteractionClient interactionClient,
+    public InteractionIdentityController(EleAiTenderInteractionClient interactionClient,
                                          InteractionIdentityService identityService,
                                          InteractionEventLogger eventLogger) {
         this.interactionClient = interactionClient;

@@ -5,7 +5,7 @@ import com.jy.eleaitender.common.interaction.dto.ExternalTokenResponse;
 import com.jy.eleaitender.common.interaction.dto.InteractionResult;
 import com.jy.eleaitender.common.interaction.util.InteractionResultExtractor;
 import com.jy.eleaitender.common.interaction.util.InteractionValidationUtils;
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionLogMasker;
 import com.jy.eleaitender.interaction.core.support.InteractionTraceSupport;
 import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
@@ -27,11 +27,11 @@ import java.util.Collections;
 public class ExternalAuthClient {
 
     private final RestTemplate restTemplate;
-    private final EleTenderInteractionProperties properties;
+    private final EleAiTenderInteractionProperties properties;
     private final InteractionRequestSigner signer;
 
     public ExternalAuthClient(RestTemplate restTemplate,
-                              EleTenderInteractionProperties properties,
+                              EleAiTenderInteractionProperties properties,
                               InteractionRequestSigner signer) {
         this.restTemplate = restTemplate;
         this.properties = properties;

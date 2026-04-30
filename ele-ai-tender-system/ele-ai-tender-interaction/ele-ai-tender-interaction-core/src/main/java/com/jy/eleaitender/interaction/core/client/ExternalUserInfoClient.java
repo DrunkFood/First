@@ -3,7 +3,7 @@ package com.jy.eleaitender.interaction.core.client;
 import com.jy.eleaitender.common.interaction.dto.ExternalUserInfoResponse;
 import com.jy.eleaitender.common.interaction.dto.InteractionResult;
 import com.jy.eleaitender.common.interaction.util.InteractionResultExtractor;
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionLogMasker;
 import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
 import com.jy.eleaitender.interaction.core.support.InteractionTraceSupport;
@@ -25,11 +25,11 @@ import java.util.Collections;
 public class ExternalUserInfoClient {
 
     private final RestTemplate restTemplate;
-    private final EleTenderInteractionProperties properties;
+    private final EleAiTenderInteractionProperties properties;
     private final InteractionRequestSigner signer;
 
     public ExternalUserInfoClient(RestTemplate restTemplate,
-                                  EleTenderInteractionProperties properties,
+                                  EleAiTenderInteractionProperties properties,
                                   InteractionRequestSigner signer) {
         this.restTemplate = restTemplate;
         this.properties = properties;

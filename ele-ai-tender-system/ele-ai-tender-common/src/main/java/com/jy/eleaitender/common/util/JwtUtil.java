@@ -23,7 +23,7 @@ public class JwtUtil {
     /**
      * 默认密钥（实际使用时应从配置文件读取，至少32字节）
      */
-    private static final String DEFAULT_SECRET = "EleTenderSystemSecretKey2024JWT!";
+    private static final String DEFAULT_SECRET = "eleAiTenderSystemSecretKey2024JWT!";
 
     /**
      * 默认过期时间（毫秒）- 2小时

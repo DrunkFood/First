@@ -20,7 +20,7 @@ import java.nio.file.Path;
 /**
  * 电子标交互统一客户端
  */
-public class EleTenderInteractionClient {
+public class EleAiTenderInteractionClient {
 
     private final ExternalAuthClient externalAuthClient;
     private final ExternalUserInfoClient externalUserInfoClient;
@@ -30,10 +30,10 @@ public class EleTenderInteractionClient {
     private final EnvelopeClient envelopeClient;
     private final TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder;
 
-    public EleTenderInteractionClient(ExternalAuthClient externalAuthClient,
-                                      ExternalUserInfoClient externalUserInfoClient,
-                                      FileClient fileClient,
-                                      TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder) {
+    public EleAiTenderInteractionClient(ExternalAuthClient externalAuthClient,
+                                        ExternalUserInfoClient externalUserInfoClient,
+                                        FileClient fileClient,
+                                        TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder) {
         this(externalAuthClient,
                 externalUserInfoClient,
                 fileClient,
@@ -43,13 +43,13 @@ public class EleTenderInteractionClient {
                 tenderDocumentEntryUrlBuilder);
     }
 
-    public EleTenderInteractionClient(ExternalAuthClient externalAuthClient,
-                                      ExternalUserInfoClient externalUserInfoClient,
-                                      FileClient fileClient,
-                                      BidDocumentPushClient bidDocumentPushClient,
-                                      BidDecryptClient bidDecryptClient,
-                                      EnvelopeClient envelopeClient,
-                                      TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder) {
+    public EleAiTenderInteractionClient(ExternalAuthClient externalAuthClient,
+                                        ExternalUserInfoClient externalUserInfoClient,
+                                        FileClient fileClient,
+                                        BidDocumentPushClient bidDocumentPushClient,
+                                        BidDecryptClient bidDecryptClient,
+                                        EnvelopeClient envelopeClient,
+                                        TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder) {
         this.externalAuthClient = externalAuthClient;
         this.externalUserInfoClient = externalUserInfoClient;
         this.fileClient = fileClient;

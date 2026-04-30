@@ -4,7 +4,7 @@ import com.jy.eleaitender.common.interaction.constant.InteractionHeaderConstants
 import com.jy.eleaitender.common.interaction.enums.InteractionResponseCode;
 import com.jy.eleaitender.common.interaction.exception.InteractionException;
 import com.jy.eleaitender.common.interaction.util.InteractionSignatureUtil;
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -14,9 +14,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
  */
 public class InteractionSignatureInterceptor implements HandlerInterceptor {
 
-    private final EleTenderInteractionProperties properties;
+    private final EleAiTenderInteractionProperties properties;
 
-    public InteractionSignatureInterceptor(EleTenderInteractionProperties properties) {
+    public InteractionSignatureInterceptor(EleAiTenderInteractionProperties properties) {
         this.properties = properties;
     }
 

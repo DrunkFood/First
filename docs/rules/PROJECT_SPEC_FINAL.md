@@ -17,13 +17,13 @@
 | 模块 | 类型 | 端口 | 详细规范 |
 |------|------|------|----------|
 | `ele-ai-tender-support-frontend` | 前端 | 3060（开发） | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
-| `ele-ai-tender-frontend` | 前端 | 5173（开发） | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
+| `ele-ai-tender-frontend` | 前端 | 5173（开发） | [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) |
 | `ele-ai-tender-common` | 公共库 | — | — |
 | `ele-ai-tender-common-interaction` | 协议库 | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
 | `ele-ai-tender-support` | 后端服务 | 8080 | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
 | `ele-ai-tender-file` | 后端服务 | 8081 | [FILE_SERVICE_SPEC.md](FILE_SERVICE_SPEC.md) |
-| `ele-ai-tender-core` | 后端服务 | 8082 | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
-| `ele-ai-tender-ai` | 后端服务 | 8083 | [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) |
+| `ele-ai-tender-core` | 后端服务 | 8082 | [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) |
+| `ele-ai-tender-ai` | 后端服务 | 8083 | [AI_MODULE_SPEC.md](AI_MODULE_SPEC.md) |
 | `ele-ai-tender-interaction` | Starter | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
 
 ## 3. 技术基线
@@ -56,70 +56,27 @@
 
 ## 6. 关键接口清单
 
-### 支撑中心（`/api`）
-- `/auth/*`、`/users/*`、`/roles/*`、`/menus/*`
-- `/v1/template-configs/*`、`/v1/knowledge-configs/*`、`/v1/statistics/*`
-- `/v1/model-configs/*`、`/v1/model-routes/*`、`/access-logs`、`/v1/messages/*`
-- `/v1/policy-files/*`、`/v1/sys-params/*`、`/versions/*`
-- `/external-systems/*`、`/external/*`
-- `/v1/operation-logs/*`
+各模块完整接口清单见对应 spec 文件：
 
-### 文件服务（`/api/file`）
-- `POST /upload`、`GET /download/{fileId}`
-- `GET /info/{fileId}`、`DELETE /delete/{fileId}`
-
-### AI编制核心（`/api/v1`）
-- `/projects/*` — 项目管理
-- `/requirements/*` — 业务需求
-- `/review-items/*` — 评审项
-- `/templates/*` — 模板管理
-- `/detections/*` — 检测管理
-- `/document-integration/*` — 文档集成
-- `/project-templates/*` — 项目模板快照
-- `/policy-files/*` — 用户政策文件
-- `/ai-tasks/*` — AI任务管理
-- `/ai-content-feedback/*` — AI内容反馈
-- `/user-messages/*` — 用户消息
-
-### AI服务（`/api/v1`）
-- `/ai/*` — AI助手对话、文本优化、生成
-- `/document-match/*` — 文档匹配
-- `/knowledge/*` — 知识库检索
-
-### 交互固定路径（`/api/eleAiTender/interaction`）
-- `/identity/current`
-- `/projects/basic-info`
-- `/callbacks/document-export`
-- `/callbacks/detection-result`
+| 模块 | 接口前缀 | 详细规范 |
+|------|----------|----------|
+| 支撑中心 | `/api/auth` `/api/users` `/api/roles` `/api/menus` `/api/v1/*` | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
+| 文件服务 | `/api/file/*` | [FILE_SERVICE_SPEC.md](FILE_SERVICE_SPEC.md) |
+| 核心业务 | `/api/v1/projects` `/api/v1/requirements` `/api/v1/review-items` `/api/v1/detection` `/api/v1/documents` 等 | [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) |
+| AI服务 | `/api/v1/ai` `/api/v1/knowledge` | [AI_MODULE_SPEC.md](AI_MODULE_SPEC.md) |
+| 交互集成 | `/api/eleAiTender/interaction` | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
 
 ## 7. 安全与 JWT
 
-- 认证采用 JWT + Redis 双校验
-- `ele-ai-tender-support` 负责 external token 签发
-- 四个后端服务共享同一套 JWT 密钥与过期策略
-- 所有使用 `JwtAuthenticationFilter` 的服务启动时必须执行 `JwtUtil.configure(...)`
-- 外部系统签名统一使用 `HMAC-SHA256`
-- 安全配置缺失时必须抛异常，禁止静默降级
-
-详见 [CODE_CONVENTIONS.md — 安全规范](CODE_CONVENTIONS.md#5-安全规范)。
+安全规范详见 [CODE_CONVENTIONS.md — 安全规范](CODE_CONVENTIONS.md)。
 
 ## 8. 日志约束
 
-- 全系统统一透传 `X-Trace-Id`，MDC 键为 `traceId`
-- HTTP 入站日志优先落库到 `sup_access_log`
-- 新增链路时尽量记录 `bizType`、`bizId`、`projectId`、`fileId`
-- 禁止记录完整 token、签名 secret、文件二进制内容和 AI 原始响应
+日志与链路追踪规范详见 [CODE_CONVENTIONS.md — 链路追踪规范](CODE_CONVENTIONS.md)。
 
 ## 9. 前后端联调
 
-| 前端路径前缀 | 目标 |
-|-------------|------|
-| `/support-api/*` | support :8080（rewrite → `/api/*`） |
-| `/file-api/*` | file :8081（rewrite → `/api/*`） |
-| `/core-api/*` | core :8082（rewrite → `/api/*`） |
-| `/ai-api/*` | ai :8083（rewrite → `/api/*`） |
-
-修改接口路径、参数位置或代理规则时，必须同步前端 API 文件和相关文档。
+代理规则详见 [FRONTEND_CONVENTIONS.md](FRONTEND_CONVENTIONS.md)。
 
 ## 10. 文档治理
 

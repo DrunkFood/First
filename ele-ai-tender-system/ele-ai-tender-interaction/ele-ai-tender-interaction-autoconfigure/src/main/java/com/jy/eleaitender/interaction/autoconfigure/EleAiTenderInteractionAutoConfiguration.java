@@ -24,12 +24,12 @@ import com.jy.eleaitender.interaction.core.client.EnvelopeClient;
 import com.jy.eleaitender.interaction.autoconfigure.handler.InteractionGlobalExceptionHandler;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionSignatureInterceptor;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionWebMvcConfigurer;
-import com.jy.eleaitender.interaction.core.client.EleTenderInteractionClient;
+import com.jy.eleaitender.interaction.core.client.EleAiTenderInteractionClient;
 import com.jy.eleaitender.interaction.core.client.ExternalAuthClient;
 import com.jy.eleaitender.interaction.core.client.ExternalUserInfoClient;
 import com.jy.eleaitender.interaction.core.client.FileClient;
 import com.jy.eleaitender.interaction.core.client.TenderDocumentEntryUrlBuilder;
-import com.jy.eleaitender.interaction.core.properties.EleTenderInteractionProperties;
+import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
 import com.jy.eleaitender.interaction.core.support.InteractionRestTemplateFactory;
 import com.jy.eleaitender.interaction.core.support.OutboundLogInterceptor;
@@ -47,21 +47,21 @@ import org.springframework.web.client.RestTemplate;
  * 电子标交互自动配置
  */
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties({EleTenderInteractionProperties.class, InteractionControllerProperties.class})
-@ConditionalOnProperty(prefix = "ele-tender.interaction", name = "enabled", havingValue = "true", matchIfMissing = true)
-public class EleTenderInteractionAutoConfiguration {
+@EnableConfigurationProperties({EleAiTenderInteractionProperties.class, InteractionControllerProperties.class})
+@ConditionalOnProperty(prefix = "ele-ai-tender.interaction", name = "enabled", havingValue = "true", matchIfMissing = true)
+public class EleAiTenderInteractionAutoConfiguration {
 
     static final String INTERACTION_REST_TEMPLATE_BEAN_NAME = "interactionRestTemplate";
 
     @Bean
     @ConditionalOnMissingBean
-    public InteractionRequestSigner interactionRequestSigner(EleTenderInteractionProperties properties) {
+    public InteractionRequestSigner interactionRequestSigner(EleAiTenderInteractionProperties properties) {
         return new InteractionRequestSigner(properties);
     }
 
     @Bean(INTERACTION_REST_TEMPLATE_BEAN_NAME)
     @ConditionalOnMissingBean(name = INTERACTION_REST_TEMPLATE_BEAN_NAME)
-    public RestTemplate interactionRestTemplate(EleTenderInteractionProperties properties,
+    public RestTemplate interactionRestTemplate(EleAiTenderInteractionProperties properties,
                                                 ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
         return InteractionRestTemplateFactory.create(properties, new OutboundLogInterceptor(eventLoggerProvider.getIfAvailable()));
     }
@@ -69,7 +69,7 @@ public class EleTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public ExternalAuthClient externalAuthClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                                 EleTenderInteractionProperties properties,
+                                                 EleAiTenderInteractionProperties properties,
                                                  InteractionRequestSigner interactionRequestSigner) {
         return new ExternalAuthClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
@@ -77,7 +77,7 @@ public class EleTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public ExternalUserInfoClient externalUserInfoClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                                         EleTenderInteractionProperties properties,
+                                                         EleAiTenderInteractionProperties properties,
                                                          InteractionRequestSigner interactionRequestSigner) {
         return new ExternalUserInfoClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
@@ -85,7 +85,7 @@ public class EleTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public FileClient fileClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                 EleTenderInteractionProperties properties,
+                                 EleAiTenderInteractionProperties properties,
                                  InteractionRequestSigner interactionRequestSigner) {
         return new FileClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
@@ -93,7 +93,7 @@ public class EleTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public BidDocumentPushClient bidDocumentPushClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                               EleTenderInteractionProperties properties,
+                                               EleAiTenderInteractionProperties properties,
                                                InteractionRequestSigner interactionRequestSigner) {
         return new BidDocumentPushClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
@@ -101,7 +101,7 @@ public class EleTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public BidDecryptClient bidDecryptClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                             EleTenderInteractionProperties properties,
+                                             EleAiTenderInteractionProperties properties,
                                              InteractionRequestSigner interactionRequestSigner) {
         return new BidDecryptClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
@@ -109,27 +109,27 @@ public class EleTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public EnvelopeClient envelopeClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                         EleTenderInteractionProperties properties,
+                                         EleAiTenderInteractionProperties properties,
                                          InteractionRequestSigner interactionRequestSigner) {
         return new EnvelopeClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder(EleTenderInteractionProperties properties) {
+    public TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder(EleAiTenderInteractionProperties properties) {
         return new TenderDocumentEntryUrlBuilder(properties);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public EleTenderInteractionClient eleTenderInteractionClient(ExternalAuthClient externalAuthClient,
-                                                                 ExternalUserInfoClient externalUserInfoClient,
-                                                                 FileClient fileClient,
-                                                                 BidDocumentPushClient bidDocumentPushClient,
-                                                                 BidDecryptClient bidDecryptClient,
-                                                                 EnvelopeClient envelopeClient,
-                                                                 TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder) {
-        return new EleTenderInteractionClient(
+    public EleAiTenderInteractionClient aiTenderInteractionClient(ExternalAuthClient externalAuthClient,
+                                                                  ExternalUserInfoClient externalUserInfoClient,
+                                                                  FileClient fileClient,
+                                                                  BidDocumentPushClient bidDocumentPushClient,
+                                                                  BidDecryptClient bidDecryptClient,
+                                                                  EnvelopeClient envelopeClient,
+                                                                  TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder) {
+        return new EleAiTenderInteractionClient(
                 externalAuthClient,
                 externalUserInfoClient,
                 fileClient,
@@ -141,7 +141,7 @@ public class EleTenderInteractionAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public InteractionSignatureInterceptor interactionSignatureInterceptor(EleTenderInteractionProperties properties) {
+    public InteractionSignatureInterceptor interactionSignatureInterceptor(EleAiTenderInteractionProperties properties) {
         return new InteractionSignatureInterceptor(properties);
     }
 
@@ -166,7 +166,7 @@ public class EleTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnBean(InteractionIdentityService.class)
     @ConditionalOnMissingBean
-    public InteractionIdentityController interactionIdentityController(EleTenderInteractionClient interactionClient,
+    public InteractionIdentityController interactionIdentityController(EleAiTenderInteractionClient interactionClient,
                                                                        InteractionIdentityService identityService,
                                                                        ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
         return new InteractionIdentityController(interactionClient, identityService, eventLoggerProvider.getIfAvailable());

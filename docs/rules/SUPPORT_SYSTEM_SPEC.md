@@ -14,8 +14,10 @@
 | POST | `/api/auth/login` | 账号密码登录 |
 | POST | `/api/auth/send-sms-code` | 发送短信验证码 |
 | POST | `/api/auth/phone-login` | 手机号登录 |
+| POST | `/api/auth/reset-password` | 通过短信验证码重置密码 |
 | POST | `/api/auth/logout` | 退出登录 |
 | GET | `/api/auth/userinfo` | 获取当前用户信息 |
+| GET | `/api/auth/info` | 获取当前用户信息（别名） |
 | GET | `/api/auth/menus` | 获取当前用户菜单 |
 | POST | `/api/auth/change-password` | 修改密码 |
 
@@ -65,6 +67,7 @@
 | PUT | `/api/v1/template-configs/{id}` | 更新模板 |
 | DELETE | `/api/v1/template-configs/{id}` | 删除模板 |
 | POST | `/api/v1/template-configs/{id}/set-default` | 设为默认模板 |
+| PUT | `/api/v1/template-configs/{id}/status` | 设置模板状态 |
 
 ### 2.6 知识库管理 (`/api/v1/knowledge-configs`)
 
@@ -245,4 +248,5 @@ JWT 约束、字符集约束与通用安全规范见 [PROJECT_SPEC_FINAL.md](PRO
 
 - [CODE_CONVENTIONS.md](CODE_CONVENTIONS.md) — 通用编码规范
 - [PROJECT_SPEC_FINAL.md](PROJECT_SPEC_FINAL.md) — 全局模块边界与 JWT 约束
-- [AI_TENDER_SYSTEM_SPEC.md](AI_TENDER_SYSTEM_SPEC.md) — AI编制系统规范
+- [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) — 核心业务模块规范
+- [AI_MODULE_SPEC.md](AI_MODULE_SPEC.md) — AI服务模块规范

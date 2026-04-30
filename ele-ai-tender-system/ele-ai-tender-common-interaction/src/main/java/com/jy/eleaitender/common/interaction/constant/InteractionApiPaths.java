@@ -5,7 +5,7 @@ package com.jy.eleaitender.common.interaction.constant;
  */
 public final class InteractionApiPaths {
 
-    public static final String BASE = "/api/eleTender/interaction";
+    public static final String BASE = "/api/eleAiTender/interaction";
     public static final String IDENTITY_CURRENT = BASE + "/identity/current";
     public static final String PROJECT_BASIC_INFO = BASE + "/projects/basic-info";
     public static final String BID_RECORD_SCHEME = BASE + "/bid-record-schemes/query";

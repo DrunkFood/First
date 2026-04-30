@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.jy.eletender.interaction.autoconfigure.EleTenderInteractionAutoConfiguration
+com.jy.eleaitender.interaction.autoconfigure.EleAiTenderInteractionAutoConfiguration
