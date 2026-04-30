@@ -369,9 +369,7 @@ onMounted(loadData)
 }
 
 .editor-area {
-  :deep(.cherry-markdown-editor) {
-    min-height: 500px;
-  }
+  min-height: 500px;
 }
 
 // ========================================
