@@ -56,6 +56,8 @@ pipeline {
                     bat """
                         cd ${env.APP_DIR}
                         npm install
+                        npm audit fix
+                        npm install
                     """
                 }
             }
