@@ -22,7 +22,7 @@
             <pattern>${project.pattern}</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>./${log.path}/${project.name}/%d{YYYY-MM-dd}/${project.name}_info_%d{YYYY-MM-dd}_%i.log</fileNamePattern>
+            <fileNamePattern>../${log.path}/${project.name}/%d{YYYY-MM-dd}/${project.name}_info_%d{YYYY-MM-dd}_%i.log</fileNamePattern>
             <maxFileSize>3GB</maxFileSize>
             <maxHistory>14</maxHistory>
         </rollingPolicy>
@@ -38,7 +38,7 @@
             <pattern>${project.pattern}</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>./${log.path}/${project.name}/%d{YYYY-MM-dd}/${project.name}_warn_%d{YYYY-MM-dd}_%i.log</fileNamePattern>
+            <fileNamePattern>../${log.path}/${project.name}/%d{YYYY-MM-dd}/${project.name}_warn_%d{YYYY-MM-dd}_%i.log</fileNamePattern>
             <maxFileSize>3GB</maxFileSize>
             <maxHistory>14</maxHistory>
         </rollingPolicy>
@@ -54,7 +54,7 @@
             <pattern>${project.pattern}</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>./${log.path}/${project.name}/%d{YYYY-MM-dd}/${project.name}_error_%d{YYYY-MM-dd}_%i.log</fileNamePattern>
+            <fileNamePattern>../${log.path}/${project.name}/%d{YYYY-MM-dd}/${project.name}_error_%d{YYYY-MM-dd}_%i.log</fileNamePattern>
             <maxFileSize>3GB</maxFileSize>
             <maxHistory>14</maxHistory>
         </rollingPolicy>
