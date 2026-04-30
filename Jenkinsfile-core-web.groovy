@@ -4,7 +4,7 @@ pipeline {
         APP_NAME = 'ele-ai-tender-web'
         APP_DIR = 'ele-ai-tender-frontend'
 
-        HTML_REPO = 'E:\\tender-document-tool\\fronted\\nginx-1.28.3\\html'
+        HTML_REPO = 'E:\\tender-document-tool\\frontend\\nginx-1.28.3\\html'
         BAK_REPO = 'E:\\tender-document-tool\\bak'
     }
     tools {
