@@ -98,6 +98,7 @@ import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
 import { useThemeStore } from '@/store/theme'
 import { aiApi, createSSEConnection } from '@/api/ai'
+import { generateUUID } from '@/utils/crypto'
 import type { AiChatMessage } from '@/types/ai'
 
 const themeStore = useThemeStore()
@@ -135,7 +136,7 @@ const inputText = ref('')
 const sending = ref(false)
 const messageListRef = ref<HTMLDivElement>()
 let closeSSE: (() => void) | null = null
-const conversationId = crypto.randomUUID()
+const conversationId = generateUUID()
 
 /** 每条聊天消息的反馈状态：uid → LIKE/DISLIKE */
 const chatFeedbackMap = reactive<Record<string, 'LIKE' | 'DISLIKE'>>({})
