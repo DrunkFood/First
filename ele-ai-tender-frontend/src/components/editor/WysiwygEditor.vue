@@ -527,6 +527,7 @@ onBeforeUnmount(() => {
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
   padding: 6px 10px;
   background: var(--app-bg-elevated);
   color: var(--app-text-primary);
