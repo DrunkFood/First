@@ -222,20 +222,19 @@ function scrollToBottom() {
   })
 }
 
-/** 发送消息 */
-function handleSend() {
-  const text = inputText.value.trim()
-  if (!text || sending.value) return
-
-  // 构建对话历史（发送前构建，排除欢迎语和当前消息）
-  const history = messages.value
+/** 构建对话历史 */
+function buildHistory() {
+  return messages.value
     .filter(msg => msg.content && !msg.error && !msg.isGreeting)
     .map(msg => ({ role: msg.role, content: msg.content }))
     .slice(-10)
+}
 
-  // 添加用户消息
-  const hadSelection = !!props.selectedText
-  const userMsg: AiChatMessage = { role: 'user', content: text, timestamp: Date.now(), uid: generateUid('user', Date.now(), text), selectedText: props.selectedText || undefined }
+/** 统一发送逻辑 */
+function doSend(text: string, context: string) {
+  const currentSelection = props.selectedText || ''
+  const hadSelection = !!currentSelection
+  const userMsg: AiChatMessage = { role: 'user', content: text, timestamp: Date.now(), uid: generateUid('user', Date.now(), text), selectedText: currentSelection || undefined }
   messages.value.push(userMsg)
   inputText.value = ''
   sending.value = true
@@ -245,25 +244,22 @@ function handleSend() {
   }
   scrollToBottom()
 
-  // 准备AI占位消息
   const aiMsgTimestamp = Date.now()
   const aiMsg: AiChatMessage = { role: 'assistant', content: '', timestamp: aiMsgTimestamp, uid: generateUid('assistant', aiMsgTimestamp) }
   messages.value.push(aiMsg)
   const aiIndex = messages.value.length - 1
 
-  // 发起SSE连接
   closeSSE = createSSEConnection(
     aiApi.chatUrl,
     {
       message: text,
-      context: props.selectedText || '',
+      context,
       projectId: props.projectId,
       requirementId: props.requirementId,
       conversationId,
-      history,
+      history: buildHistory(),
     },
     (data: string) => {
-      // 流式追加内容
       const current = messages.value[aiIndex]!
       const newContent = current.content + data
       messages.value.splice(aiIndex, 1, {
@@ -275,7 +271,6 @@ function handleSend() {
       scrollToBottom()
     },
     () => {
-      // 错误处理
       const current = messages.value[aiIndex]
       if (current) {
         messages.value.splice(aiIndex, 1, {
@@ -290,95 +285,27 @@ function handleSend() {
       closeSSE = null
     },
     () => {
-      // 完成回调
       sending.value = false
       closeSSE = null
     },
   )
 
   scrollToBottom()
+}
+
+/** 发送消息（用户输入：context = 选中内容 || 空） */
+function handleSend() {
+  const text = inputText.value.trim()
+  if (!text || sending.value) return
+  doSend(text, props.selectedText || '')
 }
 
 /** 快捷操作：设置输入内容并发送 */
 function sendQuickAction(text: string) {
   if (sending.value || !text.trim()) return
   inputText.value = text
-  sendWithQuickActionContext(text)
-}
-
-/** 快捷操作发送（context fallback 到完整内容） */
-function sendWithQuickActionContext(text: string) {
-  if (!text.trim() || sending.value) return
-
-  const history = messages.value
-    .filter(msg => msg.content && !msg.error && !msg.isGreeting)
-    .map(msg => ({ role: msg.role, content: msg.content }))
-    .slice(-10)
-
-  const hadSelection = !!props.selectedText
-  const userMsg: AiChatMessage = {
-    role: 'user',
-    content: text,
-    timestamp: Date.now(),
-    uid: generateUid('user', Date.now(), text),
-    selectedText: props.selectedText || undefined,
-  }
-  messages.value.push(userMsg)
-  inputText.value = ''
-  sending.value = true
-  emit('message', text, hadSelection)
-  if (hadSelection) {
-    emit('update:selectedText', '')
-  }
-  scrollToBottom()
-
-  const aiMsgTimestamp = Date.now()
-  const aiMsg: AiChatMessage = { role: 'assistant', content: '', timestamp: aiMsgTimestamp, uid: generateUid('assistant', aiMsgTimestamp) }
-  messages.value.push(aiMsg)
-  const aiIndex = messages.value.length - 1
-
-  closeSSE = createSSEConnection(
-    aiApi.chatUrl,
-    {
-      message: text,
-      context: props.selectedText || props.context || '',   // 快捷操作：有选中用选中，否则用全文
-      projectId: props.projectId,
-      requirementId: props.requirementId,
-      conversationId,
-      history,
-    },
-    (data: string) => {
-      const current = messages.value[aiIndex]!
-      const newContent = current.content + data
-      messages.value.splice(aiIndex, 1, {
-        role: current.role,
-        content: newContent,
-        timestamp: current.timestamp,
-        uid: generateUid('assistant', current.timestamp, newContent),
-      })
-      scrollToBottom()
-    },
-    () => {
-      const current = messages.value[aiIndex]
-      if (current) {
-        messages.value.splice(aiIndex, 1, {
-          role: current.role,
-          content: current.content || '',
-          timestamp: current.timestamp,
-          uid: generateUid('assistant', current.timestamp, current.content),
-          error: true,
-        })
-      }
-      sending.value = false
-      closeSSE = null
-    },
-    () => {
-      sending.value = false
-      closeSSE = null
-    },
-  )
-
-  scrollToBottom()
+  // 快捷操作：context = 选中内容 || 完整内容
+  doSend(text, props.selectedText || props.context || '')
 }
 
 defineExpose({ sendQuickAction })
