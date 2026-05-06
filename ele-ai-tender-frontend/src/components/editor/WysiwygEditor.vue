@@ -130,6 +130,10 @@ import type { DetectionIssueVO } from '@/types/detection'
 
 const modelValue = defineModel<string>({ default: '' })
 
+const emit = defineEmits<{
+  'selection-change': [text: string]
+}>()
+
 const props = withDefaults(defineProps<{
   readonly?: boolean
   highlights?: DetectionIssueVO[]
@@ -139,6 +143,7 @@ const props = withDefaults(defineProps<{
 })
 
 
+let selectionTimer: ReturnType<typeof setTimeout> | null = null
 // 防止 setContent 触发 onUpdate 导致循环
 let isInternalChange = false
 // SSE 流式更新节流
@@ -172,6 +177,18 @@ const editor = useEditor({
     if (isInternalChange) return
     const md = ed.getMarkdown()
     modelValue.value = md
+  },
+  onSelectionUpdate: ({ editor: ed }) => {
+    if (selectionTimer) clearTimeout(selectionTimer)
+    selectionTimer = setTimeout(() => {
+      const { from, to, empty } = ed.state.selection
+      if (empty) {
+        emit('selection-change', '')
+        return
+      }
+      const text = ed.state.doc.textBetween(from, to, '\n')
+      emit('selection-change', text.length >= 5 ? text : '')
+    }, 300)
   },
 })
 
@@ -228,6 +245,10 @@ watch(() => props.highlights, (val) => {
 // 主题变量由 _tokens.scss 中的 [data-theme="light"] 控制
 
 onBeforeUnmount(() => {
+  if (selectionTimer) {
+    clearTimeout(selectionTimer)
+    selectionTimer = null
+  }
   if (flushTimer) {
     clearTimeout(flushTimer)
     flushTimer = null

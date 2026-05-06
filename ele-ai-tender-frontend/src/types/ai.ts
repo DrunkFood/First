@@ -16,6 +16,8 @@ export interface AiChatMessage {
   uid?: string
   /** 是否为欢迎语（不显示反馈按钮、不作为对话历史发送） */
   isGreeting?: boolean
+  /** 用户选中的原文，用于后续替换定位。仅用户消息携带 */
+  selectedText?: string
 }
 
 /** AI优化请求 */

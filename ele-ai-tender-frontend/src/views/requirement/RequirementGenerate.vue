@@ -135,6 +135,7 @@
                   :readonly="isRequirementCompleted"
                   :highlights="detectionIssues"
                   class="content-editor"
+                  @selection-change="handleSelectionChange"
                 />
               </div>
 
@@ -214,8 +215,11 @@
       greeting="您好！我是您的AI助手，可以帮助您修改业务需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
       :context="content"
       :requirement-id="requirementId"
+      :selected-text="selectedText"
       @feedback="handleChatFeedback"
       @message="handleAiMessage"
+      @replace="handleReplace"
+      @update:selected-text="selectedText = $event"
     >
       <template #quick-actions>
         <div class="quick-actions">
@@ -264,6 +268,7 @@ const saving = ref(false)
 const exporting = ref(false)
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
+const selectedText = ref('')
 
 // ---- 最新任务 ----
 const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
@@ -518,10 +523,34 @@ function sendQuickAction(action: string) {
   aiSidebarRef.value?.sendQuickAction(action)
 }
 
-function handleAiMessage(msg: string) {
+function handleAiMessage(msg: string, hadSelection: boolean) {
   if (!msg.trim()) return
-  content.value += '\n\n' + msg
-  ElMessage.info('AI建议已追加到内容末尾')
+  // 带选中内容的消息走替换流程，不追加到末尾
+  if (!hadSelection) {
+    content.value += '\n\n' + msg
+  }
+}
+
+function handleSelectionChange(text: string) {
+  selectedText.value = text
+}
+
+function handleReplace(payload: { selectedText: string; replacement: string }) {
+  const { selectedText: original, replacement } = payload
+  const index = content.value.indexOf(original)
+
+  if (index === -1) {
+    ElMessage.warning('原文已被修改，请手动替换')
+    return
+  }
+
+  const secondIndex = content.value.indexOf(original, index + 1)
+  if (secondIndex !== -1) {
+    ElMessage.warning('存在多处相同内容，已替换第一处')
+  }
+
+  content.value = content.value.substring(0, index) + replacement + content.value.substring(index + original.length)
+  ElMessage.success('替换成功')
 }
 
 function formatBudget(yuan?: number): string {

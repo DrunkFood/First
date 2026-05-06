@@ -35,7 +35,12 @@
             </div>
           </template>
           <template v-else>
-            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-content">
+              <div v-if="msg.selectedText" class="user-quote">
+                {{ msg.selectedText }}
+              </div>
+              <div>{{ msg.content }}</div>
+            </div>
           </template>
           <!-- AI消息失败标记 -->
           <div v-if="msg.role === 'assistant' && msg.error" class="message-error">
@@ -63,6 +68,15 @@
               />
             </template>
           </div>
+          <!-- 替换操作栏（暂时隐藏） -->
+          <div v-if="false" class="replace-actions">
+            <el-button size="small" type="primary" @click="handleReplace(index, msg)">
+              应用替换
+            </el-button>
+            <el-button size="small" @click="dismissReplace(index)">
+              取消
+            </el-button>
+          </div>
         </div>
       </div>
     </div>
@@ -72,6 +86,14 @@
       <!-- 快捷操作插槽（发送中时禁用） -->
       <div :class="{ 'is-disabled': sending }">
         <slot name="quick-actions" />
+      </div>
+      <!-- 选中内容引用块 -->
+      <div v-if="props.selectedText" class="selection-quote">
+        <div class="quote-header">
+          <span class="quote-label">选中的内容</span>
+          <button class="quote-close" @click="clearSelection" title="清除">&times;</button>
+        </div>
+        <div class="quote-content">{{ props.selectedText }}</div>
       </div>
       <div class="chat-input-row">
         <el-input
@@ -109,6 +131,7 @@ const props = defineProps<{
   requirementId?: number
   showClose?: boolean
   greeting?: string
+  selectedText?: string
 }>()
 
 const messages = defineModel<AiChatMessage[]>('messages', { default: () => [] })
@@ -129,8 +152,14 @@ watch([() => messages.value.length, () => props.greeting], ([len, greetingText])
 const emit = defineEmits<{
   close: []
   feedback: [type: 'like' | 'dislike', msg: AiChatMessage]
-  message: [content: string]
+  message: [content: string, hadSelection: boolean]
+  replace: [payload: { selectedText: string; replacement: string }]
+  'update:selectedText': [value: string]
 }>()
+
+function clearSelection() {
+  emit('update:selectedText', '')
+}
 
 const inputText = ref('')
 const sending = ref(false)
@@ -140,6 +169,31 @@ const conversationId = generateUUID()
 
 /** 每条聊天消息的反馈状态：uid → LIKE/DISLIKE */
 const chatFeedbackMap = reactive<Record<string, 'LIKE' | 'DISLIKE'>>({})
+
+/** 记录已取消替换的消息索引 */
+const dismissedReplace = ref(new Set<number>())
+
+/** 获取 AI 回复消息对应的用户选中原文 */
+function getSelectedTextForAiMsg(aiMsgIndex: number): string | undefined {
+  if (dismissedReplace.value.has(aiMsgIndex)) return undefined
+  if (aiMsgIndex <= 0) return undefined
+  const userMsg = messages.value[aiMsgIndex - 1]
+  if (userMsg?.role !== 'user') return undefined
+  return userMsg.selectedText
+}
+
+/** 应用替换 */
+function handleReplace(_index: number, msg: AiChatMessage) {
+  const selectedText = getSelectedTextForAiMsg(_index)
+  if (!selectedText) return
+  emit('replace', { selectedText, replacement: msg.content })
+  dismissedReplace.value.add(_index)
+}
+
+/** 取消替换 */
+function dismissReplace(index: number) {
+  dismissedReplace.value.add(index)
+}
 
 /** 生成消息唯一标识 */
 function generateUid(role: string, timestamp: number, content?: string): string {
@@ -180,9 +234,15 @@ function handleSend() {
     .slice(-10)
 
   // 添加用户消息
-  const userMsg: AiChatMessage = { role: 'user', content: text, timestamp: Date.now(), uid: generateUid('user', Date.now(), text) }
+  const hadSelection = !!props.selectedText
+  const userMsg: AiChatMessage = { role: 'user', content: text, timestamp: Date.now(), uid: generateUid('user', Date.now(), text), selectedText: props.selectedText || undefined }
   messages.value.push(userMsg)
   inputText.value = ''
+  sending.value = true
+  emit('message', text, hadSelection)
+  if (hadSelection) {
+    emit('update:selectedText', '')
+  }
   scrollToBottom()
 
   // 准备AI占位消息
@@ -191,15 +251,12 @@ function handleSend() {
   messages.value.push(aiMsg)
   const aiIndex = messages.value.length - 1
 
-  sending.value = true
-  emit('message', text)
-
   // 发起SSE连接
   closeSSE = createSSEConnection(
     aiApi.chatUrl,
     {
       message: text,
-      context: props.context,
+      context: props.selectedText || '',
       projectId: props.projectId,
       requirementId: props.requirementId,
       conversationId,
@@ -246,7 +303,82 @@ function handleSend() {
 function sendQuickAction(text: string) {
   if (sending.value || !text.trim()) return
   inputText.value = text
-  handleSend()
+  sendWithQuickActionContext(text)
+}
+
+/** 快捷操作发送（context fallback 到完整内容） */
+function sendWithQuickActionContext(text: string) {
+  if (!text.trim() || sending.value) return
+
+  const history = messages.value
+    .filter(msg => msg.content && !msg.error && !msg.isGreeting)
+    .map(msg => ({ role: msg.role, content: msg.content }))
+    .slice(-10)
+
+  const hadSelection = !!props.selectedText
+  const userMsg: AiChatMessage = {
+    role: 'user',
+    content: text,
+    timestamp: Date.now(),
+    uid: generateUid('user', Date.now(), text),
+    selectedText: props.selectedText || undefined,
+  }
+  messages.value.push(userMsg)
+  inputText.value = ''
+  sending.value = true
+  emit('message', text, hadSelection)
+  if (hadSelection) {
+    emit('update:selectedText', '')
+  }
+  scrollToBottom()
+
+  const aiMsgTimestamp = Date.now()
+  const aiMsg: AiChatMessage = { role: 'assistant', content: '', timestamp: aiMsgTimestamp, uid: generateUid('assistant', aiMsgTimestamp) }
+  messages.value.push(aiMsg)
+  const aiIndex = messages.value.length - 1
+
+  closeSSE = createSSEConnection(
+    aiApi.chatUrl,
+    {
+      message: text,
+      context: props.selectedText || props.context || '',   // 快捷操作：有选中用选中，否则用全文
+      projectId: props.projectId,
+      requirementId: props.requirementId,
+      conversationId,
+      history,
+    },
+    (data: string) => {
+      const current = messages.value[aiIndex]!
+      const newContent = current.content + data
+      messages.value.splice(aiIndex, 1, {
+        role: current.role,
+        content: newContent,
+        timestamp: current.timestamp,
+        uid: generateUid('assistant', current.timestamp, newContent),
+      })
+      scrollToBottom()
+    },
+    () => {
+      const current = messages.value[aiIndex]
+      if (current) {
+        messages.value.splice(aiIndex, 1, {
+          role: current.role,
+          content: current.content || '',
+          timestamp: current.timestamp,
+          uid: generateUid('assistant', current.timestamp, current.content),
+          error: true,
+        })
+      }
+      sending.value = false
+      closeSSE = null
+    },
+    () => {
+      sending.value = false
+      closeSSE = null
+    },
+  )
+
+  scrollToBottom()
 }
 
 defineExpose({ sendQuickAction })
@@ -494,5 +626,79 @@ onBeforeUnmount(() => {
 .is-disabled {
   pointer-events: none;
   opacity: 0.5;
+}
+
+// ========================================
+// 选中内容引用块
+// ========================================
+.selection-quote {
+  background: var(--app-bg-elevated);
+  border: 1px solid var(--app-border-light);
+  border-left: 3px solid var(--app-brand-color);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+}
+
+.quote-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.quote-label {
+  font-size: 11px;
+  color: var(--app-text-tertiary);
+  font-weight: 500;
+}
+
+.quote-close {
+  background: none;
+  border: none;
+  color: var(--app-text-tertiary);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.quote-close:hover {
+  color: var(--app-text-secondary);
+}
+
+.quote-content {
+  font-size: 12px;
+  color: var(--app-text-secondary);
+  line-height: 1.5;
+  max-height: 4.5em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-all;
+}
+
+// ========================================
+// 用户消息中的引用
+// ========================================
+.user-quote {
+  border-left: 3px solid rgba(255, 255, 255, 0.4);
+  padding-left: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  opacity: 0.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+// ========================================
+// 替换操作栏
+// ========================================
+.replace-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
 }
 </style>

@@ -13,10 +13,13 @@
         :context="context"
         :project-id="projectId"
         :requirement-id="requirementId"
+        :selected-text="selectedText"
         v-model:messages="messages"
         @close="emit('update:visible', false)"
         @feedback="(type, msg) => emit('feedback', type, msg)"
-        @message="(content) => emit('message', content)"
+        @message="(content, hadSelection) => emit('message', content, hadSelection)"
+        @replace="(payload) => emit('replace', payload)"
+        @update:selected-text="(val) => emit('update:selectedText', val)"
       >
         <template #quick-actions>
           <slot name="quick-actions" />
@@ -39,13 +42,16 @@ const props = defineProps<{
   context?: string
   projectId?: number
   requirementId?: number
+  selectedText?: string
 }>()
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
   'update:messages': [value: AiChatMessage[]]
   feedback: [type: 'like' | 'dislike', msg: AiChatMessage]
-  message: [content: string]
+  message: [content: string, hadSelection: boolean]
+  replace: [payload: { selectedText: string; replacement: string }]
+  'update:selectedText': [value: string]
 }>()
 
 const messages = defineModel<AiChatMessage[]>('messages', { default: () => [] })
