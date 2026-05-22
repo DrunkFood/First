@@ -19,7 +19,7 @@ jwt:
 
 file:
   storage:
-    base-path: /data/ele-ai-tender/files
+    base-path: E:\java\filestore\ele-ai-tender\files
 
 swagger:
   enabled: false
