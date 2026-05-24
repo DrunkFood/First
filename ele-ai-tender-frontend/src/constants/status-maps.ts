@@ -5,7 +5,7 @@ export const PROJECT_STATUS_MAP: Record<string, { label: string; type?: '' | 'su
   PENDING_DETECTION: { label: '待检测', type: 'warning' },
   DETECTING: { label: '检测中', type: '', pulse: true },
   DETECTION_PASSED: { label: '检测通过', type: 'success' },
-  DETECTION_FAILED: { label: '检测失败', type: 'danger' },
+  DETECTION_FAILED: { label: '检测未通过', type: 'danger' },
   PUBLISHED: { label: '已发布', type: 'success' },
   ARCHIVED: { label: '已归档', type: 'info' },
   CANCELLED: { label: '已取消', type: 'info' },
