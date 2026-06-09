@@ -73,10 +73,10 @@ public class AiTaskProcessor {
             }
 
             // 检查发起数上限
-            if (!concurrencyManager.tryReserve(userId)) {
-                log.warn("任务{}发起数超限，拒绝: userId={}", task.getId(), userId);
-                continue;
-            }
+            //if (!concurrencyManager.tryReserve(userId)) {
+            //    log.warn("任务{}发起数超限，拒绝: userId={}", task.getId(), userId);
+            //    continue;
+            //}
 
             // 先获取并发许可，再CAS改状态，避免PROCESSING→PENDING弹跳
             if (!concurrencyManager.tryAcquire(userId)) {
