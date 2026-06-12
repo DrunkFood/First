@@ -36,6 +36,7 @@ export interface ProjectQueryParams {
 }
 
 export interface ProjectCreateParams {
+  projectCode?: string
   projectName: string
   projectCategory: string
   projectType: string

@@ -57,6 +57,16 @@
         <div class="section-title">项目基本信息</div>
         <el-row :gutter="20">
           <el-col :span="12">
+            <el-form-item label="项目编号" prop="projectCode">
+              <el-input
+                v-model="form.projectCode"
+                placeholder="不填则自动生成"
+                maxlength="50"
+                show-word-limit
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="项目名称" prop="projectName">
               <el-input
                 v-model="form.projectName"
@@ -119,11 +129,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="评审类型">
+            <el-form-item label="评审方式">
               <div class="review-type-wrapper">
                 <el-select
                   v-model="form.reviewType"
-                  placeholder="请选择评审类型"
+                  placeholder="请选择评审方式"
                   clearable
                   style="flex: 1"
                 >
@@ -182,12 +192,12 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="项目描述">
+        <el-form-item label="招标需求">
           <el-input
             v-model="form.projectDescription"
             type="textarea"
             :rows="4"
-            placeholder="请输入项目描述"
+            placeholder="请输入招标需求"
             maxlength="500"
             show-word-limit
           />
@@ -304,6 +314,7 @@ const usedTemplateName = computed(() => {
 })
 
 const form = reactive<ProjectCreateParams>({
+  projectCode: undefined,
   projectName: '',
   projectCategory: '',
   projectType: '',
@@ -320,13 +331,17 @@ const form = reactive<ProjectCreateParams>({
 })
 
 const rules = {
+  projectCode: [
+    { max: 50, message: '项目编号不超过50个字符', trigger: 'blur' },
+  ],
   projectName: [
     { required: true, message: '请输入项目名称', trigger: 'blur' },
     {
       asyncValidator: async (_rule: any, value: string, callback: any) => {
         if (!value || !value.trim()) return callback()
         try {
-          const isUnique = await projectApi.checkName(value.trim())
+          const editId = isEdit.value ? Number(route.params.id) : undefined
+          const isUnique = await projectApi.checkName(value.trim(), editId)
           if (isUnique) {
             callback()
           } else {
@@ -397,6 +412,7 @@ async function loadProjectDetail(id: number) {
     const data = await projectApi.getById(id)
     projectDetail.value = data
     Object.assign(form, {
+      projectCode: data.projectCode || '',
       projectName: data.projectName || '',
       projectCategory: data.projectCategory || '',
       projectType: data.projectType || '',
@@ -452,6 +468,7 @@ function handleRequirementChange(reqId: number | undefined) {
 function applyQueryParams() {
   const query = route.query
   const fieldMap: Record<string, keyof ProjectCreateParams> = {
+    projectCode: 'projectCode',
     projectName: 'projectName',
     projectCategory: 'projectCategory',
     projectType: 'projectType',
