@@ -87,8 +87,8 @@ CREATE TABLE IF NOT EXISTS `tb_project_version` (
 CREATE TABLE IF NOT EXISTS `tb_requirement` (
     `id`                     BIGINT        NOT NULL AUTO_INCREMENT COMMENT '需求ID',
     `requirement_name`       VARCHAR(100)  NOT NULL COMMENT '需求名称',
-    `project_category`       VARCHAR(30)   NOT NULL COMMENT '项目类别',
-    `project_type`           VARCHAR(30)   NOT NULL COMMENT '项目类型',
+    `project_category`       VARCHAR(30)   DEFAULT NULL COMMENT '项目类别',
+    `project_type`           VARCHAR(30)   DEFAULT NULL COMMENT '项目类型',
     `service_sub_type`       VARCHAR(50)   DEFAULT NULL COMMENT '服务子分类',
     `budget`                 DECIMAL(15,2) DEFAULT NULL COMMENT '预算价(元)',
     `requirement_description` VARCHAR(500) DEFAULT NULL COMMENT '需求描述',
