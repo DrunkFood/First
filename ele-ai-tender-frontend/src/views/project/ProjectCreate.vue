@@ -121,10 +121,11 @@
               <el-input-number
                 v-model="form.budget"
                 :min="0"
-                :precision="2"
+                :precision="6"
+                :step="1"
                 :disabled="isReferenceMode"
                 style="width: 100%"
-                placeholder="正数，保留2位小数"
+                placeholder="正数，保留6位小数"
               />
             </el-form-item>
           </el-col>
