@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.math.BigDecimal;
 
@@ -23,6 +24,7 @@ public class ProjectRequest {
     @Schema(description = "服务子类型")
     private String serviceSubType;
     
+    @NotNull(message = "预算金额不能为空")
     @Schema(description = "预算金额(元)")
     private BigDecimal budget;
     

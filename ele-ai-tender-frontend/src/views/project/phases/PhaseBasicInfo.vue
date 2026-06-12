@@ -39,7 +39,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="预算金额(万元)" prop="budget">
-            <el-input-number v-model="form.budget" :min="0" :precision="2" style="width: 100%" />
+            <el-input-number v-model="form.budget" :min="0" :precision="6" :step="0.01" placeholder="请输入正数，保留6位小数" style="width: 100%" />
           </el-form-item>
         </el-col>
         <el-col :span="12">

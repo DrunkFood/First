@@ -38,8 +38,9 @@
                 <el-input-number
                   v-model="form.budget"
                   :min="0"
-                  :precision="2"
+                  :precision="6"
                   :step="0.01"
+                  placeholder="请输入正数，保留6位小数"
                   class="full-width"
                 />
               </el-form-item>
@@ -158,6 +159,7 @@ const rules = {
   requirementName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
   requirementType: [{ required: true, message: '请选择需求类型', trigger: 'change' }],
+  budget: [{ required: true, message: '请输入预算价', trigger: 'blur' }],
 }
 
 onMounted(async () => {
@@ -231,7 +233,7 @@ async function handleSubmit() {
 
 function formatBudget(yuan?: number): string {
   if (yuan == null) return '-'
-  return `¥${(yuan / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 2 })} 万元`
+  return `¥${(yuan / 10000).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} 万元`
 }
 </script>
 
