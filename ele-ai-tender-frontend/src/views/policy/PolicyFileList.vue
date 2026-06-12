@@ -14,12 +14,6 @@
           <el-option label="政策文件" value="政策文件" />
         </el-select>
       </el-form-item>
-      <el-form-item label="来源">
-        <el-select v-model="searchForm.source" placeholder="请选择来源" clearable>
-          <el-option label="平台" value="SYSTEM" />
-          <el-option label="用户上传" value="USER" />
-        </el-select>
-      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handleSearch">查询</el-button>
         <el-button @click="handleReset">重置</el-button>
@@ -38,12 +32,9 @@
           {{ applicableCategoryMap[row.applicableCategory] || row.applicableCategory }}
         </template>
       </el-table-column>
-      <el-table-column prop="source" label="来源" width="80">
-        <template #default="{ row }">
-          <el-tag :type="row.source === 'SYSTEM' ? '' : 'success'" size="small">
-            {{ row.source === 'SYSTEM' ? '平台' : '用户上传' }}
-          </el-tag>
-        </template>
+      <el-table-column prop="createName" label="上传人" width="100" />
+      <el-table-column prop="fileSize" label="文件大小" width="100">
+        <template #default="{ row }">{{ formatFileSize(row.fileSize) }}</template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="80">
         <template #default="{ row }">
@@ -52,14 +43,13 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="170">
+      <el-table-column prop="createTime" label="上传时间" width="170">
         <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
       </el-table-column>
       <el-table-column label="操作" width="160">
         <template #default="{ row }">
           <el-button text type="primary" size="small" @click="handleView(row)">查看</el-button>
           <el-button
-            v-if="row.source !== 'SYSTEM'"
             text
             type="danger"
             size="small"
@@ -131,11 +121,7 @@
         <el-descriptions-item label="文件名">{{ currentDetail.fileName }}</el-descriptions-item>
         <el-descriptions-item label="文件分类">{{ currentDetail.fileCategory }}</el-descriptions-item>
         <el-descriptions-item label="适用类别">{{ applicableCategoryMap[currentDetail.applicableCategory] || currentDetail.applicableCategory }}</el-descriptions-item>
-        <el-descriptions-item label="来源">
-          <el-tag :type="currentDetail.source === 'SYSTEM' ? '' : 'success'" size="small">
-            {{ currentDetail.source === 'SYSTEM' ? '平台' : '用户上传' }}
-          </el-tag>
-        </el-descriptions-item>
+        <el-descriptions-item label="上传人">{{ currentDetail.createName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="文件大小">{{ formatFileSize(currentDetail.fileSize) }}</el-descriptions-item>
         <el-descriptions-item label="文件类型">{{ currentDetail.fileType }}</el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -170,19 +156,17 @@ const pageSize = ref(20)
 const searchForm = ref({
   fileName: '',
   fileCategory: '',
-  source: '',
 })
 
 const loadData = async () => {
   loading.value = true
   try {
-    const params: { pageNum: number; pageSize: number; fileName?: string; fileCategory?: string; source?: string } = {
+    const params: { pageNum: number; pageSize: number; fileName?: string; fileCategory?: string } = {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
     }
     if (searchForm.value.fileName) params.fileName = searchForm.value.fileName
     if (searchForm.value.fileCategory) params.fileCategory = searchForm.value.fileCategory
-    if (searchForm.value.source) params.source = searchForm.value.source
     const res = await policyFileApi.getList(params)
     tableData.value = res.records
     total.value = res.total
@@ -197,7 +181,7 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  searchForm.value = { fileName: '', fileCategory: '', source: '' }
+  searchForm.value = { fileName: '', fileCategory: '' }
   pageNum.value = 1
   loadData()
 }

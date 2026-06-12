@@ -11,6 +11,7 @@ export interface PolicyFileVO {
   userId?: number
   status: number
   source: 'SYSTEM' | 'USER'
+  createName?: string
   createTime: string
 }
 

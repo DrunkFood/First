@@ -14,7 +14,7 @@ public interface IPolicyFileService {
     /**
      * 分页查询当前用户的政策文件
      */
-    Page<TbPolicyFile> getPage(Integer pageNum, Integer pageSize, String fileCategory, String applicableCategory);
+    Page<PolicyFileVO> getPage(Integer pageNum, Integer pageSize, String fileName, String fileCategory, String applicableCategory);
 
     /**
      * 获取详情

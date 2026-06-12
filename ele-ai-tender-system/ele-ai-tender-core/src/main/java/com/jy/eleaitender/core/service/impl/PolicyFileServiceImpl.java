@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 政策文件服务实现
@@ -33,10 +34,13 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
     private SupPolicyFileMapper supPolicyFileMapper;
 
     @Override
-    public Page<TbPolicyFile> getPage(Integer pageNum, Integer pageSize, String fileCategory, String applicableCategory) {
+    public Page<PolicyFileVO> getPage(Integer pageNum, Integer pageSize, String fileName, String fileCategory, String applicableCategory) {
         Page<TbPolicyFile> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<TbPolicyFile> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TbPolicyFile::getUserId, SecurityContextHolder.getUserId());
+        if (StringUtils.hasText(fileName)) {
+            wrapper.like(TbPolicyFile::getFileName, fileName);
+        }
         if (StringUtils.hasText(fileCategory)) {
             wrapper.eq(TbPolicyFile::getFileCategory, fileCategory);
         }
@@ -44,7 +48,14 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
             wrapper.eq(TbPolicyFile::getApplicableCategory, applicableCategory);
         }
         wrapper.orderByDesc(TbPolicyFile::getCreateTime);
-        return aiPolicyFileMapper.selectPage(page, wrapper);
+        Page<TbPolicyFile> entityPage = aiPolicyFileMapper.selectPage(page, wrapper);
+
+        // 转换为VO
+        Page<PolicyFileVO> voPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(), entityPage.getTotal());
+        voPage.setRecords(entityPage.getRecords().stream()
+                .map(f -> toVO(f, "USER"))
+                .collect(Collectors.toList()));
+        return voPage;
     }
 
     @Override
