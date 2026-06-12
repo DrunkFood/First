@@ -17,6 +17,7 @@ export interface PolicyFileInfo {
 export interface PolicyFileQueryParams {
   pageNum: number
   pageSize: number
+  fileName?: string
   fileCategory?: string
   applicableCategory?: string
 }

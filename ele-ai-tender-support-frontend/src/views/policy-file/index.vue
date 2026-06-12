@@ -14,6 +14,9 @@
     <el-card shadow="never" class="panel-card">
       <div class="search-wrap">
         <el-form :inline="true" :model="queryParams" class="search-form">
+          <el-form-item label="文件名称">
+            <el-input v-model="queryParams.fileName" placeholder="请输入文件名称" clearable style="width: 200px" />
+          </el-form-item>
           <el-form-item label="文件分类">
             <el-select v-model="queryParams.fileCategory" placeholder="请选择" clearable style="width: 160px">
               <el-option label="法律法规" value="LAW" />
@@ -98,8 +101,20 @@
     <!-- 上传对话框 -->
     <el-dialog v-model="dialogVisible" title="上传政策文件" width="520px">
       <el-form :model="form" label-width="100px">
-        <el-form-item label="文件名称" required>
-          <el-input v-model="form.fileName" placeholder="请输入文件名称" />
+        <el-form-item label="文件" required>
+          <el-upload
+            :http-request="handleUpload"
+            :before-upload="beforeUpload"
+            v-model:file-list="fileList"
+            :limit="1"
+            :on-exceed="() => ElMessage.warning('只能上传一个文件')"
+            accept=".pdf,.doc,.docx"
+          >
+            <el-button type="primary">选择文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">支持 PDF、Word 文档，单文件不超过 50MB</div>
+            </template>
+          </el-upload>
         </el-form-item>
         <el-form-item label="文件分类" required>
           <el-select v-model="form.fileCategory" placeholder="请选择" style="width: 100%">
@@ -130,9 +145,11 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { UploadRequestOptions, UploadUserFile } from 'element-plus'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import type { PolicyFileInfo } from '@/types/policy-file'
 import { policyFileApi } from '@/api/policy-file'
+import { fileApi } from '@/api/file'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -143,14 +160,20 @@ const dialogVisible = ref(false)
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
+  fileName: '',
   fileCategory: '',
   applicableCategory: '',
 })
+
+const fileList = ref<UploadUserFile[]>([])
 
 const form = reactive({
   fileName: '',
   fileCategory: '',
   applicableCategory: '',
+  fileId: 0 as number | string,
+  fileSize: 0,
+  fileType: '',
   description: '',
 })
 
@@ -199,6 +222,7 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
+  queryParams.fileName = ''
   queryParams.fileCategory = ''
   queryParams.applicableCategory = ''
   handleSearch()
@@ -208,13 +232,48 @@ const handleCreate = () => {
   form.fileName = ''
   form.fileCategory = ''
   form.applicableCategory = ''
+  form.fileId = 0
+  form.fileSize = 0
+  form.fileType = ''
   form.description = ''
+  fileList.value = []
   dialogVisible.value = true
 }
 
+const beforeUpload = (file: File) => {
+  const maxSize = 50 * 1024 * 1024
+  if (file.size > maxSize) {
+    ElMessage.error('文件大小不能超过 50MB')
+    return false
+  }
+  return true
+}
+
+const handleUpload = async (options: UploadRequestOptions) => {
+  try {
+    const res = await fileApi.upload(options.file as File, 'policy_file')
+    form.fileId = res.data.fileId
+    form.fileName = res.data.fileName
+    form.fileSize = res.data.fileSize
+    form.fileType = extractFileExt(form.fileName)
+    ElMessage.success('文件上传成功')
+  } catch (error) {
+    console.error('Upload failed:', error)
+  }
+}
+
+function extractFileExt(fileName: string): string {
+  if (!fileName || !fileName.includes('.')) return ''
+  return fileName.substring(fileName.lastIndexOf('.') + 1).toUpperCase()
+}
+
 const handleSubmit = async () => {
-  if (!form.fileName || !form.fileCategory) {
-    ElMessage.warning('请填写必填项')
+  if (!form.fileId) {
+    ElMessage.warning('请先上传文件')
+    return
+  }
+  if (!form.fileCategory) {
+    ElMessage.warning('请选择文件分类')
     return
   }
   submitting.value = true

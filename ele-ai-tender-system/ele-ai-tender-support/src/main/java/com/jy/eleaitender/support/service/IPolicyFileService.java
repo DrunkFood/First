@@ -18,7 +18,7 @@ public interface IPolicyFileService {
      * @return 分页结果
      */
     Page<SupPolicyFile> getPage(Integer pageNum, Integer pageSize,
-                                String fileCategory, String applicableCategory);
+                                String fileName, String fileCategory, String applicableCategory);
 
     /**
      * 获取政策文件详情

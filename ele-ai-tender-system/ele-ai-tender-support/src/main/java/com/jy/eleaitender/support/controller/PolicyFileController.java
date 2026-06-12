@@ -28,9 +28,10 @@ public class PolicyFileController {
     public Result<Page<SupPolicyFile>> list(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String fileName,
             @RequestParam(required = false) String fileCategory,
             @RequestParam(required = false) String applicableCategory) {
-        return Result.success(policyFileService.getPage(pageNum, pageSize, fileCategory, applicableCategory));
+        return Result.success(policyFileService.getPage(pageNum, pageSize, fileName, fileCategory, applicableCategory));
     }
 
     @GetMapping("/{id}")

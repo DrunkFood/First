@@ -23,10 +23,13 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
 
     @Override
     public Page<SupPolicyFile> getPage(Integer pageNum, Integer pageSize,
-                                       String fileCategory, String applicableCategory) {
+                                       String fileName, String fileCategory, String applicableCategory) {
         Page<SupPolicyFile> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<SupPolicyFile> wrapper = new LambdaQueryWrapper<>();
 
+        if (StringUtils.hasText(fileName)) {
+            wrapper.like(SupPolicyFile::getFileName, fileName);
+        }
         if (StringUtils.hasText(fileCategory)) {
             wrapper.eq(SupPolicyFile::getFileCategory, fileCategory);
         }
