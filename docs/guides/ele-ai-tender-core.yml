@@ -257,10 +257,6 @@ paths:
                   type: string
                   description: ""
                   example: ""
-                serviceSubType:
-                  type: string
-                  description: ""
-                  example: ""
                 budget:
                   type: string
                   description: ""
@@ -455,10 +451,6 @@ paths:
                   description: ""
                   example: ""
                 projectType:
-                  type: string
-                  description: ""
-                  example: ""
-                serviceSubType:
                   type: string
                   description: ""
                   example: ""

@@ -142,9 +142,9 @@ AI能力由 ai 模块通过 `ai_task` 表异步解耦提供，core 模块负责"
 
 | 表名 | 用途 |
 |------|------|
-| `tb_project` | 项目表：project_code / project_name / project_category / project_type / service_sub_type / budget / status / current_phase / progress / template_id / requirement_id / requirement_content / generated_file_id |
+| `tb_project` | 项目表：project_code / project_name / project_category / project_type / budget / status / current_phase / progress / template_id / requirement_id / requirement_content / generated_file_id |
 | `tb_project_version` | 项目版本表：project_id / version_no / content_snapshot(JSON) / change_description |
-| `tb_requirement` | 业务需求表：requirement_name / project_category / project_type / service_sub_type / budget / requirement_description / match_mode / matched_file_id / matched_similarity / uploaded_file_id / content / auto_save_content / status / progress（**无 projectId**，需求与项目通过 `tb_project.requirement_id` 单向关联） |
+| `tb_requirement` | 业务需求表：requirement_name / project_category / project_type / budget / requirement_description / match_mode / matched_file_id / matched_similarity / uploaded_file_id / content / auto_save_content / status / progress（**无 projectId**，需求与项目通过 `tb_project.requirement_id` 单向关联） |
 | `tb_project_template` | 项目模板快照表：project_id / template_id / template_name / project_category / project_type / file_id / content / structure_definition(JSON) / version_no |
 | `tb_detection_record` | 检测记录表：requirement_id / project_id / detection_type / content_snapshot / result(JSON) / status / task_id / policy_file_ids / started_at / completed_at |
 | `tb_project_review_item` | 评审项表：project_id / parent_id / level / item_name / item_content / sort_order / review_type / score / max_score / weight / subjectivity / is_required |
