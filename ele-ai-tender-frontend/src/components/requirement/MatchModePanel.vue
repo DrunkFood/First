@@ -105,6 +105,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   'update:selectedFileId': [id: number | undefined]
   'update:selectedFileIds': [ids: number[]]
+  'update:uploadedFileId': [id: number | undefined]
   'file-preview': [file: MatchFile]
 }>()
 
@@ -113,7 +114,7 @@ const matching = ref(false)
 const internalFiles = ref<MatchFile[]>([])
 const fileList = ref<UploadFile[]>([])
 
-const uploadAction = '/file-api/api/v1/file/upload'
+const uploadAction = '/file-api/file/upload?bizType=requirement'
 const uploadHeaders = computed(() => {
   const token = getToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -199,6 +200,7 @@ function handleUploadSuccess(response: any, _file: UploadFile, _files: UploadFil
   const fileId = response?.data?.id || response?.data?.fileId
   if (fileId) {
     ElMessage.success('文件上传成功')
+    emit('update:uploadedFileId', fileId)
   } else {
     ElMessage.error('上传返回数据异常，未获取到文件ID')
   }

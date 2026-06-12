@@ -72,10 +72,12 @@
             v-model="form.matchMode"
             :match-files="matchFiles"
             :selected-file-id="form.matchedFileId"
+            :uploaded-file-id="form.uploadedFileId"
             :upload-accept="'.doc,.docx'"
             :upload-limit="1"
             mode="create"
             @update:selected-file-id="form.matchedFileId = $event"
+            @update:uploaded-file-id="form.uploadedFileId = $event"
             @file-preview="handlePreviewFile"
           />
         </div>
@@ -181,6 +183,11 @@ async function handleSubmit() {
 
   if (form.matchMode === 'MANUAL_SELECT' && !form.matchedFileId) {
     ElMessage.warning('请选择一个匹配文件')
+    return
+  }
+
+  if (form.matchMode === 'UPLOAD' && !form.uploadedFileId) {
+    ElMessage.warning('请上传需求文件')
     return
   }
 
