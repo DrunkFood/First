@@ -49,4 +49,10 @@ export const projectApi = {
   archive(id: number) {
     return request.post(`/core-api/v1/projects/${id}/archive`)
   },
+  /** 校验项目名称是否唯一 */
+  checkName(projectName: string, excludeId?: number) {
+    return request.get<any, boolean>('/core-api/v1/projects/check-name', {
+      params: { projectName, excludeId: excludeId || undefined },
+    })
+  },
 }

@@ -320,7 +320,25 @@ const form = reactive<ProjectCreateParams>({
 })
 
 const rules = {
-  projectName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
+  projectName: [
+    { required: true, message: '请输入项目名称', trigger: 'blur' },
+    {
+      asyncValidator: async (_rule: any, value: string, callback: any) => {
+        if (!value || !value.trim()) return callback()
+        try {
+          const isUnique = await projectApi.checkName(value.trim())
+          if (isUnique) {
+            callback()
+          } else {
+            callback(new Error('该项目名称已存在'))
+          }
+        } catch {
+          callback()
+        }
+      },
+      trigger: 'blur',
+    },
+  ],
   projectCategory: [{ required: true, message: '请选择项目类别', trigger: 'change' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
   requirementId: [{ required: true, message: '请选择业务需求', trigger: 'change' }],

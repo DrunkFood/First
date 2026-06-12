@@ -148,6 +148,10 @@ public class ProjectServiceImpl implements IProjectService {
     @Transactional(rollbackFor = Exception.class)
     public void update(Long id, TbProject project) {
         TbProject existing = getById(id); // 内部已做归属校验
+        // 校验项目名称唯一性
+        if (StringUtils.hasText(project.getProjectName())) {
+            validateProjectNameUnique(project.getProjectName(), id);
+        }
         project.setId(id);
         // 不允许修改项目编号
         project.setProjectCode(existing.getProjectCode());
@@ -262,13 +266,21 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     private void validateProjectNameUnique(String projectName, Long excludeId) {
+        if (!checkNameUnique(projectName, excludeId)) {
+            throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目名称已存在: " + projectName);
+        }
+    }
+
+    @Override
+    public boolean checkNameUnique(String projectName, Long excludeId) {
+        if (!StringUtils.hasText(projectName)) {
+            return true;
+        }
         LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TbProject::getProjectName, projectName);
         if (excludeId != null) {
             wrapper.ne(TbProject::getId, excludeId);
         }
-        if (projectMapper.selectCount(wrapper) > 0) {
-            throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目名称已存在: " + projectName);
-        }
+        return projectMapper.selectCount(wrapper) == 0;
     }
 }

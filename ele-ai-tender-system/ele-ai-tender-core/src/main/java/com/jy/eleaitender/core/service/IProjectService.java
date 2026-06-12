@@ -81,4 +81,12 @@ public interface IProjectService {
      * 归档项目
      */
     void archiveProject(Long projectId);
+
+    /**
+     * 校验项目名称是否唯一
+     * @param projectName 项目名称
+     * @param excludeId 排除的ID（编辑时排除自身）
+     * @return true=名称可用，false=名称已存在
+     */
+    boolean checkNameUnique(String projectName, Long excludeId);
 }

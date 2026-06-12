@@ -52,6 +52,15 @@ public class ProjectController {
         return Result.success(projectService.getById(id));
     }
 
+    @GetMapping("/check-name")
+    @RequireLogin
+    @Operation(summary = "校验项目名称是否唯一")
+    public Result<Boolean> checkName(
+            @RequestParam String projectName,
+            @RequestParam(required = false) Long excludeId) {
+        return Result.success(projectService.checkNameUnique(projectName, excludeId));
+    }
+
     @PostMapping
     @RequireLogin
     @Operation(summary = "创建项目")
