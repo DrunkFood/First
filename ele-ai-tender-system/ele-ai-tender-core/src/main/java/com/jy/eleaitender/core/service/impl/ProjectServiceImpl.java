@@ -84,12 +84,19 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    public Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String status, String projectCategory, String projectType, String createTimeStart, String createTimeEnd) {
+    public Page<TbProject> getPage(Integer pageNum, Integer pageSize, String projectName, String projectCode, String status, String projectCategory, String projectType, String createTimeStart, String createTimeEnd) {
         Page<TbProject> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
 
-        if (StringUtils.hasText(projectName)) {
+        // 项目名称或编号模糊查询（OR 逻辑）
+        boolean hasName = StringUtils.hasText(projectName);
+        boolean hasCode = StringUtils.hasText(projectCode);
+        if (hasName && hasCode) {
+            wrapper.and(w -> w.like(TbProject::getProjectName, projectName).or().like(TbProject::getProjectCode, projectCode));
+        } else if (hasName) {
             wrapper.like(TbProject::getProjectName, projectName);
+        } else if (hasCode) {
+            wrapper.like(TbProject::getProjectCode, projectCode);
         }
         if (StringUtils.hasText(status)) {
             wrapper.eq(TbProject::getStatus, status);

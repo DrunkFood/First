@@ -39,12 +39,13 @@ public class ProjectController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String projectName,
+            @RequestParam(required = false) String projectCode,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String projectCategory,
             @RequestParam(required = false) String projectType,
             @RequestParam(required = false) String createTimeStart,
             @RequestParam(required = false) String createTimeEnd) {
-        return Result.success(projectService.getPage(pageNum, pageSize, projectName, status, projectCategory, projectType, createTimeStart, createTimeEnd));
+        return Result.success(projectService.getPage(pageNum, pageSize, projectName, projectCode, status, projectCategory, projectType, createTimeStart, createTimeEnd));
     }
 
     @GetMapping("/{id}")

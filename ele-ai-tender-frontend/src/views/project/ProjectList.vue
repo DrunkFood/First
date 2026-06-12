@@ -8,7 +8,7 @@
       <el-form :inline="true" :model="queryParams" class="search-form">
         <el-form-item label="搜索项目">
           <el-input
-            v-model="queryParams.projectName"
+            v-model="searchKeyword"
             placeholder="名称/编号"
             clearable
             style="width: 180px"
@@ -181,12 +181,21 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   projectName: '',
+  projectCode: '',
   status: '',
   projectCategory: '',
   projectType: '',
   createTimeStart: '',
   createTimeEnd: '',
 })
+
+/** 搜索关键词，同步到 projectName 和 projectCode */
+const searchKeyword = ref('')
+
+function syncSearchKeyword() {
+  queryParams.projectName = searchKeyword.value
+  queryParams.projectCode = searchKeyword.value
+}
 
 function formatBudget(value?: number): string {
   return formatBudgetWanYuan(value)
@@ -239,6 +248,7 @@ function buildQueryParams() {
 
 async function fetchData() {
   loading.value = true
+  syncSearchKeyword()
   buildQueryParams()
   try {
     const result = await projectApi.getList(queryParams)
@@ -255,7 +265,9 @@ function handleSearch() {
 }
 
 function handleReset() {
+  searchKeyword.value = ''
   queryParams.projectName = ''
+  queryParams.projectCode = ''
   queryParams.status = ''
   queryParams.projectCategory = ''
   queryParams.projectType = ''
