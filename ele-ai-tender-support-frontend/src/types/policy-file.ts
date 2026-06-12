@@ -27,7 +27,7 @@ export interface PolicyFileCreateParams {
   fileName: string
   fileCategory: string
   applicableCategory?: string
-  fileId?: number
+  fileId?: number | string
   fileSize?: number
   fileType?: string
   description?: string
