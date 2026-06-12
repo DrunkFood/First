@@ -26,15 +26,6 @@
                 />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
-              <el-form-item label="项目类别" prop="projectCategory">
-                <el-select v-model="form.projectCategory" placeholder="请选择项目类别">
-                  <el-option label="限额以下" value="LIMITED_BELOW" />
-                  <el-option label="产权交易" value="PROPERTY_TRADE" />
-                  <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
-                </el-select>
-              </el-form-item>
-            </el-col>
           </el-row>
 
           <el-row :gutter="20">
@@ -138,7 +129,6 @@ const previewFile = ref<MatchFile | null>(null)
 
 const form = reactive({
   requirementName: '',
-  projectCategory: '',
   projectType: '',
   budget: undefined as number | undefined,
   requirementDescription: '',
@@ -152,7 +142,6 @@ const rules = {
     { required: true, message: '请输入项目名称', trigger: 'blur' },
     { max: 100, message: '项目名称不能超过100字符', trigger: 'blur' },
   ],
-  projectCategory: [{ required: true, message: '请选择项目类别', trigger: 'change' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
   budget: [{ required: true, message: '请输入预算价', trigger: 'blur' }],
 }

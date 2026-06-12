@@ -53,7 +53,7 @@ export interface RequirementQueryParams {
 
 export interface RequirementCreateParams {
   requirementName: string
-  projectCategory: string
+  projectCategory?: string
   projectType: string
   projectSubType?: string
   budget?: number
