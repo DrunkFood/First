@@ -60,7 +60,7 @@
           <el-progress
             :percentage="overallProgress"
             :stroke-width="8"
-            :status="allCompleted ? 'success' : ''"
+            :status="allCompleted && !hasIncompleteDetection ? 'success' : hasIncompleteDetection ? 'warning' : ''"
           />
           <span class="progress-text">{{ overallProgress }}% 完成</span>
         </div>
@@ -138,6 +138,11 @@
             </div>
           </div>
 
+          <div v-else-if="allCompleted && hasIncompleteDetection" class="no-issues-tip incomplete-tip">
+            <el-icon :size="32" color="var(--app-color-warning)"><WarningFilled /></el-icon>
+            <p>部分检测项未完成，结果可能不完整</p>
+          </div>
+
           <div v-else-if="allCompleted" class="no-issues-tip">
             <el-icon :size="32" color="var(--app-color-success)"><CircleCheck /></el-icon>
             <p>通过检测，未发现问题</p>
@@ -157,7 +162,8 @@
           <div class="conclusion-body">
             <p v-for="card in detectCards" :key="card.type" class="conclusion-line">
               <strong>{{ card.label }}：</strong>
-              <template v-if="card.issueCount > 0">发现 {{ card.issueCount }} 个问题，建议进行修改。</template>
+              <template v-if="card.failed && card.status === 'FAILED'">检测未完成，结果不可用。</template>
+              <template v-else-if="card.issueCount > 0">发现 {{ card.issueCount }} 个问题，建议进行修改。</template>
               <template v-else>未发现问题，通过检测。</template>
             </p>
             <p v-if="totalUnhandledIssues > 0" class="conclusion-warning">
@@ -194,7 +200,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Loading, RefreshRight, CircleCheck } from '@element-plus/icons-vue'
+import { ArrowLeft, Loading, RefreshRight, CircleCheck, WarningFilled } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { useTaskPolling } from '@/composables/useTaskPolling'
 import { getTaskProgress } from '@/types/ai-task'
@@ -270,6 +276,11 @@ const overallProgress = computed(() => {
 
 const totalUnhandledIssues = computed(() =>
   issues.value.filter(i => i.handleStatus === 0).length
+)
+
+/** 是否有检测项标记为failed（即未完成/超时），用于区分"通过"和"未完成" */
+const hasIncompleteDetection = computed(() =>
+  detectCards.value.some(c => c.failed && c.status === 'FAILED')
 )
 
 /** 是否从未提交过检测（初始状态） */
@@ -364,6 +375,11 @@ async function restoreDetectionState() {
         if (record.result) {
           parseTaskResult(card, record.result)
         }
+      } else if (isRequirementCompleted.value) {
+        // 需求已完成后，非终态记录视为检测未完成/超时，不再轮询
+        card.failed = true
+        card.percentage = 100
+        card.status = 'FAILED'
       } else {
         // 还在进行中，设置轮询
         cardTaskIds[cardIndex]!.value = record.taskId
@@ -814,6 +830,10 @@ function getIssueClass(issue: DetectionIssueVO): string {
   gap: 8px;
   padding: 32px;
   color: var(--app-color-success);
+}
+
+.no-issues-tip.incomplete-tip {
+  color: var(--app-color-warning);
 }
 
 .detecting-tip {
