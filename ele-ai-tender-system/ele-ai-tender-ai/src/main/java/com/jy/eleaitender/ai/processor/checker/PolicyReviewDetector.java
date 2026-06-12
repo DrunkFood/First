@@ -1,7 +1,8 @@
 package com.jy.eleaitender.ai.processor.checker;
 
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.UserPromptTemplates;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -25,7 +26,7 @@ public class PolicyReviewDetector extends BaseDetector {
 
     @Override
     protected String getSystemPrompt() {
-        return PromptTemplates.DETECTION_POLICY_REVIEW;
+        return SystemPromptTemplates.DETECTION_POLICY_REVIEW;
     }
 
     @Override

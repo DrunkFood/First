@@ -2,7 +2,7 @@ package com.jy.eleaitender.ai.processor.generator;
 
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.dto.ReviewConfig;
 import com.jy.eleaitender.common.entity.ai.AiTask;
@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -82,7 +81,7 @@ public class ReviewItemGenerator {
         ChatClient client = modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE);
 
         // 同步调用并记录响应
-        String aiOutput = aiCallRecorder.callAndRecord(client, PromptTemplates.REVIEW_ITEM_GENERATE,
+        String aiOutput = aiCallRecorder.callAndRecord(client, SystemPromptTemplates.REVIEW_ITEM_GENERATE,
                 userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
         // 提取JSON内容

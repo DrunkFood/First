@@ -1,7 +1,8 @@
 package com.jy.eleaitender.ai.processor.checker;
 
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.UserPromptTemplates;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -25,7 +26,7 @@ public class TypoDetector extends BaseDetector {
 
     @Override
     protected String getSystemPrompt() {
-        return PromptTemplates.DETECTION_TYPO;
+        return SystemPromptTemplates.DETECTION_TYPO;
     }
 
     @Override

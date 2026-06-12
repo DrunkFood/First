@@ -4,7 +4,7 @@ import com.jy.eleaitender.ai.dto.request.ChatRequest;
 import com.jy.eleaitender.ai.dto.request.OptimizeRequest;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.ai.service.IAiChatService;
 import com.jy.eleaitender.common.enums.AiUsageScenario;
@@ -73,7 +73,7 @@ public class AiChatServiceImpl implements IAiChatService {
                 AtomicReference<ChatResponse> lastResponseRef = new AtomicReference<>();
 
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
-                        .system(PromptTemplates.AI_ASSISTANT)
+                        .system(SystemPromptTemplates.AI_ASSISTANT)
                         .messages(chatMessages)
                         .user(userPrompt.toString())
                         .stream()
@@ -93,7 +93,7 @@ public class AiChatServiceImpl implements IAiChatService {
                             // 流完成后记录响应日志
                             aiCallRecorder.recordStreamResponse(
                                     lastResponseRef.get(), contentBuilder.toString(),
-                                    PromptTemplates.AI_ASSISTANT, userPrompt.toString(),
+                                    SystemPromptTemplates.AI_ASSISTANT, userPrompt.toString(),
                                     "CHAT", null, request.getConversationId(), null);
                             completeSse(emitter);
                         }
@@ -119,7 +119,7 @@ public class AiChatServiceImpl implements IAiChatService {
                 AtomicReference<ChatResponse> lastResponseRef = new AtomicReference<>();
 
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
-                        .system(PromptTemplates.TEXT_OPTIMIZE)
+                        .system(SystemPromptTemplates.TEXT_OPTIMIZE)
                         .user(userPrompt)
                         .stream()
                         .chatResponse();
@@ -137,7 +137,7 @@ public class AiChatServiceImpl implements IAiChatService {
                         () -> {
                             aiCallRecorder.recordStreamResponse(
                                     lastResponseRef.get(), contentBuilder.toString(),
-                                    PromptTemplates.TEXT_OPTIMIZE, userPrompt,
+                                    SystemPromptTemplates.TEXT_OPTIMIZE, userPrompt,
                                     "OPTIMIZATION", null, null, null);
                             completeSse(emitter);
                         }
@@ -159,7 +159,7 @@ public class AiChatServiceImpl implements IAiChatService {
         }
         userPrompt.append(request.getMessage());
 
-        return aiCallRecorder.callAndRecord(chatClient, PromptTemplates.AI_ASSISTANT,
+        return aiCallRecorder.callAndRecord(chatClient, SystemPromptTemplates.AI_ASSISTANT,
                 userPrompt.toString(), "CHAT", null, null, null);
     }
 

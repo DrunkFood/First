@@ -5,6 +5,11 @@ import com.jy.eleaitender.common.enums.ReviewType;
 /**
  * Prompt动态构建器
  * 根据不同场景组装User Prompt
+ * <p>
+ * 注意：Spring AI 的 ChatClient.prompt().system() / .user() 会通过 PromptTemplate 处理字符串，
+ * PromptTemplate 使用 {variableName} 语法做变量占位。如果模板内容包含字面量花括号（如 JSON 示例），
+ * 必须使用双花括号转义：{ → {{，} → }}，否则 PromptTemplate 构造时会抛出
+ * IllegalArgumentException: The template string is not valid.
  */
 public final class PromptBuilder {
 
@@ -14,7 +19,7 @@ public final class PromptBuilder {
     public static String buildRequirementGenerate(String projectName, String projectType,
                                                   String projectCategory, String budget,
                                                   String description, String referenceContent) {
-        return String.format(PromptTemplates.REQUIREMENT_GENERATE_USER,
+        return String.format(UserPromptTemplates.REQUIREMENT_GENERATE_USER,
                 defaultStr(projectName),
                 defaultStr(projectType),
                 defaultStr(projectCategory),
@@ -30,7 +35,7 @@ public final class PromptBuilder {
                                                  String projectCategory, String budget,
                                                  String requirementContent, String reviewMethod,
                                                  String enabledTypes) {
-        return String.format(PromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG,
+        return String.format(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG,
                 defaultStr(projectName),
                 defaultStr(projectType),
                 defaultStr(projectCategory),
@@ -44,7 +49,7 @@ public final class PromptBuilder {
      * 构建文本优化的User Prompt
      */
     public static String buildTextOptimize(String content, String requirement) {
-        return String.format(PromptTemplates.TEXT_OPTIMIZE_USER,
+        return String.format(UserPromptTemplates.TEXT_OPTIMIZE_USER,
                 defaultStr(content),
                 defaultStr(requirement, "提升专业性和规范性"));
     }
@@ -53,22 +58,21 @@ public final class PromptBuilder {
      * 构建检测类的User Prompt（敏感词/错别字/格式检测通用）
      */
     public static String buildDetection(String content) {
-        return String.format(PromptTemplates.DETECTION_USER, defaultStr(content));
+        return String.format(UserPromptTemplates.DETECTION_USER, defaultStr(content));
     }
 
     /**
      * 构建政策审查的User Prompt
      */
     public static String buildPolicyReview(String content) {
-        return String.format(PromptTemplates.DETECTION_POLICY_USER,
-                defaultStr(content));
+        return String.format(UserPromptTemplates.DETECTION_POLICY_USER, defaultStr(content));
     }
 
     /**
      * 构建占位符匹配的User Prompt
      */
     public static String buildPlaceholderMatch(String placeholders, String dataFields) {
-        return String.format(PromptTemplates.PLACEHOLDER_MATCH_USER,
+        return String.format(UserPromptTemplates.PLACEHOLDER_MATCH_USER,
                 defaultStr(placeholders),
                 defaultStr(dataFields));
     }

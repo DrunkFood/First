@@ -1,7 +1,7 @@
 package com.jy.eleaitender.ai.processor.checker;
 
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ public class SensitiveWordDetector extends BaseDetector {
 
     @Override
     protected String getSystemPrompt() {
-        return PromptTemplates.DETECTION_SENSITIVE_WORD;
+        return SystemPromptTemplates.DETECTION_SENSITIVE_WORD;
     }
 
     @Override

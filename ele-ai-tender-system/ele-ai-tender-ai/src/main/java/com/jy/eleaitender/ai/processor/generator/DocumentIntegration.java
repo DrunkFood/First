@@ -2,11 +2,10 @@ package com.jy.eleaitender.ai.processor.generator;
 
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.dto.FillData;
-import com.jy.eleaitender.common.dto.response.WordStructureVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
@@ -104,13 +103,13 @@ public class DocumentIntegration {
      * 解决占位符名（如"项目名称"）与数据key（如"projectName"）不匹配的问题
      *
      * @param targetPlaceholders Word模板占位符列表（{{变量名}}格式）
-     * @param sourceData        源数据（key为英文字段名）
-     * @param task              AI任务（用于AI调用记录）
+     * @param sourceData         源数据（key为英文字段名）
+     * @param task               AI任务（用于AI调用记录）
      * @return 匹配后的数据，key为模板占位符名，value为对应数据值
      */
     private Map<String, Object> matchPlaceholders(List<String> targetPlaceholders,
-                                                   Map<String, Object> sourceData,
-                                                   AiTask task) {
+                                                  Map<String, Object> sourceData,
+                                                  AiTask task) {
         if (targetPlaceholders == null || targetPlaceholders.isEmpty() || sourceData.isEmpty()) {
             log.warn("占位符或数据为空，跳过AI匹配");
             return sourceData;
@@ -135,7 +134,7 @@ public class DocumentIntegration {
             ChatClient client = modelRouter.route(AiTaskType.DOCUMENT_INTEGRATION);
 
             // 同步调用并记录响应
-            String aiOutput = aiCallRecorder.callAndRecord(client, PromptTemplates.PLACEHOLDER_MATCH,
+            String aiOutput = aiCallRecorder.callAndRecord(client, SystemPromptTemplates.PLACEHOLDER_MATCH,
                     userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
             // 解析AI返回的映射JSON

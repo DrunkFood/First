@@ -2,7 +2,8 @@ package com.jy.eleaitender.ai.processor.generator;
 
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
+import com.jy.eleaitender.ai.processor.prompt.UserPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
@@ -57,7 +58,7 @@ public class RequirementGenerator {
         ChatClient client = modelRouter.route(AiTaskType.REQUIREMENT_GENERATE);
 
         // 同步调用并记录响应
-        String aiOutput = aiCallRecorder.callAndRecord(client, PromptTemplates.REQUIREMENT_GENERATE,
+        String aiOutput = aiCallRecorder.callAndRecord(client, SystemPromptTemplates.REQUIREMENT_GENERATE,
                 userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
         // 提取Markdown内容

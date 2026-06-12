@@ -1,19 +1,9 @@
 package com.jy.eleaitender.ai.processor.prompt;
 
 /**
- * Prompt模板常量
- * 集中管理各AI场景的System Prompt和User Prompt模板
- *
- * 注意：Spring AI 的 ChatClient.prompt().system() / .user() 会通过 PromptTemplate 处理字符串，
- * PromptTemplate 使用 {variableName} 语法做变量占位。如果模板内容包含字面量花括号（如 JSON 示例），
- * 必须使用双花括号转义：{ → {{，} → }}，否则 PromptTemplate 构造时会抛出
- * IllegalArgumentException: The template string is not valid.
+ * System Prompt模板常量
  */
-public final class PromptTemplates {
-
-    private PromptTemplates() {}
-
-    // ==================== System Prompts ====================
+public class SystemPromptTemplates {
 
     /**
      * AI助手对话 - System Prompt
@@ -72,17 +62,17 @@ public final class PromptTemplates {
      */
     public static final String REVIEW_ITEM_GENERATE = """
             你是评标专家。根据项目信息和业务需求，生成完整的评审标准体系。
-
+            
             评分说明：资信评审、技术评审、商务评审三项合计总分必须为100分。允许其中一项或两项为0分。
             评分建议：建议货物类项目商务分30-60，资信10-25分；建议服务类项目商务分10-30，资信10-25分。
-
+            
             生成要求：
             1. 输出JSON格式的评审项树形结构
             2. 包含符合性审查、技术标评审、商务评审等一级分类
             3. 每个评审项需包含评分标准和分值
             4. 区分客观评审项和主观评审项
             5. 总分值必须为100分
-
+            
             输出JSON格式：
             ```json
             {{
@@ -108,17 +98,39 @@ public final class PromptTemplates {
             """;
 
     /**
+     * 占位符匹配 - System Prompt
+     * 将Word模板占位符与数据字段进行语义匹配
+     */
+    public static final String PLACEHOLDER_MATCH = """
+            你是文档模板字段匹配专家。你需要将Word模板占位符名称与数据字段名称进行语义匹配。
+            
+            匹配规则：
+            1. 根据语义含义匹配，不依赖字面一致
+            2. 中英文对应：如"项目名称"对应"projectName"，"预算金额"对应"budget"
+            3. 列表占位符对应列表类型字段：如"符合性审查项"对应"complianceItems"
+            4. 无法匹配的占位符映射为空字符串
+            
+            只输出JSON映射，格式如下，不要添加任何解释：
+            ```json
+            {{
+              "模板占位符名": "对应的数据字段key",
+              "无匹配占位符": ""
+            }}
+            ```
+            """;
+
+    /**
      * 敏感词检测 - System Prompt
      */
     public static final String DETECTION_SENSITIVE_WORD = """
             你是招标文件合规审查专家。分析以下招标文件内容，检测其中的敏感词汇和不当表述。
-
+            
             检测范围：
             1. 歧视性表述（地域歧视、品牌指定、规模限制等）
             2. 限制性条款（不合理的资质要求、业绩门槛等）
             3. 排他性表述（指定品牌、唯一供应商暗示等）
             4. 倾向性表述（暗示特定投标人的表述）
-
+            
             输出JSON格式：
             ```json
             {{
@@ -144,13 +156,13 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_TYPO = """
             你是文字校对专家。检查以下文本中的错别字、语法错误和标点符号错误。
-
+            
             检测范围：
             1. 错别字（同音字、形近字错误）
             2. 语法错误（搭配不当、成分残缺等）
             3. 标点符号错误
             4. 专业术语拼写错误
-
+            
             输出JSON格式：
             ```json
             {{
@@ -175,14 +187,14 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_POLICY_REVIEW = """
             你是招投标政策法规审查专家。对照提供的政策文件内容，检查招标文件的合规性。
-
+            
             审查要点：
             1. 是否符合最新的招投标法律法规
             2. 是否违反公平竞争原则
             3. 评标方法是否合规
             4. 投标人资格条件是否合法
             5. 招标程序是否完整
-
+            
             输出JSON格式：
             ```json
             {{
@@ -208,14 +220,14 @@ public final class PromptTemplates {
      */
     public static final String DETECTION_FORMAT_CHECK = """
             你是文档格式规范审查专家。检查招标文件的格式规范性。
-
+            
             检查范围：
             1. 标题层级规范（一级、二级、三级标题层次）
             2. 编号格式规范（统一使用阿拉伯数字或中文数字）
             3. 必要章节完整性（封面、目录、投标邀请、须知、技术要求、评标办法等）
             4. 表格格式规范
             5. 附件引用完整性
-
+            
             输出JSON格式：
             ```json
             {{
@@ -235,118 +247,4 @@ public final class PromptTemplates {
             评分规则：满分100分，每个格式问题-5分。
             """;
 
-    // ==================== User Prompt Templates ====================
-
-    /**
-     * 需求生成 - User Prompt 模板
-     * 参数: projectName, projectType, projectCategory, budget, description, referenceContent
-     */
-    public static final String REQUIREMENT_GENERATE_USER = """
-            请根据以下项目信息生成业务需求：
-            
-            项目名称：%s
-            项目类型：%s
-            项目类别：%s
-            项目预算：%s元
-            项目描述：%s
-
-            参考文档内容：
-            %s
-            """;
-
-    /**
-     * 评审项生成 - User Prompt 模板（带评审类型配置）
-     * 参数: projectName, projectType, projectCategory, budget, requirementContent, reviewMethod, enabledTypes
-     */
-    public static final String REVIEW_ITEM_GENERATE_USER_WITH_CONFIG = """
-            请根据以下项目信息和需求内容生成评审标准：
-
-            项目名称：%s
-            项目类型：%s
-            项目类别：%s
-            项目预算：%s元
-
-            业务需求内容：
-            %s
-
-            评审方式：%s
-
-            评审类型配置（只生成以下列出的类型，严禁添加其他类型）：
-            %s
-
-            输出JSON的一级分类name必须严格使用上述类型名称。
-            请确保总分值为100分，合理分配各评审项的分值。
-            """;
-
-    /**
-     * 文本优化 - User Prompt 模板
-     * 参数: content, requirement
-     */
-    public static final String TEXT_OPTIMIZE_USER = """
-            请优化以下招标文件文本：
-            
-            原文：
-            %s
-            
-            优化要求：%s
-            """;
-
-    /**
-     * 检测类 - User Prompt 模板（通用）
-     * 参数: content
-     */
-    public static final String DETECTION_USER = """
-            请检测以下招标文件内容：
-            
-            %s
-            """;
-
-    /**
-     * 政策审查 - User Prompt 模板
-     * 参数: content, policyContent
-     */
-    public static final String DETECTION_POLICY_USER = """
-            请对照政策文件检查以下招标文件内容的合规性：
-
-            招标文件内容：
-            %s
-
-            政策文件内容：
-            """;
-
-    /**
-     * 占位符匹配 - System Prompt
-     * 将Word模板占位符与数据字段进行语义匹配
-     */
-    public static final String PLACEHOLDER_MATCH = """
-            你是文档模板字段匹配专家。你需要将Word模板占位符名称与数据字段名称进行语义匹配。
-
-            匹配规则：
-            1. 根据语义含义匹配，不依赖字面一致
-            2. 中英文对应：如"项目名称"对应"projectName"，"预算金额"对应"budget"
-            3. 列表占位符对应列表类型字段：如"符合性审查项"对应"complianceItems"
-            4. 无法匹配的占位符映射为空字符串
-
-            只输出JSON映射，格式如下，不要添加任何解释：
-            ```json
-            {{
-              "模板占位符名": "对应的数据字段key",
-              "无匹配占位符": ""
-            }}
-            ```
-            """;
-
-    /**
-     * 占位符匹配 - User Prompt 模板
-     * 参数: placeholderList, dataFieldList
-     */
-    public static final String PLACEHOLDER_MATCH_USER = """
-            请将以下Word模板占位符与数据字段进行匹配：
-
-            模板占位符：
-            %s
-
-            可用数据字段：
-            %s
-            """;
 }
