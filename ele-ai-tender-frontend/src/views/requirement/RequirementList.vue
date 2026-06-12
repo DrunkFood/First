@@ -10,7 +10,7 @@
           <el-input v-model="queryParams.requirementName" placeholder="请输入项目名称" clearable />
         </el-form-item>
         <el-form-item label="需求状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable>
+          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 140px">
             <el-option
               v-for="(item, key) in REQUIREMENT_STATUS_MAP"
               :key="key"
@@ -20,13 +20,16 @@
           </el-select>
         </el-form-item>
         <el-form-item label="项目类型">
-          <el-select v-model="queryParams.projectType" placeholder="全部" clearable>
-            <el-option
-              v-for="(item, key) in PROJECT_TYPE_MAP"
-              :key="key"
-              :label="item.label + '类'"
-              :value="key"
-            />
+          <el-select v-model="queryParams.projectType" placeholder="全部" clearable style="width: 140px">
+            <el-option label="工程类" value="ENGINEERING" />
+            <el-option label="货物类" value="GOODS" />
+            <el-option-group label="服务类">
+              <el-option label="服务类" value="SERVICE" />
+              <el-option label="物业类" value="PROPERTY" />
+              <el-option label="IT服务类" value="IT_SERVICE" />
+              <el-option label="咨询服务类" value="CONSULTING" />
+              <el-option label="维保服务类" value="MAINTENANCE" />
+            </el-option-group>
           </el-select>
         </el-form-item>
         <el-form-item label="创建时间">
