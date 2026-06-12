@@ -9,9 +9,9 @@
       </el-form-item>
       <el-form-item label="文件分类">
         <el-select v-model="searchForm.fileCategory" placeholder="请选择分类" clearable>
-          <el-option label="法律法规" value="法律法规" />
-          <el-option label="规章制度" value="规章制度" />
-          <el-option label="政策文件" value="政策文件" />
+          <el-option label="法律法规" value="LAW" />
+          <el-option label="规章制度" value="REGULATION" />
+          <el-option label="政策文件" value="POLICY" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -26,7 +26,9 @@
 
     <el-table :data="tableData" v-loading="loading" stripe>
       <el-table-column prop="fileName" label="文件名" />
-      <el-table-column prop="fileCategory" label="文件分类" width="120" />
+      <el-table-column prop="fileCategory" label="文件分类" width="120">
+        <template #default="{ row }">{{ fileCategoryMap[row.fileCategory] || row.fileCategory }}</template>
+      </el-table-column>
       <el-table-column prop="applicableCategory" label="适用类别" width="120">
         <template #default="{ row }">
           {{ applicableCategoryMap[row.applicableCategory] || row.applicableCategory }}
@@ -75,9 +77,9 @@
       <el-form ref="uploadFormRef" :model="uploadForm" :rules="uploadRules" label-width="80px">
         <el-form-item label="文件分类" prop="fileCategory">
           <el-select v-model="uploadForm.fileCategory" placeholder="请选择分类" style="width: 100%">
-            <el-option label="法律法规" value="法律法规" />
-            <el-option label="规章制度" value="规章制度" />
-            <el-option label="政策文件" value="政策文件" />
+            <el-option label="法律法规" value="LAW" />
+            <el-option label="规章制度" value="REGULATION" />
+            <el-option label="政策文件" value="POLICY" />
           </el-select>
         </el-form-item>
         <el-form-item label="适用类别" prop="applicableCategory">
@@ -119,7 +121,7 @@
     <el-dialog v-model="showDetailDialog" title="文件详情" width="500px">
       <el-descriptions :column="1" border v-if="currentDetail">
         <el-descriptions-item label="文件名">{{ currentDetail.fileName }}</el-descriptions-item>
-        <el-descriptions-item label="文件分类">{{ currentDetail.fileCategory }}</el-descriptions-item>
+        <el-descriptions-item label="文件分类">{{ fileCategoryMap[currentDetail.fileCategory] || currentDetail.fileCategory }}</el-descriptions-item>
         <el-descriptions-item label="适用类别">{{ applicableCategoryMap[currentDetail.applicableCategory] || currentDetail.applicableCategory }}</el-descriptions-item>
         <el-descriptions-item label="上传人">{{ currentDetail.createName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="文件大小">{{ formatFileSize(currentDetail.fileSize) }}</el-descriptions-item>
@@ -213,6 +215,12 @@ const applicableCategoryMap: Record<string, string> = {
   LIMITED_BELOW: '限额以下',
   PROPERTY_TRADE: '产权交易',
   GOVERNMENT_PROCUREMENT: '政府采购',
+}
+
+const fileCategoryMap: Record<string, string> = {
+  LAW: '法律法规',
+  REGULATION: '规章制度',
+  POLICY: '政策文件',
 }
 
 const uploadRules: FormRules = {

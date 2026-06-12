@@ -25,7 +25,7 @@ export const policyFileApi = {
 
   /** 设置状态 */
   setStatus(id: number, status: number) {
-    return request.put(`/core-api/v1/policy-files/${id}/status`, { status })
+    return request.put(`/core-api/v1/policy-files/${id}/status`, undefined, { params: { status } })
   },
 
   /** 获取所有可用政策文件（平台+用户） */
