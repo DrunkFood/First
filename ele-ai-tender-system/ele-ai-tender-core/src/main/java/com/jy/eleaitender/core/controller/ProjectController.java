@@ -48,13 +48,6 @@ public class ProjectController {
         return Result.success(projectService.getPage(pageNum, pageSize, projectName, projectCode, status, projectCategory, projectType, createTimeStart, createTimeEnd));
     }
 
-    @GetMapping("/{id}")
-    @RequireLogin
-    @Operation(summary = "获取项目详情")
-    public Result<TbProject> getById(@PathVariable Long id) {
-        return Result.success(projectService.getById(id));
-    }
-
     @GetMapping("/check-name")
     @RequireLogin
     @Operation(summary = "校验项目名称是否唯一")
@@ -62,6 +55,13 @@ public class ProjectController {
             @RequestParam String projectName,
             @RequestParam(required = false) Long excludeId) {
         return Result.success(projectService.checkNameUnique(projectName, excludeId));
+    }
+
+    @GetMapping("/{id}")
+    @RequireLogin
+    @Operation(summary = "获取项目详情")
+    public Result<TbProject> getById(@PathVariable Long id) {
+        return Result.success(projectService.getById(id));
     }
 
     @PostMapping
