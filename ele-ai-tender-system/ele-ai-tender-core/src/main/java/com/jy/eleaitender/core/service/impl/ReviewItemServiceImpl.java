@@ -16,6 +16,7 @@ import com.jy.eleaitender.core.service.IReviewItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
@@ -131,7 +132,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public AiTask submitGenerate(Long projectId, Map<String, Object> params) {
         // 校验项目归属并获取项目信息
         TbProject project = projectService.getById(projectId);
