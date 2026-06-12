@@ -22,6 +22,8 @@ public class ProjectRequest {
     @Schema(description = "项目类型")
     private String projectType;
 
+    @Schema(description = "服务子类型")
+    private String serviceSubType;
 
     @NotNull(message = "预算金额不能为空")
     @Positive(message = "预算金额必须大于0")

@@ -34,13 +34,7 @@
                 <el-select v-model="form.projectType" placeholder="请选择项目类型" @change="handleTypeChange">
                   <el-option label="工程类" value="ENGINEERING" />
                   <el-option label="货物类" value="GOODS" />
-                  <el-option-group label="服务类">
-                    <el-option label="服务类" value="SERVICE" />
-                    <el-option label="物业" value="PROPERTY" />
-                    <el-option label="IT服务" value="IT_SERVICE" />
-                    <el-option label="咨询服务" value="CONSULTING" />
-                    <el-option label="维保服务" value="MAINTENANCE" />
-                  </el-option-group>
+                  <el-option label="服务类" value="SERVICE" />
                 </el-select>
               </el-form-item>
             </el-col>
