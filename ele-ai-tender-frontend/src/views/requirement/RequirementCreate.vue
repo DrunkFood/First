@@ -141,6 +141,22 @@ const rules = {
   requirementName: [
     { required: true, message: '请输入项目名称', trigger: 'blur' },
     { max: 100, message: '项目名称不能超过100字符', trigger: 'blur' },
+    {
+      asyncValidator: async (_rule: any, value: string, callback: any) => {
+        if (!value || !value.trim()) return callback()
+        try {
+          const isUnique = await requirementApi.checkName(value.trim())
+          if (isUnique) {
+            callback()
+          } else {
+            callback(new Error('该项目名称已存在'))
+          }
+        } catch {
+          callback()
+        }
+      },
+      trigger: 'blur',
+    },
   ],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
   budget: [

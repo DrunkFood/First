@@ -28,9 +28,6 @@ public class TbRequirement extends BaseEntity {
     @Schema(description = "项目类型")
     private String projectType;
 
-    @Schema(description = "服务子分类")
-    private String serviceSubType;
-
     @Schema(description = "预算价(元)")
     private BigDecimal budget;
 

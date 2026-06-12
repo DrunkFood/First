@@ -42,8 +42,11 @@ public class RequirementController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String requirementName,
-            @RequestParam(required = false) String status) {
-        return Result.success(requirementService.getPage(pageNum, pageSize, requirementName, status));
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String projectType,
+            @RequestParam(required = false) String createTimeStart,
+            @RequestParam(required = false) String createTimeEnd) {
+        return Result.success(requirementService.getPage(pageNum, pageSize, requirementName, status, projectType, createTimeStart, createTimeEnd));
     }
 
     @GetMapping("/match-files")
@@ -53,6 +56,15 @@ public class RequirementController {
             @RequestParam(required = false) Long requirementId,
             @RequestParam(required = false) String keyword) {
         return Result.success(requirementService.getMatchFiles(requirementId, keyword));
+    }
+
+    @GetMapping("/check-name")
+    @RequireLogin
+    @Operation(summary = "校验需求名称是否唯一")
+    public Result<Boolean> checkName(
+            @RequestParam String requirementName,
+            @RequestParam(required = false) Long excludeId) {
+        return Result.success(requirementService.checkNameUnique(requirementName, excludeId));
     }
 
     @GetMapping("/{id}")

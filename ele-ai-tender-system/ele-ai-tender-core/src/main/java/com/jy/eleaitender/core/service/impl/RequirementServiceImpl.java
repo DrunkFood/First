@@ -64,7 +64,7 @@ public class RequirementServiceImpl implements IRequirementService {
     };
 
     @Override
-    public Page<TbRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status) {
+    public Page<TbRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status, String projectType, String createTimeStart, String createTimeEnd) {
         Page<TbRequirement> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<TbRequirement> wrapper = new LambdaQueryWrapper<>();
 
@@ -73,6 +73,15 @@ public class RequirementServiceImpl implements IRequirementService {
         }
         if (StringUtils.hasText(status)) {
             wrapper.eq(TbRequirement::getStatus, status);
+        }
+        if (StringUtils.hasText(projectType)) {
+            wrapper.eq(TbRequirement::getProjectType, projectType);
+        }
+        if (StringUtils.hasText(createTimeStart)) {
+            wrapper.ge(TbRequirement::getCreateTime, createTimeStart + " 00:00:00");
+        }
+        if (StringUtils.hasText(createTimeEnd)) {
+            wrapper.le(TbRequirement::getCreateTime, createTimeEnd + " 23:59:59");
         }
 
         wrapper.orderByDesc(TbRequirement::getCreateTime);
@@ -93,6 +102,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public TbRequirement create(TbRequirement requirement) {
+        validateRequirementNameUnique(requirement.getRequirementName(), null);
         if (!StringUtils.hasText(requirement.getStatus())) {
             requirement.setStatus("IN_PROGRESS");
         }
@@ -107,6 +117,7 @@ public class RequirementServiceImpl implements IRequirementService {
     @Transactional(rollbackFor = Exception.class)
     public void update(Long id, TbRequirement requirement) {
         getById(id); // 内部已做归属校验
+        validateRequirementNameUnique(requirement.getRequirementName(), id);
         requirement.setId(id);
         // 正式保存后清除自动保存内容
         requirement.setAutoSaveContent(null);
@@ -376,6 +387,28 @@ public class RequirementServiceImpl implements IRequirementService {
         String html = markdownTemplateEngine.markdownToHtml(req.getContent());
         Map<String, Object> data = Map.of("projectName", req.getRequirementName());
         return wordDocumentGenerator.generate(data, html);
+    }
+
+    @Override
+    public boolean checkNameUnique(String requirementName, Long excludeId) {
+        if (!StringUtils.hasText(requirementName)) {
+            return true;
+        }
+        LambdaQueryWrapper<TbRequirement> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TbRequirement::getRequirementName, requirementName);
+        if (excludeId != null) {
+            wrapper.ne(TbRequirement::getId, excludeId);
+        }
+        return requirementMapper.selectCount(wrapper) == 0;
+    }
+
+    /**
+     * 校验需求名称唯一性（不唯一则抛异常）
+     */
+    private void validateRequirementNameUnique(String name, Long excludeId) {
+        if (!checkNameUnique(name, excludeId)) {
+            throw new BusinessException(ResponseCode.REQUIREMENT_NAME_EXISTS, "需求名称已存在: " + name);
+        }
     }
 
 }

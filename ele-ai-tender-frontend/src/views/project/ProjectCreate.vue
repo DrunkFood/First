@@ -103,20 +103,6 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="服务子类型">
-              <el-select
-                v-model="form.serviceSubType"
-                placeholder="请选择服务子类型"
-                style="width: 100%"
-              >
-                <el-option label="物业服务" value="物业服务" />
-                <el-option label="IT服务" value="IT服务" />
-                <el-option label="咨询服务" value="咨询服务" />
-                <el-option label="维保服务" value="维保服务" />
-              </el-select>
-            </el-form-item>
-          </el-col>
         </el-row>
 
         <el-row :gutter="20">
@@ -321,7 +307,6 @@ const form = reactive<ProjectCreateParams>({
   projectName: '',
   projectCategory: '',
   projectType: '',
-  serviceSubType: undefined,
   budget: undefined,
   reviewType: undefined,
   requirementContent: undefined,
@@ -397,7 +382,6 @@ async function loadProjectDetail(id: number) {
       projectName: data.projectName || '',
       projectCategory: data.projectCategory || '',
       projectType: data.projectType || '',
-      serviceSubType: data.serviceSubType,
       budget: toWanYuan(data.budget),
       reviewType: data.reviewType,
       requirementContent: data.requirementContent,
@@ -453,7 +437,6 @@ function applyQueryParams() {
     projectName: 'projectName',
     projectCategory: 'projectCategory',
     projectType: 'projectType',
-    serviceSubType: 'serviceSubType',
     reviewType: 'reviewType',
     tenderUnit: 'tenderUnit',
     contactPerson: 'contactPerson',

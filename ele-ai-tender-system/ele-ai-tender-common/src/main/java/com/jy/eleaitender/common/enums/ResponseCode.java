@@ -85,6 +85,7 @@ public enum ResponseCode {
     REQUIREMENT_NOT_FOUND(8011, "需求不存在"),
     REQUIREMENT_STATUS_ERROR(8012, "需求状态错误"),
     REQUIREMENT_MATCH_ERROR(8013, "需求模板匹配失败"),
+    REQUIREMENT_NAME_EXISTS(8014, "需求名称已存在"),
 
     // 模板相关 8021-8029
     TEMPLATE_NOT_FOUND(8021, "模板不存在"),

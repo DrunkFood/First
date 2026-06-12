@@ -17,7 +17,7 @@ public interface IRequirementService {
     /**
      * 分页查询需求列表
      */
-    Page<TbRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status);
+    Page<TbRequirement> getPage(Integer pageNum, Integer pageSize, String requirementName, String status, String projectType, String createTimeStart, String createTimeEnd);
 
     /**
      * 根据ID获取需求详情
@@ -98,4 +98,12 @@ public interface IRequirementService {
      * 导出需求文档（Markdown→Word）
      */
     byte[] exportDocument(Long id);
+
+    /**
+     * 校验需求名称是否唯一
+     * @param requirementName 需求名称
+     * @param excludeId 排除的ID（编辑时排除自身）
+     * @return true=名称可用，false=名称已存在
+     */
+    boolean checkNameUnique(String requirementName, Long excludeId);
 }

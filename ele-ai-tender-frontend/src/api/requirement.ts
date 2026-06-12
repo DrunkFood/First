@@ -70,4 +70,10 @@ export const requirementApi = {
   finishDetection(id: number) {
     return request.post(`/core-api/v1/requirements/${id}/detect/finish`)
   },
+  /** 校验需求名称是否唯一 */
+  checkName(requirementName: string, excludeId?: number) {
+    return request.get<any, boolean>('/core-api/v1/requirements/check-name', {
+      params: { requirementName, excludeId: excludeId || undefined },
+    })
+  },
 }

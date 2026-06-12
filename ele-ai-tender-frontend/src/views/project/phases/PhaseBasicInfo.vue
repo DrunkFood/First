@@ -25,16 +25,6 @@
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item v-if="form.projectType === 'SERVICE'" label="服务子类型">
-            <el-select v-model="form.serviceSubType" placeholder="请选择" style="width: 100%">
-              <el-option label="物业服务" value="物业服务" />
-              <el-option label="IT服务" value="IT服务" />
-              <el-option label="咨询服务" value="咨询服务" />
-              <el-option label="维保服务" value="维保服务" />
-            </el-select>
-          </el-form-item>
-        </el-col>
       </el-row>
       <el-row :gutter="20">
         <el-col :span="12">
@@ -251,7 +241,6 @@ const form = ref({
   projectName: '',
   projectCategory: '',
   projectType: '',
-  serviceSubType: '',
   budget: 0,
   reviewType: 'INTELLIGENT',
   projectDescription: '',
@@ -403,7 +392,6 @@ const loadProject = async () => {
     projectName: project.projectName || '',
     projectCategory: project.projectCategory || '',
     projectType: project.projectType || '',
-    serviceSubType: project.serviceSubType || '',
     budget: toWanYuan(project.budget) ?? 0,
     reviewType: project.reviewType ?? 'INTELLIGENT',
     projectDescription: project.projectDescription || '',

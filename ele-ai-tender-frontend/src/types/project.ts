@@ -4,7 +4,6 @@ export interface ProjectInfo {
   projectName: string
   projectCategory: string
   projectType: string
-  serviceSubType?: string
   budget?: number
   reviewType?: string
   status: string
@@ -40,7 +39,6 @@ export interface ProjectCreateParams {
   projectName: string
   projectCategory: string
   projectType: string
-  serviceSubType?: string
   budget?: number
   reviewType?: string
   requirementContent?: string
