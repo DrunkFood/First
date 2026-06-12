@@ -177,17 +177,17 @@ onMounted(async () => {
       stats.value.requirementCount = requirementRes.value.total
     }
 
-    const [pendingDetection, pendingReview] = await Promise.allSettled([
+    const [pendingDetection, inProgressReq] = await Promise.allSettled([
       projectApi.getList({ pageNum: 1, pageSize: 1, status: 'PENDING_DETECTION' }),
-      requirementApi.getList({ pageNum: 1, pageSize: 1, status: 'PENDING_REVIEW' }),
+      requirementApi.getList({ pageNum: 1, pageSize: 1, status: 'IN_PROGRESS' }),
     ])
 
     todoItems.value = []
     if (pendingDetection.status === 'fulfilled' && pendingDetection.value.total > 0) {
       todoItems.value.push({ label: '待检测项目', count: pendingDetection.value.total })
     }
-    if (pendingReview.status === 'fulfilled' && pendingReview.value.total > 0) {
-      todoItems.value.push({ label: '待审核需求', count: pendingReview.value.total })
+    if (inProgressReq.status === 'fulfilled' && inProgressReq.value.total > 0) {
+      todoItems.value.push({ label: '进行中需求', count: inProgressReq.value.total })
     }
   } catch {
     // 静默处理

@@ -13,11 +13,8 @@ export const PROJECT_STATUS_MAP: Record<string, { label: string; type?: '' | 'su
 
 /** 需求状态映射 */
 export const REQUIREMENT_STATUS_MAP: Record<string, { label: string; type?: '' | 'success' | 'warning' | 'info' | 'danger'; pulse?: boolean }> = {
-  DRAFT: { label: '草稿', type: 'info' },
-  GENERATING: { label: '生成中', type: '', pulse: true },
-  PENDING_REVIEW: { label: '待审核', type: 'warning' },
-  APPROVED: { label: '已通过', type: 'success' },
-  REJECTED: { label: '已拒绝', type: 'danger' },
+  IN_PROGRESS: { label: '进行中', type: '' },
+  COMPLETED: { label: '已完成', type: 'success' },
 }
 
 /** 项目类别映射 */
