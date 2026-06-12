@@ -535,7 +535,7 @@ async function handleSubmit() {
     } else {
       const project = await projectApi.create(submitData)
       ElMessage.success('创建成功')
-      router.push(`/project/${project.id}`)
+      router.push(`/project/${project.id}/wizard?step=0`)
     }
   } catch {
     ElMessage.error(isEdit.value ? '修改失败' : '创建失败')
