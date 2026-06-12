@@ -61,6 +61,11 @@
             <el-link type="primary" @click="handleView(row.id)">{{ row.requirementName }}</el-link>
           </template>
         </el-table-column>
+        <el-table-column prop="status" label="需求状态" width="100">
+          <template #default="{ row }">
+            <StatusBadge :status="row.status" :type-map="REQUIREMENT_STATUS_MAP" />
+          </template>
+        </el-table-column>
         <el-table-column prop="projectType" label="项目类型" width="120">
           <template #default="{ row }">
             <StatusBadge :status="row.projectType" :type-map="PROJECT_TYPE_MAP" />
