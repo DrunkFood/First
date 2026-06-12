@@ -122,11 +122,6 @@
             <ProgressCell :percentage="row.progress ?? 0" />
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="110" align="center">
-          <template #default="{ row }">
-            <StatusBadge :status="row.status" :type-map="PROJECT_STATUS_MAP" />
-          </template>
-        </el-table-column>
         <el-table-column label="创建时间" width="170">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
@@ -164,7 +159,6 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { projectApi } from '@/api/project'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import StatusBadge from '@/components/common/StatusBadge.vue'
 import ProgressCell from '@/components/common/ProgressCell.vue'
 import { PROJECT_STATUS_MAP, PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import { formatBudgetWanYuan } from '@/utils/budget'
