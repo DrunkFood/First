@@ -265,7 +265,16 @@ const rules: FormRules = {
   projectName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
   projectCategory: [{ required: true, message: '请选择项目类别', trigger: 'change' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
-  budget: [{ required: true, message: '请输入预算金额', trigger: 'blur' }],
+  budget: [
+    { required: true, message: '请输入预算金额', trigger: 'blur' },
+    { type: 'number', validator: (_rule: any, value: any, callback: any) => {
+      if (value !== undefined && value !== null && value <= 0) {
+        callback(new Error('预算金额必须大于0'))
+      } else {
+        callback()
+      }
+    }, trigger: 'blur' },
+  ],
   reviewType: [{ required: true, message: '请选择评审方式', trigger: 'change' }],
 }
 

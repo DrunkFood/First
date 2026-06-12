@@ -159,7 +159,16 @@ const rules = {
   requirementName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
   requirementType: [{ required: true, message: '请选择需求类型', trigger: 'change' }],
-  budget: [{ required: true, message: '请输入预算价', trigger: 'blur' }],
+  budget: [
+    { required: true, message: '请输入预算价', trigger: 'blur' },
+    { type: 'number', validator: (_rule: any, value: any, callback: any) => {
+      if (value !== undefined && value !== null && value <= 0) {
+        callback(new Error('预算价必须大于0'))
+      } else {
+        callback()
+      }
+    }, trigger: 'blur' },
+  ],
 }
 
 onMounted(async () => {
