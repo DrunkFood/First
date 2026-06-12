@@ -177,10 +177,18 @@ onMounted(async () => {
       stats.value.requirementCount = requirementRes.value.total
     }
 
-    const [pendingDetection, inProgressReq] = await Promise.allSettled([
+    const [pendingDetection, inProgressReq, detectionPassed, detectionFailed] = await Promise.allSettled([
       projectApi.getList({ pageNum: 1, pageSize: 1, status: 'PENDING_DETECTION' }),
       requirementApi.getList({ pageNum: 1, pageSize: 1, status: 'IN_PROGRESS' }),
+      projectApi.getList({ pageNum: 1, pageSize: 1, status: 'DETECTION_PASSED' }),
+      projectApi.getList({ pageNum: 1, pageSize: 1, status: 'DETECTION_FAILED' }),
     ])
+
+    // 计算检测通过率：已通过 / (已通过 + 未通过)
+    const passedCount = detectionPassed.status === 'fulfilled' ? detectionPassed.value.total : 0
+    const failedCount = detectionFailed.status === 'fulfilled' ? detectionFailed.value.total : 0
+    const detectedTotal = passedCount + failedCount
+    stats.value.detectionPassRate = detectedTotal > 0 ? Math.round(passedCount / detectedTotal * 100) : 0
 
     todoItems.value = []
     if (pendingDetection.status === 'fulfilled' && pendingDetection.value.total > 0) {
