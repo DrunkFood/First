@@ -71,6 +71,10 @@
                   <StatusBadge v-if="requirementData.projectType" :status="requirementData.projectType" :type-map="PROJECT_TYPE_MAP" />
                   <span v-else>-</span>
                 </p>
+                <p><strong>项目类别：</strong>
+                  <StatusBadge v-if="requirementData.projectCategory" :status="requirementData.projectCategory" :type-map="PROJECT_CATEGORY_MAP" />
+                  <span v-else>-</span>
+                </p>
                 <p><strong>项目预算：</strong>{{ formatBudget(requirementData.budget) }}</p>
                 <p><strong>需求类型：</strong>{{ REQUIREMENT_TYPE_MAP[requirementData.requirementType || 'NEW']?.label || '-' }}</p>
                 <p><strong>需求描述：</strong>{{ requirementData.requirementDescription || '-' }}</p>
@@ -244,7 +248,7 @@ import { getTaskProgress, getProgressStatus, isTaskSucceeded } from '@/types/ai-
 import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
-import { PROJECT_TYPE_MAP } from '@/constants/status-maps'
+import {PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP} from '@/constants/status-maps'
 import { REQUIREMENT_TYPE_MAP } from '@/types/requirement'
 import { formatBudgetWanYuan } from '@/utils/budget'
 import type { RequirementInfo, MatchFile } from '@/types/requirement'
