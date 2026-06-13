@@ -48,10 +48,8 @@ public class RequirementGenerator {
         String userPrompt = PromptBuilder.buildRequirementGenerate(
                 getString(params, "requirementName"),
                 getString(params, "projectType"),
-                getString(params, "projectCategory"),
                 getString(params, "budget"),
-                getString(params, "description"),
-                getString(params, "referenceContent")
+                getString(params, "description")
         );
 
         // 路由到合适的模型

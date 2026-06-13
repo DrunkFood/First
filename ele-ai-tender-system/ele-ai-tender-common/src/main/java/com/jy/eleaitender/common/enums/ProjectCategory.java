@@ -18,9 +18,9 @@ public enum ProjectCategory {
     private final String label;
 
     public static ProjectCategory fromCode(String code) {
-        for (ProjectCategory category : values()) {
-            if (category.code.equals(code)) {
-                return category;
+        for (ProjectCategory type : values()) {
+            if (type.code.equals(code)) {
+                return type;
             }
         }
         throw new IllegalArgumentException("未知的项目类别: " + code);

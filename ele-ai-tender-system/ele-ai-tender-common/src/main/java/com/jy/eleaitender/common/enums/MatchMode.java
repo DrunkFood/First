@@ -23,6 +23,6 @@ public enum MatchMode {
                 return mode;
             }
         }
-        throw new IllegalArgumentException("未知的匹配模式: " + code);
+        return AUTO_MATCH;
     }
 }

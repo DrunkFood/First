@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 检测器基类
@@ -40,17 +39,15 @@ public abstract class BaseDetector {
      * 执行检测（带任务ID和用户ID，用于响应记录）
      *
      * @param content 待检测文本
-     * @param params  额外参数（如政策文件内容等）
      * @param taskId  关联AI任务ID
      * @param userId  用户ID（取自ai_task.create_id）
      * @param fileIds 关联文件ID列表
      * @return 检测结果
      */
-    public DetectionResult detect(String content, Map<String, Object> params,
-                                  Long taskId, Long userId, List<String> fileIds) {
+    public DetectionResult detect(String content, Long taskId, Long userId, List<String> fileIds) {
         try {
             String systemPrompt = getSystemPrompt();
-            String userPrompt = buildUserPrompt(content, params);
+            String userPrompt = buildUserPrompt(content);
 
             ChatClient client = modelRouter.route(AiUsageScenario.DETECTION);
 
@@ -83,7 +80,7 @@ public abstract class BaseDetector {
     /**
      * 构建User Prompt
      */
-    protected abstract String buildUserPrompt(String content, Map<String, Object> params);
+    protected abstract String buildUserPrompt(String content);
 
     /**
      * 解析AI返回的检测结果
@@ -96,8 +93,8 @@ public abstract class BaseDetector {
 
             // 解析issues
             if (root.has("issues")) {
-                List<DetectionIssueVO> issues = objectMapper.convertValue(
-                        root.get("issues"), new TypeReference<List<DetectionIssueVO>>() {});
+                List<DetectionIssueVO> issues = objectMapper.convertValue(root.get("issues"), new TypeReference<>() {
+                });
                 // 为每个issue设置检测类型
                 issues.forEach(issue -> issue.setDetectionType(getDetectionType()));
                 result.setIssues(issues);

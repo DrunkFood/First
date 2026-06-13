@@ -30,6 +30,15 @@ public class GenerateResultParser {
         }
     }
 
+    public <T> T parseParams(String requestParams, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(requestParams, clazz);
+        } catch (Exception e) {
+            log.warn("解析requestParams失败: {}", requestParams, e);
+            return null;
+        }
+    }
+
     public String toJsonResult(String key, String value) {
         try {
             return objectMapper.writeValueAsString(Map.of(key, value));

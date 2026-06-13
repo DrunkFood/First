@@ -3,6 +3,7 @@ package com.jy.eleaitender.ai.processor.checker;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.prompt.UserPromptTemplates;
+import com.jy.eleaitender.common.enums.DetectionType;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -21,7 +22,7 @@ public class PolicyReviewDetector extends BaseDetector {
 
     @Override
     protected String getDetectionType() {
-        return "POLICY_REVIEW";
+        return DetectionType.POLICY_REVIEW.getCode();
     }
 
     @Override
@@ -30,7 +31,7 @@ public class PolicyReviewDetector extends BaseDetector {
     }
 
     @Override
-    protected String buildUserPrompt(String content, Map<String, Object> params) {
+    protected String buildUserPrompt(String content) {
         return PromptBuilder.buildPolicyReview(content);
     }
 }

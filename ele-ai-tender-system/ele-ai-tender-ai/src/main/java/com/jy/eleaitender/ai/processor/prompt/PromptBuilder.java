@@ -1,5 +1,8 @@
 package com.jy.eleaitender.ai.processor.prompt;
 
+import com.jy.eleaitender.common.enums.ProjectCategory;
+import com.jy.eleaitender.common.enums.ProjectType;
+import com.jy.eleaitender.common.enums.ReviewMethod;
 import com.jy.eleaitender.common.enums.ReviewType;
 
 /**
@@ -16,16 +19,15 @@ public final class PromptBuilder {
     /**
      * 构建需求生成的User Prompt
      */
-    public static String buildRequirementGenerate(String projectName, String projectType,
-                                                  String projectCategory, String budget,
-                                                  String description, String referenceContent) {
+    public static String buildRequirementGenerate(String projectName,
+                                                  String projectType,
+                                                  String budget,
+                                                  String description) {
         return String.format(UserPromptTemplates.REQUIREMENT_GENERATE_USER,
                 defaultStr(projectName),
-                defaultStr(projectType),
-                defaultStr(projectCategory),
+                defaultStr(ProjectType.fromCode(projectType).getLabel()),
                 defaultStr(budget),
-                defaultStr(description),
-                referenceContent != null ? referenceContent : "无参考文档");
+                defaultStr(description));
     }
 
     /**
@@ -37,11 +39,11 @@ public final class PromptBuilder {
                                                  String enabledTypes) {
         return String.format(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG,
                 defaultStr(projectName),
-                defaultStr(projectType),
-                defaultStr(projectCategory),
+                defaultStr(ProjectType.fromCode(projectType).getLabel()),
+                defaultStr(ProjectCategory.fromCode(projectCategory).getLabel()),
                 defaultStr(budget),
                 defaultStr(requirementContent),
-                defaultStr(reviewMethod, "综合评分法"),
+                defaultStr(ReviewMethod.fromCode(reviewMethod).getLabel()),
                 defaultStr(enabledTypes, ReviewType.getLabels()));
     }
 
@@ -58,14 +60,16 @@ public final class PromptBuilder {
      * 构建检测类的User Prompt（敏感词/错别字/格式检测通用）
      */
     public static String buildDetection(String content) {
-        return String.format(UserPromptTemplates.DETECTION_USER, defaultStr(content));
+        return String.format(UserPromptTemplates.DETECTION_USER,
+                defaultStr(content));
     }
 
     /**
      * 构建政策审查的User Prompt
      */
     public static String buildPolicyReview(String content) {
-        return String.format(UserPromptTemplates.DETECTION_POLICY_USER, defaultStr(content));
+        return String.format(UserPromptTemplates.DETECTION_POLICY_USER,
+                defaultStr(content));
     }
 
     /**

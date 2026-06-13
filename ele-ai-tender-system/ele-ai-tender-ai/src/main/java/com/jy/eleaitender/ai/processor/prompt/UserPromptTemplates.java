@@ -20,19 +20,15 @@ public final class UserPromptTemplates {
 
     /**
      * 需求生成 - User Prompt 模板
-     * 参数: projectName, projectType, projectCategory, budget, description, referenceContent
+     * 参数: projectName, projectType, budget, description
      */
     public static final String REQUIREMENT_GENERATE_USER = """
             请根据以下项目信息生成业务需求：
             
             项目名称：%s
             项目类型：%s
-            项目类别：%s
             项目预算：%s元
             项目描述：%s
-            
-            参考文档内容：
-            %s
             """;
 
     /**
@@ -88,11 +84,9 @@ public final class UserPromptTemplates {
      * 参数: content, policyContent
      */
     public static final String DETECTION_POLICY_USER = """
-            请对照政策文件检查以下招标文件内容的合规性：
+            请对照政策文件检查以下招标文件内容的合规性，政策文件位于【文档内容】：
             
             招标文件内容：
             %s
-            
-            政策文件内容：
             """;
 }

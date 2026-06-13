@@ -145,7 +145,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
         params.put("projectName", project.getProjectName());
         params.put("projectType", project.getProjectType());
         params.put("projectCategory", project.getProjectCategory());
-        params.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : null);
+        params.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : "");
         params.put("reviewMethod", project.getReviewType());
         params.put("requirementContent", project.getRequirementContent());
 

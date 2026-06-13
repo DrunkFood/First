@@ -7,10 +7,7 @@ import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbRequirement;
-import com.jy.eleaitender.common.enums.AiTaskStatus;
-import com.jy.eleaitender.common.enums.AiTaskType;
-import com.jy.eleaitender.common.enums.DetectionType;
-import com.jy.eleaitender.common.enums.ResponseCode;
+import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
 import com.jy.eleaitender.core.engine.MarkdownTemplateEngine;
@@ -157,13 +154,27 @@ public class RequirementServiceImpl implements IRequirementService {
         params.put("requirementId", requirementId);
         params.put("requirementName", requirement.getRequirementName());
         params.put("projectType", requirement.getProjectType());
-        params.put("projectCategory", requirement.getProjectCategory());
-        params.put("budget", requirement.getBudget());
+        params.put("budget", requirement.getBudget() != null ? requirement.getBudget().toPlainString() : "");
         params.put("description", requirement.getRequirementDescription());
-        // TODO 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
-        params.put("referenceContent", "");
+
+        // 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
+        StringJoiner paramJoiner = new StringJoiner(",");
+        MatchMode matchMode = MatchMode.fromCode(requirement.getMatchMode());
+        switch (matchMode) {
+            case AUTO_MATCH:
+            case MANUAL_SELECT:
+                if (requirement.getMatchedFileId() != null) {
+                    paramJoiner.add(String.valueOf(requirement.getMatchedFileId()));
+                }
+                break;
+            case UPLOAD:
+                if (requirement.getUploadedFileId() != null) {
+                    paramJoiner.add(String.valueOf(requirement.getUploadedFileId()));
+                }
+                break;
+        }
         return aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE, null,
-                requirementId, "REQUIREMENT", params, null);
+                requirementId, "REQUIREMENT", params, paramJoiner.toString());
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.jy.eleaitender.core.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.FixReplacement;
@@ -8,9 +7,7 @@ import com.jy.eleaitender.common.dto.LocationRefVO;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
-import com.jy.eleaitender.common.entity.core.TbPolicyFile;
 import com.jy.eleaitender.common.entity.core.TbProject;
-import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
@@ -20,10 +17,10 @@ import com.jy.eleaitender.core.dto.response.DetectionIssueVO;
 import com.jy.eleaitender.core.dto.response.DetectionProgressVO;
 import com.jy.eleaitender.core.dto.response.DetectionReportVO;
 import com.jy.eleaitender.core.helper.MessageHelper;
+import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
-import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
@@ -70,9 +67,6 @@ public class DetectionServiceImpl implements IDetectionService {
 
     @Autowired
     private IProjectVersionService projectVersionService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private static final DetectionType[] ALL_DETECTION_TYPES = {
             DetectionType.SENSITIVE_WORD,
@@ -431,10 +425,7 @@ public class DetectionServiceImpl implements IDetectionService {
                 params.put("projectId", projectId);
                 params.put("detectionRecordId", record.getId());
                 params.put("detectionType", record.getDetectionType());
-                params.put("content", record.getContentSnapshot());
-                if (StringUtils.hasText(record.getPolicyFileIds())) {
-                    params.put("policyFileIds", record.getPolicyFileIds());
-                }
+                params.put("contentFileId", record.getContentFileId());
 
                 AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
                 AiTask task = aiTaskService.createTask(taskType, projectId,

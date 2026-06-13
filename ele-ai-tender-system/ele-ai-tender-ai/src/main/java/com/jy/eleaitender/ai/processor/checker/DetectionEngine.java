@@ -5,6 +5,7 @@ import com.jy.eleaitender.ai.service.FileContentService;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -12,9 +13,6 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
-
-import static org.apache.commons.collections4.MapUtils.getLong;
-import static org.apache.commons.collections4.MapUtils.getString;
 
 /**
  * 检测引擎（编排器）
@@ -55,11 +53,11 @@ public class DetectionEngine {
         StringJoiner contentJoiner = new StringJoiner("\n\n");
 
         Map<String, Object> params = parseParams(task.getRequestParams());
-        String content = getString(params, "content");
+        String content = MapUtils.getString(params, "content");
         if (StringUtils.hasText(content)) {
             contentJoiner.add(content);
         }
-        Long contentFileId = getLong(params, "contentFileId");
+        Long contentFileId = MapUtils.getLong(params, "contentFileId");
         if (contentFileId != null) {
             String extractContent = fileContentService.extractContent(contentFileId);
             if (StringUtils.hasText(extractContent)) {
@@ -76,7 +74,7 @@ public class DetectionEngine {
             fileIdList = task.getFileIdList();
         }
 
-        BaseDetector.DetectionResult result = detector.detect(contentJoiner.toString(), params,
+        BaseDetector.DetectionResult result = detector.detect(contentJoiner.toString(),
                 task.getId(), task.getCreateId(), fileIdList);
 
         log.info("检测完成: taskId={}, type={}, issueCount={}, score={}",
