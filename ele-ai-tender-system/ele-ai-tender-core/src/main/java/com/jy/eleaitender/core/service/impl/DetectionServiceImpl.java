@@ -10,6 +10,7 @@ import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.common.dto.ai.DetectionParams;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.core.dto.request.DetectionSubmitRequest;
 import com.jy.eleaitender.core.dto.response.DetectionFileInfoVO;
@@ -106,11 +107,10 @@ public class DetectionServiceImpl implements IDetectionService {
             detectionRecordMapper.insert(record);
 
             // 构建AI任务参数
-            Map<String, Object> params = new HashMap<>();
-            params.put("projectId", projectId);
-            params.put("detectionRecordId", record.getId());
-            params.put("detectionType", type.getCode());
-            params.put("contentFileId", project.getGeneratedFileId());
+            DetectionParams params = new DetectionParams();
+            params.setDetectionRecordId(record.getId());
+            params.setDetectionType(type.getCode());
+            params.setContentFileId(project.getGeneratedFileId());
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
             AiTask task = aiTaskService.createTask(taskType, projectId,
@@ -421,11 +421,10 @@ public class DetectionServiceImpl implements IDetectionService {
                 record.setCompletedAt(null);
                 detectionRecordMapper.updateById(record);
 
-                Map<String, Object> params = new HashMap<>();
-                params.put("projectId", projectId);
-                params.put("detectionRecordId", record.getId());
-                params.put("detectionType", record.getDetectionType());
-                params.put("contentFileId", record.getContentFileId());
+                DetectionParams params = new DetectionParams();
+                params.setDetectionRecordId(record.getId());
+                params.setDetectionType(record.getDetectionType());
+                params.setContentFileId(record.getContentFileId());
 
                 AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
                 AiTask task = aiTaskService.createTask(taskType, projectId,

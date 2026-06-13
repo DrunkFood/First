@@ -1,5 +1,6 @@
 package com.jy.eleaitender.common.enums;
 
+import com.jy.eleaitender.common.dto.ai.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,22 +11,23 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AiTaskType {
 
-    REQUIREMENT_GENERATE("REQUIREMENT_GENERATE", "需求生成"),
-    PROJECT_REQUIREMENT_GENERATE("PROJECT_REQUIREMENT_GENERATE", "项目需求生成"),
+    REQUIREMENT_GENERATE("REQUIREMENT_GENERATE", "需求生成", RequirementGenerateParams.class),
+    PROJECT_REQUIREMENT_GENERATE("PROJECT_REQUIREMENT_GENERATE", "项目需求生成", RequirementGenerateParams.class),
 
-    REVIEW_ITEM_GENERATE("REVIEW_ITEM_GENERATE", "评审项生成"),
+    REVIEW_ITEM_GENERATE("REVIEW_ITEM_GENERATE", "评审项生成", ReviewItemGenerateParams.class),
 
-    DOCUMENT_INTEGRATION("DOCUMENT_INTEGRATION", "文档集成"),
+    DOCUMENT_INTEGRATION("DOCUMENT_INTEGRATION", "文档集成", DocumentIntegrationParams.class),
 
-    DETECTION_SENSITIVE_WORD("DETECTION_SENSITIVE_WORD", "敏感词检测"),
-    DETECTION_TYPO("DETECTION_TYPO", "错别字检测"),
-    DETECTION_POLICY_REVIEW("DETECTION_POLICY_REVIEW", "政策文件审查"),
-    DETECTION_FORMAT_CHECK("DETECTION_FORMAT_CHECK", "格式规范检测"),
+    DETECTION_SENSITIVE_WORD("DETECTION_SENSITIVE_WORD", "敏感词检测", DetectionParams.class),
+    DETECTION_TYPO("DETECTION_TYPO", "错别字检测", DetectionParams.class),
+    DETECTION_POLICY_REVIEW("DETECTION_POLICY_REVIEW", "政策文件审查", DetectionParams.class),
+    DETECTION_FORMAT_CHECK("DETECTION_FORMAT_CHECK", "格式规范检测", DetectionParams.class),
 
-    TEXT_OPTIMIZE("TEXT_OPTIMIZE", "文本优化");
+    TEXT_OPTIMIZE("TEXT_OPTIMIZE", "文本优化", TextOptimizeParams.class);
 
     private final String code;
     private final String label;
+    private final Class<?> clazz;
 
     public static AiTaskType fromCode(String code) {
         for (AiTaskType type : values()) {

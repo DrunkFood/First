@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-
 /**
  * AI任务服务实现
  */
@@ -32,7 +30,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
-                             Map<String, Object> requestParams, String fileIds) {
+                             Object requestParams, String fileIds) {
         // 防重复提交：同一业务同一类型不能有活跃任务
         AiTask activeTask = aiTaskMapper.selectActiveTask(type.getCode(), bizId, bizType);
         if (activeTask != null) {

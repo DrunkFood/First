@@ -8,6 +8,7 @@ import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.common.dto.ai.DocumentIntegrationParams;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
 import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
 import com.jy.eleaitender.core.engine.DocumentDataAssembler;
@@ -67,10 +68,10 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         List<FillData> fillDataList = dataAssembler.assemble(projectId);
 
         // 将元数据和填充数据一起序列化传递给AI任务
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("templateFileId", pt.getFileId());
-        params.put("projectName", project.getProjectName());
-        params.put("fillDataList", fillDataList);
+        DocumentIntegrationParams params = new DocumentIntegrationParams();
+        params.setTemplateFileId(pt.getFileId());
+        params.setProjectName(project.getProjectName());
+        params.setFillDataList(fillDataList);
 
         return aiTaskService.createTask(AiTaskType.DOCUMENT_INTEGRATION,
                 project.getId(), project.getId(), "PROJECT", params, null);

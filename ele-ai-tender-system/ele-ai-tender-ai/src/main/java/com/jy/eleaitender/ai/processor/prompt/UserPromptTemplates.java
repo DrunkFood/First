@@ -20,13 +20,14 @@ public final class UserPromptTemplates {
 
     /**
      * 需求生成 - User Prompt 模板
-     * 参数: projectName, projectType, budget, description
+     * 参数: projectName, projectType, projectCategory, budget, description
      */
     public static final String REQUIREMENT_GENERATE_USER = """
             请根据以下项目信息生成业务需求：
             
             项目名称：%s
             项目类型：%s
+            项目类别：%s
             项目预算：%s元
             项目描述：%s
             """;

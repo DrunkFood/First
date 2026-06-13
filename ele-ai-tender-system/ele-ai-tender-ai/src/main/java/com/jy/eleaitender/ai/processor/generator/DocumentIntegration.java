@@ -1,11 +1,13 @@
 package com.jy.eleaitender.ai.processor.generator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.dto.FillData;
+import com.jy.eleaitender.common.dto.ai.DocumentIntegrationParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static org.apache.commons.collections4.MapUtils.getLong;
-import static org.apache.commons.collections4.MapUtils.getString;
 
 /**
  * 文档集成器
@@ -41,6 +40,9 @@ public class DocumentIntegration {
     @Autowired
     private AiCallRecorder aiCallRecorder;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     /**
      * 执行文档集成
      *
@@ -50,19 +52,17 @@ public class DocumentIntegration {
     public String integration(AiTask task) {
         log.info("开始文档集成: taskId={}", task.getId());
 
-        Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
+        DocumentIntegrationParams params = resultParser.parseParams(task.getRequestParams(), DocumentIntegrationParams.class);
 
-        Long templateFileId = getLong(params, "templateFileId");
-        String projectName = getString(params, "projectName");
+        Long templateFileId = params.getTemplateFileId();
+        String projectName = params.getProjectName();
 
         // TODO 通过AI模型匹配占位符和数据key，生成符合Word模板占位符名称的填充数据，列表数据无法正确匹配
         //WordStructureVO fileStructure = fileServiceClient.getFileStructure(templateFileId);
         //Map<String, Object> data = matchPlaceholders(fileStructure.getPlaceholders(), fillData, task);
 
-        // 提取 FillData 列表
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> fillDataRaw = (List<Map<String, Object>>) params.get("fillDataList");
-        List<FillData> fillDataList = deserializeFillDataList(fillDataRaw);
+        // 提取 FillData 列表（强类型反序列化，value仍需按type转换具体类型）
+        List<FillData> fillDataList = deserializeFillDataList(params.getFillDataList());
 
         // 调用File服务生成Word文档（新接口：List<FillData>）
         Long generatedFileId = fileServiceClient.generateDocument(templateFileId, fillDataList, projectName + ".docx");
@@ -71,28 +71,26 @@ public class DocumentIntegration {
         return String.valueOf(generatedFileId);
     }
 
-    private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =
-            new com.fasterxml.jackson.databind.ObjectMapper();
-
     /**
-     * 将 JSON 反序列化后的 Map 列表转为 FillData 列表
-     * Jackson 反序列化 List<FillData> 时 value 会变成 LinkedHashMap，需按 type 转为具体类型
+     * 将 FillData 列表中的 value 按 type 转为具体类型
+     * Jackson 反序列化 List<FillData> 时 value 会变成 LinkedHashMap，需按 type 转换
      */
-    private List<FillData> deserializeFillDataList(List<Map<String, Object>> rawList) {
-        if (rawList == null) return List.of();
-        return rawList.stream().map(raw -> {
+    private List<FillData> deserializeFillDataList(List<FillData> fillDataList) {
+        if (fillDataList == null) {
+            return List.of();
+        }
+        return fillDataList.stream().map(fd -> {
             try {
-                FillData fd = MAPPER.convertValue(raw, FillData.class);
                 if (fd.getValue() != null && fd.getType() != null) {
                     fd.setValue(switch (fd.getType()) {
-                        case TABLE -> MAPPER.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.TableData.class);
-                        case IMAGE -> MAPPER.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.ImageData.class);
+                        case TABLE -> objectMapper.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.TableData.class);
+                        case IMAGE -> objectMapper.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.ImageData.class);
                         case TEXT, MARKDOWN -> fd.getValue() instanceof String s ? s : String.valueOf(fd.getValue());
                     });
                 }
                 return fd;
             } catch (Exception e) {
-                log.warn("FillData 反序列化失败: {}", raw, e);
+                log.warn("FillData value类型转换失败: key={}", fd.getKey(), e);
                 return null;
             }
         }).filter(java.util.Objects::nonNull).toList();
@@ -114,7 +112,6 @@ public class DocumentIntegration {
             log.warn("占位符或数据为空，跳过AI匹配");
             return sourceData;
         }
-
         try {
             // 提取占位符名称（去掉{{、}}、#等poi-tl标记）
             List<String> placeholderNames = targetPlaceholders.stream()

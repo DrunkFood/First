@@ -3,18 +3,14 @@ package com.jy.eleaitender.ai.processor.generator;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
-import com.jy.eleaitender.ai.processor.prompt.UserPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
+import com.jy.eleaitender.common.dto.ai.RequirementGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
-
-import static org.apache.commons.collections4.MapUtils.getString;
 
 /**
  * 需求生成器
@@ -42,14 +38,15 @@ public class RequirementGenerator {
     public String generate(AiTask task) {
         log.info("开始需求生成: taskId={}", task.getId());
 
-        Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
+        RequirementGenerateParams params = resultParser.parseParams(task.getRequestParams(), RequirementGenerateParams.class);
 
         // 构建Prompt
         String userPrompt = PromptBuilder.buildRequirementGenerate(
-                getString(params, "requirementName"),
-                getString(params, "projectType"),
-                getString(params, "budget"),
-                getString(params, "description")
+                params.getRequirementName(),
+                params.getProjectType(),
+                params.getProjectCategory(),
+                params.getBudget(),
+                params.getDescription()
         );
 
         // 路由到合适的模型

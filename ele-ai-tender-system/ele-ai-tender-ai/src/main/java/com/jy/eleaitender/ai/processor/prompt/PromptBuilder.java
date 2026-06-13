@@ -21,11 +21,13 @@ public final class PromptBuilder {
      */
     public static String buildRequirementGenerate(String projectName,
                                                   String projectType,
+                                                  String projectCategory,
                                                   String budget,
                                                   String description) {
         return String.format(UserPromptTemplates.REQUIREMENT_GENERATE_USER,
                 defaultStr(projectName),
                 defaultStr(ProjectType.fromCode(projectType).getLabel()),
+                defaultStr(ProjectCategory.fromCode(projectCategory).getLabel()),
                 defaultStr(budget),
                 defaultStr(description));
     }

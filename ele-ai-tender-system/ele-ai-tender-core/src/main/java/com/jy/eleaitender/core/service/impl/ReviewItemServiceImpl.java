@@ -8,6 +8,7 @@ import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
@@ -133,21 +134,18 @@ public class ReviewItemServiceImpl implements IReviewItemService {
 
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    public AiTask submitGenerate(Long projectId, Map<String, Object> params) {
+    public AiTask submitGenerate(Long projectId, Map<String, Object> extraParams) {
         // 校验项目归属并获取项目信息
         TbProject project = projectService.getById(projectId);
-        if (params == null) {
-            params = new HashMap<>();
-        }
 
-        // 补全项目信息，确保AI生成器有足够的上下文
-        params.put("projectId", projectId);
-        params.put("projectName", project.getProjectName());
-        params.put("projectType", project.getProjectType());
-        params.put("projectCategory", project.getProjectCategory());
-        params.put("budget", project.getBudget() != null ? project.getBudget().toPlainString() : "");
-        params.put("reviewMethod", project.getReviewType());
-        params.put("requirementContent", project.getRequirementContent());
+        // 构建任务参数
+        ReviewItemGenerateParams params = new ReviewItemGenerateParams();
+        params.setProjectName(project.getProjectName());
+        params.setProjectType(project.getProjectType());
+        params.setProjectCategory(project.getProjectCategory());
+        params.setBudget(project.getBudget() != null ? project.getBudget().toPlainString() : "");
+        params.setReviewMethod(project.getReviewType());
+        params.setRequirementContent(project.getRequirementContent());
 
         String projectTemplateFileId = null;
         // 读取项目模板数据
@@ -159,7 +157,7 @@ public class ReviewItemServiceImpl implements IReviewItemService {
             }
             // 评审项配置
             if (projectTemplate.getReviewConfig() != null) {
-                params.put("reviewConfig", projectTemplate.getReviewConfig());
+                params.setReviewConfig(projectTemplate.getReviewConfig());
             }
         }
 

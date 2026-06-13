@@ -2,10 +2,10 @@ package com.jy.eleaitender.ai.processor.checker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.service.FileContentService;
+import com.jy.eleaitender.common.dto.ai.DetectionParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -52,12 +52,12 @@ public class DetectionEngine {
 
         StringJoiner contentJoiner = new StringJoiner("\n\n");
 
-        Map<String, Object> params = parseParams(task.getRequestParams());
-        String content = MapUtils.getString(params, "content");
+        DetectionParams params = parseParams(task.getRequestParams());
+        String content = params.getContent();
         if (StringUtils.hasText(content)) {
             contentJoiner.add(content);
         }
-        Long contentFileId = MapUtils.getLong(params, "contentFileId");
+        Long contentFileId = params.getContentFileId();
         if (contentFileId != null) {
             String extractContent = fileContentService.extractContent(contentFileId);
             if (StringUtils.hasText(extractContent)) {
@@ -96,13 +96,12 @@ public class DetectionEngine {
         };
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> parseParams(String requestParams) {
+    private DetectionParams parseParams(String requestParams) {
         try {
-            return objectMapper.readValue(requestParams, Map.class);
+            return objectMapper.readValue(requestParams, DetectionParams.class);
         } catch (Exception e) {
             log.warn("解析requestParams失败: {}", requestParams, e);
-            return Map.of();
+            return new DetectionParams();
         }
     }
 

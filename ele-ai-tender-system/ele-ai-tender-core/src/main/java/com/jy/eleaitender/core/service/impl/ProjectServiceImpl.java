@@ -3,24 +3,22 @@ package com.jy.eleaitender.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
+import com.jy.eleaitender.common.dto.ai.RequirementGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ProjectPhase;
 import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
-import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.statemachine.PhaseFlowController;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
-import com.jy.eleaitender.core.statemachine.trigger.BasicInfoTrigger;
-import com.jy.eleaitender.core.statemachine.trigger.DetectionPhaseTrigger;
-import com.jy.eleaitender.core.statemachine.trigger.DocumentTrigger;
-import com.jy.eleaitender.core.statemachine.trigger.RequirementTrigger;
-import com.jy.eleaitender.core.statemachine.trigger.ReviewItemTrigger;
+import com.jy.eleaitender.core.statemachine.trigger.*;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -29,12 +27,9 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-
-import jakarta.annotation.PostConstruct;
 
 /**
  * 项目服务实现
@@ -228,14 +223,14 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public AiTask generateRequirement(Long projectId) {
         TbProject project = getById(projectId);
-        Map<String, Object> params = new HashMap<>();
-        params.put("requirementName", project.getProjectName() + " - 招标需求");
-        params.put("projectType", project.getProjectType());
-        params.put("projectCategory", project.getProjectCategory());
-        params.put("budget", project.getBudget());
-        params.put("description", project.getProjectDescription());
+        RequirementGenerateParams params = new RequirementGenerateParams();
+        params.setRequirementName(project.getProjectName() + " - 招标需求");
+        params.setProjectType(project.getProjectType());
+        params.setProjectCategory(project.getProjectCategory());
+        params.setBudget(project.getBudget() != null ? project.getBudget().toPlainString() : "");
+        params.setDescription(project.getProjectDescription());
         // TODO 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
-        params.put("referenceContent", "");
+
         return aiTaskService.createTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
                 project.getId(), project.getId(), "REQUIREMENT", params, null);
     }

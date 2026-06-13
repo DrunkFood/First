@@ -5,6 +5,7 @@ import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.dto.ReviewConfig;
+import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ReviewType;
@@ -15,10 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.Map;
 import java.util.stream.Collectors;
-
-import static org.apache.commons.collections4.MapUtils.getString;
 
 /**
  * 评审项生成器
@@ -46,14 +44,12 @@ public class ReviewItemGenerator {
     public String generate(AiTask task) {
         log.info("开始评审项生成: taskId={}", task.getId());
 
-        Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
+        ReviewItemGenerateParams params = resultParser.parseParams(task.getRequestParams(), ReviewItemGenerateParams.class);
 
-        String reviewConfigJson = getString(params, "reviewConfig");
         String enabledTypes;
-
-        if (StringUtils.hasText(reviewConfigJson)) {
+        if (StringUtils.hasText(params.getReviewConfig())) {
             // 有配置：生成所有启用的类型（generateStandard=false的类型由同步处理器替换二级节点为占位）
-            ReviewConfig config = ReviewConfig.fromJson(reviewConfigJson);
+            ReviewConfig config = ReviewConfig.fromJson(params.getReviewConfig());
             enabledTypes = config.getEnabledTypes().stream()
                     .map(t -> ReviewType.fromCode(t.getReviewType()).getLabel())
                     .collect(Collectors.joining("、"));
@@ -68,12 +64,12 @@ public class ReviewItemGenerator {
 
         // 构建Prompt
         String userPrompt = PromptBuilder.buildReviewItemGenerate(
-                getString(params, "projectName"),
-                getString(params, "projectType"),
-                getString(params, "projectCategory"),
-                getString(params, "budget"),
-                getString(params, "requirementContent"),
-                getString(params, "reviewMethod"),
+                params.getProjectName(),
+                params.getProjectType(),
+                params.getProjectCategory(),
+                params.getBudget(),
+                params.getRequirementContent(),
+                params.getReviewMethod(),
                 enabledTypes
         );
 

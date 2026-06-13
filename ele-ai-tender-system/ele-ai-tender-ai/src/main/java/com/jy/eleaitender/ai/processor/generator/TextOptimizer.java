@@ -3,18 +3,14 @@ package com.jy.eleaitender.ai.processor.generator;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
-import com.jy.eleaitender.ai.processor.prompt.UserPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
+import com.jy.eleaitender.common.dto.ai.TextOptimizeParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
-
-import static org.apache.commons.collections4.MapUtils.getString;
 
 /**
  * 文本优化器
@@ -42,10 +38,10 @@ public class TextOptimizer {
     public String optimize(AiTask task) {
         log.info("开始文本优化: taskId={}", task.getId());
 
-        Map<String, Object> params = resultParser.parseParams(task.getRequestParams());
+        TextOptimizeParams params = resultParser.parseParams(task.getRequestParams(), TextOptimizeParams.class);
 
-        String content = getString(params, "content");
-        String requirement = getString(params, "requirement");
+        String content = params.getContent();
+        String requirement = params.getRequirement();
 
         // 构建Prompt
         String userPrompt = PromptBuilder.buildTextOptimize(content, requirement);

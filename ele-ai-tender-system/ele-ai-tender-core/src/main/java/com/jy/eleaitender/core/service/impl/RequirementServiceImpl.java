@@ -3,6 +3,8 @@ package com.jy.eleaitender.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
+import com.jy.eleaitender.common.dto.ai.DetectionParams;
+import com.jy.eleaitender.common.dto.ai.RequirementGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiKnowledgeDocument;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
@@ -143,19 +145,20 @@ public class RequirementServiceImpl implements IRequirementService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public AiTask submitGenerate(Long requirementId, Map<String, Object> params) {
+    public AiTask submitGenerate(Long requirementId, Map<String, Object> extraParams) {
         TbRequirement requirement = getById(requirementId);
         // 清空需求内容
         requirement.setContent("");
         requirement.setProgress(0);
         requirementMapper.updateById(requirement);
 
-        // 填充任务参数
-        params.put("requirementId", requirementId);
-        params.put("requirementName", requirement.getRequirementName());
-        params.put("projectType", requirement.getProjectType());
-        params.put("budget", requirement.getBudget() != null ? requirement.getBudget().toPlainString() : "");
-        params.put("description", requirement.getRequirementDescription());
+        // 构建任务参数
+        RequirementGenerateParams taskParams = new RequirementGenerateParams();
+        taskParams.setRequirementName(requirement.getRequirementName());
+        taskParams.setProjectType(requirement.getProjectType());
+        taskParams.setProjectCategory(requirement.getProjectCategory());
+        taskParams.setBudget(requirement.getBudget() != null ? requirement.getBudget().toPlainString() : "");
+        taskParams.setDescription(requirement.getRequirementDescription());
 
         // 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
         StringJoiner paramJoiner = new StringJoiner(",");
@@ -174,7 +177,7 @@ public class RequirementServiceImpl implements IRequirementService {
                 break;
         }
         return aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE, null,
-                requirementId, "REQUIREMENT", params, paramJoiner.toString());
+                requirementId, "REQUIREMENT", taskParams, paramJoiner.toString());
     }
 
     @Override
@@ -229,17 +232,16 @@ public class RequirementServiceImpl implements IRequirementService {
             detectionRecordMapper.insert(record);
 
             // 构建AI任务参数
-            Map<String, Object> params = new HashMap<>();
-            params.put("requirementId", requirementId);
-            params.put("detectionRecordId", record.getId());
-            params.put("detectionType", type.getCode());
-            params.put("content", contentSnapshot);
+            DetectionParams taskParams = new DetectionParams();
+            taskParams.setDetectionRecordId(record.getId());
+            taskParams.setDetectionType(type.getCode());
+            taskParams.setContent(contentSnapshot);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
 
             // bizId=recordId, bizType=DETECTION，使syncDetection能找到record
             AiTask task = aiTaskService.createTask(taskType, null,
-                    record.getId(), "DETECTION", params, null);
+                    record.getId(), "DETECTION", taskParams, null);
 
             record.setTaskId(task.getId());
             detectionRecordMapper.updateById(record);

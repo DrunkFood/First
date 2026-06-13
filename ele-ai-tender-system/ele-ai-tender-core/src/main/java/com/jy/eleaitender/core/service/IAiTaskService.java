@@ -4,8 +4,6 @@ import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
 
-import java.util.Map;
-
 /**
  * AI任务服务接口
  */
@@ -15,7 +13,7 @@ public interface IAiTaskService {
      * 创建AI任务
      */
     AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
-                      Map<String, Object> requestParams, String fileIds);
+                      Object requestParams, String fileIds);
 
     /**
      * 查询任务状态
