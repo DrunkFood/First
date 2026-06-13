@@ -6,7 +6,7 @@ import lombok.Data;
  * 文本优化任务参数
  */
 @Data
-public class TextOptimizeParams {
+public class TextOptimizeParams implements AiTaskParams {
 
     private String content;
 

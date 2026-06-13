@@ -18,6 +18,11 @@ public class BusinessException extends RuntimeException {
         this.code = ResponseCode.FAIL.getCode();
     }
 
+    public BusinessException(String message, Throwable cause) {
+        super(message, cause);
+        this.code = ResponseCode.FAIL.getCode();
+    }
+
     public BusinessException(int code, String message) {
         super(message);
         this.code = code;

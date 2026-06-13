@@ -108,8 +108,6 @@ public class DetectionServiceImpl implements IDetectionService {
 
             // 构建AI任务参数
             DetectionParams params = new DetectionParams();
-            params.setDetectionRecordId(record.getId());
-            params.setDetectionType(type.getCode());
             params.setContentFileId(project.getGeneratedFileId());
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
@@ -422,8 +420,6 @@ public class DetectionServiceImpl implements IDetectionService {
                 detectionRecordMapper.updateById(record);
 
                 DetectionParams params = new DetectionParams();
-                params.setDetectionRecordId(record.getId());
-                params.setDetectionType(record.getDetectionType());
                 params.setContentFileId(record.getContentFileId());
 
                 AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));

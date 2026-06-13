@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service;
 
+import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
@@ -13,7 +14,7 @@ public interface IAiTaskService {
      * 创建AI任务
      */
     AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
-                      Object requestParams, String fileIds);
+                      AiTaskParams requestParams, String fileIds);
 
     /**
      * 查询任务状态

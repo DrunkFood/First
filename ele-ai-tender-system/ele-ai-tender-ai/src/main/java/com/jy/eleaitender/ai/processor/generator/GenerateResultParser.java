@@ -2,6 +2,7 @@ package com.jy.eleaitender.ai.processor.generator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,11 +22,11 @@ public class GenerateResultParser {
     private ObjectMapper objectMapper;
 
     @SuppressWarnings("unchecked")
-    public Map<String, Object> parseParams(String requestParams) {
+    public Map<String, Object> parseJsonToMap(String json) {
         try {
-            return objectMapper.readValue(requestParams, Map.class);
+            return objectMapper.readValue(json, Map.class);
         } catch (Exception e) {
-            log.warn("解析requestParams失败: {}", requestParams, e);
+            log.warn("解析JSON失败: {}", json, e);
             return Map.of();
         }
     }
@@ -34,8 +35,7 @@ public class GenerateResultParser {
         try {
             return objectMapper.readValue(requestParams, clazz);
         } catch (Exception e) {
-            log.warn("解析requestParams失败: {}", requestParams, e);
-            return null;
+            throw new BusinessException("解析任务参数失败: " + clazz.getSimpleName(), e);
         }
     }
 

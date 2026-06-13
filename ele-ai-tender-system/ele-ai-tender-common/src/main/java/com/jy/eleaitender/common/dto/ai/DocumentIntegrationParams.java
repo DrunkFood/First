@@ -9,7 +9,7 @@ import java.util.List;
  * 文档集成任务参数
  */
 @Data
-public class DocumentIntegrationParams {
+public class DocumentIntegrationParams implements AiTaskParams {
 
     private Long templateFileId;
 

@@ -7,6 +7,8 @@ import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.dto.FillData;
+import com.jy.eleaitender.common.dto.ImageData;
+import com.jy.eleaitender.common.dto.TableData;
 import com.jy.eleaitender.common.dto.ai.DocumentIntegrationParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
@@ -83,8 +85,8 @@ public class DocumentIntegration {
             try {
                 if (fd.getValue() != null && fd.getType() != null) {
                     fd.setValue(switch (fd.getType()) {
-                        case TABLE -> objectMapper.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.TableData.class);
-                        case IMAGE -> objectMapper.convertValue(fd.getValue(), com.jy.eleaitender.common.dto.ImageData.class);
+                        case TABLE -> objectMapper.convertValue(fd.getValue(), TableData.class);
+                        case IMAGE -> objectMapper.convertValue(fd.getValue(), ImageData.class);
                         case TEXT, MARKDOWN -> fd.getValue() instanceof String s ? s : String.valueOf(fd.getValue());
                     });
                 }
@@ -136,7 +138,7 @@ public class DocumentIntegration {
 
             // 解析AI返回的映射JSON
             String mappingJson = resultParser.extractJson(aiOutput);
-            Map<String, String> mapping = resultParser.parseParams(mappingJson)
+            Map<String, String> mapping = resultParser.parseJsonToMap(mappingJson)
                     .entrySet().stream()
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,

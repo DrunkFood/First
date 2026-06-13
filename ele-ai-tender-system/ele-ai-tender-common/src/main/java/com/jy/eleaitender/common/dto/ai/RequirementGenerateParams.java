@@ -6,7 +6,7 @@ import lombok.Data;
  * 需求生成任务参数
  */
 @Data
-public class RequirementGenerateParams {
+public class RequirementGenerateParams implements AiTaskParams {
 
     private String requirementName;
 

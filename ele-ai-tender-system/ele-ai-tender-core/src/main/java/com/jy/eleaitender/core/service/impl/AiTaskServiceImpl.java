@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
@@ -30,7 +31,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
-                             Object requestParams, String fileIds) {
+                             AiTaskParams requestParams, String fileIds) {
         // 防重复提交：同一业务同一类型不能有活跃任务
         AiTask activeTask = aiTaskMapper.selectActiveTask(type.getCode(), bizId, bizType);
         if (activeTask != null) {

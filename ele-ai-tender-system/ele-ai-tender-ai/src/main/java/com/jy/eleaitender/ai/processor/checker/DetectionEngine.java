@@ -1,6 +1,7 @@
 package com.jy.eleaitender.ai.processor.checker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.ai.processor.generator.GenerateResultParser;
 import com.jy.eleaitender.ai.service.FileContentService;
 import com.jy.eleaitender.common.dto.ai.DetectionParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
@@ -38,6 +39,9 @@ public class DetectionEngine {
     private FormatCheckDetector formatCheckDetector;
 
     @Autowired
+    private GenerateResultParser resultParser;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     /**
@@ -52,7 +56,7 @@ public class DetectionEngine {
 
         StringJoiner contentJoiner = new StringJoiner("\n\n");
 
-        DetectionParams params = parseParams(task.getRequestParams());
+        DetectionParams params = resultParser.parseParams(task.getRequestParams(), DetectionParams.class);
         String content = params.getContent();
         if (StringUtils.hasText(content)) {
             contentJoiner.add(content);
@@ -94,15 +98,6 @@ public class DetectionEngine {
             case DETECTION_FORMAT_CHECK -> formatCheckDetector;
             default -> throw new IllegalArgumentException("非检测类型任务: " + taskType);
         };
-    }
-
-    private DetectionParams parseParams(String requestParams) {
-        try {
-            return objectMapper.readValue(requestParams, DetectionParams.class);
-        } catch (Exception e) {
-            log.warn("解析requestParams失败: {}", requestParams, e);
-            return new DetectionParams();
-        }
     }
 
     private String toJson(BaseDetector.DetectionResult result) {

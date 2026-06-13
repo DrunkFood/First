@@ -6,7 +6,7 @@ import lombok.Data;
  * 评审项生成任务参数
  */
 @Data
-public class ReviewItemGenerateParams {
+public class ReviewItemGenerateParams implements AiTaskParams {
 
     private String projectName;
 

@@ -233,8 +233,6 @@ public class RequirementServiceImpl implements IRequirementService {
 
             // 构建AI任务参数
             DetectionParams taskParams = new DetectionParams();
-            taskParams.setDetectionRecordId(record.getId());
-            taskParams.setDetectionType(type.getCode());
             taskParams.setContent(contentSnapshot);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
