@@ -56,7 +56,7 @@ pipeline {
                     bat """
                         cd ${env.APP_DIR}
                         nvm use 22.21.1
-                        npm audit fix --force
+                        npm audit fix
                         npm install
                         npm audit fix
                         npm install
