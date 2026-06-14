@@ -62,7 +62,7 @@
     </el-form>
 
     <!-- 选择招标文件模板 -->
-    <div class="section-title">选择招标文件模板</div>
+    <div class="section-title">选择招标文件模板<span class="required-star">*</span></div>
     <div class="tpl-hint">新建项目选择模板，引用项目显示当前项目的招标文件</div>
     <div class="template-grid" v-loading="templateLoading">
       <div
@@ -450,6 +450,11 @@ const handleSaveAndNext = async () => {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
 
+  if (!form.value.templateId) {
+    ElMessage.warning('请选择招标文件模板')
+    return
+  }
+
   const { templateId, ...updateData } = form.value
   // 计算匹配相似度（从候选列表中查找选中文件的 matchPercent）
   const matchedFile = matchFiles.value.find(f => f.id === selectedMatchId.value)
@@ -625,6 +630,11 @@ onMounted(() => {
 // 匹配区
 .match-section {
   padding: 0;
+}
+
+.required-star {
+  color: var(--el-color-danger);
+  margin-left: 2px;
 }
 
 .match-readonly-info {
