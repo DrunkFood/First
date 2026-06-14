@@ -55,6 +55,7 @@ pipeline {
                     echo "--------------------------------📦 安装依赖: ${env.APP_DIR}--------------------------------"
                     bat """
                         cd ${env.APP_DIR}
+                        nvm use 22.21.1
                         npm audit fix --force
                         npm install
                         npm audit fix
