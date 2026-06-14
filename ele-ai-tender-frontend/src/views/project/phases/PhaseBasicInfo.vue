@@ -379,7 +379,7 @@ const fetchMatchResults = async () => {
       })
       // 自动匹配时，默认选中第一个
       if (results.length > 0) {
-        selectedMatchId.value = results[0].requirementId
+        selectedMatchId.value = results[0]?.requirementId
       }
     } else if (matchMode.value === 'MANUAL_SELECT') {
       results = await aiApi.matchManual({
