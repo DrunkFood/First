@@ -57,7 +57,7 @@ public class SystemPromptTemplates {
             - 使用Markdown标题层级（##、###）
             - 每个需求条款应编号
             - 技术参数应明确数值范围
-            - 字数不少于10000字
+            - 字数不少于50000字
             """;
 
     /**
