@@ -230,21 +230,19 @@ public class ProjectServiceImpl implements IProjectService {
 
         // 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
         StringJoiner paramJoiner = new StringJoiner(",");
-        if (StringUtils.hasText(project.getMatchMode())) {
-            MatchMode matchMode = MatchMode.fromCode(project.getMatchMode());
-            switch (matchMode) {
-                case AUTO_MATCH:
-                case MANUAL_SELECT:
-                    if (project.getMatchedFileId() != null) {
-                        paramJoiner.add(String.valueOf(project.getMatchedFileId()));
-                    }
-                    break;
-                case UPLOAD:
-                    if (project.getUploadedFileId() != null) {
-                        paramJoiner.add(String.valueOf(project.getUploadedFileId()));
-                    }
-                    break;
-            }
+        MatchMode matchMode = MatchMode.fromCode(project.getMatchMode());
+        switch (matchMode) {
+            case AUTO_MATCH:
+            case MANUAL_SELECT:
+                if (project.getMatchedFileId() != null) {
+                    paramJoiner.add(String.valueOf(project.getMatchedFileId()));
+                }
+                break;
+            case UPLOAD:
+                if (project.getUploadedFileId() != null) {
+                    paramJoiner.add(String.valueOf(project.getUploadedFileId()));
+                }
+                break;
         }
         return aiTaskService.createTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
                 project.getId(), project.getId(), "REQUIREMENT", params, paramJoiner.toString());
