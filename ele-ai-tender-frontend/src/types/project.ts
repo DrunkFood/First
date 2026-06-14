@@ -15,6 +15,10 @@ export interface ProjectInfo {
   requirementSource?: string
   requirementContent?: string
   generatedFileId?: number
+  matchMode?: string
+  matchedFileId?: number
+  matchedSimilarity?: number
+  uploadedFileId?: number
   projectDescription?: string
   tenderUnit?: string
   projectLocation?: string
@@ -52,6 +56,10 @@ export interface ProjectCreateParams {
   contactPerson?: string
   contactPhone?: string
   projectDescription?: string
+  matchMode?: string
+  matchedFileId?: number
+  matchedSimilarity?: number
+  uploadedFileId?: number
 }
 
 export interface ProjectVersionInfo {

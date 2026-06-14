@@ -146,71 +146,23 @@
     <!-- 历史招标文件匹配 -->
     <div class="section-title">历史招标文件匹配</div>
     <div class="match-section" :class="{ 'match-readonly': readonly }">
-      <div class="match-mode-label">匹配模式<span class="required-star">*</span></div>
-      <el-radio-group v-model="matchMode" class="match-radio-group" :disabled="readonly">
-        <el-radio value="auto">1. 系统自动匹配</el-radio>
-        <el-radio value="manual">2. 手动选择</el-radio>
-        <el-radio value="upload">3. 上传</el-radio>
-      </el-radio-group>
-
-      <!-- 自动匹配模式 -->
-      <div v-if="matchMode === 'auto'" class="match-content">
-        <div class="auto-match-box">
-          <div class="auto-match-title">系统自动匹配</div>
-          <div class="auto-match-desc">系统将根据项目信息自动匹配历史招标文件，生成招标需求。</div>
+      <!-- 只读模式：展示已选匹配信息 -->
+      <template v-if="readonly">
+        <div class="match-readonly-info">
+          <span class="match-readonly-label">匹配模式：</span>
+          <span class="match-readonly-value">{{ matchModeLabel }}</span>
         </div>
-      </div>
-
-      <!-- 手动选择模式 -->
-      <div v-if="matchMode === 'manual'" class="match-content">
-        <div class="manual-title">选择历史招标文件</div>
-        <div v-if="matchResults.length" class="match-file-list">
-          <div
-            v-for="item in matchResults"
-            :key="item.requirementId"
-            class="match-file-card"
-            :class="{ selected: selectedMatchId === item.requirementId }"
-            @click="!readonly && (selectedMatchId = item.requirementId)"
-          >
-            <div class="match-file-header">
-              <span class="match-file-name">{{ item.requirementName }}</span>
-              <span class="match-file-type">工程类</span>
-            </div>
-            <div class="match-file-similarity">
-              匹配度：{{ Math.round(item.similarity * 100) }}% - 与当前需求相似度较高
-            </div>
-            <div class="match-file-actions">
-              <el-button size="small" @click.stop="handlePreviewMatch(item)">预览</el-button>
-              <el-button
-                size="small"
-                :type="selectedMatchId === item.requirementId ? 'primary' : ''"
-                @click.stop="selectedMatchId = item.requirementId"
-              >选择</el-button>
-            </div>
-          </div>
-        </div>
-        <el-empty v-else description="暂无匹配结果" :image-size="60" />
-        <div class="manual-hint">展示历史文件库中匹配度高的文件，仅可单选</div>
-      </div>
-
-      <!-- 上传模式 -->
-      <div v-if="matchMode === 'upload'" class="match-content">
-        <div class="upload-title">上传招标文件</div>
-        <el-upload
-          drag
-          :auto-upload="false"
-          accept=".doc,.docx"
-          :limit="1"
-          :on-change="handleFileChange"
-          class="upload-area"
-        >
-          <el-icon size="48"><UploadFilled /></el-icon>
-          <div>点击或拖拽文件到此处上传</div>
-          <template #tip>
-            <div class="upload-tip">支持word格式，文件大小不超过50M，上传1份文件</div>
-          </template>
-        </el-upload>
-      </div>
+      </template>
+      <!-- 编辑模式：MatchModePanel 交互 -->
+      <MatchModePanel
+        v-else
+        v-model="matchMode"
+        v-model:selected-file-id="selectedMatchId"
+        v-model:uploaded-file-id="uploadedFileId"
+        :match-files="matchFiles"
+        mode="create"
+        @file-preview="handlePreviewMatch"
+      />
     </div>
 
     <!-- 底部操作 -->
@@ -221,16 +173,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { projectApi } from '@/api/project'
 import { templateApi } from '@/api/template'
 import { projectTemplateApi } from '@/api/projectTemplate'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { UploadFilled, Calendar, View } from '@element-plus/icons-vue'
+import { Calendar, View } from '@element-plus/icons-vue'
 import { toWanYuan, toYuan } from '@/utils/budget'
 import { PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import DocxPreview from '@/components/document/DocxPreview.vue'
+import { aiApi } from '@/api/ai'
+import MatchModePanel from '@/components/requirement/MatchModePanel.vue'
 import type { TemplateInfo, WordStructure } from '@/types/template'
+import type { MatchFile } from '@/types/requirement'
 import type { AiMatchResult } from '@/types/ai'
 
 const props = defineProps<{ projectId: number; readonly?: boolean }>()
@@ -392,17 +347,76 @@ const handlePreviewTemplate = (tpl: TemplateInfo) => {
 }
 
 // --- 历史匹配 ---
-const matchMode = ref<'auto' | 'manual' | 'upload'>('auto')
-const matchResults = ref<AiMatchResult[]>([])
-const selectedMatchId = ref<number | null>(null)
+const matchMode = ref<string>('AUTO_MATCH')
+const selectedMatchId = ref<number | undefined>(undefined)
+const uploadedFileId = ref<number | undefined>(undefined)
+const matchFiles = ref<MatchFile[]>([])
+const matchLoading = ref(false)
 
-const handlePreviewMatch = (item: AiMatchResult) => {
-  ElMessage.info(`预览：${item.requirementName}`)
+/** 将 AiMatchResult 转为 MatchFile 格式，供 MatchModePanel 使用 */
+const toMatchFile = (r: AiMatchResult): MatchFile => ({
+  id: r.requirementId,
+  fileName: r.requirementName,
+  fileType: form.value.projectType || '工程类',
+  matchPercent: Math.round(r.similarity * 100),
+  matchDesc: r.content?.substring(0, 200),
+})
+
+/** 根据匹配模式调用 AI 接口获取候选列表 */
+const fetchMatchResults = async () => {
+  if (!form.value.projectCategory || !form.value.projectType) {
+    ElMessage.warning('请先选择项目类别和项目类型')
+    return
+  }
+  matchLoading.value = true
+  try {
+    let results: AiMatchResult[] = []
+    if (matchMode.value === 'AUTO_MATCH') {
+      results = await aiApi.matchAuto({
+        projectCategory: form.value.projectCategory,
+        projectType: form.value.projectType,
+        content: form.value.projectDescription || form.value.projectName || '',
+      })
+      // 自动匹配时，默认选中第一个
+      if (results.length > 0) {
+        selectedMatchId.value = results[0].requirementId
+      }
+    } else if (matchMode.value === 'MANUAL_SELECT') {
+      results = await aiApi.matchManual({
+        projectCategory: form.value.projectCategory,
+        projectType: form.value.projectType,
+      })
+    }
+    matchFiles.value = results.map(toMatchFile)
+  } catch {
+    matchFiles.value = []
+    ElMessage.error('匹配失败，请稍后重试')
+  } finally {
+    matchLoading.value = false
+  }
 }
 
-const handleFileChange = () => {
-  ElMessage.info('文件已选择')
+/** 监听匹配模式变化，切换时重新获取候选 */
+watch(matchMode, () => {
+  selectedMatchId.value = undefined
+  matchFiles.value = []
+  if (matchMode.value === 'AUTO_MATCH' || matchMode.value === 'MANUAL_SELECT') {
+    fetchMatchResults()
+  }
+})
+
+/** 预览匹配文件 */
+const handlePreviewMatch = (file: MatchFile) => {
+  ElMessage.info(`预览：${file.fileName}`)
 }
+
+/** 只读模式下匹配模式显示文本 */
+const MATCH_MODE_LABELS: Record<string, string> = {
+  AUTO_MATCH: '系统自动匹配',
+  MANUAL_SELECT: '手动选择',
+  UPLOAD: '上传',
+}
+const matchModeLabel = computed(() => MATCH_MODE_LABELS[matchMode.value] || '未选择')
 
 // --- 保存 ---
 const loadProject = async () => {
@@ -420,6 +434,16 @@ const loadProject = async () => {
     contactPhone: project.contactPhone || '',
     templateId: project.templateId || null,
   })
+
+  // 回填匹配字段
+  matchMode.value = project.matchMode || 'AUTO_MATCH'
+  selectedMatchId.value = project.matchedFileId || undefined
+  uploadedFileId.value = project.uploadedFileId || undefined
+
+  // 非只读模式下，加载后触发一次匹配获取候选列表
+  if (!props.readonly && (project.matchMode === 'AUTO_MATCH' || project.matchMode === 'MANUAL_SELECT')) {
+    fetchMatchResults()
+  }
 }
 
 const handleSaveAndNext = async () => {
@@ -427,9 +451,15 @@ const handleSaveAndNext = async () => {
   if (!valid) return
 
   const { templateId, ...updateData } = form.value
+  // 计算匹配相似度（从候选列表中查找选中文件的 matchPercent）
+  const matchedFile = matchFiles.value.find(f => f.id === selectedMatchId.value)
   await projectApi.update(props.projectId, {
     ...updateData,
     budget: toYuan(form.value.budget),
+    matchMode: matchMode.value,
+    matchedFileId: selectedMatchId.value,
+    matchedSimilarity: matchedFile?.matchPercent ?? undefined,
+    uploadedFileId: uploadedFileId.value,
   })
 
   // 绑定模板到项目模板表
@@ -597,140 +627,21 @@ onMounted(() => {
   padding: 0;
 }
 
-.match-mode-label {
-  font-size: 13px;
-  color: var(--app-text-secondary);
-  margin-bottom: 12px;
-}
-
-.required-star {
-  color: var(--el-color-danger);
-  margin-left: 2px;
-}
-
-.match-radio-group {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 20px;
-}
-
-.match-content {
-  margin-top: 0;
-}
-
-// 自动匹配
-.auto-match-box {
+.match-readonly-info {
   padding: 16px;
   background: var(--app-bg-tertiary, var(--app-bg-secondary));
   border-radius: 6px;
-}
-
-.auto-match-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-  margin-bottom: 8px;
-}
-
-.auto-match-desc {
   font-size: 13px;
-  color: var(--app-text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-// 手动选择
-.manual-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-  margin-bottom: 16px;
-}
-
-.manual-hint {
-  font-size: 12px;
+.match-readonly-label {
   color: var(--app-text-tertiary);
-  margin-top: 12px;
 }
 
-.match-file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.match-file-card {
-  padding: 16px;
-  background: var(--app-bg-tertiary, var(--app-bg-secondary));
-  border: 1px solid var(--app-border-light);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: var(--app-transition-base);
-
-  &:hover {
-    border-color: var(--app-brand-color-light-5);
-  }
-
-  &.selected {
-    border-color: var(--app-brand-color);
-    background: rgba(51, 108, 255, 0.05);
-  }
-}
-
-.match-file-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.match-file-name {
-  font-weight: 600;
-  font-size: 13px;
+.match-readonly-value {
   color: var(--app-text-primary);
-}
-
-.match-file-type {
-  background: rgba(51, 108, 255, 0.15);
-  color: var(--app-brand-color);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  flex-shrink: 0;
-}
-
-.match-file-similarity {
-  font-size: 12px;
-  color: var(--app-text-secondary);
-  margin: 8px 0;
-}
-
-.match-file-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-// 上传
-.upload-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--app-text-primary);
-  margin-bottom: 16px;
-}
-
-.upload-area {
-  width: 100%;
-
-  :deep(.el-upload-dragger) {
-    background: var(--app-bg-secondary);
-    border-color: var(--app-border-medium);
-  }
-}
-
-.upload-tip {
-  color: var(--app-text-tertiary);
-  font-size: 12px;
-  margin-top: 4px;
+  font-weight: 500;
 }
 
 .phase-actions {
