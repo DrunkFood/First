@@ -68,6 +68,10 @@ public class AiTaskProcessor {
         for (AiTask task : tasks) {
             Long userId = task.getCreateId();
             if (userId == null || userId == 0) {
+                int updated = aiTaskMapper.casUpdateStatus(task.getId(), "PENDING", "PROCESSING");
+                if (updated == 0) {
+                    return;
+                }
                 submitDirectly(task);
                 continue;
             }
@@ -92,7 +96,7 @@ public class AiTaskProcessor {
             }
 
             // 获得许可，提交到线程池执行
-            submitWithConcurrencyControl(task, userId);
+            submitWithConcurrencyControl(task);
         }
     }
 
@@ -100,10 +104,6 @@ public class AiTaskProcessor {
      * 无并发控制的直接提交（兼容无用户信息的任务）
      */
     private void submitDirectly(AiTask task) {
-        int updated = aiTaskMapper.casUpdateStatus(task.getId(), "PENDING", "PROCESSING");
-        if (updated == 0) {
-            return;
-        }
         log.info("开始处理AI任务(直接): id={}, type={}", task.getId(), task.getTaskType());
 
         threadPoolManager.execute(() -> {
@@ -127,7 +127,8 @@ public class AiTaskProcessor {
     /**
      * 带并发控制和超时的任务提交
      */
-    private void submitWithConcurrencyControl(AiTask task, Long userId) {
+    private void submitWithConcurrencyControl(AiTask task) {
+        Long userId = task.getCreateId();
         int timeout = threadPoolManager.getProperties().getTaskTimeoutMinutes();
         if (task.getTimeoutMinutes() != null && task.getTimeoutMinutes() > 0) {
             timeout = task.getTimeoutMinutes();
