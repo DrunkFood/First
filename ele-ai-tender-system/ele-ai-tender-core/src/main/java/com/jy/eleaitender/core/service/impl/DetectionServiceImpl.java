@@ -1,22 +1,20 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.FixReplacement;
 import com.jy.eleaitender.common.dto.LocationRefVO;
+import com.jy.eleaitender.common.dto.ai.DetectionParams;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.dto.ai.DetectionParams;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.core.dto.request.DetectionSubmitRequest;
-import com.jy.eleaitender.core.dto.response.DetectionFileInfoVO;
-import com.jy.eleaitender.core.dto.response.DetectionIssueVO;
-import com.jy.eleaitender.core.dto.response.DetectionProgressVO;
-import com.jy.eleaitender.core.dto.response.DetectionReportVO;
+import com.jy.eleaitender.core.dto.response.*;
 import com.jy.eleaitender.core.helper.MessageHelper;
 import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
@@ -29,6 +27,7 @@ import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.util.DetectionResultParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -412,24 +411,25 @@ public class DetectionServiceImpl implements IDetectionService {
 
         for (TbDetectionRecord record : records) {
             AiTaskStatus status = AiTaskStatus.fromCode(record.getStatus());
-            if (status.isRetryable()) {
-                record.setStatus(AiTaskStatus.PENDING.getCode());
-                record.setResult(null);
-                record.setStartedAt(LocalDateTime.now());
-                record.setCompletedAt(null);
-                detectionRecordMapper.updateById(record);
+            //if (!status.isRetryable()) {
+            //    continue;
+            //}
+            record.setStatus(AiTaskStatus.PENDING.getCode());
+            record.setResult(null);
+            record.setStartedAt(LocalDateTime.now());
+            record.setCompletedAt(null);
+            detectionRecordMapper.updateById(record);
 
-                DetectionParams params = new DetectionParams();
-                params.setContentFileId(record.getContentFileId());
+            DetectionParams params = new DetectionParams();
+            params.setContentFileId(record.getContentFileId());
 
-                AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
-                AiTask task = aiTaskService.createTask(taskType, projectId,
-                        record.getId(), "DETECTION", params, record.getPolicyFileIds());
-                record.setTaskId(task.getId());
-                detectionRecordMapper.updateById(record);
+            AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
+            AiTask task = aiTaskService.createTask(taskType, projectId,
+                    record.getId(), "DETECTION", params, record.getPolicyFileIds());
+            record.setTaskId(task.getId());
+            detectionRecordMapper.updateById(record);
 
-                taskIds.put(record.getDetectionType(), task.getId());
-            }
+            taskIds.put(record.getDetectionType(), task.getId());
         }
 
         // 走状态机回到 DETECTING
@@ -485,6 +485,20 @@ public class DetectionServiceImpl implements IDetectionService {
             return DetectionType.fromCode(code).getLabel();
         } catch (Exception e) {
             return code;
+        }
+    }
+
+    /**
+     * 每10秒扫描待处理的检测记录并更新状态
+     */
+    @Scheduled(fixedDelay = 10000)
+    public void updateDetectionPendingStatus() {
+        List<TbDetectionRecord> records = detectionRecordMapper.selectList(new QueryWrapper<TbDetectionRecord>().lambda()
+                .eq(TbDetectionRecord::getStatus, AiTaskStatus.PENDING.getCode()));
+        for (TbDetectionRecord record : records) {
+            AiTaskVO task = aiTaskService.getTaskStatus(record.getTaskId());
+            record.setStatus(task.getStatus());
+            detectionRecordMapper.updateById(record);
         }
     }
 
