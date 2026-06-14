@@ -33,7 +33,7 @@ public class DocumentMatchServiceImpl implements IDocumentMatchService {
 
         // 按匹配度降序排序，取Top5
         return candidates.stream()
-                .sorted(Comparator.comparingInt(MatchResultVO::getSimilarity).reversed())
+                .sorted(Comparator.comparingDouble(MatchResultVO::getSimilarity).reversed())
                 .limit(5)
                 .toList();
     }
@@ -47,7 +47,7 @@ public class DocumentMatchServiceImpl implements IDocumentMatchService {
         candidates.forEach(c -> c.setSimilarity(calculateSimilarity(c, request)));
 
         return candidates.stream()
-                .sorted(Comparator.comparingInt(MatchResultVO::getSimilarity).reversed())
+                .sorted(Comparator.comparingDouble(MatchResultVO::getSimilarity).reversed())
                 .toList();
     }
 
@@ -60,22 +60,22 @@ public class DocumentMatchServiceImpl implements IDocumentMatchService {
      * - 预算范围相近: 20%
      * - 关键词匹配: 20%
      */
-    private int calculateSimilarity(MatchResultVO candidate, MatchRequest request) {
-        int score = 0;
+    private double calculateSimilarity(MatchResultVO candidate, MatchRequest request) {
+        double score = 0;
 
         // 1. 项目类型匹配 (40分)
         if (request.getProjectType() != null && request.getProjectType().equals(candidate.getProjectType())) {
-            score += 40;
+            score += 0.4;
         }
 
         // 2. 项目类别匹配 (20分)
         if (request.getProjectCategory() != null && request.getProjectCategory().equals(candidate.getProjectCategory())) {
-            score += 20;
+            score += 0.2;
         }
 
         // 3. 预算范围匹配 (20分) — 需要通过VO扩展budget字段（暂用简化逻辑）
         // 由于MatchResultVO没有budget字段用于比对，此处给予基础分
-        score += 10;
+        score += 0.1;
 
         // 4. 关键词匹配 (20分)
         if (request.getProjectName() != null && candidate.getRequirementName() != null) {
@@ -85,27 +85,30 @@ public class DocumentMatchServiceImpl implements IDocumentMatchService {
             score += calculateKeywordScore(request.getDescription(), candidate.getContentPreview()) / 2;
         }
 
-        return Math.min(score, 100);
+        return Math.min(score, 1);
     }
 
     /**
      * 简单关键词匹配评分
      * 计算两个文本中共有词的占比
      */
-    private int calculateKeywordScore(String text1, String text2) {
+    private double calculateKeywordScore(String text1, String text2) {
         if (text1 == null || text2 == null || text1.isBlank() || text2.isBlank()) {
             return 0;
         }
         // 简单的字符级包含检查
         String[] keywords = text1.split("[\\s,，、。；;]+");
-        int matchCount = 0;
+        double matchCount = 0;
         for (String keyword : keywords) {
             if (keyword.length() >= 2 && text2.contains(keyword)) {
                 matchCount++;
             }
         }
-        if (keywords.length == 0) return 0;
-        double ratio = (double) matchCount / keywords.length;
-        return (int) (ratio * 20);
+        if (keywords.length == 0) {
+            return 0;
+        }
+        double ratio = matchCount / keywords.length;
+
+        return ratio * 20;
     }
 }

@@ -25,8 +25,8 @@ public class MatchResultVO {
     @Schema(description = "项目类别")
     private String projectCategory;
 
-    @Schema(description = "匹配度(0-100)")
-    private Integer similarity;
+    @Schema(description = "匹配度(0-1.00)")
+    private Double similarity;
 
     @Schema(description = "内容预览(前200字)")
     private String contentPreview;
