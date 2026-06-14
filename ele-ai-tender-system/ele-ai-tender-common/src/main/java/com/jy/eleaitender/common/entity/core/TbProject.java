@@ -73,6 +73,18 @@ public class TbProject extends BaseEntity {
     @Schema(description = "使用的模板ID")
     private Long templateId;
 
+    @Schema(description = "匹配模式")
+    private String matchMode;
+
+    @Schema(description = "匹配的历史文件ID")
+    private Long matchedFileId;
+
+    @Schema(description = "匹配度百分比")
+    private BigDecimal matchedSimilarity;
+
+    @Schema(description = "上传的文件ID")
+    private Long uploadedFileId;
+
     @Schema(description = "关联的业务需求ID")
     private Long requirementId;
 

@@ -6,10 +6,7 @@ import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.ai.RequirementGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
-import com.jy.eleaitender.common.enums.AiTaskType;
-import com.jy.eleaitender.common.enums.ProjectPhase;
-import com.jy.eleaitender.common.enums.ProjectStatus;
-import com.jy.eleaitender.common.enums.ResponseCode;
+import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
@@ -29,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -229,10 +227,25 @@ public class ProjectServiceImpl implements IProjectService {
         params.setProjectCategory(project.getProjectCategory());
         params.setBudget(project.getBudget() != null ? project.getBudget().toPlainString() : "");
         params.setDescription(project.getProjectDescription());
-        // TODO 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
 
+        // 参考文档内容 从 自动匹配的第一份文件/手动选择匹配的历史文件id/上传的文件id 中获取
+        StringJoiner paramJoiner = new StringJoiner(",");
+        MatchMode matchMode = MatchMode.fromCode(project.getMatchMode());
+        switch (matchMode) {
+            case AUTO_MATCH:
+            case MANUAL_SELECT:
+                if (project.getMatchedFileId() != null) {
+                    paramJoiner.add(String.valueOf(project.getMatchedFileId()));
+                }
+                break;
+            case UPLOAD:
+                if (project.getUploadedFileId() != null) {
+                    paramJoiner.add(String.valueOf(project.getUploadedFileId()));
+                }
+                break;
+        }
         return aiTaskService.createTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
-                project.getId(), project.getId(), "REQUIREMENT", params, null);
+                project.getId(), project.getId(), "REQUIREMENT", params, paramJoiner.toString());
     }
 
     @Override
