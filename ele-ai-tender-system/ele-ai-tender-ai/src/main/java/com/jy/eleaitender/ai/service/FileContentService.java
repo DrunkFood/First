@@ -56,7 +56,7 @@ public class FileContentService {
         if (contentList.isEmpty()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder("\n\n【文档内容】");
+        StringBuilder sb = new StringBuilder("\n\n【参考文件内容】");
         contentList.forEach(sb::append);
         return sb.toString();
     }
