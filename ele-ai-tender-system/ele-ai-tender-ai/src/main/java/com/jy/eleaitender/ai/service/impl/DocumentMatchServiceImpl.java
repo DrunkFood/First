@@ -2,13 +2,12 @@ package com.jy.eleaitender.ai.service.impl;
 
 import com.jy.eleaitender.ai.dto.request.MatchRequest;
 import com.jy.eleaitender.ai.dto.response.MatchResultVO;
-import com.jy.eleaitender.ai.mapper.AiRequirementMatchMapper;
+import com.jy.eleaitender.ai.mapper.AiKnowledgeDocumentMapper;
 import com.jy.eleaitender.ai.service.IDocumentMatchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 
@@ -21,7 +20,7 @@ import java.util.List;
 public class DocumentMatchServiceImpl implements IDocumentMatchService {
 
     @Autowired
-    private AiRequirementMatchMapper matchMapper;
+    private AiKnowledgeDocumentMapper matchMapper;
 
     @Override
     public List<MatchResultVO> autoMatch(MatchRequest request) {
@@ -54,7 +53,7 @@ public class DocumentMatchServiceImpl implements IDocumentMatchService {
 
     /**
      * 计算匹配度评分 (0-100)
-     *
+     * <p>
      * 评分维度：
      * - 项目类型匹配: 40%
      * - 项目类别匹配: 20%
