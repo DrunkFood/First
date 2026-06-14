@@ -3,8 +3,8 @@ package com.jy.eleaitender.ai.controller;
 import com.jy.eleaitender.ai.dto.request.MatchRequest;
 import com.jy.eleaitender.ai.dto.response.MatchResultVO;
 import com.jy.eleaitender.ai.service.IDocumentMatchService;
-import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.common.response.Result;
+import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,13 +31,18 @@ public class DocumentMatchController {
     @PostMapping("/auto")
     @RequireLogin
     public Result<List<MatchResultVO>> autoMatch(@RequestBody @Valid MatchRequest request) {
-        return Result.success(documentMatchService.autoMatch(request));
+        // TODO: 自动匹配逻辑
+        //return Result.success(documentMatchService.autoMatch(request));
+        return Result.success(List.of());
     }
 
     @Operation(summary = "手动选择匹配（返回候选列表）")
     @PostMapping("/manual")
     @RequireLogin
     public Result<List<MatchResultVO>> manualMatch(@RequestBody @Valid MatchRequest request) {
-        return Result.success(documentMatchService.manualMatch(request));
+        // TODO: 手动匹配逻辑
+        //return Result.success(documentMatchService.manualMatch(request));
+        return Result.success(List.of());
     }
+
 }
