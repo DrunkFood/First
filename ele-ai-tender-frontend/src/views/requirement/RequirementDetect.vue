@@ -430,19 +430,9 @@ async function startDetection() {
     const taskMap = await requirementApi.detect(requirementId.value)
     submitting.value = false
 
-    // 后端返回 key 为 SENSITIVE_WORD / TYPO
-    const cards = detectCards.value
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i]!
-      const taskId = taskMap[card.type]
-      if (taskId) {
-        card.taskId = taskId
-        cardTaskIds[i]!.value = taskId
-      } else {
-        card.completed = true
-        card.percentage = 100
-      }
-    }
+    // 后端返回 key 为 SENSITIVE_WORD / TYPO，value 为 taskId
+    // 需要重新加载检测记录以获取 recordId（accept/reject 接口依赖 recordId）
+    await restoreDetectionState()
   } catch (e: any) {
     submitting.value = false
     if (e?.code === 8084) {
