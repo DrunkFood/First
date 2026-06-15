@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +51,9 @@ public class AiCallRecorder {
         String fileContents = fileContentService.resolveFileContents(fileIds);
         userPrompt = userPrompt + fileContents;
 
+        // 记录开始时间
+        Date startTime = new Date();
+
         ChatResponse chatResponse = client.prompt()
                 .system(systemPrompt)
                 .user(userPrompt)
@@ -57,7 +61,7 @@ public class AiCallRecorder {
                 .chatResponse();
 
         String content = extractContent(chatResponse);
-        record(chatResponse, content, systemPrompt, userPrompt, role, taskId, null, userId);
+        record(chatResponse, content, systemPrompt, userPrompt, startTime, role, taskId, null, userId);
         return content;
     }
 
@@ -76,11 +80,11 @@ public class AiCallRecorder {
     public void recordStreamResponse(ChatResponse lastChatResponse, String fullContent,
                                      String systemPrompt, String userPrompt,
                                      String role, Long taskId, String conversationId, Long userId) {
-        record(lastChatResponse, fullContent, systemPrompt, userPrompt, role, taskId, conversationId, userId);
+        record(lastChatResponse, fullContent, systemPrompt, userPrompt, new Date(), role, taskId, conversationId, userId);
     }
 
     private void record(ChatResponse chatResponse, String content,
-                        String systemPrompt, String userPrompt,
+                        String systemPrompt, String userPrompt, Date startTime,
                         String role, Long taskId, String conversationId, Long userId) {
         try {
             AiResponseLog responseLog = new AiResponseLog();
@@ -98,6 +102,8 @@ public class AiCallRecorder {
             if (userId != null) {
                 responseLog.setCreateId(userId);
             }
+            responseLog.setCreateTime(startTime);
+            responseLog.setModifyTime(new Date());
             responseLogService.record(responseLog);
         } catch (Exception e) {
             log.error("记录AI响应日志失败: role={}, taskId={}", role, taskId, e);
