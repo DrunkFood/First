@@ -42,7 +42,7 @@ public class RequirementGenerator {
     /**
      * 分章并行生成时，每章交错启动的间隔（毫秒），避免瞬间并发触发API速率限制
      */
-    private static final long CHAPTER_STAGGER_INTERVAL_MS = 2000L;
+    private static final long CHAPTER_STAGGER_INTERVAL_MS = 10 * 1000L;
 
     @Autowired
     private ModelRouter modelRouter;
