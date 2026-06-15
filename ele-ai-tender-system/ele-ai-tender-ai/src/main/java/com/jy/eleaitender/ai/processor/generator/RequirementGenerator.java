@@ -263,12 +263,13 @@ public class RequirementGenerator {
             if (content != null && !content.isBlank()) {
                 log.info("章节[{}]生成成功: {}, 字符数={}", chapterIndex, chapter.getChapterTitle(), content.length());
                 return content;
+            } else {
+                log.error("章节[{}]生成结果为空或空白: {}", chapterIndex, chapter.getChapterTitle());
             }
         } catch (Exception e) {
-            log.warn("章节[{}]生成失败: {} - {}", chapterIndex, chapter.getChapterTitle(), e.getMessage());
+            log.error("章节[{}]生成失败: {} - {}", chapterIndex, chapter.getChapterTitle(), e.getMessage());
         }
 
-        log.error("章节[{}]生成最终失败: {}", chapterIndex, chapter.getChapterTitle());
         return "> ⚠️ 本章节内容生成失败，请手动补充";
     }
 
