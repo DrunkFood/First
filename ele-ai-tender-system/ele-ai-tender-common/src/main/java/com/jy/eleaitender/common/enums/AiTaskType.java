@@ -11,22 +11,23 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AiTaskType {
 
-    REQUIREMENT_GENERATE("REQUIREMENT_GENERATE", "需求生成", RequirementGenerateParams.class),
-    PROJECT_REQUIREMENT_GENERATE("PROJECT_REQUIREMENT_GENERATE", "项目需求生成", RequirementGenerateParams.class),
+    REQUIREMENT_GENERATE("REQUIREMENT_GENERATE", "需求生成", 10, RequirementGenerateParams.class),
+    PROJECT_REQUIREMENT_GENERATE("PROJECT_REQUIREMENT_GENERATE", "项目需求生成", 10, RequirementGenerateParams.class),
 
-    REVIEW_ITEM_GENERATE("REVIEW_ITEM_GENERATE", "评审项生成", ReviewItemGenerateParams.class),
+    REVIEW_ITEM_GENERATE("REVIEW_ITEM_GENERATE", "评审项生成", 10, ReviewItemGenerateParams.class),
 
-    DOCUMENT_INTEGRATION("DOCUMENT_INTEGRATION", "文档集成", DocumentIntegrationParams.class),
+    DOCUMENT_INTEGRATION("DOCUMENT_INTEGRATION", "文档集成", 10, DocumentIntegrationParams.class),
 
-    DETECTION_SENSITIVE_WORD("DETECTION_SENSITIVE_WORD", "敏感词检测", DetectionParams.class),
-    DETECTION_TYPO("DETECTION_TYPO", "错别字检测", DetectionParams.class),
-    DETECTION_POLICY_REVIEW("DETECTION_POLICY_REVIEW", "政策文件审查", DetectionParams.class),
-    DETECTION_FORMAT_CHECK("DETECTION_FORMAT_CHECK", "格式规范检测", DetectionParams.class),
+    DETECTION_SENSITIVE_WORD("DETECTION_SENSITIVE_WORD", "敏感词检测", 10, DetectionParams.class),
+    DETECTION_TYPO("DETECTION_TYPO", "错别字检测", 10, DetectionParams.class),
+    DETECTION_POLICY_REVIEW("DETECTION_POLICY_REVIEW", "政策文件审查", 10, DetectionParams.class),
+    DETECTION_FORMAT_CHECK("DETECTION_FORMAT_CHECK", "格式规范检测", 10, DetectionParams.class),
 
-    TEXT_OPTIMIZE("TEXT_OPTIMIZE", "文本优化", TextOptimizeParams.class);
+    TEXT_OPTIMIZE("TEXT_OPTIMIZE", "文本优化", 10, TextOptimizeParams.class);
 
     private final String code;
     private final String label;
+    private final Integer timeout;
     private final Class<?> clazz;
 
     public static AiTaskType fromCode(String code) {

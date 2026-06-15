@@ -47,7 +47,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
         task.setStatus(AiTaskStatus.PENDING.getCode());
         task.setRetryCount(0);
         task.setMaxRetry(3);
-        task.setTimeoutMinutes(10);
+        task.setTimeoutMinutes(type.getTimeout());
 
         try {
             task.setRequestParams(objectMapper.writeValueAsString(requestParams));
