@@ -5,6 +5,7 @@ import com.jy.eleaitender.common.entity.base.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -69,7 +70,7 @@ public class AiTask extends BaseEntity {
         if (fileIds == null) {
             return null;
         }
-        return Arrays.stream(fileIds.split(",")).toList();
+        return Arrays.stream(fileIds.split(",")).filter(StringUtils::isNotBlank).toList();
     }
 
 }
