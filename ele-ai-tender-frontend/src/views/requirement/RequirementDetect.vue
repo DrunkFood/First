@@ -427,11 +427,10 @@ async function startDetection() {
   }
   submitting.value = true
   try {
-    const taskMap = await requirementApi.detect(requirementId.value)
+    await requirementApi.detect(requirementId.value)
     submitting.value = false
 
-    // 后端返回 key 为 SENSITIVE_WORD / TYPO，value 为 taskId
-    // 需要重新加载检测记录以获取 recordId（accept/reject 接口依赖 recordId）
+    // 重新加载检测记录以获取 recordId（accept/reject 接口依赖 recordId）
     await restoreDetectionState()
   } catch (e: any) {
     submitting.value = false
