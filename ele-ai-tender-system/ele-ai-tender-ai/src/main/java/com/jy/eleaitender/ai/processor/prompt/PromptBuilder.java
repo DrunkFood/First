@@ -16,9 +16,23 @@ import com.jy.eleaitender.common.enums.ReviewType;
  */
 public final class PromptBuilder {
 
+    // ===========================文本优化===========================
+
     /**
-     * 构建需求生成的User Prompt
+     * 构建文本优化的User Prompt
      */
+    public static String buildTextOptimize(String content, String requirement) {
+        return String.format(UserPromptTemplates.TEXT_OPTIMIZE_USER,
+                defaultStr(content),
+                defaultStr(requirement, "提升专业性和规范性"));
+    }
+
+    // ===========================需求生成===========================
+
+    /**
+     * 构建需求生成的User Prompt（已废弃，由三步式Agent替代：buildOutline / buildChapter / buildReview）
+     */
+    @Deprecated
     public static String buildRequirementGenerate(String projectName,
                                                   String projectType,
                                                   String projectCategory,
@@ -31,6 +45,50 @@ public final class PromptBuilder {
                 defaultStr(budget),
                 defaultStr(description));
     }
+
+    /**
+     * 构建需求大纲生成的User Prompt
+     */
+    public static String buildOutline(String projectName, String projectType,
+                                      String projectCategory, String budget,
+                                      String description) {
+        return String.format(UserPromptTemplates.REQUIREMENT_OUTLINE_GENERATE_USER,
+                defaultStr(projectName),
+                defaultStr(ProjectType.fromCode(projectType).getLabel()),
+                defaultStr(ProjectCategory.fromCode(projectCategory).getLabel()),
+                defaultStr(budget),
+                defaultStr(description));
+    }
+
+    /**
+     * 构建需求章节生成的User Prompt
+     */
+    public static String buildChapter(String projectOverview, String outlineDirectory,
+                                      String chapterTitle, String corePoints,
+                                      int estimatedWords) {
+        return String.format(UserPromptTemplates.REQUIREMENT_CHAPTER_GENERATE_USER,
+                defaultStr(projectOverview),
+                defaultStr(outlineDirectory),
+                defaultStr(chapterTitle),
+                defaultStr(corePoints),
+                defaultStr(String.valueOf(estimatedWords), "3000"));
+    }
+
+    /**
+     * 构建需求审查的User Prompt
+     */
+    public static String buildReview(String projectName, String projectType,
+                                     String projectCategory, String budget,
+                                     String fullContent) {
+        return String.format(UserPromptTemplates.REQUIREMENT_REVIEW_USER,
+                defaultStr(projectName),
+                defaultStr(ProjectType.fromCode(projectType).getLabel()),
+                defaultStr(ProjectCategory.fromCode(projectCategory).getLabel()),
+                defaultStr(budget),
+                defaultStr(fullContent));
+    }
+
+    // ===========================评审项生成===========================
 
     /**
      * 构建评审项生成的 User Prompt（带评审类型配置）
@@ -49,14 +107,7 @@ public final class PromptBuilder {
                 defaultStr(enabledTypes, ReviewType.getLabels()));
     }
 
-    /**
-     * 构建文本优化的User Prompt
-     */
-    public static String buildTextOptimize(String content, String requirement) {
-        return String.format(UserPromptTemplates.TEXT_OPTIMIZE_USER,
-                defaultStr(content),
-                defaultStr(requirement, "提升专业性和规范性"));
-    }
+    // ===========================检测类===========================
 
     /**
      * 构建检测类的User Prompt（敏感词/错别字/格式检测通用）
@@ -73,6 +124,8 @@ public final class PromptBuilder {
         return String.format(UserPromptTemplates.DETECTION_POLICY_USER,
                 defaultStr(content));
     }
+
+    // ===========================占位符匹配===========================
 
     /**
      * 构建占位符匹配的User Prompt

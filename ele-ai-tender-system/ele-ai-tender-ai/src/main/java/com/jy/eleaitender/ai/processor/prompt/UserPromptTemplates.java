@@ -5,6 +5,8 @@ package com.jy.eleaitender.ai.processor.prompt;
  */
 public final class UserPromptTemplates {
 
+    // ===========================文本优化===========================
+
     /**
      * 文本优化 - User Prompt 模板
      * 参数: content, requirement
@@ -18,10 +20,12 @@ public final class UserPromptTemplates {
             优化要求：%s
             """;
 
+    // ===========================需求生成===========================
+
     /**
-     * 需求生成 - User Prompt 模板
-     * 参数: projectName, projectType, projectCategory, budget, description
+     * 需求生成 - User Prompt 模板（已废弃，由三步式Agent替代）
      */
+    @Deprecated
     public static final String REQUIREMENT_GENERATE_USER = """
             请根据以下项目信息生成业务需求：
             
@@ -31,6 +35,52 @@ public final class UserPromptTemplates {
             项目预算：%s元
             项目描述：%s
             """;
+
+    /**
+     * 需求大纲生成 - User Prompt 模板
+     * 参数: projectName, projectType, projectCategory, budget, description
+     */
+    public static final String REQUIREMENT_OUTLINE_GENERATE_USER = """
+            请根据以下项目信息规划招标需求文档的大纲：
+            
+            项目名称：%s
+            项目类型：%s
+            项目类别：%s
+            项目预算：%s元
+            项目描述：%s
+            """;
+
+    /**
+     * 需求章节生成 - User Prompt 模板
+     * 参数: projectOverview, outlineDirectory, chapterTitle, corePoints, estimatedWords
+     */
+    public static final String REQUIREMENT_CHAPTER_GENERATE_USER = """
+            项目概况：%s
+            
+            完整大纲目录：
+            %s
+            
+            当前需要编写的章节：
+            章节标题：%s
+            核心要点：%s
+            预估字数：%s字
+            
+            请编写本章节的详细内容：
+            """;
+
+    /**
+     * 需求审查 - User Prompt 模板
+     * 参数: projectName, projectType, projectCategory, budget, fullContent
+     */
+    public static final String REQUIREMENT_REVIEW_USER = """
+            项目信息：%s，%s，%s，预算%s元
+            
+            请审查以下招标需求文档：
+            
+            %s
+            """;
+
+    // ===========================评审项生成===========================
 
     /**
      * 评审项生成 - User Prompt 模板（带评审类型配置）
@@ -56,19 +106,7 @@ public final class UserPromptTemplates {
             请确保总分值为100分，合理分配各评审项的分值。
             """;
 
-    /**
-     * 占位符匹配 - User Prompt 模板
-     * 参数: placeholderList, dataFieldList
-     */
-    public static final String PLACEHOLDER_MATCH_USER = """
-            请将以下Word模板占位符与数据字段进行匹配：
-            
-            模板占位符：
-            %s
-            
-            可用数据字段：
-            %s
-            """;
+    // ===========================检测类===========================
 
     /**
      * 检测类 - User Prompt 模板（通用）
@@ -88,6 +126,22 @@ public final class UserPromptTemplates {
             请对照政策文件检查以下招标文件内容的合规性，政策文件位于【文档内容】：
             
             招标文件内容：
+            %s
+            """;
+
+    // ===========================占位符匹配===========================
+
+    /**
+     * 占位符匹配 - User Prompt 模板
+     * 参数: placeholderList, dataFieldList
+     */
+    public static final String PLACEHOLDER_MATCH_USER = """
+            请将以下Word模板占位符与数据字段进行匹配：
+            
+            模板占位符：
+            %s
+            
+            可用数据字段：
             %s
             """;
 }

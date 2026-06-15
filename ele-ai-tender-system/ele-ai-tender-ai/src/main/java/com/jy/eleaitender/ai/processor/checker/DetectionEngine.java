@@ -1,7 +1,7 @@
 package com.jy.eleaitender.ai.processor.checker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jy.eleaitender.ai.processor.generator.GenerateResultParser;
+import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.service.FileContentService;
 import com.jy.eleaitender.common.dto.ai.DetectionParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;

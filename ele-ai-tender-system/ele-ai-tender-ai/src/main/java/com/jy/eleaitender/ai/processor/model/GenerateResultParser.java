@@ -1,4 +1,4 @@
-package com.jy.eleaitender.ai.processor.generator;
+package com.jy.eleaitender.ai.processor.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
