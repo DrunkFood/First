@@ -39,6 +39,11 @@ public class RequirementGenerator {
      */
     private static final int MIN_REVISION_ORIGINAL_LENGTH = 20;
 
+    /**
+     * 分章并行生成时，每章交错启动的间隔（毫秒），避免瞬间并发触发API速率限制
+     */
+    private static final long CHAPTER_STAGGER_INTERVAL_MS = 2000L;
+
     @Autowired
     private ModelRouter modelRouter;
 
@@ -203,15 +208,22 @@ public class RequirementGenerator {
                 .map(ch -> ch.getChapterTitle() + "（" + ch.getCorePoints() + "）")
                 .collect(Collectors.joining("\n"));
 
-        // 并行生成所有章节
+        // 交错并行生成所有章节：每章延迟启动，避免同时提交触发API速率限制
         List<CompletableFuture<String>> futures = new ArrayList<>();
         for (int i = 0; i < chapters.size(); i++) {
             RequirementOutline chapter = chapters.get(i);
             int chapterIndex = i;
-            futures.add(CompletableFuture.supplyAsync(() ->
-                            generateSingleChapter(chapter, projectOverview, outlineDirectory,
-                                    client, task, chapterIndex),
-                    virtualThreadExecutor));
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                // 首章立即启动，后续章节按序延迟，错开API请求
+                if (chapterIndex > 0) {
+                    try {
+                        Thread.sleep(chapterIndex * CHAPTER_STAGGER_INTERVAL_MS);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+                return generateSingleChapter(chapter, projectOverview, outlineDirectory,
+                        client, task, chapterIndex);
+            }, virtualThreadExecutor));
         }
 
         // 等待所有章节完成，超时20分钟
