@@ -68,24 +68,18 @@ public class AiCallRecorder {
     /**
      * 记录流式响应日志（流完成后调用）
      *
-     * @param lastChatResponse 流的最后一个ChatResponse（包含usage信息）
-     * @param fullContent      流式收集的完整内容
-     * @param systemPrompt     系统提示词
-     * @param userPrompt       用户提示词
-     * @param role             对话角色
-     * @param taskId           关联AI任务ID
-     * @param conversationId   对话ID
-     * @param userId           用户ID
+     * @param chatResponse   ChatResponse对象（包含usage信息）
+     * @param content        内容
+     * @param systemPrompt   系统提示词
+     * @param userPrompt     用户提示词
+     * @param role           对话角色
+     * @param taskId         关联AI任务ID
+     * @param conversationId 对话ID
+     * @param userId         用户ID
      */
-    public void recordStreamResponse(ChatResponse lastChatResponse, String fullContent,
-                                     String systemPrompt, String userPrompt,
-                                     String role, Long taskId, String conversationId, Long userId) {
-        record(lastChatResponse, fullContent, systemPrompt, userPrompt, new Date(), role, taskId, conversationId, userId);
-    }
-
-    private void record(ChatResponse chatResponse, String content,
-                        String systemPrompt, String userPrompt, Date startTime,
-                        String role, Long taskId, String conversationId, Long userId) {
+    public void record(ChatResponse chatResponse, String content,
+                       String systemPrompt, String userPrompt, Date startTime,
+                       String role, Long taskId, String conversationId, Long userId) {
         try {
             AiResponseLog responseLog = new AiResponseLog();
             responseLog.setModel(getModel(chatResponse));

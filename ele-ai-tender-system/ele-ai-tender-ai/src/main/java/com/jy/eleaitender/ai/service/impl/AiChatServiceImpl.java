@@ -7,11 +7,14 @@ import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.ai.service.IAiChatService;
+import com.jy.eleaitender.ai.threadpool.DynamicThreadPoolManager;
 import com.jy.eleaitender.common.enums.AiUsageScenario;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
-import com.jy.eleaitender.ai.threadpool.DynamicThreadPoolManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -19,12 +22,9 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.UserMessage;
 
 /**
  * AI对话服务实现
@@ -68,6 +68,9 @@ public class AiChatServiceImpl implements IAiChatService {
                 }
                 userPrompt.append(request.getMessage());
 
+                // 记录开始时间
+                Date startTime = new Date();
+
                 // 流式调用 - 使用chatResponse以获取token信息
                 StringBuilder contentBuilder = new StringBuilder();
                 AtomicReference<ChatResponse> lastResponseRef = new AtomicReference<>();
@@ -91,9 +94,8 @@ public class AiChatServiceImpl implements IAiChatService {
                         error -> completeSseWithError(emitter, error),
                         () -> {
                             // 流完成后记录响应日志
-                            aiCallRecorder.recordStreamResponse(
-                                    lastResponseRef.get(), contentBuilder.toString(),
-                                    SystemPromptTemplates.AI_ASSISTANT, userPrompt.toString(),
+                            aiCallRecorder.record(lastResponseRef.get(), contentBuilder.toString(),
+                                    SystemPromptTemplates.AI_ASSISTANT, userPrompt.toString(), startTime,
                                     "CHAT", null, request.getConversationId(), null);
                             completeSse(emitter);
                         }
@@ -113,6 +115,9 @@ public class AiChatServiceImpl implements IAiChatService {
 
                 String userPrompt = PromptBuilder.buildTextOptimize(
                         request.getContent(), request.getRequirement());
+
+                // 记录开始时间
+                Date startTime = new Date();
 
                 // 流式调用 - 使用chatResponse以获取token信息
                 StringBuilder contentBuilder = new StringBuilder();
@@ -135,9 +140,8 @@ public class AiChatServiceImpl implements IAiChatService {
                         },
                         error -> completeSseWithError(emitter, error),
                         () -> {
-                            aiCallRecorder.recordStreamResponse(
-                                    lastResponseRef.get(), contentBuilder.toString(),
-                                    SystemPromptTemplates.TEXT_OPTIMIZE, userPrompt,
+                            aiCallRecorder.record(lastResponseRef.get(), contentBuilder.toString(),
+                                    SystemPromptTemplates.TEXT_OPTIMIZE, userPrompt, startTime,
                                     "OPTIMIZATION", null, null, null);
                             completeSse(emitter);
                         }
@@ -213,9 +217,9 @@ public class AiChatServiceImpl implements IAiChatService {
     private String escapeJson(String text) {
         if (text == null) return "";
         return text.replace("\\", "\\\\")
-                   .replace("\"", "\\\"")
-                   .replace("\n", "\\n")
-                   .replace("\r", "\\r")
-                   .replace("\t", "\\t");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }
