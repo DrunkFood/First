@@ -229,7 +229,7 @@ public class RequirementGenerator {
         // 等待所有章节完成，超时20分钟
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(20, TimeUnit.MINUTES);
+                    .get(10, TimeUnit.MINUTES);
         } catch (TimeoutException e) {
             log.error("分章生成等待超时: taskId={}, 取消未完成章节", task.getId());
             futures.forEach(f -> f.cancel(true));
@@ -273,13 +273,13 @@ public class RequirementGenerator {
                     userPrompt, "GENERATION", task.getId(), task.getCreateId(), null);
             String content = resultParser.extractMarkdown(aiOutput);
             if (content != null && !content.isBlank()) {
-                log.info("章节[{}]生成成功: {}, 字符数={}", chapterIndex, chapter.getChapterTitle(), content.length());
+                log.info("taskId={}, 章节[{}]生成成功: {}, 字符数={}", task.getId(), chapterIndex, chapter.getChapterTitle(), content.length());
                 return content;
             } else {
-                log.error("章节[{}]生成结果为空或空白: {}", chapterIndex, chapter.getChapterTitle());
+                log.error("taskId={}, 章节[{}]生成结果为空: {}", task.getId(), chapterIndex, chapter.getChapterTitle());
             }
         } catch (Exception e) {
-            log.error("章节[{}]生成失败: {} - {}", chapterIndex, chapter.getChapterTitle(), e.getMessage());
+            log.error("taskId={}, 章节[{}]生成失败: {} - {}", task.getId(), chapterIndex, chapter.getChapterTitle(), e.getMessage(), e);
         }
 
         return "> ⚠️ 本章节内容生成失败，请手动补充";
