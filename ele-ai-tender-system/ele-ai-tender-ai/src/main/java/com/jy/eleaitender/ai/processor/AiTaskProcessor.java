@@ -135,8 +135,7 @@ public class AiTaskProcessor {
         }
         final int timeoutMinutes = timeout;
 
-        log.info("开始处理AI任务: id={}, type={}, userId={}, timeout={}min",
-                task.getId(), task.getTaskType(), userId, timeoutMinutes);
+        log.info("开始处理AI任务: id={}, type={}, userId={}, timeout={}min", task.getId(), task.getTaskType(), userId, timeoutMinutes);
 
         Future<String> future = threadPoolManager.submit(() -> dispatch(task));
 

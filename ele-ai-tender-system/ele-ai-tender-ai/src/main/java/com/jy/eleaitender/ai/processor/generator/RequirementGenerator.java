@@ -83,11 +83,11 @@ public class RequirementGenerator {
 
         // Step 3: 拼接全文
         String fullContent = assembleFullContent(outline, chapterContents);
-        log.info("全文拼接完成: taskId={}, 总字符数={}", task.getId(), fullContent.length());
+        log.info("Step3全文拼接完成: taskId={}, 总字符数={}", task.getId(), fullContent.length());
 
         // Step 4: 审查与局部修订（不传fileIdList，减少token消耗）
         String finalContent = reviewAndRefine(fullContent, params, client, task);
-        log.info("需求生成完成: taskId={}, 最终字符数={}", task.getId(), finalContent.length());
+        log.info("Step4需求生成完成: taskId={}, 最终字符数={}", task.getId(), finalContent.length());
 
         return resultParser.toJsonResult("content", finalContent);
     }
@@ -363,9 +363,7 @@ public class RequirementGenerator {
                 // 原文太短，跳过避免误替换
                 if (original.length() < MIN_REVISION_ORIGINAL_LENGTH) {
                     skipped++;
-                    log.warn("修订项原文过短({}字符)，跳过: [{}]",
-                            original.length(),
-                            original.length() > 30 ? original.substring(0, 30) + "..." : original);
+                    log.warn("修订项原文过短({}字符)，跳过: [{}]", original.length(), original);
                     continue;
                 }
 

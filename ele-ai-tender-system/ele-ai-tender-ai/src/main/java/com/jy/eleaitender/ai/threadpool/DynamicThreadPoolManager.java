@@ -8,7 +8,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -49,9 +48,10 @@ public class DynamicThreadPoolManager {
         this.properties = loadFromDb();
         this.cachedParamHash = this.properties.computeHash();
         this.executor = createExecutor(properties);
-        log.info("动态线程池初始化完成: core={}, max={}, queue={}, keepAlive={}s",
+        log.info("动态线程池初始化完成: core={}, max={}, queue={}, keepAlive={}s, timeout={}min",
                 properties.getCorePoolSize(), properties.getMaxPoolSize(),
-                properties.getQueueCapacity(), properties.getKeepAliveSeconds());
+                properties.getQueueCapacity(), properties.getKeepAliveSeconds(),
+                properties.getTaskTimeoutMinutes());
     }
 
     @PreDestroy
