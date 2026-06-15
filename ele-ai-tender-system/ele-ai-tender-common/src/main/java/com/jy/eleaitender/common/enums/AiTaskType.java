@@ -11,8 +11,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AiTaskType {
 
-    REQUIREMENT_GENERATE("REQUIREMENT_GENERATE", "需求生成", 10, RequirementGenerateParams.class),
-    PROJECT_REQUIREMENT_GENERATE("PROJECT_REQUIREMENT_GENERATE", "项目需求生成", 10, RequirementGenerateParams.class),
+    REQUIREMENT_GENERATE("REQUIREMENT_GENERATE", "需求生成", 20, RequirementGenerateParams.class),
+    PROJECT_REQUIREMENT_GENERATE("PROJECT_REQUIREMENT_GENERATE", "项目需求生成", 20, RequirementGenerateParams.class),
 
     REVIEW_ITEM_GENERATE("REVIEW_ITEM_GENERATE", "评审项生成", 10, ReviewItemGenerateParams.class),
 
