@@ -244,7 +244,13 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { useLatestTask } from '@/composables/useLatestTask'
 import { useFeedback } from '@/composables/useFeedback'
-import { getTaskProgress, getProgressStatus, isTaskSucceeded } from '@/types/ai-task'
+import {
+  getTaskProgress,
+  getProgressStatus,
+  getProcessingProgressByTime,
+  isTaskSucceeded,
+  isTaskTerminal
+} from '@/types/ai-task'
 import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -282,12 +288,8 @@ const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   async (_task) => {
     // resultSynced=1 时业务数据已同步，直接读取
     if (requirementId.value) {
-      // 清除进度模拟计时器
-      if (generateProgressTimer) {
-        clearInterval(generateProgressTimer)
-        generateProgressTimer = null
-      }
-      sseProgress.value = 100
+      stopProgressTimer()
+      displayProgress.value = 100
       ElMessage.success('AI生成完成')
       sseGenerating.value = false
 
@@ -331,21 +333,92 @@ watch(latestTask, (task) => {
 // ---- 生成状态 ----
 const sseGenerating = ref(false)
 const isRequirementCompleted = computed(() => requirementData.value.status === 'COMPLETED')
-let sseProgress = ref(0)
+
+// ---- 统一进度模型 ----
+const displayProgress = ref(0)       // 显示进度（只增不减，除非新任务重置）
+const generateStartTime = ref(0)     // 本地记录的生成开始时间戳
+let progressTimer: ReturnType<typeof setInterval> | null = null
+
+/** 更新进度（由定时器每秒调用） */
+function updateProgress() {
+  const task = latestTask.value
+  if (!task) {
+    displayProgress.value = content.value ? 100 : 0
+    return
+  }
+
+  if (task.status === 'PROCESSING' || sseGenerating.value) {
+    // PROCESSING / 刚触发生成：基于已运行时间计算进度
+    displayProgress.value = getProcessingProgressByTime(task, generateStartTime.value)
+  } else {
+    // 其他状态（PENDING/COMPLETED/FAILED等）：使用固定映射
+    const taskProgress = getTaskProgress(task)
+    // 进度只增不减（避免从90%跳到10%等视觉回退）
+    displayProgress.value = Math.max(displayProgress.value, taskProgress)
+  }
+}
+
+/** 启动进度定时器 */
+function startProgressTimer() {
+  stopProgressTimer()
+  updateProgress()
+  progressTimer = setInterval(updateProgress, 1000)
+}
+
+/** 停止进度定时器 */
+function stopProgressTimer() {
+  if (progressTimer) {
+    clearInterval(progressTimer)
+    progressTimer = null
+  }
+}
+
+// 监听任务状态变化，自动启动/停止进度定时器
+watch(latestTask, (task) => {
+  if (!task) {
+    // 无任务时：sseGenerating 保持定时器（updateProgress 用 generateStartTime 兜底）
+    if (!sseGenerating.value) {
+      stopProgressTimer()
+      displayProgress.value = content.value ? 100 : 0
+    }
+    return
+  }
+
+  if (task.status === 'PROCESSING' || sseGenerating.value) {
+    // 生成中（含用户刚触发、任务尚在 PENDING 的场景）：确保定时器运行
+    if (!progressTimer) {
+      startProgressTimer()
+    }
+    return
+  }
+
+  // 非 PROCESSING 且非用户主动生成 → 停止定时器
+  stopProgressTimer()
+
+  if (task.status === 'COMPLETED') {
+    if (task.resultSynced === 1) {
+      displayProgress.value = 100
+    } else if (task.resultSynced === 0) {
+      // 已完成但结果同步中，进度不低于90%
+      displayProgress.value = Math.max(displayProgress.value, 90)
+    } else {
+      // resultSynced=2 同步失败
+      displayProgress.value = 0
+    }
+  } else if (isTaskTerminal(task)) {
+    // FAILED / AI_UNAVAILABLE / SKIPPED
+    displayProgress.value = getTaskProgress(task)
+  } else {
+    // PENDING（页面刷新恢复场景）
+    const taskProgress = getTaskProgress(task)
+    displayProgress.value = Math.max(displayProgress.value, taskProgress)
+  }
+}, { immediate: true })
 
 // ---- 进度计算 ----
-const progressPercent = computed(() => {
-  // SSE 正在流式输出
-  if (sseGenerating.value) return sseProgress.value
-  // 有任务状态
-  if (latestTask.value) return getTaskProgress(latestTask.value)
-  // 有内容但无任务 = 历史已完成
-  if (content.value) return 100
-  return 0
-})
+const progressPercent = computed(() => displayProgress.value)
 
 const progressStatus = computed(() => {
-  if (sseGenerating.value) return ''
   if (latestTask.value) return getProgressStatus(latestTask.value)
   return ''
 })
@@ -385,10 +458,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  if (generateProgressTimer) {
-    clearInterval(generateProgressTimer)
-    generateProgressTimer = null
-  }
+  stopProgressTimer()
   // 清空内容，防止编辑器在DOM销毁后报错
   content.value = ''
 })
@@ -429,7 +499,8 @@ async function handleGenerate() {
 
   sseGenerating.value = true
   content.value = ''
-  sseProgress.value = 0
+  displayProgress.value = 0
+  generateStartTime.value = Date.now() // 记录本地开始时间
 
   try {
     // 调用后端创建AI生成任务（普通POST，非SSE）
@@ -439,29 +510,17 @@ async function handleGenerate() {
       setActive(task.id)
     }
 
-    // 模拟进度（等待后端异步任务执行期间）
-    const progressTimer = setInterval(() => {
-      if (sseProgress.value < 90) {
-        sseProgress.value += Math.floor(Math.random() * 3) + 1
-      }
-    }, 1000)
-
-    // 保存timer以便停止时清除
-    generateProgressTimer = progressTimer
+    // 启动基于时间的统一进度定时器
+    startProgressTimer()
   } catch (e: any) {
     ElMessage.error(e?.message || 'AI生成任务创建失败')
     sseGenerating.value = false
+    stopProgressTimer()
   }
 }
 
-// 模拟进度计时器引用
-let generateProgressTimer: ReturnType<typeof setInterval> | null = null
-
 function stopGenerate() {
-  if (generateProgressTimer) {
-    clearInterval(generateProgressTimer)
-    generateProgressTimer = null
-  }
+  stopProgressTimer()
   sseGenerating.value = false
 }
 

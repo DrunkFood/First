@@ -69,6 +69,42 @@ export function getTaskProgress(task: AiTaskVO | null): number {
   }
 }
 
+/**
+ * 基于任务已运行时间计算 PROCESSING 状态的进度
+ * 使用指数曲线：前期增长快、后期趋于平缓，上限90%
+ *
+ * 公式：progress = 90 × (1 - e^(-3 × elapsed / estimatedTotal))
+ *
+ * 典型值（estimatedTotal = 5分钟）：
+ * | 已用时间 | 进度  |
+ * |----------|-------|
+ * | 0秒      | 0%    |
+ * | 30秒     | 23%   |
+ * | 1分钟    | 41%   |
+ * | 2分钟    | 63%   |
+ * | 3分钟    | 75%   |
+ * | 5分钟    | 86%   |
+ *
+ * @param task AI任务（需有 startedAt 字段）
+ * @param fallbackStartMs 本地开始时间戳（task.startedAt 为空时的兜底）
+ * @param estimatedTotalMs 预估总耗时（毫秒），默认5分钟
+ */
+export function getProcessingProgressByTime(
+  task: AiTaskVO,
+  fallbackStartMs: number = 0,
+  estimatedTotalMs: number = 5 * 60 * 1000,
+): number {
+  const startTime = task.startedAt ? new Date(task.startedAt).getTime() : fallbackStartMs
+  if (!startTime) return 30 // 无时间信息时返回基础值
+
+  const elapsed = Date.now() - startTime
+  if (elapsed <= 0) return 0
+
+  const ratio = Math.min(elapsed / estimatedTotalMs, 1)
+  const progress = 90 * (1 - Math.exp(-3 * ratio))
+  return Math.min(Math.round(progress), 90)
+}
+
 /** 标准化进度条样式 */
 export function getProgressStatus(task: AiTaskVO | null): '' | 'success' | 'warning' | 'exception' {
   if (!task) return ''
