@@ -28,22 +28,8 @@ pipeline {
             steps {
                 script {
                     // 确定目标服务器用户@IP
-                    def envType = env.BRANCH_NAME.split('_')[0]
-                    if (envType == 'dev') {
-                        env.TARGET_SERVER = '10.11.20.42'
-                        env.APP_ENV = 'dev'
-                    } else if (envType == 'test') {
-                        env.TARGET_SERVER = '10.11.20.50'
-                        env.APP_ENV = 'test'
-                    } else if (envType == 'master') {
-                        env.TARGET_SERVER = '10.11.20.50'
-                        env.APP_ENV = 'test'
-                    } else if (envType == 'releases') {
-                        env.TARGET_SERVER = '10.11.20.50'
-                        env.APP_ENV = 'test'
-                    } else {
-                        error "[ERROR] 分支名错误"
-                    }
+                    env.TARGET_SERVER = '10.11.20.50'
+                    env.APP_ENV = 'test'
 
                     echo "[INFO] Building server: ${env.TARGET_SERVER}"
                     echo "[INFO] Building branch: ${env.BRANCH_NAME}"
