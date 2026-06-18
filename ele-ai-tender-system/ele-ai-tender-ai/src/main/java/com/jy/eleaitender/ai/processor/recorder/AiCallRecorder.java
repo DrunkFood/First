@@ -48,21 +48,28 @@ public class AiCallRecorder {
      */
     public String callAndRecord(ChatClient client, String systemPrompt, String userPrompt,
                                 String role, Long taskId, Long userId, List<String> fileIds) {
-        String fileContents = fileContentService.resolveFileContents(fileIds);
-        userPrompt = userPrompt + fileContents;
+        String resolvedUserPrompt = buildUserPromptWithFiles(userPrompt, fileIds);
 
         // 记录开始时间
         Date startTime = new Date();
 
         ChatResponse chatResponse = client.prompt()
                 .system(systemPrompt)
-                .user(userPrompt)
+                .user(resolvedUserPrompt)
                 .call()
                 .chatResponse();
 
         String content = extractContent(chatResponse);
-        record(chatResponse, content, systemPrompt, userPrompt, startTime, role, taskId, null, userId);
+        record(chatResponse, content, systemPrompt, resolvedUserPrompt, startTime, role, taskId, null, userId);
         return content;
+    }
+
+    /**
+     * 构建最终发送给AI的用户提示词，包含关联文件内容。
+     */
+    public String buildUserPromptWithFiles(String userPrompt, List<String> fileIds) {
+        String fileContents = fileContentService.resolveFileContents(fileIds);
+        return (userPrompt == null ? "" : userPrompt) + fileContents;
     }
 
     /**
