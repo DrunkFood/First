@@ -19,9 +19,9 @@ export const REQUIREMENT_STATUS_MAP: Record<string, { label: string; type?: '' |
 
 /** 项目类别映射 */
 export const PROJECT_CATEGORY_MAP: Record<string, { label: string; type?: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
-  LIMITED_BELOW: { label: '限额以下', type: '' },
-  PROPERTY_TRADE: { label: '产权交易', type: 'warning' },
+  SMALL_TRADE: { label: '小额交易', type: '' },
   GOVERNMENT_PROCUREMENT: { label: '政府采购', type: 'success' },
+  COMPREHENSIVE_TRADE: { label: '综合交易', type: 'warning' },
 }
 
 /** 项目类型映射 */

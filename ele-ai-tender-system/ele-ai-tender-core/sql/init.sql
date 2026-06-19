@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS `tb_project` (
     `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '项目ID',
     `project_code`          VARCHAR(50)  NOT NULL COMMENT '项目编号',
     `project_name`          VARCHAR(100) NOT NULL COMMENT '项目名称',
-    `project_category`      VARCHAR(30)  NOT NULL COMMENT '项目类别: LIMITED_BELOW/PROPERTY_TRADE/GOVERNMENT_PROCUREMENT',
+    `project_category`      VARCHAR(30)  NOT NULL COMMENT '项目类别: SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE',
     `project_type`          VARCHAR(30)  NOT NULL COMMENT '项目类型: ENGINEERING/GOODS/SERVICE',
     `service_sub_type`      VARCHAR(50)  DEFAULT NULL COMMENT '服务子类型(当project_type=SERVICE时)',
     `budget`                DECIMAL(15,2) DEFAULT NULL COMMENT '预算金额(元)',

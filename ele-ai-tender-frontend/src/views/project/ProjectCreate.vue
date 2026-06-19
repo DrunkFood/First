@@ -29,7 +29,7 @@
 
         <!-- 引用模式：业务需求选择+预览 -->
         <template v-if="!isEdit && activeTab === 'REFERENCE'">
-          <div class="section-title">招标需求</div>
+          <div class="section-title">项目描述</div>
           <el-form-item label="引用业务需求" prop="requirementId">
             <el-select
               v-model="form.requirementId"
@@ -117,7 +117,7 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="预算金额(万元)">
+            <el-form-item label="预算金额(万元)" prop="budget">
               <el-input-number
                 v-model="form.budget"
                 :min="0"
@@ -193,12 +193,12 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="招标需求">
+        <el-form-item label="项目描述" prop="projectDescription">
           <el-input
             v-model="form.projectDescription"
             type="textarea"
             :rows="4"
-            placeholder="请输入招标需求"
+            placeholder="请详细描述项目概况、招标范围、技术标准、资格要求等核心信息，描述越清晰，生成的招标文件越精准。示例“本项目服务期2年，预算约480万元，服务面积3.2万㎡。招标范围包括环境卫生保洁、安全保卫、设施设备日常维护及会议服务。质量标准：保洁合格率≥98%，报修响应≤15分钟。投标人须具备近三年政府办公楼物业服务业绩，项目经理持物业管理师证书。”"
             maxlength="500"
             show-word-limit
           />
@@ -321,7 +321,7 @@ const form = reactive<ProjectCreateParams>({
   projectType: '',
   serviceSubType: undefined,
   budget: undefined,
-  reviewType: undefined,
+  reviewType: 'MANUAL',
   requirementContent: undefined,
   templateId: undefined,
   requirementId: undefined,
@@ -358,6 +358,27 @@ const rules = {
   ],
   projectCategory: [{ required: true, message: '请选择项目类别', trigger: 'change' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
+  budget: [
+    { required: true, message: '请输入预算金额', trigger: 'blur' },
+    {
+      type: 'number',
+      validator: (_rule: any, value: number | undefined, callback: any) => {
+        if (value === undefined || value === null) {
+          callback(new Error('请输入预算金额'))
+          return
+        }
+        if (value <= 0) {
+          callback(new Error('预算金额必须大于0'))
+          return
+        }
+        callback()
+      },
+      trigger: 'blur',
+    },
+  ],
+  projectDescription: [
+    { required: true, message: '请输入项目描述', trigger: 'blur' },
+  ],
   requirementId: [{ required: true, message: '请选择业务需求', trigger: 'change' }],
 }
 

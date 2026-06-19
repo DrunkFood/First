@@ -84,9 +84,9 @@
         </el-form-item>
         <el-form-item label="适用类别" prop="applicableCategory">
           <el-select v-model="uploadForm.applicableCategory" placeholder="请选择适用类别" style="width: 100%">
-            <el-option label="限额以下" value="LIMITED_BELOW" />
-            <el-option label="产权交易" value="PROPERTY_TRADE" />
+            <el-option label="小额交易" value="SMALL_TRADE" />
             <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+            <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
           </el-select>
         </el-form-item>
         <el-form-item label="文件" prop="fileId">
@@ -212,9 +212,9 @@ const uploadForm = ref({
 })
 
 const applicableCategoryMap: Record<string, string> = {
-  LIMITED_BELOW: '限额以下',
-  PROPERTY_TRADE: '产权交易',
+  SMALL_TRADE: '小额交易',
   GOVERNMENT_PROCUREMENT: '政府采购',
+  COMPREHENSIVE_TRADE: '综合交易',
 }
 
 const fileCategoryMap: Record<string, string> = {

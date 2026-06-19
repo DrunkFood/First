@@ -305,7 +305,7 @@ CREATE TABLE `sup_policy_file` (
     `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `file_name`             VARCHAR(200) NOT NULL COMMENT '文件名称',
     `file_category`         VARCHAR(30)  NOT NULL COMMENT '文件分类: LAW(法律法规)/REGULATION(规章制度)/POLICY(政策文件)',
-    `applicable_category`   VARCHAR(30)  DEFAULT NULL COMMENT '适用项目类别: LIMITED_BELOW/PROPERTY_TRADE/GOVERNMENT_PROCUREMENT',
+    `applicable_category`   VARCHAR(30)  DEFAULT NULL COMMENT '适用项目类别: SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE',
     `file_id`               BIGINT       DEFAULT NULL COMMENT '关联文件服务的file_id',
     `file_size`             BIGINT       DEFAULT NULL COMMENT '文件大小(字节)',
     `file_type`             VARCHAR(20)  DEFAULT NULL COMMENT '文件格式: PDF/DOCX/DOC/XLSX',
@@ -359,7 +359,10 @@ CREATE TABLE IF NOT EXISTS `sup_model_config` (
 INSERT INTO `sup_model_config` (`model_name`, `model_type`, `provider`, `api_endpoint`, `api_key`, `model_params`, `usage_scenario`, `is_active`, `create_time`, `modify_time`)
 VALUES ('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.7, "maxTokens": 4096, "topP": 0.9, "model": "deepseek-chat"}', 'GENERATION', 1, NOW(), NOW()),
        ('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.3, "maxTokens": 2048, "topP": 0.85, "model": "deepseek-chat"}', 'OPTIMIZATION', 1, NOW(), NOW()),
-       ('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.1, "maxTokens": 4096, "topP": 0.8, "model": "deepseek-chat"}', 'DETECTION', 1, NOW(), NOW());
+       ('DeepSeek-Chat', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.1, "maxTokens": 4096, "topP": 0.8, "model": "deepseek-chat"}', 'DETECTION', 1, NOW(), NOW()),
+       ('DeepSeek-V4-Pro', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.7, "maxTokens": 4096, "topP": 0.9, "model": "deepseek-v4-pro"}', 'GENERATION', 1, NOW(), NOW()),
+       ('DeepSeek-V4-Pro', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.3, "maxTokens": 2048, "topP": 0.85, "model": "deepseek-v4-pro"}', 'OPTIMIZATION', 1, NOW(), NOW()),
+       ('DeepSeek-V4-Pro', 'CLOUD', 'OPENAI', 'https://api.deepseek.com', '${DEEPSEEK_API_KEY}', '{"temperature": 0.1, "maxTokens": 4096, "topP": 0.8, "model": "deepseek-v4-pro"}', 'DETECTION', 1, NOW(), NOW());
 
 -- -----------------------------------------------
 -- 13. 模型路由规则表

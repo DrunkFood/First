@@ -332,7 +332,7 @@ class MarkdownToDocumentConverterTest {
             String markdown = """
                     # 招标公告
 
-                    本项目为限额以下工程。
+                    本项目为小额交易工程。
 
                     **重要提示**：请仔细阅读。
 

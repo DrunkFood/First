@@ -15,9 +15,9 @@
           </el-form-item>
           <el-form-item label="类别">
             <el-select v-model="queryParams.projectCategory" placeholder="请选择类别" clearable>
-              <el-option label="限额以下" value="LIMITED_BELOW" />
-              <el-option label="产权交易" value="PROPERTY_TRADE" />
+              <el-option label="小额交易" value="SMALL_TRADE" />
               <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+              <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
@@ -66,8 +66,8 @@
         <el-table-column prop="templateName" label="模板名称" min-width="180" />
         <el-table-column prop="projectCategory" label="类别" width="120">
           <template #default="{ row }">
-            <el-tag v-if="row.projectCategory === 'LIMITED_BELOW'" type="info">限额以下</el-tag>
-            <el-tag v-else-if="row.projectCategory === 'PROPERTY_TRADE'" type="warning">产权交易</el-tag>
+            <el-tag v-if="row.projectCategory === 'SMALL_TRADE'" type="info">小额交易</el-tag>
+            <el-tag v-else-if="row.projectCategory === 'COMPREHENSIVE_TRADE'" type="warning">综合交易</el-tag>
             <el-tag v-else-if="row.projectCategory === 'GOVERNMENT_PROCUREMENT'" type="success">政府采购</el-tag>
           </template>
         </el-table-column>
@@ -141,9 +141,9 @@
         </el-form-item>
         <el-form-item label="模板类别" prop="projectCategory">
           <el-select v-model="formData.projectCategory" placeholder="请选择模板类别" style="width: 100%">
-            <el-option label="限额以下" value="LIMITED_BELOW" />
-            <el-option label="产权交易" value="PROPERTY_TRADE" />
+            <el-option label="小额交易" value="SMALL_TRADE" />
             <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+            <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
           </el-select>
         </el-form-item>
         <el-form-item label="项目类型" prop="projectType">

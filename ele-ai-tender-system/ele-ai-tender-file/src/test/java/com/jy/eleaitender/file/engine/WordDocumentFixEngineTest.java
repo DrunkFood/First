@@ -223,9 +223,9 @@ class WordDocumentFixEngineTest {
         @Test
         @DisplayName("精确匹配替换")
         void exactMatchReplace() {
-            byte[] doc = createDocWithText("本项目为限额以下工程");
+            byte[] doc = createDocWithText("本项目为小额交易工程");
             WordDocumentFixEngine.FixResult result = engine.fix(doc,
-                    List.of(replacement("限额以下工程", "政府采购服务")));
+                    List.of(replacement("小额交易工程", "政府采购服务")));
 
             assertEquals(1, result.getFixedCount());
             assertEquals(0, result.getFailedCount());
@@ -235,9 +235,9 @@ class WordDocumentFixEngineTest {
         @Test
         @DisplayName("换行差异替换 - AI原文含换行，文档不含")
         void newlineDifferenceReplace() {
-            byte[] doc = createDocWithText("本项目为限额以下工程");
+            byte[] doc = createDocWithText("本项目为小额交易工程");
             WordDocumentFixEngine.FixResult result = engine.fix(doc,
-                    List.of(replacement("限额\n以下\n工程", "政府采购服务")));
+                    List.of(replacement("小额\n交易\n工程", "政府采购服务")));
 
             assertEquals(1, result.getFixedCount());
             assertEquals(0, result.getFailedCount());
@@ -247,9 +247,9 @@ class WordDocumentFixEngineTest {
         @Test
         @DisplayName("空格差异替换 - AI原文无空格，文档含空格")
         void spaceDifferenceReplace() {
-            byte[] doc = createDocWithText("本项目为限 额 以 下 工程");
+            byte[] doc = createDocWithText("本项目为小 额 交 易 工程");
             WordDocumentFixEngine.FixResult result = engine.fix(doc,
-                    List.of(replacement("限额以下工程", "政府采购服务")));
+                    List.of(replacement("小额交易工程", "政府采购服务")));
 
             assertEquals(1, result.getFixedCount());
             assertEquals(0, result.getFailedCount());
@@ -259,9 +259,9 @@ class WordDocumentFixEngineTest {
         @Test
         @DisplayName("全角空格差异替换 - 文档含全角空格")
         void fullWidthSpaceDifferenceReplace() {
-            byte[] doc = createDocWithText("本项目为限　额以下工程");
+            byte[] doc = createDocWithText("本项目为小　额交易工程");
             WordDocumentFixEngine.FixResult result = engine.fix(doc,
-                    List.of(replacement("限额以下工程", "政府采购服务")));
+                    List.of(replacement("小额交易工程", "政府采购服务")));
 
             assertEquals(1, result.getFixedCount());
             assertEquals(0, result.getFailedCount());
@@ -271,7 +271,7 @@ class WordDocumentFixEngineTest {
         @Test
         @DisplayName("无匹配返回失败")
         void noMatchReturnsFailed() {
-            byte[] doc = createDocWithText("本项目为限额以下工程");
+            byte[] doc = createDocWithText("本项目为小额交易工程");
             WordDocumentFixEngine.FixResult result = engine.fix(doc,
                     List.of(replacement("完全不存在的内容", "替换文本")));
 
@@ -282,9 +282,9 @@ class WordDocumentFixEngineTest {
         @Test
         @DisplayName("表格单元格内替换")
         void tableCellReplace() {
-            byte[] doc = createDocWithTableText("标题", "限额以下工程内容");
+            byte[] doc = createDocWithTableText("标题", "小额交易工程内容");
             WordDocumentFixEngine.FixResult result = engine.fix(doc,
-                    List.of(replacement("限额以下工程", "政府采购服务")));
+                    List.of(replacement("小额交易工程", "政府采购服务")));
 
             assertEquals(1, result.getFixedCount());
             assertEquals(0, result.getFailedCount());
@@ -294,11 +294,11 @@ class WordDocumentFixEngineTest {
         @Test
         @DisplayName("多项替换 - 精确和模糊混合")
         void multipleReplacements() {
-            byte[] doc = createDocWithText("限额以下工程和产权交易项目");
+            byte[] doc = createDocWithText("小额交易工程和综合交易项目");
             WordDocumentFixEngine.FixResult result = engine.fix(doc,
                     List.of(
-                            replacement("限额以下工程", "政府采购服务"),
-                            replacement("产权\n交易", "公开招标")));
+                            replacement("小额交易工程", "政府采购服务"),
+                            replacement("综合\n交易", "公开招标")));
 
             assertEquals(2, result.getFixedCount());
             assertEquals(0, result.getFailedCount());

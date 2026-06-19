@@ -17,7 +17,7 @@ public class MatchRequest {
     @Schema(description = "项目类型: ENGINEERING/GOODS/SERVICE")
     private String projectType;
 
-    @Schema(description = "项目类别: LIMITED_BELOW/PROPERTY_TRADE/GOVERNMENT_PROCUREMENT")
+    @Schema(description = "项目类别: SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE")
     private String projectCategory;
 
     @Schema(description = "项目预算(元)")

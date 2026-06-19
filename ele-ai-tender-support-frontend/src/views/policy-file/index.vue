@@ -26,9 +26,9 @@
           </el-form-item>
           <el-form-item label="适用类别">
             <el-select v-model="queryParams.applicableCategory" placeholder="请选择" clearable style="width: 160px">
-              <el-option label="限额以下" value="LIMITED_BELOW" />
-              <el-option label="产权交易" value="PROPERTY_TRADE" />
+              <el-option label="小额交易" value="SMALL_TRADE" />
               <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+              <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -125,9 +125,9 @@
         </el-form-item>
         <el-form-item label="适用类别">
           <el-select v-model="form.applicableCategory" placeholder="请选择" clearable style="width: 100%">
-            <el-option label="限额以下" value="LIMITED_BELOW" />
-            <el-option label="产权交易" value="PROPERTY_TRADE" />
+            <el-option label="小额交易" value="SMALL_TRADE" />
             <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+            <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
           </el-select>
         </el-form-item>
         <el-form-item label="文件描述">
@@ -178,7 +178,7 @@ const form = reactive({
 })
 
 const categoryMap: Record<string, string> = { LAW: '法律法规', REGULATION: '规章制度', POLICY: '政策文件' }
-const applicableMap: Record<string, string> = { LIMITED_BELOW: '限额以下', PROPERTY_TRADE: '产权交易', GOVERNMENT_PROCUREMENT: '政府采购' }
+const applicableMap: Record<string, string> = { SMALL_TRADE: '小额交易', GOVERNMENT_PROCUREMENT: '政府采购', COMPREHENSIVE_TRADE: '综合交易' }
 
 const categoryLabel = (code?: string) => (code ? categoryMap[code] || code : '-')
 const applicableLabel = (code?: string) => (code ? applicableMap[code] || code : '-')

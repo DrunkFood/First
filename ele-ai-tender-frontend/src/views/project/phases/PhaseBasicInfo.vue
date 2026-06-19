@@ -161,6 +161,7 @@
         v-model:uploaded-file-id="uploadedFileId"
         :match-files="matchFiles"
         mode="create"
+        :show-manual-select="false"
         @file-preview="handlePreviewMatch"
       />
     </div>

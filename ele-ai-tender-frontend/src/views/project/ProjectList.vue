@@ -219,9 +219,9 @@ function getCategoryLabel(key: string): string {
 
 function getCategoryTagType(key: string): '' | 'success' | 'warning' | 'info' {
   const map: Record<string, '' | 'success' | 'warning' | 'info'> = {
-    LIMITED_BELOW: '',
-    PROPERTY_TRADE: 'warning',
+    SMALL_TRADE: '',
     GOVERNMENT_PROCUREMENT: 'success',
+    COMPREHENSIVE_TRADE: 'warning',
   }
   return map[key] || 'info'
 }

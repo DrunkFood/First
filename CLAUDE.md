@@ -47,7 +47,7 @@
 
 **表前缀规范**: `tb_`(核心服务) / `ai_`(AI服务) / `sup_`(支撑中心) / `file_`(文件服务)
 
-**项目类别**: LIMITED_BELOW(限额以下) / PROPERTY_TRADE(产权交易) / GOVERNMENT_PROCUREMENT(政府采购)
+**项目类别**: SMALL_TRADE(小额交易) / GOVERNMENT_PROCUREMENT(政府采购) / COMPREHENSIVE_TRADE(综合交易)
 
 **项目类型**: ENGINEERING(工程) / GOODS(货物) / SERVICE(服务)
 

@@ -29,9 +29,9 @@
             <el-col :span="12">
               <el-form-item label="项目类别" prop="projectCategory">
                 <el-select v-model="form.projectCategory" placeholder="请选择项目类别">
-                  <el-option label="限额以下" value="LIMITED_BELOW" />
-                  <el-option label="产权交易" value="PROPERTY_TRADE" />
+                  <el-option label="小额交易" value="SMALL_TRADE" />
                   <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
+                  <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
                 </el-select>
               </el-form-item>
             </el-col>

@@ -187,7 +187,7 @@ class RequirementGeneratorTest {
         RequirementGenerateParams params = new RequirementGenerateParams();
         params.setRequirementName("Office Renovation");
         params.setProjectType("ENGINEERING");
-        params.setProjectCategory("LIMITED_BELOW");
+        params.setProjectCategory("SMALL_TRADE");
         params.setBudget("500000");
         params.setDescription("Renovate office interior.");
 

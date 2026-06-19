@@ -5,7 +5,7 @@
     </label>
     <el-radio-group :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" class="mode-group">
       <el-radio label="AUTO_MATCH">系统自动匹配</el-radio>
-      <el-radio :label="mode === 'create' ? 'MANUAL_SELECT' : 'SYSTEM_SELECT'">
+      <el-radio v-if="showManualSelectOption" :label="mode === 'create' ? 'MANUAL_SELECT' : 'SYSTEM_SELECT'">
         {{ mode === 'create' ? '手动选择' : '系统匹配用户选择' }}
       </el-radio>
       <el-radio label="UPLOAD">{{ mode === 'create' ? '上传' : '本地上传' }}</el-radio>
@@ -25,7 +25,7 @@
     </div>
 
     <!-- 手动选择 / 系统匹配用户选择 -->
-    <div v-if="showManualSelect" class="mode-content">
+    <div v-if="showManualSelectContent" class="mode-content">
       <div v-if="loadingFiles" class="loading-tip">
         <el-icon class="is-loading"><Loading /></el-icon>
         <span>正在加载匹配文件...</span>
@@ -96,9 +96,11 @@ const props = withDefaults(defineProps<{
   uploadLimit?: number
   mode: 'create' | 'edit'
   requirementId?: number
+  showManualSelect?: boolean
 }>(), {
   uploadAccept: '.doc,.docx',
   uploadLimit: 1,
+  showManualSelect: true,
 })
 
 const emit = defineEmits<{
@@ -120,16 +122,25 @@ const uploadHeaders = computed(() => {
   return token ? { Authorization: `Bearer ${token}` } : {}
 })
 
-const showManualSelect = computed(() => {
-  return props.modelValue === 'MANUAL_SELECT' || props.modelValue === 'SYSTEM_SELECT'
+const showManualSelectOption = computed(() => props.showManualSelect)
+
+const showManualSelectContent = computed(() => {
+  return props.showManualSelect
+    && (props.modelValue === 'MANUAL_SELECT' || props.modelValue === 'SYSTEM_SELECT')
 })
 
 // 加载匹配文件
 watch(() => props.modelValue, async (mode) => {
-  if ((mode === 'MANUAL_SELECT' || mode === 'SYSTEM_SELECT') && !props.matchFiles?.length) {
+  if (props.showManualSelect && (mode === 'MANUAL_SELECT' || mode === 'SYSTEM_SELECT') && !props.matchFiles?.length) {
     await fetchMatchFiles()
   }
 })
+
+watch(() => props.showManualSelect, (visible) => {
+  if (!visible && (props.modelValue === 'MANUAL_SELECT' || props.modelValue === 'SYSTEM_SELECT')) {
+    emit('update:modelValue', 'AUTO_MATCH')
+  }
+}, { immediate: true })
 
 async function fetchMatchFiles() {
   loadingFiles.value = true
