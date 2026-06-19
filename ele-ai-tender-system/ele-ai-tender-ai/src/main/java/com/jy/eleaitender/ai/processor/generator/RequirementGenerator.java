@@ -2,6 +2,7 @@ package com.jy.eleaitender.ai.processor.generator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,26 @@ public class RequirementGenerator {
 
     private static final String MODEL_SCENE_GENERATION = "GENERATION";
 
+    private static final String CONTENT_STAGE_OUTLINE_GENERATED = "OUTLINE_GENERATED";
+
+    private static final String CONTENT_STAGE_CHAPTER_GENERATING = "CHAPTER_GENERATING";
+
+    private static final String CONTENT_STAGE_DRAFT_COMPLETED = "DRAFT_COMPLETED";
+
+    private static final String CONTENT_STAGE_REVIEWING = "REVIEWING";
+
+    private static final String CONTENT_STAGE_COMPLETED = "COMPLETED";
+
+    private static final String REVIEW_STATUS_NOT_STARTED = "NOT_STARTED";
+
+    private static final String REVIEW_STATUS_PROCESSING = "PROCESSING";
+
+    private static final String REVIEW_STATUS_COMPLETED = "COMPLETED";
+
+    private static final String CHAPTER_STATUS_PENDING = "PENDING";
+
+    private static final String CHAPTER_STATUS_COMPLETED = "COMPLETED";
+
     private static final int MAX_REQUIREMENT_TOTAL_WORDS = 5000;
 
     private static final int DEFAULT_CHAPTER_ESTIMATED_WORDS = 800;
@@ -83,6 +105,9 @@ public class RequirementGenerator {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AiTaskMapper aiTaskMapper;
 
     /**
      * 虚拟线程执行器（JDK21），类级别共享
@@ -117,6 +142,8 @@ public class RequirementGenerator {
             OutlineResult outline = generateOutline(params, client, task);
             outlineMs = Timing.msSince(outlineStart);
             chapterCount = outline.getChapters().size();
+            publishProgress(task, CONTENT_STAGE_OUTLINE_GENERATED, outline,
+                    List.of(), List.of(), null, REVIEW_STATUS_NOT_STARTED);
             log.info("Step1大纲生成完成: taskId={}, 章节数={}", task.getId(), chapterCount);
 
             // Step 2: 分章并行生成（不传fileIdList，避免参考文件内容重复注入）
@@ -135,16 +162,25 @@ public class RequirementGenerator {
             logStepEnd(task, STAGE_ASSEMBLE_CONTENT, "拼接全文", null, null,
                     "success", assembleStartTime, Timing.currentTime(), assembleMs,
                     assembleParams);
+            publishProgress(task, CONTENT_STAGE_DRAFT_COMPLETED, outline,
+                    chapterContents, completedChapterStatuses(chapterContents.size()),
+                    fullContent, REVIEW_STATUS_NOT_STARTED);
             log.info("Step3全文拼接完成: taskId={}, 总字符数={}", task.getId(), fullContent.length());
 
             // Step 4: 审查与局部修订（不传fileIdList，减少token消耗）
+            publishProgress(task, CONTENT_STAGE_REVIEWING, outline,
+                    chapterContents, completedChapterStatuses(chapterContents.size()),
+                    fullContent, REVIEW_STATUS_PROCESSING);
             long reviewStart = Timing.now();
             String finalContent = reviewAndRefine(fullContent, params, client, task);
             reviewMs = Timing.msSince(reviewStart);
             contentLength = finalContent.length();
             log.info("Step4需求生成完成: taskId={}, 最终字符数={}", task.getId(), contentLength);
 
-            String result = resultParser.toJsonResult("content", finalContent);
+            String result = buildProgressResult(CONTENT_STAGE_COMPLETED, outline,
+                    chapterContents, completedChapterStatuses(chapterContents.size()),
+                    finalContent, REVIEW_STATUS_COMPLETED);
+            updateTaskResult(task, result);
             success = true;
             return result;
         } finally {
@@ -320,6 +356,9 @@ public class RequirementGenerator {
 
         // 限流并行生成所有章节：最多同时发起固定数量的章节AI请求，避免触发API速率限制
         Semaphore chapterSemaphore = new Semaphore(CHAPTER_GENERATION_CONCURRENCY);
+        Object progressLock = new Object();
+        List<String> progressContents = new ArrayList<>(Collections.nCopies(chapters.size(), null));
+        List<String> progressStatuses = new ArrayList<>(Collections.nCopies(chapters.size(), CHAPTER_STATUS_PENDING));
         List<CompletableFuture<String>> futures = new ArrayList<>();
         for (int i = 0; i < chapters.size(); i++) {
             RequirementOutline chapter = chapters.get(i);
@@ -334,8 +373,17 @@ public class RequirementGenerator {
                     chapterSemaphore.acquire();
                     acquired = true;
                     delayMs = Timing.msSince(delayStart);
-                    return generateSingleChapter(chapter, projectOverview, outlineDirectory,
+                    String content = generateSingleChapter(chapter, projectOverview, outlineDirectory,
                             client, task, chapterIndex, delayMs, chapterStartTime, chapterStart);
+                    synchronized (progressLock) {
+                        progressContents.set(chapterIndex, content);
+                        progressStatuses.set(chapterIndex, CHAPTER_STATUS_COMPLETED);
+                        publishProgress(task, CONTENT_STAGE_CHAPTER_GENERATING, outline,
+                                progressContents, progressStatuses,
+                                assembleAvailableContent(outline, progressContents),
+                                REVIEW_STATUS_NOT_STARTED);
+                    }
+                    return content;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.warn("章节[{}]等待并发许可被中断: taskId={}, title={}",
@@ -454,6 +502,141 @@ public class RequirementGenerator {
     }
 
     // ==================== Step 3: 审查与局部修订 ====================
+
+    private String assembleAvailableContent(OutlineResult outline, List<String> chapterContents) {
+        StringBuilder sb = new StringBuilder();
+        List<RequirementOutline> chapters = outline.getChapters();
+        boolean appended = false;
+
+        for (int i = 0; i < chapters.size(); i++) {
+            String content = i < chapterContents.size() ? chapterContents.get(i) : null;
+            if (!hasText(content)) {
+                continue;
+            }
+            if (appended) {
+                sb.append("\n\n---\n\n");
+            }
+            sb.append("## ").append(chapters.get(i).getChapterTitle()).append("\n\n");
+            sb.append(content);
+            appended = true;
+        }
+
+        return sb.toString();
+    }
+
+    private void publishProgress(AiTask task,
+                                 String contentStage,
+                                 OutlineResult outline,
+                                 List<String> chapterContents,
+                                 List<String> chapterStatuses,
+                                 String content,
+                                 String reviewStatus) {
+        updateTaskResult(task, buildProgressResult(contentStage, outline, chapterContents,
+                chapterStatuses, content, reviewStatus));
+    }
+
+    private void updateTaskResult(AiTask task, String result) {
+        if (task == null || task.getId() == null || aiTaskMapper == null) {
+            return;
+        }
+        try {
+            aiTaskMapper.updateResult(task.getId(), result);
+        } catch (Exception e) {
+            log.warn("更新需求生成过程态失败: taskId={}, error={}", task.getId(), e.getMessage());
+        }
+    }
+
+    private String buildProgressResult(String contentStage,
+                                       OutlineResult outline,
+                                       List<String> chapterContents,
+                                       List<String> chapterStatuses,
+                                       String content,
+                                       String reviewStatus) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        List<RequirementOutline> chapters = outline != null && outline.getChapters() != null
+                ? outline.getChapters()
+                : List.of();
+        result.put("contentStage", contentStage);
+        result.put("outline", buildOutlineProgress(outline));
+        result.put("chapters", buildChapterProgress(chapters, chapterContents, chapterStatuses));
+        result.put("completedChapterCount", countCompletedChapters(chapterContents));
+        result.put("totalChapterCount", chapters.size());
+        result.put("reviewStatus", reviewStatus);
+        if (hasText(content)) {
+            result.put("content", content);
+        }
+
+        try {
+            return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            log.warn("序列化需求生成过程态失败: {}", e.getMessage());
+            return hasText(content) ? resultParser.toJsonResult("content", content) : "{}";
+        }
+    }
+
+    private Map<String, Object> buildOutlineProgress(OutlineResult outline) {
+        Map<String, Object> outlineMap = new LinkedHashMap<>();
+        if (outline == null) {
+            outlineMap.put("projectOverview", "");
+            outlineMap.put("chapters", List.of());
+            return outlineMap;
+        }
+
+        List<RequirementOutline> chapters = outline.getChapters() != null ? outline.getChapters() : List.of();
+        outlineMap.put("projectOverview", outline.getProjectOverview() != null ? outline.getProjectOverview() : "");
+        List<Map<String, Object>> chapterMaps = new ArrayList<>();
+        for (int i = 0; i < chapters.size(); i++) {
+            chapterMaps.add(buildOutlineChapterProgress(i, chapters.get(i)));
+        }
+        outlineMap.put("chapters", chapterMaps);
+        return outlineMap;
+    }
+
+    private Map<String, Object> buildOutlineChapterProgress(int index, RequirementOutline chapter) {
+        Map<String, Object> chapterMap = new LinkedHashMap<>();
+        chapterMap.put("chapterNo", index + 1);
+        chapterMap.put("chapterKey", chapter.getChapterKey());
+        chapterMap.put("chapterTitle", chapter.getChapterTitle());
+        chapterMap.put("corePoints", chapter.getCorePoints());
+        chapterMap.put("estimatedWords", chapter.getEstimatedWords());
+        return chapterMap;
+    }
+
+    private List<Map<String, Object>> buildChapterProgress(List<RequirementOutline> chapters,
+                                                           List<String> chapterContents,
+                                                           List<String> chapterStatuses) {
+        List<Map<String, Object>> chapterMaps = new ArrayList<>();
+        for (int i = 0; i < chapters.size(); i++) {
+            RequirementOutline chapter = chapters.get(i);
+            String content = i < chapterContents.size() ? chapterContents.get(i) : null;
+            String status = i < chapterStatuses.size() ? chapterStatuses.get(i) : null;
+            Map<String, Object> chapterMap = buildOutlineChapterProgress(i, chapter);
+            chapterMap.put("status", hasText(status) ? status : (hasText(content) ? CHAPTER_STATUS_COMPLETED : CHAPTER_STATUS_PENDING));
+            if (hasText(content)) {
+                chapterMap.put("content", content);
+            }
+            chapterMaps.add(chapterMap);
+        }
+        return chapterMaps;
+    }
+
+    private List<String> completedChapterStatuses(int size) {
+        return new ArrayList<>(Collections.nCopies(size, CHAPTER_STATUS_COMPLETED));
+    }
+
+    private int countCompletedChapters(List<String> chapterContents) {
+        int count = 0;
+        for (String content : chapterContents) {
+            if (hasText(content)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
 
     private String reviewAndRefine(String fullContent,
                                    RequirementGenerateParams params,

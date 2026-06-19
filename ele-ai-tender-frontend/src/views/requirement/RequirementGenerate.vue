@@ -18,7 +18,7 @@
             <span class="progress-title">生成进度</span>
             <el-tag v-if="sseGenerating" type="" size="small" class="is-pulse">生成中</el-tag>
             <el-tag v-else-if="latestTask && !canCreateNew" type="" size="small" class="is-pulse">
-              {{ latestTask.status === 'PENDING' ? '任务排队中' : '处理中' }}
+              {{ generationStageText }}
             </el-tag>
             <el-tag v-else-if="latestTask?.status === 'COMPLETED' || content" type="success" size="small">已完成</el-tag>
             <el-tag v-else-if="latestTask?.status === 'FAILED'" type="danger" size="small">失败</el-tag>
@@ -40,7 +40,7 @@
             <h3>业务需求内容</h3>
             <div class="content-actions">
               <el-tooltip v-if="!isRequirementCompleted" content="保存" placement="top">
-                <button class="primary-action-btn" :disabled="saving" @click="handleSave">
+                <button class="primary-action-btn" :disabled="saving || editorReadonly" @click="handleSave">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
                     <polyline points="17 21 17 13 7 13 7 21" />
@@ -136,11 +136,28 @@
               <div class="content-area">
                 <WysiwygEditor
                   v-model="content"
-                  :readonly="isRequirementCompleted"
+                  :readonly="editorReadonly"
                   :highlights="detectionIssues"
                   class="content-editor"
                   @selection-change="handleSelectionChange"
                 />
+                <div v-if="generationLocked" class="generation-overlay" role="status" aria-live="polite">
+                  <div class="generation-status-panel">
+                    <div class="generation-spinner" aria-hidden="true"></div>
+                    <div class="generation-status-content">
+                      <div class="generation-status-title">{{ generationStageText }}</div>
+                      <div class="generation-status-detail">{{ generationOverlayDetail }}</div>
+                      <div class="generation-status-progress">
+                        <span>{{ generationOverlayProgressText }}</span>
+                        <el-progress
+                          :percentage="progressPercent"
+                          :stroke-width="6"
+                          :show-text="false"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- AI反馈 -->
@@ -249,7 +266,8 @@ import {
   getProgressStatus,
   getProcessingProgressByTime,
   isTaskSucceeded,
-  isTaskTerminal
+  isTaskTerminal,
+  parseRequirementGenerationProgress
 } from '@/types/ai-task'
 import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
@@ -260,6 +278,7 @@ import { formatBudgetWanYuan } from '@/utils/budget'
 import type { RequirementInfo, MatchFile } from '@/types/requirement'
 import type { AiChatMessage } from '@/types/ai'
 import type { DetectionIssueVO, RequirementDetectionRecord } from '@/types/detection'
+import type { RequirementGenerationProgressResult } from '@/types/ai-task'
 
 const router = useRouter()
 const route = useRoute()
@@ -333,10 +352,132 @@ watch(latestTask, (task) => {
 // ---- 生成状态 ----
 const sseGenerating = ref(false)
 const isRequirementCompleted = computed(() => requirementData.value.status === 'COMPLETED')
+const generationProgress = computed(() => parseRequirementGenerationProgress(latestTask.value?.result))
+const generationLocked = computed(() => {
+  const task = latestTask.value
+  if (sseGenerating.value) return true
+  if (!task) return false
+  if (isTaskSucceeded(task)) return false
+  return task.status === 'PENDING'
+    || task.status === 'PROCESSING'
+    || (task.status === 'COMPLETED' && task.resultSynced === 0)
+})
+const editorReadonly = computed(() => isRequirementCompleted.value || generationLocked.value)
+const generationStageText = computed(() => {
+  const progress = generationProgress.value
+  if (!progress) {
+    return latestTask.value?.status === 'PENDING' ? '任务排队中' : '处理中'
+  }
+  switch (progress.contentStage) {
+    case 'OUTLINE_GENERATED':
+      return '大纲已生成'
+    case 'CHAPTER_GENERATING':
+      return `正文生成中 ${progress.completedChapterCount ?? 0}/${progress.totalChapterCount ?? 0}`
+    case 'DRAFT_COMPLETED':
+      return '草稿已生成'
+    case 'REVIEWING':
+      return '全文审查中'
+    case 'COMPLETED':
+      return latestTask.value?.resultSynced === 0 ? '结果同步中' : '已完成'
+    default:
+      return '处理中'
+  }
+})
+const generationOverlayDetail = computed(() => {
+  const task = latestTask.value
+  const progress = generationProgress.value
+
+  if (!progress) {
+    if (sseGenerating.value && !task) {
+      return '任务已提交，等待后端接收'
+    }
+    if (task?.status === 'PENDING') {
+      return '任务排队中，等待 AI 服务消费'
+    }
+    if (task?.status === 'COMPLETED' && task.resultSynced === 0) {
+      return 'AI 已完成，正在同步到业务需求'
+    }
+    return '正在获取任务状态'
+  }
+
+  const totalChapterCount = progress.totalChapterCount
+    ?? progress.outline?.chapters?.length
+    ?? 0
+  const completedChapterCount = progress.completedChapterCount ?? 0
+
+  switch (progress.contentStage) {
+    case 'OUTLINE_GENERATED':
+      return totalChapterCount > 0
+        ? `已生成 ${totalChapterCount} 个章节大纲，等待正文生成`
+        : '大纲已生成，等待正文生成'
+    case 'CHAPTER_GENERATING':
+      return totalChapterCount > 0
+        ? `已完成 ${completedChapterCount} / ${totalChapterCount} 章，正文会实时填充到对应章节`
+        : '正文生成中，生成内容会实时填充'
+    case 'DRAFT_COMPLETED':
+      return '草稿已生成，准备进行全文审查'
+    case 'REVIEWING':
+      return '全文审查修订中，审查结束前暂不可编辑'
+    case 'COMPLETED':
+      return task?.resultSynced === 0
+        ? 'AI 已完成，正在同步到业务需求'
+        : '生成已完成'
+    default:
+      return 'AI 正在处理任务'
+  }
+})
 
 // ---- 统一进度模型 ----
 const displayProgress = ref(0)       // 显示进度（只增不减，除非新任务重置）
 const generateStartTime = ref(0)     // 本地记录的生成开始时间戳
+watch(generationProgress, (progress) => {
+  if (!progress || isTaskSucceeded(latestTask.value)) return
+  const progressContent = buildGenerationProgressMarkdown(progress)
+  if (progressContent && progressContent !== content.value) {
+    content.value = progressContent
+  }
+}, { deep: true })
+
+function buildGenerationProgressMarkdown(progress: RequirementGenerationProgressResult): string {
+  if (
+    (progress.contentStage === 'DRAFT_COMPLETED'
+      || progress.contentStage === 'REVIEWING'
+      || progress.contentStage === 'COMPLETED')
+    && progress.content?.trim()
+  ) {
+    return progress.content
+  }
+
+  const outlineChapters = progress.outline?.chapters ?? []
+  if (outlineChapters.length === 0) {
+    return progress.content ?? ''
+  }
+
+  const chapterMap = new Map<number, string>()
+  for (const chapter of progress.chapters ?? []) {
+    if (chapter.chapterNo && chapter.content?.trim()) {
+      chapterMap.set(chapter.chapterNo, chapter.content.trim())
+    }
+  }
+
+  return outlineChapters.map((chapter, index) => {
+    const chapterNo = chapter.chapterNo || index + 1
+    const title = chapter.chapterTitle || `\u7b2c${chapterNo}\u7ae0`
+    const chapterContent = chapterMap.get(chapterNo)
+    if (chapterContent) {
+      return `## ${title}\n\n${chapterContent}`
+    }
+
+    const statusText = progress.contentStage === 'OUTLINE_GENERATED'
+      ? '\u7b49\u5f85\u751f\u6210\u6b63\u6587...'
+      : '\u751f\u6210\u4e2d...'
+    const corePoints = chapter.corePoints?.trim()
+      ? `\n\n> \u6838\u5fc3\u8981\u70b9\uff1a${chapter.corePoints}`
+      : ''
+    return `## ${title}\n\n> ${statusText}${corePoints}`
+  }).join('\n\n---\n\n')
+}
+
 let progressTimer: ReturnType<typeof setInterval> | null = null
 
 /** 更新进度（由定时器每秒调用） */
@@ -417,6 +558,7 @@ watch(latestTask, (task) => {
 
 // ---- 进度计算 ----
 const progressPercent = computed(() => displayProgress.value)
+const generationOverlayProgressText = computed(() => `当前进度 ${progressPercent.value}%`)
 
 const progressStatus = computed(() => {
   if (latestTask.value) return getProgressStatus(latestTask.value)
@@ -526,6 +668,7 @@ function stopGenerate() {
 
 // ---- 保存 ----
 async function handleSave() {
+  if (editorReadonly.value) return
   saving.value = true
   try {
     await requirementApi.update(requirementId.value, { content: content.value })
@@ -558,6 +701,10 @@ async function handleExport() {
 
 // ---- 下一步 ----
 function handleNextStep() {
+  if (generationLocked.value) {
+    ElMessage.warning('AI\u6b63\u5728\u751f\u6210\u6216\u5ba1\u67e5\uff0c\u8bf7\u7a0d\u540e')
+    return
+  }
   const hasContent = content.value || requirementData.value.content
   if (!hasContent && requirementData.value.status !== 'COMPLETED') {
     ElMessage.warning('请先生成需求内容')
@@ -919,6 +1066,7 @@ function parseDetectionIssues(record: RequirementDetectionRecord, typeName: stri
   border-radius: 6px;
   background: var(--app-input-bg, var(--app-bg-secondary));
   overflow: hidden;
+  position: relative;
 }
 
 .content-preview {
@@ -927,6 +1075,70 @@ function parseDetectionIssues(record: RequirementDetectionRecord, typeName: stri
 
 .content-editor {
   min-height: 400px;
+}
+
+.generation-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 24px 24px;
+  background: rgba(248, 250, 252, 0.62);
+  backdrop-filter: blur(1px);
+  pointer-events: auto;
+}
+
+.generation-status-panel {
+  width: min(460px, 100%);
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--app-border-medium);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+}
+
+.generation-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(51, 108, 255, 0.18);
+  border-top-color: var(--app-brand-color);
+  flex-shrink: 0;
+  animation: generation-spin 0.9s linear infinite;
+}
+
+.generation-status-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.generation-status-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--app-text-primary);
+  margin-bottom: 6px;
+}
+
+.generation-status-detail {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.generation-status-progress {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--app-text-tertiary);
+}
+
+@keyframes generation-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ---- AI反馈 ---- */

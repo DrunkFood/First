@@ -42,6 +42,60 @@ export interface AiTaskVO {
 }
 
 /** 任务是否真正完成（resultSynced=1 才算成功，可读取业务数据） */
+export type RequirementContentStage =
+  | 'OUTLINE_GENERATED'
+  | 'CHAPTER_GENERATING'
+  | 'DRAFT_COMPLETED'
+  | 'REVIEWING'
+  | 'COMPLETED'
+
+export type RequirementReviewStatus =
+  | 'NOT_STARTED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+
+export type RequirementChapterStatus =
+  | 'PENDING'
+  | 'COMPLETED'
+
+export interface RequirementGenerationOutlineChapter {
+  chapterNo: number
+  chapterKey?: string
+  chapterTitle: string
+  corePoints?: string
+  estimatedWords?: number
+}
+
+export interface RequirementGenerationProgressChapter extends RequirementGenerationOutlineChapter {
+  status?: RequirementChapterStatus
+  content?: string
+}
+
+export interface RequirementGenerationProgressResult {
+  contentStage?: RequirementContentStage
+  outline?: {
+    projectOverview?: string
+    chapters?: RequirementGenerationOutlineChapter[]
+  }
+  chapters?: RequirementGenerationProgressChapter[]
+  content?: string
+  completedChapterCount?: number
+  totalChapterCount?: number
+  reviewStatus?: RequirementReviewStatus
+}
+
+export function parseRequirementGenerationProgress(result?: string): RequirementGenerationProgressResult | null {
+  if (!result) return null
+  try {
+    const parsed = JSON.parse(result) as RequirementGenerationProgressResult
+    if (!parsed || typeof parsed !== 'object') return null
+    if (!parsed.contentStage && !parsed.outline && !parsed.chapters && !parsed.content) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
 export function isTaskSucceeded(task: AiTaskVO | null): boolean {
   return task?.status === 'COMPLETED' && task.resultSynced === 1
 }

@@ -46,6 +46,14 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     int markCompleted(@Param("id") Long id, @Param("result") String result);
 
     /**
+     * Update in-progress task result snapshots.
+     */
+    @DataScope(skip = true)
+    @Update("UPDATE ai_task SET result = #{result}, modify_time = NOW() " +
+            "WHERE id = #{id} AND is_delete = 0")
+    int updateResult(@Param("id") Long id, @Param("result") String result);
+
+    /**
      * 标记任务失败
      * 跳过数据隔离：后台任务处理无用户上下文
      */
