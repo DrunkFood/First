@@ -71,7 +71,7 @@ public final class PromptBuilder {
                 defaultStr(outlineDirectory),
                 defaultStr(chapterTitle),
                 defaultStr(corePoints),
-                defaultStr(String.valueOf(estimatedWords), "3000"));
+                defaultStr(String.valueOf(estimatedWords), "800"));
     }
 
     /**

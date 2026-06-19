@@ -23,7 +23,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +49,18 @@ public class RequirementGenerator {
     private static final String STAGE_CHAPTER_CONTENT_GENERATE = "CHAPTER_CONTENT_GENERATE";
 
     private static final String STAGE_FULL_CONTENT_REVIEW = "FULL_CONTENT_REVIEW";
+
+    private static final String STAGE_ASSEMBLE_CONTENT = "ASSEMBLE_CONTENT";
+
+    private static final String STAGE_REVIEW_APPLY = "REVIEW_APPLY";
+
+    private static final String MODEL_SCENE_GENERATION = "GENERATION";
+
+    private static final int MAX_REQUIREMENT_TOTAL_WORDS = 5000;
+
+    private static final int DEFAULT_CHAPTER_ESTIMATED_WORDS = 800;
+
+    private static final int MIN_CHAPTER_ESTIMATED_WORDS = 300;
 
     /**
      * 修订原文最小字符数，过短的原文容易误替换
@@ -82,6 +96,7 @@ public class RequirementGenerator {
      * @return JSON结果字符串 {"content": "Markdown需求内容"}
      */
     public String generate(AiTask task) {
+        String taskStartTime = Timing.currentTime();
         long totalStart = Timing.now();
         long outlineMs = -1L;
         long chaptersMs = -1L;
@@ -91,6 +106,7 @@ public class RequirementGenerator {
         int contentLength = 0;
         boolean success = false;
         log.info("开始需求生成(Agent三步式): taskId={}", task.getId());
+        logTaskStart(task, taskStartTime);
 
         try {
             RequirementGenerateParams params = resultParser.parseParams(task.getRequestParams(), RequirementGenerateParams.class);
@@ -110,9 +126,15 @@ public class RequirementGenerator {
             log.info("Step2分章生成完成: taskId={}, 成功章节数={}", task.getId(), chapterContents.size());
 
             // Step 3: 拼接全文
+            String assembleStartTime = Timing.currentTime();
             long assembleStart = Timing.now();
             String fullContent = assembleFullContent(outline, chapterContents);
             assembleMs = Timing.msSince(assembleStart);
+            Map<String, Object> assembleParams = new LinkedHashMap<>();
+            assembleParams.put("contentLength", fullContent.length());
+            logStepEnd(task, STAGE_ASSEMBLE_CONTENT, "拼接全文", null, null,
+                    "success", assembleStartTime, Timing.currentTime(), assembleMs,
+                    assembleParams);
             log.info("Step3全文拼接完成: taskId={}, 总字符数={}", task.getId(), fullContent.length());
 
             // Step 4: 审查与局部修订（不传fileIdList，减少token消耗）
@@ -126,8 +148,9 @@ public class RequirementGenerator {
             success = true;
             return result;
         } finally {
-            requirementGenerationLog.info("REQ_GEN_TIMING taskId={} status={} total={}ms outline={}ms chapters={}ms assemble={}ms review={}ms chapterCount={} contentLength={}",
-                    task.getId(), success ? "success" : "error", Timing.msSince(totalStart), outlineMs, chaptersMs, assembleMs, reviewMs,
+            requirementGenerationLog.info("taskId={} event=REQ_GEN_TASK_END taskType={} status={} startTime={} endTime={} totalDurationMs={} outlineDurationMs={} chaptersDurationMs={} assembleDurationMs={} reviewDurationMs={} chapterCount={} contentLength={}",
+                    task.getId(), task.getTaskType(), success ? "success" : "error", taskStartTime, Timing.currentTime(),
+                    Timing.msSince(totalStart), outlineMs, chaptersMs, assembleMs, reviewMs,
                     chapterCount, contentLength);
         }
     }
@@ -147,19 +170,21 @@ public class RequirementGenerator {
         String resolvedUserPrompt = aiCallRecorder.buildUserPromptWithFiles(userPrompt, task.getFileIdList());
 
         AiCallLogContext aiCall = beginAiCall(task, STAGE_OUTLINE_GENERATE, "生成大纲", null, null);
+        logAiRequest(task, aiCall, systemPrompt, resolvedUserPrompt, task.getFileIdList());
         AiCallLogResult aiCallResult;
         boolean aiSuccess = false;
         String aiOutput = null;
+        String errorMessage = null;
         try {
             aiOutput = aiCallRecorder.callAndRecord(
                     client, systemPrompt,
-                    resolvedUserPrompt, "GENERATION", task.getId(), task.getCreateId(), null);
+                    resolvedUserPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null);
             aiSuccess = true;
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+            throw e;
         } finally {
-            aiCallResult = finishAiCall(task, aiCall, aiSuccess, aiOutput, systemPrompt, resolvedUserPrompt);
-            requirementGenerationLog.info("REQ_GEN_STEP_TIMING taskId={} callId={} stageCode={} stageName={} step=outline.ai callTime={} returnTime={} duration={}ms status={}",
-                    task.getId(), aiCall.callId(), aiCall.stageCode(), aiCall.stageName(), aiCall.callTime(),
-                    aiCallResult.returnTime(), aiCallResult.durationMs(), aiCallResult.status());
+            aiCallResult = finishAiCall(task, aiCall, aiSuccess, aiOutput, errorMessage);
         }
 
         // 解析大纲JSON
@@ -169,7 +194,49 @@ public class RequirementGenerator {
             log.warn("大纲解析失败或为空，使用降级模板: taskId={}", task.getId());
             outline = buildFallbackOutline(params);
         }
+        normalizeOutlineEstimatedWords(task.getId(), outline);
         return outline;
+    }
+
+    private void normalizeOutlineEstimatedWords(Long taskId, OutlineResult outline) {
+        if (outline == null || outline.getChapters() == null || outline.getChapters().isEmpty()) {
+            return;
+        }
+
+        List<RequirementOutline> chapters = outline.getChapters();
+        int defaultWords = Math.max(1, MAX_REQUIREMENT_TOTAL_WORDS / chapters.size());
+        int totalWords = 0;
+        for (RequirementOutline chapter : chapters) {
+            if (chapter.getEstimatedWords() <= 0) {
+                chapter.setEstimatedWords(defaultWords);
+            }
+            totalWords += chapter.getEstimatedWords();
+        }
+
+        if (totalWords <= MAX_REQUIREMENT_TOTAL_WORDS) {
+            return;
+        }
+
+        int minWords = Math.min(MIN_CHAPTER_ESTIMATED_WORDS, defaultWords);
+        int remainingWords = MAX_REQUIREMENT_TOTAL_WORDS;
+        for (int i = 0; i < chapters.size(); i++) {
+            RequirementOutline chapter = chapters.get(i);
+            int remainingChapters = chapters.size() - i;
+            int scaledWords;
+            if (remainingChapters == 1) {
+                scaledWords = remainingWords;
+            } else {
+                int reservedWords = minWords * (remainingChapters - 1);
+                scaledWords = (int) Math.floor(chapter.getEstimatedWords() * (double) MAX_REQUIREMENT_TOTAL_WORDS / totalWords);
+                scaledWords = Math.max(minWords, scaledWords);
+                scaledWords = Math.min(scaledWords, remainingWords - reservedWords);
+            }
+            chapter.setEstimatedWords(Math.max(1, scaledWords));
+            remainingWords -= chapter.getEstimatedWords();
+        }
+
+        log.info("大纲预估总字数超过{}，已压缩到{}以内: taskId={}, originalTotal={}",
+                MAX_REQUIREMENT_TOTAL_WORDS, MAX_REQUIREMENT_TOTAL_WORDS, taskId, totalWords);
     }
 
     /**
@@ -191,57 +258,57 @@ public class RequirementGenerator {
 
         if (ProjectType.SERVICE.getCode().equals(projectType)) {
             chapters.add(new RequirementOutline("project_overview", "项目概况与采购范围",
-                    "项目背景、采购目标、采购范围、预算及资金来源", 2000));
+                    "项目背景、采购目标、采购范围、预算及资金来源", 900));
             chapters.add(new RequirementOutline("service_scope", "服务范围与内容",
-                    "服务内容描述、服务边界、服务成果交付物", 2000));
+                    "服务内容描述、服务边界、服务成果交付物", 900));
             chapters.add(new RequirementOutline("service_requirements", "服务要求",
-                    "服务标准、服务质量、服务流程、服务响应时间", 2000));
+                    "服务标准、服务质量、服务流程、服务响应时间", 900));
             chapters.add(new RequirementOutline("personnel", "人员配备要求",
-                    "项目团队结构、关键岗位资质要求、人员数量与分工", 1500));
+                    "项目团队结构、关键岗位资质要求、人员数量与分工", 600));
             chapters.add(new RequirementOutline("commercial", "商务要求",
-                    "报价要求、付款方式、合同期限、违约责任", 1500));
+                    "报价要求、付款方式、合同期限、违约责任", 600));
             chapters.add(new RequirementOutline("acceptance", "验收与考核",
-                    "验收标准、验收流程、考核指标与奖惩", 1500));
+                    "验收标准、验收流程、考核指标与奖惩", 600));
             chapters.add(new RequirementOutline("other", "其他要求",
-                    "保密要求、知识产权、争议解决", 1000));
+                    "保密要求、知识产权、争议解决", 500));
         } else if (ProjectType.GOODS.getCode().equals(projectType)) {
             chapters.add(new RequirementOutline("project_overview", "项目概况与采购范围",
-                    "项目背景、采购目标、采购范围、预算及资金来源", 2000));
+                    "项目背景、采购目标、采购范围、预算及资金来源", 650));
             chapters.add(new RequirementOutline("procurement_list", "采购清单",
-                    "采购设备/货物清单、数量、规格要求概要", 2000));
+                    "采购设备/货物清单、数量、规格要求概要", 650));
             chapters.add(new RequirementOutline("technical_specs", "技术规格与参数要求",
-                    "核心技术指标、性能参数、配置要求、兼容性要求", 3000));
+                    "核心技术指标、性能参数、配置要求、兼容性要求", 1000));
             chapters.add(new RequirementOutline("quality", "质量标准与检验",
-                    "质量标准、检验方法、不合格品处理", 1500));
+                    "质量标准、检验方法、不合格品处理", 550));
             chapters.add(new RequirementOutline("commercial", "商务要求",
-                    "报价要求、付款方式、交货条件、违约责任", 1500));
+                    "报价要求、付款方式、交货条件、违约责任", 550));
             chapters.add(new RequirementOutline("delivery", "交货与验收",
-                    "交货时间、交货地点、验收标准与流程", 1500));
+                    "交货时间、交货地点、验收标准与流程", 550));
             chapters.add(new RequirementOutline("after_sale", "售后服务",
-                    "质保期限、售后服务内容、响应时间、培训要求", 1500));
+                    "质保期限、售后服务内容、响应时间、培训要求", 550));
             chapters.add(new RequirementOutline("other", "其他要求",
-                    "包装运输、保密要求、知识产权", 1000));
+                    "包装运输、保密要求、知识产权", 500));
         } else {
             // 工程类默认（projectType为null时也走此分支）
             if (projectType == null) {
                 log.warn("projectType为null，降级使用工程类章节模板");
             }
             chapters.add(new RequirementOutline("project_overview", "项目概况与采购范围",
-                    "项目背景、建设目标、工程范围、预算及资金来源", 2000));
+                    "项目背景、建设目标、工程范围、预算及资金来源", 650));
             chapters.add(new RequirementOutline("scope", "采购范围",
-                    "工程内容、工作范围、界限划分", 2000));
+                    "工程内容、工作范围、界限划分", 650));
             chapters.add(new RequirementOutline("technical_specs", "技术规格与参数要求",
-                    "设计标准、技术参数、材料要求、施工工艺", 3000));
+                    "设计标准、技术参数、材料要求、施工工艺", 1000));
             chapters.add(new RequirementOutline("construction", "施工要求",
-                    "施工组织、安全文明施工、环保要求、进度要求", 2000));
+                    "施工组织、安全文明施工、环保要求、进度要求", 750));
             chapters.add(new RequirementOutline("quality", "质量验收",
-                    "质量标准、验收规范、检测方法", 1500));
+                    "质量标准、验收规范、检测方法", 550));
             chapters.add(new RequirementOutline("commercial", "商务要求",
-                    "报价要求、付款方式、合同工期、违约责任", 1500));
+                    "报价要求、付款方式、合同工期、违约责任", 550));
             chapters.add(new RequirementOutline("service", "服务要求",
-                    "项目管理、协调配合、保修责任", 1500));
+                    "项目管理、协调配合、保修责任", 500));
             chapters.add(new RequirementOutline("other", "其他要求",
-                    "风险分担、保密要求、争议解决", 1000));
+                    "风险分担、保密要求、争议解决", 350));
         }
 
         result.setChapters(chapters);
@@ -269,6 +336,7 @@ public class RequirementGenerator {
             RequirementOutline chapter = chapters.get(i);
             int chapterIndex = i;
             futures.add(CompletableFuture.supplyAsync(() -> {
+                String chapterStartTime = Timing.currentTime();
                 long chapterStart = Timing.now();
                 long delayMs = 0;
                 long delayStart = 0;
@@ -283,7 +351,7 @@ public class RequirementGenerator {
                     delayMs = Timing.msSince(delayStart);
                 }
                 return generateSingleChapter(chapter, projectOverview, outlineDirectory,
-                        client, task, chapterIndex, delayMs, chapterStart);
+                        client, task, chapterIndex, delayMs, chapterStartTime, chapterStart);
             }, virtualThreadExecutor));
         }
 
@@ -322,6 +390,7 @@ public class RequirementGenerator {
                                          ChatClient client, AiTask task,
                                          int chapterIndex,
                                          long delayMs,
+                                         String chapterStartTime,
                                          long chapterStart) {
         String userPrompt = PromptBuilder.buildChapter(
                 projectOverview,
@@ -333,40 +402,41 @@ public class RequirementGenerator {
         String systemPrompt = SystemPromptTemplates.REQUIREMENT_CHAPTER_GENERATE;
         AiCallLogContext aiCall = beginAiCall(task, STAGE_CHAPTER_CONTENT_GENERATE, "生成章节正文",
                 chapterIndex, chapter.getChapterTitle());
+        logAiRequest(task, aiCall, systemPrompt, userPrompt, List.of());
         AiCallLogResult aiCallResult = null;
 
         try {
             boolean aiSuccess = false;
             String aiOutput = null;
+            String errorMessage = null;
             try {
                 aiOutput = aiCallRecorder.callAndRecord(
                         client, systemPrompt,
-                        userPrompt, "GENERATION", task.getId(), task.getCreateId(), null);
+                        userPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null);
                 aiSuccess = true;
+            } catch (Exception e) {
+                errorMessage = e.getMessage();
+                throw e;
             } finally {
-                aiCallResult = finishAiCall(task, aiCall, aiSuccess, aiOutput, systemPrompt, userPrompt);
+                aiCallResult = finishAiCall(task, aiCall, aiSuccess, aiOutput, errorMessage);
             }
             long aiMs = aiCallResult.durationMs();
             String content = resultParser.extractMarkdown(aiOutput);
             if (content != null && !content.isBlank()) {
                 log.info("taskId={}, 章节[{}]生成成功: {}, 字符数={}", task.getId(), chapterIndex, chapter.getChapterTitle(), content.length());
-                requirementGenerationLog.info("REQ_GEN_CHAPTER_TIMING taskId={} callId={} stageCode={} stageName={} index={} title=\"{}\" callTime={} returnTime={} delay={}ms ai={}ms total={}ms contentLength={} status=success",
-                        task.getId(), aiCall.callId(), aiCall.stageCode(), aiCall.stageName(), chapterIndex, chapter.getChapterTitle(),
-                        aiCall.callTime(), aiCallResult.returnTime(), delayMs, aiMs, Timing.msSince(chapterStart), content.length());
+                logChapterStepEnd(task, aiCall, "success", chapterStartTime, Timing.currentTime(),
+                        Timing.msSince(chapterStart), delayMs, aiMs, content.length());
                 return content;
             } else {
-                requirementGenerationLog.info("REQ_GEN_CHAPTER_TIMING taskId={} callId={} stageCode={} stageName={} index={} title=\"{}\" callTime={} returnTime={} delay={}ms ai={}ms total={}ms contentLength=0 status=empty",
-                        task.getId(), aiCall.callId(), aiCall.stageCode(), aiCall.stageName(), chapterIndex, chapter.getChapterTitle(),
-                        aiCall.callTime(), aiCallResult.returnTime(), delayMs, aiMs, Timing.msSince(chapterStart));
+                logChapterStepEnd(task, aiCall, "empty", chapterStartTime, Timing.currentTime(),
+                        Timing.msSince(chapterStart), delayMs, aiMs, 0);
                 log.error("taskId={}, 章节[{}]生成结果为空: {}", task.getId(), chapterIndex, chapter.getChapterTitle());
             }
         } catch (Exception e) {
             long aiMs = aiCallResult != null ? aiCallResult.durationMs() : Timing.msSince(aiCall.startNanos());
-            String returnTime = aiCallResult != null ? aiCallResult.returnTime() : Timing.currentTime();
             log.error("taskId={}, 章节[{}]生成失败: {} - {}", task.getId(), chapterIndex, chapter.getChapterTitle(), e.getMessage(), e);
-            requirementGenerationLog.info("REQ_GEN_CHAPTER_TIMING taskId={} callId={} stageCode={} stageName={} index={} title=\"{}\" callTime={} returnTime={} delay={}ms ai={}ms total={}ms contentLength=0 status=error",
-                    task.getId(), aiCall.callId(), aiCall.stageCode(), aiCall.stageName(), chapterIndex, chapter.getChapterTitle(),
-                    aiCall.callTime(), returnTime, delayMs, aiMs, Timing.msSince(chapterStart));
+            logChapterStepEnd(task, aiCall, "error", chapterStartTime, Timing.currentTime(),
+                    Timing.msSince(chapterStart), delayMs, aiMs, 0);
         }
 
         return "> ⚠️ 本章节内容生成失败，请手动补充";
@@ -403,27 +473,35 @@ public class RequirementGenerator {
 
         String systemPrompt = SystemPromptTemplates.REQUIREMENT_REVIEW;
         AiCallLogContext aiCall = beginAiCall(task, STAGE_FULL_CONTENT_REVIEW, "全文审查校验", null, null);
+        logAiRequest(task, aiCall, systemPrompt, userPrompt, List.of());
 
         try {
             // 审查调用不传fileIdList，减少token消耗
             AiCallLogResult aiCallResult;
             boolean aiSuccess = false;
             String aiOutput = null;
+            String errorMessage = null;
             try {
                 aiOutput = aiCallRecorder.callAndRecord(
                         client, systemPrompt,
-                        userPrompt, "GENERATION", task.getId(), task.getCreateId(), null);
+                        userPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null);
                 aiSuccess = true;
+            } catch (Exception e) {
+                errorMessage = e.getMessage();
+                throw e;
             } finally {
-                aiCallResult = finishAiCall(task, aiCall, aiSuccess, aiOutput, systemPrompt, userPrompt);
-                requirementGenerationLog.info("REQ_GEN_STEP_TIMING taskId={} callId={} stageCode={} stageName={} step=review.ai callTime={} returnTime={} duration={}ms status={}",
-                        task.getId(), aiCall.callId(), aiCall.stageCode(), aiCall.stageName(), aiCall.callTime(),
-                        aiCallResult.returnTime(), aiCallResult.durationMs(), aiCallResult.status());
+                aiCallResult = finishAiCall(task, aiCall, aiSuccess, aiOutput, errorMessage);
             }
 
+            String applyStartTime = Timing.currentTime();
             long applyStart = Timing.now();
             String refinedContent = applyRevisions(fullContent, aiOutput);
-            requirementGenerationLog.info("REQ_GEN_STEP_TIMING taskId={} step=review.apply duration={}ms", task.getId(), Timing.msSince(applyStart));
+            Map<String, Object> applyParams = new LinkedHashMap<>();
+            applyParams.put("inputLength", fullContent.length());
+            applyParams.put("outputLength", refinedContent.length());
+            logStepEnd(task, STAGE_REVIEW_APPLY, "应用审查修订", null, null,
+                    "success", applyStartTime, Timing.currentTime(), Timing.msSince(applyStart),
+                    applyParams);
             return refinedContent;
         } catch (Exception e) {
             log.warn("审查修订失败，使用原始内容: taskId={}, error={}", task.getId(), e.getMessage());
@@ -529,13 +607,9 @@ public class RequirementGenerator {
                                          String stageName,
                                          Integer chapterIndex,
                                          String chapterTitle) {
-        String callId = buildCallId(task.getId(), stageCode, chapterIndex);
         String callTime = Timing.currentTime();
-        AiCallLogContext context = new AiCallLogContext(callId, stageCode, stageName,
+        AiCallLogContext context = new AiCallLogContext(stageCode, stageName,
                 chapterIndex, safeLogValue(chapterTitle), callTime, Timing.now());
-        requirementGenerationLog.info("REQ_GEN_AI_CALL_BEGIN callId={} taskId={} stageCode={} stageName={} chapterIndex={} chapterTitle=\"{}\" callTime={}",
-                context.callId(), task.getId(), context.stageCode(), context.stageName(),
-                context.chapterIndex(), context.chapterTitle(), context.callTime());
         return context;
     }
 
@@ -543,63 +617,125 @@ public class RequirementGenerator {
                                          AiCallLogContext context,
                                          boolean success,
                                          String aiOutput,
-                                         String systemPrompt,
-                                         String userPrompt) {
+                                         String errorMessage) {
         String returnTime = Timing.currentTime();
         long durationMs = Timing.msSince(context.startNanos());
         String status = success ? "success" : "error";
         int responseLength = aiOutput == null ? 0 : aiOutput.length();
         AiCallLogResult result = new AiCallLogResult(returnTime, durationMs, status, responseLength);
 
-        requirementGenerationLog.info("REQ_GEN_AI_CALL_END callId={} taskId={} stageCode={} stageName={} chapterIndex={} chapterTitle=\"{}\" callTime={} returnTime={} duration={}ms status={} responseLength={}",
-                context.callId(), task.getId(), context.stageCode(), context.stageName(),
-                context.chapterIndex(), context.chapterTitle(), context.callTime(), result.returnTime(),
-                result.durationMs(), result.status(), result.responseLength());
-        logPrompt(task, context, result, systemPrompt, userPrompt);
+        if (errorMessage != null && !errorMessage.isBlank()) {
+            requirementGenerationLog.info("taskId={} event=REQ_GEN_AI_RESPONSE stageCode={} stageName={} chapterNo={} chapterTitle=\"{}\" status={} startTime={} endTime={} durationMs={} responseLength={} errorMessage=\"{}\"",
+                    task.getId(), context.stageCode(), context.stageName(), chapterNo(context),
+                    context.chapterTitle(), result.status(), context.callTime(), result.returnTime(),
+                    result.durationMs(), result.responseLength(), safeLogValue(errorMessage));
+            return result;
+        }
+
+        if (STAGE_OUTLINE_GENERATE.equals(context.stageCode()) && aiOutput != null) {
+            requirementGenerationLog.info("taskId={} event=REQ_GEN_AI_RESPONSE stageCode={} stageName={} chapterNo={} chapterTitle=\"{}\" status={} startTime={} endTime={} durationMs={} responseLength={} outlineResult={}",
+                    task.getId(), context.stageCode(), context.stageName(), chapterNo(context),
+                    context.chapterTitle(), result.status(), context.callTime(), result.returnTime(),
+                    result.durationMs(), result.responseLength(), safeLogValue(aiOutput));
+            return result;
+        }
+
+        requirementGenerationLog.info("taskId={} event=REQ_GEN_AI_RESPONSE stageCode={} stageName={} chapterNo={} chapterTitle=\"{}\" status={} startTime={} endTime={} durationMs={} responseLength={}",
+                task.getId(), context.stageCode(), context.stageName(), chapterNo(context),
+                context.chapterTitle(), result.status(), context.callTime(), result.returnTime(),
+                result.durationMs(), result.responseLength());
         return result;
     }
 
-    private void logPrompt(AiTask task,
-                           AiCallLogContext context,
-                           AiCallLogResult result,
-                           String systemPrompt,
-                           String userPrompt) {
-        logPromptPart(task, context, result, "system", systemPrompt);
-        logPromptPart(task, context, result, "user", userPrompt);
+    private void logTaskStart(AiTask task, String startTime) {
+        requirementGenerationLog.info("taskId={} event=REQ_GEN_TASK_START taskType={} startTime={} requestParams={}",
+                task.getId(), task.getTaskType(), startTime, rawJsonLog(task.getRequestParams()));
     }
 
-    private void logPromptPart(AiTask task,
-                               AiCallLogContext context,
-                               AiCallLogResult result,
-                               String promptType,
-                               String prompt) {
-        String safePrompt = prompt == null ? "" : prompt;
-        requirementGenerationLog.info("""
-                REQ_GEN_PROMPT_BEGIN callId={} taskId={} stageCode={} stageName={} chapterIndex={} chapterTitle="{}" promptType={} callTime={} returnTime={} duration={}ms status={} length={}
-                {}
-                REQ_GEN_PROMPT_END callId={} taskId={} stageCode={} promptType={}
-                """, context.callId(), task.getId(), context.stageCode(), context.stageName(),
-                context.chapterIndex(), context.chapterTitle(), promptType, context.callTime(), result.returnTime(),
-                result.durationMs(), result.status(), safePrompt.length(), safePrompt,
-                context.callId(), task.getId(), context.stageCode(), promptType);
+    private void logAiRequest(AiTask task,
+                              AiCallLogContext context,
+                              String systemPrompt,
+                              String userPrompt,
+                              List<String> fileIds) {
+        Map<String, Object> requestParams = new LinkedHashMap<>();
+        requestParams.put("modelScene", MODEL_SCENE_GENERATION);
+        requestParams.put("taskType", task.getTaskType());
+        requestParams.put("createId", task.getCreateId());
+        requestParams.put("fileIds", fileIds != null ? fileIds : List.of());
+        requestParams.put("systemPrompt", systemPrompt != null ? systemPrompt : "");
+        requestParams.put("userPrompt", userPrompt != null ? userPrompt : "");
+
+        int requestLength = (systemPrompt == null ? 0 : systemPrompt.length())
+                + (userPrompt == null ? 0 : userPrompt.length());
+        requirementGenerationLog.info("taskId={} event=REQ_GEN_AI_REQUEST stageCode={} stageName={} chapterNo={} chapterTitle=\"{}\" startTime={} requestLength={} requestParams={}",
+                task.getId(), context.stageCode(), context.stageName(), chapterNo(context),
+                context.chapterTitle(), context.callTime(), requestLength, toJsonLog(requestParams));
     }
 
-    private String buildCallId(Long taskId, String stageCode, Integer chapterIndex) {
-        if (chapterIndex == null) {
-            return taskId + ":" + stageCode;
+    private void logChapterStepEnd(AiTask task,
+                                   AiCallLogContext context,
+                                   String status,
+                                   String startTime,
+                                   String endTime,
+                                   long durationMs,
+                                   long delayMs,
+                                   long aiMs,
+                                   int contentLength) {
+        requirementGenerationLog.info("taskId={} event=REQ_GEN_STEP_END stageCode={} stageName={} chapterNo={} chapterTitle=\"{}\" status={} startTime={} endTime={} durationMs={} delayDurationMs={} aiDurationMs={} contentLength={}",
+                task.getId(), context.stageCode(), context.stageName(), chapterNo(context),
+                context.chapterTitle(), status, startTime, endTime, durationMs, delayMs, aiMs, contentLength);
+    }
+
+    private void logStepEnd(AiTask task,
+                            String stageCode,
+                            String stageName,
+                            Integer chapterIndex,
+                            String chapterTitle,
+                            String status,
+                            String startTime,
+                            String endTime,
+                            long durationMs,
+                            Map<String, Object> extraParams) {
+        requirementGenerationLog.info("taskId={} event=REQ_GEN_STEP_END stageCode={} stageName={} chapterNo={} chapterTitle=\"{}\" status={} startTime={} endTime={} durationMs={} extraParams={}",
+                task.getId(), stageCode, stageName, chapterIndex == null ? "-" : chapterIndex + 1,
+                safeLogValue(chapterTitle), status, startTime, endTime, durationMs,
+                toJsonLog(extraParams != null ? extraParams : Map.of()));
+    }
+
+    private Object chapterNo(AiCallLogContext context) {
+        if (context.chapterIndex() == null) {
+            return "-";
         }
-        return taskId + ":" + stageCode + ":" + chapterIndex;
+        return context.chapterIndex() + 1;
+    }
+
+    private String rawJsonLog(String rawJson) {
+        if (rawJson == null || rawJson.isBlank()) {
+            return "{}";
+        }
+        try {
+            return objectMapper.writeValueAsString(objectMapper.readTree(rawJson));
+        } catch (Exception ignored) {
+            return toJsonLog(rawJson);
+        }
+    }
+
+    private String toJsonLog(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception ignored) {
+            return "\"" + safeLogValue(String.valueOf(value)) + "\"";
+        }
     }
 
     private String safeLogValue(String value) {
         if (value == null) {
             return "";
         }
-        return value.replace('\r', ' ').replace('\n', ' ');
+        return value.replace('\r', ' ').replace('\n', ' ').trim();
     }
 
-    private record AiCallLogContext(String callId,
-                                    String stageCode,
+    private record AiCallLogContext(String stageCode,
                                     String stageName,
                                     Integer chapterIndex,
                                     String chapterTitle,

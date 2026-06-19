@@ -33,7 +33,7 @@ public class RequirementOutline {
     private String corePoints;
 
     /**
-     * 预估字数，指导AI控制该章节的输出长度
+     * 预估字数上限，指导AI控制该章节的输出长度
      */
     private int estimatedWords;
 }
