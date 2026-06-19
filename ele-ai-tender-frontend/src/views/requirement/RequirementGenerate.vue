@@ -267,7 +267,8 @@ import {
   getProcessingProgressByTime,
   isTaskSucceeded,
   isTaskTerminal,
-  parseRequirementGenerationProgress
+  parseRequirementGenerationProgress,
+  buildRequirementGenerationProgressMarkdown
 } from '@/types/ai-task'
 import WysiwygEditor from '@/components/editor/WysiwygEditor.vue'
 import AiAssistantSidebar from '@/components/ai/AiAssistantSidebar.vue'
@@ -278,7 +279,6 @@ import { formatBudgetWanYuan } from '@/utils/budget'
 import type { RequirementInfo, MatchFile } from '@/types/requirement'
 import type { AiChatMessage } from '@/types/ai'
 import type { DetectionIssueVO, RequirementDetectionRecord } from '@/types/detection'
-import type { RequirementGenerationProgressResult } from '@/types/ai-task'
 
 const router = useRouter()
 const route = useRoute()
@@ -432,51 +432,11 @@ const displayProgress = ref(0)       // 显示进度（只增不减，除非新�
 const generateStartTime = ref(0)     // 本地记录的生成开始时间戳
 watch(generationProgress, (progress) => {
   if (!progress || isTaskSucceeded(latestTask.value)) return
-  const progressContent = buildGenerationProgressMarkdown(progress)
+  const progressContent = buildRequirementGenerationProgressMarkdown(progress)
   if (progressContent && progressContent !== content.value) {
     content.value = progressContent
   }
 }, { deep: true })
-
-function buildGenerationProgressMarkdown(progress: RequirementGenerationProgressResult): string {
-  if (
-    (progress.contentStage === 'DRAFT_COMPLETED'
-      || progress.contentStage === 'REVIEWING'
-      || progress.contentStage === 'COMPLETED')
-    && progress.content?.trim()
-  ) {
-    return progress.content
-  }
-
-  const outlineChapters = progress.outline?.chapters ?? []
-  if (outlineChapters.length === 0) {
-    return progress.content ?? ''
-  }
-
-  const chapterMap = new Map<number, string>()
-  for (const chapter of progress.chapters ?? []) {
-    if (chapter.chapterNo && chapter.content?.trim()) {
-      chapterMap.set(chapter.chapterNo, chapter.content.trim())
-    }
-  }
-
-  return outlineChapters.map((chapter, index) => {
-    const chapterNo = chapter.chapterNo || index + 1
-    const title = chapter.chapterTitle || `\u7b2c${chapterNo}\u7ae0`
-    const chapterContent = chapterMap.get(chapterNo)
-    if (chapterContent) {
-      return `## ${title}\n\n${chapterContent}`
-    }
-
-    const statusText = progress.contentStage === 'OUTLINE_GENERATED'
-      ? '\u7b49\u5f85\u751f\u6210\u6b63\u6587...'
-      : '\u751f\u6210\u4e2d...'
-    const corePoints = chapter.corePoints?.trim()
-      ? `\n\n> \u6838\u5fc3\u8981\u70b9\uff1a${chapter.corePoints}`
-      : ''
-    return `## ${title}\n\n> ${statusText}${corePoints}`
-  }).join('\n\n---\n\n')
-}
 
 let progressTimer: ReturnType<typeof setInterval> | null = null
 

@@ -96,6 +96,46 @@ export function parseRequirementGenerationProgress(result?: string): Requirement
   }
 }
 
+export function buildRequirementGenerationProgressMarkdown(progress: RequirementGenerationProgressResult): string {
+  if (
+    (progress.contentStage === 'DRAFT_COMPLETED'
+      || progress.contentStage === 'REVIEWING'
+      || progress.contentStage === 'COMPLETED')
+    && progress.content?.trim()
+  ) {
+    return progress.content
+  }
+
+  const outlineChapters = progress.outline?.chapters ?? []
+  if (outlineChapters.length === 0) {
+    return progress.content ?? ''
+  }
+
+  const chapterMap = new Map<number, string>()
+  for (const chapter of progress.chapters ?? []) {
+    if (chapter.chapterNo && chapter.content?.trim()) {
+      chapterMap.set(chapter.chapterNo, chapter.content.trim())
+    }
+  }
+
+  return outlineChapters.map((chapter, index) => {
+    const chapterNo = chapter.chapterNo || index + 1
+    const title = chapter.chapterTitle || `\u7b2c${chapterNo}\u7ae0`
+    const chapterContent = chapterMap.get(chapterNo)
+    if (chapterContent) {
+      return `## ${title}\n\n${chapterContent}`
+    }
+
+    const statusText = progress.contentStage === 'OUTLINE_GENERATED'
+      ? '\u7b49\u5f85\u751f\u6210\u6b63\u6587...'
+      : '\u751f\u6210\u4e2d...'
+    const corePoints = chapter.corePoints?.trim()
+      ? `\n\n> \u6838\u5fc3\u8981\u70b9\uff1a${chapter.corePoints}`
+      : ''
+    return `## ${title}\n\n> ${statusText}${corePoints}`
+  }).join('\n\n---\n\n')
+}
+
 export function isTaskSucceeded(task: AiTaskVO | null): boolean {
   return task?.status === 'COMPLETED' && task.resultSynced === 1
 }

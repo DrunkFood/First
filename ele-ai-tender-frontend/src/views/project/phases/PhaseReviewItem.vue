@@ -357,7 +357,7 @@ import { reviewApi } from '@/api/review'
 import { projectApi } from '@/api/project'
 import { projectTemplateApi } from '@/api/projectTemplate'
 import { useLatestTask } from '@/composables/useLatestTask'
-import { getTaskProgress } from '@/types/ai-task'
+import { getTaskProgress, isTaskSucceeded } from '@/types/ai-task'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 import type { ReviewItemTree, ReviewConfig, ReviewTypeConfig } from '@/types/review'
 import { REVIEW_TYPE_LABELS } from '@/types/review'
@@ -371,6 +371,7 @@ const emit = defineEmits<{ next: []; prev: [] }>()
 
 const allItems = ref<ReviewItemTree[]>([])
 const activeReviewType = ref<string>('COMPLIANCE')
+const isCreatingGenerationTask = ref(false)
 
 // 评审项配置
 const reviewConfig = ref<ReviewConfig | null>(null)
@@ -407,6 +408,12 @@ const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   },
 )
 
+
+watch(latestTask, (task) => {
+  if (task && isCreatingGenerationTask.value) {
+    isCreatingGenerationTask.value = false
+  }
+})
 
 /** 将扁平列表组装为树形结构 */
 function buildTree(flatList: any[]): ReviewItemTree[] {
@@ -518,8 +525,10 @@ const progressPercent = computed(() => {
 })
 
 const isGenerating = computed(() => {
-  const status = latestTask.value?.status
-  return status === 'PENDING' || status === 'PROCESSING' || (status === 'COMPLETED' && latestTask.value?.resultSynced === 0)
+  if (isCreatingGenerationTask.value) return true
+  const task = latestTask.value
+  if (!task || isTaskSucceeded(task)) return false
+  return task.status === 'PENDING' || task.status === 'PROCESSING' || (task.status === 'COMPLETED' && task.resultSynced === 0)
 })
 
 const isEditingDisabled = computed(() => props.readonly || isGenerating.value)
@@ -551,10 +560,15 @@ const handleGenerate = async () => {
     ElMessage.warning('AI生成任务正在处理中，请稍候')
     return
   }
+  const originalItems = allItems.value
+  isCreatingGenerationTask.value = true
   try {
     const res = await reviewApi.generate(props.projectId, {})
+    allItems.value = []
     setActive(res.id)
   } catch (e: any) {
+    allItems.value = originalItems
+    isCreatingGenerationTask.value = false
     if (e?.code === 8084) {
       ElMessage.warning('AI生成任务正在处理中，请稍候')
       refresh()

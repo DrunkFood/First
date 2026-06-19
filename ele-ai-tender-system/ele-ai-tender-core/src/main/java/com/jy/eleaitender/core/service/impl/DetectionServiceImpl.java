@@ -10,6 +10,7 @@ import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
@@ -20,6 +21,7 @@ import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
@@ -49,6 +51,9 @@ public class DetectionServiceImpl implements IDetectionService {
 
     @Autowired
     private TbDetectionRecordMapper detectionRecordMapper;
+
+    @Autowired
+    private TbProjectReviewItemMapper reviewItemMapper;
 
     @Autowired
     private TbPolicyFileMapper policyFileMapper;
@@ -93,13 +98,15 @@ public class DetectionServiceImpl implements IDetectionService {
         }
 
         Map<String, Long> taskIds = new LinkedHashMap<>();
+        String detectionContent = buildDetectionContent(project, reviewItemMapper.selectByProjectId(projectId));
 
         // 为每种检测类型创建检测记录 + AI任务
         for (DetectionType type : ALL_DETECTION_TYPES) {
             TbDetectionRecord record = new TbDetectionRecord();
             record.setProjectId(projectId);
             record.setDetectionType(type.getCode());
-            record.setContentFileId(project.getGeneratedFileId());
+            record.setContentFileId(null);
+            record.setContentSnapshot(detectionContent);
             record.setStatus(AiTaskStatus.PENDING.getCode());
             record.setPolicyFileIds(policyFileIdStr);
             record.setStartedAt(LocalDateTime.now());
@@ -107,7 +114,7 @@ public class DetectionServiceImpl implements IDetectionService {
 
             // 构建AI任务参数
             DetectionParams params = new DetectionParams();
-            params.setContentFileId(project.getGeneratedFileId());
+            params.setContent(detectionContent);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
             AiTask task = aiTaskService.createTask(taskType, projectId,
@@ -408,6 +415,7 @@ public class DetectionServiceImpl implements IDetectionService {
         // 重试失败的检测记录
         List<TbDetectionRecord> records = detectionRecordMapper.selectByProjectId(projectId);
         Map<String, Long> taskIds = new LinkedHashMap<>();
+        String detectionContent = buildDetectionContent(project, reviewItemMapper.selectByProjectId(projectId));
 
         for (TbDetectionRecord record : records) {
             AiTaskStatus status = AiTaskStatus.fromCode(record.getStatus());
@@ -416,12 +424,14 @@ public class DetectionServiceImpl implements IDetectionService {
             //}
             record.setStatus(AiTaskStatus.PENDING.getCode());
             record.setResult(null);
+            record.setContentFileId(null);
+            record.setContentSnapshot(detectionContent);
             record.setStartedAt(LocalDateTime.now());
             record.setCompletedAt(null);
             detectionRecordMapper.updateById(record);
 
             DetectionParams params = new DetectionParams();
-            params.setContentFileId(record.getContentFileId());
+            params.setContent(detectionContent);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
             AiTask task = aiTaskService.createTask(taskType, projectId,
@@ -439,6 +449,31 @@ public class DetectionServiceImpl implements IDetectionService {
 
         log.info("重新检测，项目ID: {}, 重试任务数: {}", projectId, taskIds.size());
         return taskIds;
+    }
+
+    private String buildDetectionContent(TbProject project, List<TbProjectReviewItem> reviewItems) {
+        StringJoiner content = new StringJoiner("\n\n");
+        if (StringUtils.hasText(project.getRequirementContent())) {
+            content.add("Requirement Content\n" + project.getRequirementContent());
+        }
+
+        StringJoiner reviewItemContent = new StringJoiner("\n");
+        if (reviewItems != null) {
+            for (TbProjectReviewItem item : reviewItems) {
+                String itemStandard = item.getItemStandard();
+                if (!StringUtils.hasText(itemStandard)) {
+                    continue;
+                }
+                String prefix = StringUtils.hasText(item.getReviewType()) ? "[" + item.getReviewType() + "] " : "";
+                reviewItemContent.add("- " + prefix + itemStandard);
+            }
+        }
+
+        String reviewItemsText = reviewItemContent.toString();
+        if (StringUtils.hasText(reviewItemsText)) {
+            content.add("Review Items\n" + reviewItemsText);
+        }
+        return content.toString();
     }
 
     private TbProject getProjectOrThrow(Long projectId) {

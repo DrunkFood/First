@@ -31,7 +31,7 @@ jwt:
 
 internal:
   file-service:
-    base-url: http://10.11.20.50:8081
+    base-url: http://10.11.20.50:28081
 
 swagger:
   enabled: false

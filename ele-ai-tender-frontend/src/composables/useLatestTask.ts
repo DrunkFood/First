@@ -63,9 +63,9 @@ export function useLatestTask(
   }
 
   /** 重新查询最新任务（用于任务创建后刷新） */
-  function refresh() {
+  async function refresh() {
     stopPolling()
-    fetchLatest()
+    await fetchLatest()
   }
 
   // 标记是否为首次同步（页面加载恢复场景），首次同步已完成任务不应触发回调
