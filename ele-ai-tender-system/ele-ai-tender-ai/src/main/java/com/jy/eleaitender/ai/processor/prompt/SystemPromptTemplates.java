@@ -91,7 +91,7 @@ public class SystemPromptTemplates {
               ]
             }}
             
-            总预估字数应控制在5000字以内，章节数量6-10个。estimatedWords是每个章节正文的字数上限，不是最低字数。
+            总预估字数应控制在5000字以内，章节数量5-6个。estimatedWords是每个章节正文的字数上限，不是最低字数。
             """;
 
     /**

@@ -141,6 +141,7 @@ class RequirementGeneratorTest {
         assertThat(outlineRequestLog)
                 .contains("requestParams=")
                 .contains("5000字以内")
+                .contains("章节数量5-6个")
                 .endsWith("}");
         String outlineResponseLog = logMessages.stream()
                 .filter(message -> message.contains("event=REQ_GEN_AI_RESPONSE")

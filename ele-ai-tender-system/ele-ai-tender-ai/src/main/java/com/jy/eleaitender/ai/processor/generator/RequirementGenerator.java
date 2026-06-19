@@ -68,9 +68,9 @@ public class RequirementGenerator {
     private static final int MIN_REVISION_ORIGINAL_LENGTH = 20;
 
     /**
-     * 分章并行生成时，每章交错启动的间隔（毫秒），避免瞬间并发触发API速率限制
+     * 分章生成最大并发数，避免瞬间并发触发API速率限制
      */
-    private static final long CHAPTER_STAGGER_INTERVAL_MS = 10 * 1000L;
+    private static final int CHAPTER_GENERATION_CONCURRENCY = 3;
 
     @Autowired
     private ModelRouter modelRouter;
@@ -260,55 +260,43 @@ public class RequirementGenerator {
             chapters.add(new RequirementOutline("project_overview", "项目概况与采购范围",
                     "项目背景、采购目标、采购范围、预算及资金来源", 900));
             chapters.add(new RequirementOutline("service_scope", "服务范围与内容",
-                    "服务内容描述、服务边界、服务成果交付物", 900));
+                    "服务内容描述、服务边界、服务成果交付物", 1100));
             chapters.add(new RequirementOutline("service_requirements", "服务要求",
-                    "服务标准、服务质量、服务流程、服务响应时间", 900));
-            chapters.add(new RequirementOutline("personnel", "人员配备要求",
-                    "项目团队结构、关键岗位资质要求、人员数量与分工", 600));
+                    "服务标准、人员配备、服务质量、服务流程、服务响应时间", 1100));
             chapters.add(new RequirementOutline("commercial", "商务要求",
-                    "报价要求、付款方式、合同期限、违约责任", 600));
-            chapters.add(new RequirementOutline("acceptance", "验收与考核",
-                    "验收标准、验收流程、考核指标与奖惩", 600));
-            chapters.add(new RequirementOutline("other", "其他要求",
-                    "保密要求、知识产权、争议解决", 500));
+                    "报价要求、付款方式、合同期限、违约责任", 900));
+            chapters.add(new RequirementOutline("acceptance_other", "验收与其他要求",
+                    "验收标准、验收流程、考核指标、保密要求、知识产权、争议解决", 1000));
         } else if (ProjectType.GOODS.getCode().equals(projectType)) {
             chapters.add(new RequirementOutline("project_overview", "项目概况与采购范围",
-                    "项目背景、采购目标、采购范围、预算及资金来源", 650));
+                    "项目背景、采购目标、采购范围、预算及资金来源", 700));
             chapters.add(new RequirementOutline("procurement_list", "采购清单",
-                    "采购设备/货物清单、数量、规格要求概要", 650));
+                    "采购设备/货物清单、数量、规格要求概要", 800));
             chapters.add(new RequirementOutline("technical_specs", "技术规格与参数要求",
-                    "核心技术指标、性能参数、配置要求、兼容性要求", 1000));
-            chapters.add(new RequirementOutline("quality", "质量标准与检验",
-                    "质量标准、检验方法、不合格品处理", 550));
+                    "核心技术指标、性能参数、配置要求、兼容性要求", 1200));
+            chapters.add(new RequirementOutline("quality_delivery", "质量标准与交货验收",
+                    "质量标准、检验方法、交货时间、交货地点、验收标准与流程", 900));
             chapters.add(new RequirementOutline("commercial", "商务要求",
-                    "报价要求、付款方式、交货条件、违约责任", 550));
-            chapters.add(new RequirementOutline("delivery", "交货与验收",
-                    "交货时间、交货地点、验收标准与流程", 550));
-            chapters.add(new RequirementOutline("after_sale", "售后服务",
-                    "质保期限、售后服务内容、响应时间、培训要求", 550));
-            chapters.add(new RequirementOutline("other", "其他要求",
-                    "包装运输、保密要求、知识产权", 500));
+                    "报价要求、付款方式、交货条件、违约责任", 700));
+            chapters.add(new RequirementOutline("after_sale_other", "售后服务与其他要求",
+                    "质保期限、售后服务内容、响应时间、培训要求、包装运输、保密要求、知识产权", 700));
         } else {
             // 工程类默认（projectType为null时也走此分支）
             if (projectType == null) {
                 log.warn("projectType为null，降级使用工程类章节模板");
             }
-            chapters.add(new RequirementOutline("project_overview", "项目概况与采购范围",
-                    "项目背景、建设目标、工程范围、预算及资金来源", 650));
-            chapters.add(new RequirementOutline("scope", "采购范围",
-                    "工程内容、工作范围、界限划分", 650));
+            chapters.add(new RequirementOutline("project_overview_scope", "项目概况与采购范围",
+                    "项目背景、建设目标、工程范围、界限划分、预算及资金来源", 800));
             chapters.add(new RequirementOutline("technical_specs", "技术规格与参数要求",
-                    "设计标准、技术参数、材料要求、施工工艺", 1000));
+                    "设计标准、技术参数、材料要求、施工工艺", 1200));
             chapters.add(new RequirementOutline("construction", "施工要求",
-                    "施工组织、安全文明施工、环保要求、进度要求", 750));
+                    "施工组织、安全文明施工、环保要求、进度要求", 900));
             chapters.add(new RequirementOutline("quality", "质量验收",
-                    "质量标准、验收规范、检测方法", 550));
+                    "质量标准、验收规范、检测方法", 800));
             chapters.add(new RequirementOutline("commercial", "商务要求",
-                    "报价要求、付款方式、合同工期、违约责任", 550));
-            chapters.add(new RequirementOutline("service", "服务要求",
-                    "项目管理、协调配合、保修责任", 500));
-            chapters.add(new RequirementOutline("other", "其他要求",
-                    "风险分担、保密要求、争议解决", 350));
+                    "报价要求、付款方式、合同工期、违约责任", 700));
+            chapters.add(new RequirementOutline("service_other", "服务与其他要求",
+                    "项目管理、协调配合、保修责任、风险分担、保密要求、争议解决", 600));
         }
 
         result.setChapters(chapters);
@@ -330,7 +318,8 @@ public class RequirementGenerator {
                 .map(ch -> ch.getChapterTitle() + "（" + ch.getCorePoints() + "）")
                 .collect(Collectors.joining("\n"));
 
-        // 交错并行生成所有章节：每章延迟启动，避免同时提交触发API速率限制
+        // 限流并行生成所有章节：最多同时发起固定数量的章节AI请求，避免触发API速率限制
+        Semaphore chapterSemaphore = new Semaphore(CHAPTER_GENERATION_CONCURRENCY);
         List<CompletableFuture<String>> futures = new ArrayList<>();
         for (int i = 0; i < chapters.size(); i++) {
             RequirementOutline chapter = chapters.get(i);
@@ -339,19 +328,24 @@ public class RequirementGenerator {
                 String chapterStartTime = Timing.currentTime();
                 long chapterStart = Timing.now();
                 long delayMs = 0;
-                long delayStart = 0;
-                // 首章立即启动，后续章节按序延迟，错开API请求
-                if (chapterIndex > 0) {
-                    delayStart = Timing.now();
-                    try {
-                        Thread.sleep(chapterIndex * CHAPTER_STAGGER_INTERVAL_MS);
-                    } catch (InterruptedException ignored) {
-                        Thread.currentThread().interrupt();
-                    }
+                long delayStart = Timing.now();
+                boolean acquired = false;
+                try {
+                    chapterSemaphore.acquire();
+                    acquired = true;
                     delayMs = Timing.msSince(delayStart);
+                    return generateSingleChapter(chapter, projectOverview, outlineDirectory,
+                            client, task, chapterIndex, delayMs, chapterStartTime, chapterStart);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("章节[{}]等待并发许可被中断: taskId={}, title={}",
+                            chapterIndex, task.getId(), chapter.getChapterTitle());
+                    return "> ⚠️ 本章节内容生成失败，请手动补充";
+                } finally {
+                    if (acquired) {
+                        chapterSemaphore.release();
+                    }
                 }
-                return generateSingleChapter(chapter, projectOverview, outlineDirectory,
-                        client, task, chapterIndex, delayMs, chapterStartTime, chapterStart);
             }, virtualThreadExecutor));
         }
 
