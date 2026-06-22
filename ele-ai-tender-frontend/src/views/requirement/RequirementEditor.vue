@@ -34,7 +34,11 @@
             class="name-input"
           />
         </div>
-        <WysiwygEditor v-model="content" class="editor-content" />
+        <WysiwygEditor
+          v-model="content"
+          class="editor-content"
+          @selection-change="handleSelectionChange"
+        />
       </div>
     </div>
 
@@ -46,8 +50,11 @@
       greeting="您好！我是您的AI助手，可以帮助您优化和修改业务需求内容。请选择快捷操作或输入您的需求。"
       :context="content"
       :requirement-id="requirementId"
+      :selected-text="selectedText"
       @feedback="handleChatFeedback"
       @message="handleChatMessage"
+      @replace="handleReplace"
+      @update:selected-text="selectedText = $event"
     >
       <template #quick-actions>
         <div class="quick-actions">
@@ -107,6 +114,7 @@ const generating = ref(false)
 const optimizing = ref(false)
 const chatVisible = ref(true)
 const chatMessages = ref<AiChatMessage[]>([])
+const selectedText = ref('')
 const latestTaskId = ref<number | undefined>(undefined)
 
 // ---- 反馈（仅聊天场景） ----
@@ -276,6 +284,28 @@ async function handleChatFeedback(type: 'like' | 'dislike', msg: AiChatMessage) 
 
 function handleChatMessage(_msg: string) {
   // 消息已通过 v-model 同步到 chatMessages
+}
+
+function handleSelectionChange(text: string) {
+  selectedText.value = text
+}
+
+function handleReplace(payload: { selectedText: string; replacement: string }) {
+  const { selectedText: original, replacement } = payload
+  const index = content.value.indexOf(original)
+
+  if (index === -1) {
+    ElMessage.warning('原文已被修改，请手动替换')
+    return
+  }
+
+  const secondIndex = content.value.indexOf(original, index + 1)
+  if (secondIndex !== -1) {
+    ElMessage.warning('存在多处相同内容，已替换第一处')
+  }
+
+  content.value = content.value.substring(0, index) + replacement + content.value.substring(index + original.length)
+  ElMessage.success('替换成功')
 }
 
 const aiSidebarRef = ref<InstanceType<typeof AiAssistantSidebar>>()

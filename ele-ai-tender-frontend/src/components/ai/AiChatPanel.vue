@@ -68,8 +68,8 @@
               />
             </template>
           </div>
-          <!-- 替换操作栏（暂时隐藏） -->
-          <div v-if="false" class="replace-actions">
+          <!-- 替换操作栏 -->
+          <div v-if="canShowReplace(index, msg)" class="replace-actions">
             <el-button size="small" type="primary" @click="handleReplace(index, msg)">
               应用替换
             </el-button>
@@ -180,6 +180,15 @@ function getSelectedTextForAiMsg(aiMsgIndex: number): string | undefined {
   const userMsg = messages.value[aiMsgIndex - 1]
   if (userMsg?.role !== 'user') return undefined
   return userMsg.selectedText
+}
+
+function canShowReplace(index: number, msg: AiChatMessage) {
+  return msg.role === 'assistant'
+    && !!msg.content
+    && !msg.error
+    && !msg.isGreeting
+    && !sending.value
+    && !!getSelectedTextForAiMsg(index)
 }
 
 /** 应用替换 */

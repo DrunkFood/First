@@ -27,7 +27,11 @@
     <!-- 编辑器区域 -->
     <div class="editor-container">
       <div class="editor-area">
-        <WysiwygEditor v-model="content" :readonly="editorReadonly" />
+        <WysiwygEditor
+          v-model="content"
+          :readonly="editorReadonly"
+          @selection-change="handleSelectionChange"
+        />
         <div v-if="generationLocked" class="generation-overlay" role="status" aria-live="polite">
           <div class="generation-status-panel">
             <div class="generation-spinner" aria-hidden="true"></div>
@@ -125,8 +129,11 @@
       greeting="您好！我是您的AI助手，可以帮助您修改详细需求内容。请选择或输入需要修改的内容，我会为您提供修改建议。"
       :context="content"
       :project-id="projectId"
+      :selected-text="selectedText"
       @feedback="handleChatFeedback"
       @message="handleChatMessage"
+      @replace="handleReplace"
+      @update:selected-text="selectedText = $event"
     >
       <template #quick-actions>
         <div class="quick-actions">
@@ -167,6 +174,7 @@ const isCreatingGenerationTask = ref(false)
 
 const chatVisible = ref(false)
 const chatMessages = ref<AiChatMessage[]>([])
+const selectedText = ref('')
 let closeOptimizeSSE: (() => void) | null = null
 
 // AI任务：项目需求生成，bizId=projectId
@@ -466,6 +474,28 @@ const handleChatFeedback = async (type: 'like' | 'dislike', msg: AiChatMessage) 
 
 const handleChatMessage = (_msg: string) => {
   // 消息已通过 v-model 同步到 chatMessages
+}
+
+function handleSelectionChange(text: string) {
+  selectedText.value = text
+}
+
+function handleReplace(payload: { selectedText: string; replacement: string }) {
+  const { selectedText: original, replacement } = payload
+  const index = content.value.indexOf(original)
+
+  if (index === -1) {
+    ElMessage.warning('原文已被修改，请手动替换')
+    return
+  }
+
+  const secondIndex = content.value.indexOf(original, index + 1)
+  if (secondIndex !== -1) {
+    ElMessage.warning('存在多处相同内容，已替换第一处')
+  }
+
+  content.value = content.value.substring(0, index) + replacement + content.value.substring(index + original.length)
+  ElMessage.success('替换成功')
 }
 
 const handleSave = async () => {

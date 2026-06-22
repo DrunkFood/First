@@ -156,7 +156,10 @@ class RequirementGeneratorTest {
         ArgumentCaptor<String> chapterPromptCaptor = ArgumentCaptor.forClass(String.class);
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_CHAPTER_GENERATE),
                 chapterPromptCaptor.capture(), eq("GENERATION"), eq(9001L), eq(2L), isNull());
-        assertThat(chapterPromptCaptor.getValue()).contains("5000");
+        assertThat(chapterPromptCaptor.getValue())
+                .contains("硬性字数上限：5000字")
+                .contains("不得超过")
+                .contains("超出上限视为无效输出");
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_REVIEW),
                 anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull());
 
