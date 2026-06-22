@@ -23,6 +23,9 @@ public class ChatRequest {
     @Schema(description = "上下文内容（选中的文本等）")
     private String context;
 
+    @Schema(description = "是否为选中文本替换模式，为true时AI需标记可直接替换正文范围")
+    private Boolean replaceMode;
+
     @Schema(description = "对话ID, 发起聊天时前端随机生成的UUID")
     private String conversationId;
 

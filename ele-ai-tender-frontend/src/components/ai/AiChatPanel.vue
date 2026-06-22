@@ -116,11 +116,13 @@
 <script setup lang="ts">
 import { ref, reactive, nextTick, onBeforeUnmount, watch } from 'vue'
 import { Close, CircleCheck, CircleClose, Promotion } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
 import { useThemeStore } from '@/store/theme'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { generateUUID } from '@/utils/crypto'
+import { extractReplaceableContent } from '@/utils/aiReplacement'
 import type { AiChatMessage } from '@/types/ai'
 
 const themeStore = useThemeStore()
@@ -195,7 +197,12 @@ function canShowReplace(index: number, msg: AiChatMessage) {
 function handleReplace(_index: number, msg: AiChatMessage) {
   const selectedText = getSelectedTextForAiMsg(_index)
   if (!selectedText) return
-  emit('replace', { selectedText, replacement: msg.content })
+  const replacement = extractReplaceableContent(msg.content)
+  if (!replacement) {
+    ElMessage.warning('未识别到可替换正文，请手动复制')
+    return
+  }
+  emit('replace', { selectedText, replacement })
   dismissedReplace.value.add(_index)
 }
 
@@ -266,6 +273,7 @@ function doSend(text: string, context: string) {
       projectId: props.projectId,
       requirementId: props.requirementId,
       conversationId,
+      replaceMode: hadSelection,
       history: buildHistory(),
     },
     (data: string) => {

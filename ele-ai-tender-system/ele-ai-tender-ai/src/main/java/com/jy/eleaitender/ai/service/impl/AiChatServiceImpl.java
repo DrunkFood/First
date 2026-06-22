@@ -34,6 +34,16 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class AiChatServiceImpl implements IAiChatService {
 
+    static final String REPLACEABLE_CONTENT_FORMAT_INSTRUCTION = """
+            输出格式要求：
+            如果你的回复包含可直接替换参考上下文的正文，必须使用以下固定标记包裹正文：
+            【可替换正文开始】
+            可直接替换到编辑器正文中的内容
+            【可替换正文结束】
+            标记内只放可直接替换到编辑器正文中的内容，不要放解释、修改原因、注意事项或其他说明。
+            解释说明、修改原因、注意事项可以写在标记外。
+            """;
+
     @Autowired
     private ModelRouter modelRouter;
 
@@ -61,12 +71,7 @@ public class AiChatServiceImpl implements IAiChatService {
                     }
                 }
 
-                // 构建用户消息
-                StringBuilder userPrompt = new StringBuilder();
-                if (request.getContext() != null && !request.getContext().isBlank()) {
-                    userPrompt.append("参考上下文：\n").append(request.getContext()).append("\n\n");
-                }
-                userPrompt.append(request.getMessage());
+                String userPrompt = buildUserPrompt(request);
 
                 // 记录开始时间
                 Date startTime = new Date();
@@ -78,7 +83,7 @@ public class AiChatServiceImpl implements IAiChatService {
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
                         .system(SystemPromptTemplates.AI_ASSISTANT)
                         .messages(chatMessages)
-                        .user(userPrompt.toString())
+                        .user(userPrompt)
                         .stream()
                         .chatResponse();
 
@@ -95,7 +100,7 @@ public class AiChatServiceImpl implements IAiChatService {
                         () -> {
                             // 流完成后记录响应日志
                             aiCallRecorder.record(lastResponseRef.get(), contentBuilder.toString(),
-                                    SystemPromptTemplates.AI_ASSISTANT, userPrompt.toString(), startTime,
+                                    SystemPromptTemplates.AI_ASSISTANT, userPrompt, startTime,
                                     "CHAT", null, request.getConversationId(), null);
                             completeSse(emitter);
                         }
@@ -157,14 +162,22 @@ public class AiChatServiceImpl implements IAiChatService {
     public String suggest(ChatRequest request) {
         ChatClient chatClient = modelRouter.route(AiUsageScenario.CHAT);
 
+        String userPrompt = buildUserPrompt(request);
+
+        return aiCallRecorder.callAndRecord(chatClient, SystemPromptTemplates.AI_ASSISTANT,
+                userPrompt, "CHAT", null, null, null);
+    }
+
+    String buildUserPrompt(ChatRequest request) {
         StringBuilder userPrompt = new StringBuilder();
         if (request.getContext() != null && !request.getContext().isBlank()) {
             userPrompt.append("参考上下文：\n").append(request.getContext()).append("\n\n");
+            if (Boolean.TRUE.equals(request.getReplaceMode())) {
+                userPrompt.append(REPLACEABLE_CONTENT_FORMAT_INSTRUCTION).append("\n");
+            }
         }
         userPrompt.append(request.getMessage());
-
-        return aiCallRecorder.callAndRecord(chatClient, SystemPromptTemplates.AI_ASSISTANT,
-                userPrompt.toString(), "CHAT", null, null, null);
+        return userPrompt.toString();
     }
 
     /**
