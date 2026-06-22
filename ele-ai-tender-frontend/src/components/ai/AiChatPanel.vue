@@ -214,11 +214,12 @@ function getReplaceableContents(content: string): string[] {
 function handleReplace(_index: number, msg: AiChatMessage, replacementIndex = 0) {
   const selectedText = getSelectedTextForAiMsg(_index)
   if (!selectedText) return
-  const replacement = extractReplaceableContents(msg.content)[replacementIndex]
-  if (!replacement) {
+  const replaceableContents = extractReplaceableContents(msg.content)
+  if (replacementIndex < 0 || replacementIndex >= replaceableContents.length) {
     ElMessage.warning(replacementIndex === 0 ? '未识别到可替换正文，请手动复制' : '未识别到对应替换方案，请手动复制')
     return
   }
+  const replacement = replaceableContents[replacementIndex]!
   emit('replace', { selectedText, replacement })
   dismissedReplace.value.add(_index)
 }
@@ -291,6 +292,7 @@ function doSend(text: string, context: string) {
       requirementId: props.requirementId,
       conversationId,
       replaceMode: hadSelection,
+      markdownContext: hadSelection ? props.context : undefined,
       history: buildHistory(),
     },
     (data: string) => {

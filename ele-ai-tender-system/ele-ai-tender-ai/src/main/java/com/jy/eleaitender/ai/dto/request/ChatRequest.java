@@ -23,6 +23,9 @@ public class ChatRequest {
     @Schema(description = "上下文内容（选中的文本等）")
     private String context;
 
+    @Schema(description = "完整Markdown上下文（前端当前编辑器内容，用于保持替换内容格式）")
+    private String markdownContext;
+
     @Schema(description = "是否为选中文本替换模式，为true时AI需标记可直接替换正文范围")
     private Boolean replaceMode;
 

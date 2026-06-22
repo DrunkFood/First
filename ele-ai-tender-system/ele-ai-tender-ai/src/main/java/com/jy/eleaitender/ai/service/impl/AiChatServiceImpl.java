@@ -41,8 +41,12 @@ public class AiChatServiceImpl implements IAiChatService {
             可直接替换到编辑器正文中的内容
             【可替换正文结束】
             标记内只放可直接替换到编辑器正文中的内容，不要放解释、修改原因、注意事项或其他说明。
+            如果用户明确要求删除选中的原文，允许让标记内为空；空标记表示删除选中的原文。
             解释说明、修改原因、注意事项可以写在标记外。
             如果需要提供多个可替换正文方案，每个方案都必须单独使用一组固定标记包裹；前端会将每组标记识别为一个可选替换方案。
+            请只修改“用户选中的原文”，不要改动完整 Markdown 上下文中的其他内容。
+            输出的可替换正文必须尽量保持它在完整 Markdown 上下文中的结构、标题层级、编号方式、列表样式和表格列数。
+            如果用户选中的原文不包含选区前的小标题、编号或冒号前缀，不要在可替换正文中补入这些前缀。
             """;
 
     @Autowired
@@ -172,7 +176,16 @@ public class AiChatServiceImpl implements IAiChatService {
     String buildUserPrompt(ChatRequest request) {
         StringBuilder userPrompt = new StringBuilder();
         if (request.getContext() != null && !request.getContext().isBlank()) {
-            userPrompt.append("参考上下文：\n").append(request.getContext()).append("\n\n");
+            if (Boolean.TRUE.equals(request.getReplaceMode())) {
+                userPrompt.append("用户选中的原文：\n").append(request.getContext()).append("\n\n");
+                if (request.getMarkdownContext() != null && !request.getMarkdownContext().isBlank()) {
+                    userPrompt.append("完整 Markdown 上下文：\n```markdown\n")
+                            .append(request.getMarkdownContext().trim())
+                            .append("\n```\n\n");
+                }
+            } else {
+                userPrompt.append("参考上下文：\n").append(request.getContext()).append("\n\n");
+            }
             if (Boolean.TRUE.equals(request.getReplaceMode())) {
                 userPrompt.append(REPLACEABLE_CONTENT_FORMAT_INSTRUCTION).append("\n");
             }

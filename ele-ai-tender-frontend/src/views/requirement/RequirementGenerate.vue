@@ -276,6 +276,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import {PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP} from '@/constants/status-maps'
 import { REQUIREMENT_TYPE_MAP } from '@/types/requirement'
 import { formatBudgetWanYuan } from '@/utils/budget'
+import { applyAiReplacement } from '@/utils/aiReplacement'
 import type { RequirementInfo, MatchFile } from '@/types/requirement'
 import type { AiChatMessage } from '@/types/ai'
 import type { DetectionIssueVO, RequirementDetectionRecord } from '@/types/detection'
@@ -707,19 +708,18 @@ function handleSelectionChange(text: string) {
 
 function handleReplace(payload: { selectedText: string; replacement: string }) {
   const { selectedText: original, replacement } = payload
-  const index = content.value.indexOf(original)
 
-  if (index === -1) {
+  const result = applyAiReplacement(content.value, original, replacement)
+  if (!result.found) {
     ElMessage.warning('原文已被修改，请手动替换')
     return
   }
 
-  const secondIndex = content.value.indexOf(original, index + 1)
-  if (secondIndex !== -1) {
+  if (result.duplicated) {
     ElMessage.warning('存在多处相同内容，已替换第一处')
   }
 
-  content.value = content.value.substring(0, index) + replacement + content.value.substring(index + original.length)
+  content.value = result.content
   ElMessage.success('替换成功')
 }
 
