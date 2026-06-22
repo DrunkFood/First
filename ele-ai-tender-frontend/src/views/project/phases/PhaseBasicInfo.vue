@@ -41,21 +41,6 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="招标单位">
-            <el-input v-model="form.tenderUnit" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="联系人">
-            <el-input v-model="form.contactPerson" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-form-item label="联系电话">
-        <el-input v-model="form.contactPhone" />
-      </el-form-item>
       <el-form-item label="项目描述">
         <el-input v-model="form.projectDescription" type="textarea" :rows="3" />
       </el-form-item>

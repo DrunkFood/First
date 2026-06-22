@@ -44,6 +44,21 @@ class ProjectServiceImplTest {
         existing.setId(10L);
         TbProject update = validProject("PRJ-001");
         when(projectMapper.selectById(10L)).thenReturn(existing);
+        when(projectMapper.selectCount(any())).thenReturn(0L);
+
+        projectService.update(10L, update);
+
+        ArgumentCaptor<TbProject> projectCaptor = ArgumentCaptor.forClass(TbProject.class);
+        verify(projectMapper).updateById(projectCaptor.capture());
+        assertThat(projectCaptor.getValue().getProjectCode()).isEqualTo("PRJ-001");
+    }
+
+    @Test
+    void updateKeepsExistingProjectCodeWhenPayloadContainsDifferentCode() {
+        TbProject existing = validProject("PRJ-001");
+        existing.setId(10L);
+        TbProject update = validProject("PRJ-002");
+        when(projectMapper.selectById(10L)).thenReturn(existing);
         when(projectMapper.selectCount(any())).thenReturn(0L, 0L);
 
         projectService.update(10L, update);
@@ -54,33 +69,19 @@ class ProjectServiceImplTest {
     }
 
     @Test
-    void updateAllowsChangingToUnusedProjectCode() {
+    void updateDoesNotValidatePayloadProjectCode() {
         TbProject existing = validProject("PRJ-001");
         existing.setId(10L);
         TbProject update = validProject("PRJ-002");
+        update.setProjectName("");
         when(projectMapper.selectById(10L)).thenReturn(existing);
-        when(projectMapper.selectCount(any())).thenReturn(0L, 0L);
 
         projectService.update(10L, update);
 
         ArgumentCaptor<TbProject> projectCaptor = ArgumentCaptor.forClass(TbProject.class);
         verify(projectMapper).updateById(projectCaptor.capture());
-        assertThat(projectCaptor.getValue().getProjectCode()).isEqualTo("PRJ-002");
-    }
-
-    @Test
-    void updateRejectsProjectCodeUsedByAnotherProject() {
-        TbProject existing = validProject("PRJ-001");
-        existing.setId(10L);
-        TbProject update = validProject("PRJ-002");
-        when(projectMapper.selectById(10L)).thenReturn(existing);
-        when(projectMapper.selectCount(any())).thenReturn(1L);
-
-        assertThatThrownBy(() -> projectService.update(10L, update))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("项目编号已存在");
-
-        verify(projectMapper, never()).updateById(any(TbProject.class));
+        verify(projectMapper, never()).selectCount(any());
+        assertThat(projectCaptor.getValue().getProjectCode()).isEqualTo("PRJ-001");
     }
 
     private TbProject validProject(String projectCode) {

@@ -150,13 +150,13 @@ public class ProjectServiceImpl implements IProjectService {
     @Transactional(rollbackFor = Exception.class)
     public void update(Long id, TbProject project) {
         TbProject existing = getById(id); // 内部已做归属校验
-        validateProjectRequiredFields(project);
-        validateProjectCodeUnique(project.getProjectCode(), id);
         // 校验项目名称唯一性
         if (StringUtils.hasText(project.getProjectName())) {
             validateProjectNameUnique(project.getProjectName(), id);
         }
         project.setId(id);
+        // 不允许修改项目编号
+        project.setProjectCode(existing.getProjectCode());
         projectMapper.updateById(project);
     }
 
@@ -186,6 +186,12 @@ public class ProjectServiceImpl implements IProjectService {
         if (!StringUtils.hasText(project.getProjectCode())) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "项目编号不能为空");
         }
+        if (!StringUtils.hasText(project.getReviewType())) {
+            throw new BusinessException(ResponseCode.PARAM_ERROR, "评审方式不能为空");
+        }
+    }
+
+    private void validateProjectReviewType(TbProject project) {
         if (!StringUtils.hasText(project.getReviewType())) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "评审方式不能为空");
         }

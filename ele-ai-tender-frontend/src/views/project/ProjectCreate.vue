@@ -153,45 +153,6 @@
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="招标单位">
-              <el-input v-model="form.tenderUnit" placeholder="请输入招标单位" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="联系人">
-              <el-input v-model="form.contactPerson" placeholder="请输入联系人" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="联系电话">
-              <el-input v-model="form.contactPhone" placeholder="请输入联系电话" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="模板选择">
-              <el-select
-                v-model="form.templateId"
-                placeholder="请选择模板"
-                clearable
-                filterable
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="tpl in templateList"
-                  :key="tpl.id"
-                  :label="tpl.templateName"
-                  :value="tpl.id"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
         <el-form-item label="项目描述" prop="projectDescription">
           <el-input
             v-model="form.projectDescription"
