@@ -70,9 +70,22 @@
           </div>
           <!-- 替换操作栏 -->
           <div v-if="canShowReplace(index, msg)" class="replace-actions">
-            <el-button size="small" type="primary" @click="handleReplace(index, msg)">
-              应用替换
-            </el-button>
+            <template v-if="getReplaceableContents(msg.content).length <= 1">
+              <el-button size="small" type="primary" @click="handleReplace(index, msg)">
+                应用替换
+              </el-button>
+            </template>
+            <template v-else>
+              <el-button
+                v-for="(_replacement, replaceIndex) in getReplaceableContents(msg.content)"
+                :key="replaceIndex"
+                size="small"
+                type="primary"
+                @click="handleReplace(index, msg, replaceIndex)"
+              >
+                替换方案{{ replaceIndex + 1 }}
+              </el-button>
+            </template>
             <el-button size="small" @click="dismissReplace(index)">
               取消
             </el-button>
@@ -122,7 +135,7 @@ import 'md-editor-v3/lib/preview.css'
 import { useThemeStore } from '@/store/theme'
 import { aiApi, createSSEConnection } from '@/api/ai'
 import { generateUUID } from '@/utils/crypto'
-import { extractReplaceableContent } from '@/utils/aiReplacement'
+import { extractReplaceableContents } from '@/utils/aiReplacement'
 import type { AiChatMessage } from '@/types/ai'
 
 const themeStore = useThemeStore()
@@ -193,13 +206,17 @@ function canShowReplace(index: number, msg: AiChatMessage) {
     && !!getSelectedTextForAiMsg(index)
 }
 
+function getReplaceableContents(content: string): string[] {
+  return extractReplaceableContents(content)
+}
+
 /** 应用替换 */
-function handleReplace(_index: number, msg: AiChatMessage) {
+function handleReplace(_index: number, msg: AiChatMessage, replacementIndex = 0) {
   const selectedText = getSelectedTextForAiMsg(_index)
   if (!selectedText) return
-  const replacement = extractReplaceableContent(msg.content)
+  const replacement = extractReplaceableContents(msg.content)[replacementIndex]
   if (!replacement) {
-    ElMessage.warning('未识别到可替换正文，请手动复制')
+    ElMessage.warning(replacementIndex === 0 ? '未识别到可替换正文，请手动复制' : '未识别到对应替换方案，请手动复制')
     return
   }
   emit('replace', { selectedText, replacement })

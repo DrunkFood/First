@@ -10,11 +10,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class JwtRuntimeConfig {
 
-    private static final long DEFAULT_INTERNAL_EXPIRATION_SECONDS = 2 * 60 * 60;
+    private static final long DEFAULT_INTERNAL_EXPIRATION_SECONDS = 12 * 60 * 60;
     private static final long DEFAULT_EXTERNAL_EXPIRATION_SECONDS = 7L * 24 * 60 * 60;
 
     public JwtRuntimeConfig(@Value("${jwt.secret:}") String secret,
-                            @Value("${jwt.expiration:7200}") long expirationSeconds,
+                            @Value("${jwt.expiration:43200}") long expirationSeconds,
                             @Value("${jwt.external-expiration:604800}") long externalExpirationSeconds) {
         JwtUtil.configure(
                 secret,

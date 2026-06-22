@@ -21,6 +21,7 @@ class AiChatServiceImplTest {
                 .contains("【可替换正文开始】")
                 .contains("【可替换正文结束】")
                 .contains("标记内只放可直接替换到编辑器正文中的内容")
+                .contains("每个方案都必须单独使用一组固定标记包裹")
                 .endsWith("帮我优化这段内容");
     }
 

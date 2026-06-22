@@ -46,8 +46,8 @@ public final class UserPromptTemplates {
             项目名称：%s
             项目类型：%s
             项目类别：%s
-            项目预算：%s元
-            项目描述：%s
+            项目预算金额：%s元
+            项目原始描述：%s
             """;
 
     /**
@@ -88,17 +88,19 @@ public final class UserPromptTemplates {
      * 参数: projectName, projectType, projectCategory, budget, requirementContent, reviewMethod, enabledTypes
      */
     public static final String REVIEW_ITEM_GENERATE_USER_WITH_CONFIG = """
-            请根据以下项目信息和需求内容生成评审标准：
+            请根据以下项目信息和需求内容生成《综合评分法评审标准表》：
             
             项目名称：%s
             项目类型：%s
             项目类别：%s
             项目预算：%s元
             
-            业务需求内容：
+            招标（采购）需求书（含项目类型、预算、技术/服务要求）：
             %s
             
             评审方式：%s
+            
+            如后续附带模板或参考文件内容，需结合模板要求生成评审项；模板要求与下方JSON结构或硬性计分规则冲突时，以JSON结构和硬性计分规则为准。
             
             评审类型配置（只生成以下列出的类型，严禁添加其他类型）：
             %s

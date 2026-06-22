@@ -153,6 +153,24 @@ class RequirementGeneratorTest {
 
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_OUTLINE_GENERATE),
                 anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull());
+        assertThat(SystemPromptTemplates.REQUIREMENT_OUTLINE_GENERATE)
+                .contains("经验丰富的招标采购需求编制专家")
+                .contains("中华人民共和国招标投标法")
+                .contains("政府采购需求管理办法")
+                .contains("逻辑严谨、量化清晰、符合规范")
+                .contains("项目招标（采购）需求书")
+                .contains("施工组织设计大纲")
+                .contains("材料品牌推荐表")
+                .contains("质量保修责任书框架");
+        assertThat(SystemPromptTemplates.REQUIREMENT_CHAPTER_GENERATE)
+                .contains("经验丰富的招标采购需求编制专家")
+                .contains("中华人民共和国招标投标法")
+                .contains("政府采购需求管理办法")
+                .contains("逻辑严谨、量化清晰、符合规范")
+                .contains("项目招标（采购）需求书")
+                .contains("材料品牌推荐表")
+                .contains("同等或优于")
+                .contains("不得指定唯一品牌");
         ArgumentCaptor<String> chapterPromptCaptor = ArgumentCaptor.forClass(String.class);
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_CHAPTER_GENERATE),
                 chapterPromptCaptor.capture(), eq("GENERATION"), eq(9001L), eq(2L), isNull());

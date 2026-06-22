@@ -26,9 +26,9 @@ public class JwtUtil {
     private static final String DEFAULT_SECRET = "eleAiTenderSystemSecretKey2024JWT!";
 
     /**
-     * 默认过期时间（毫秒）- 2小时
+     * 默认过期时间（毫秒）- 12小时
      */
-    private static final long DEFAULT_EXPIRATION = 2 * 60 * 60 * 1000L;
+    private static final long DEFAULT_EXPIRATION = 12 * 60 * 60 * 1000L;
 
     /**
      * 外部Token默认过期时间（毫秒）- 7天

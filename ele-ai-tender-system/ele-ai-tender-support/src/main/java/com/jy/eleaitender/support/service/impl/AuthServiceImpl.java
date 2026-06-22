@@ -70,7 +70,7 @@ public class AuthServiceImpl implements IAuthService {
 
     private static final String DEFAULT_ROLE_CODE = "BID_USER";
 
-    @Value("${jwt.expiration:7200}")
+    @Value("${jwt.expiration:43200}")
     private long tokenExpireSeconds;
 
     @Value("${jwt.external-expiration:604800}")
@@ -80,7 +80,7 @@ public class AuthServiceImpl implements IAuthService {
     private long signatureExpireSeconds;
 
     private long resolveTokenExpireSeconds() {
-        return tokenExpireSeconds > 0 ? tokenExpireSeconds : 2 * 60 * 60;
+        return tokenExpireSeconds > 0 ? tokenExpireSeconds : 12 * 60 * 60;
     }
 
     private long resolveExternalTokenExpireSeconds() {

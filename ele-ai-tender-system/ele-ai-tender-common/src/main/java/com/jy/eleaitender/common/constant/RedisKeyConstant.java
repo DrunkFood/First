@@ -43,9 +43,9 @@ public class RedisKeyConstant {
     public static final String FILE_UPLOAD_LOCK_PREFIX = "file:upload:lock:";
 
     /**
-     * 默认Token过期时间（秒）- 2小时
+     * 默认Token过期时间（秒）- 12小时
      */
-    public static final long TOKEN_EXPIRE_SECONDS = 2 * 60 * 60;
+    public static final long TOKEN_EXPIRE_SECONDS = 12 * 60 * 60;
 
     /**
      * 外部Token过期时间（秒）- 7天

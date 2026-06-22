@@ -54,7 +54,7 @@ milvus:
 
 jwt:
   secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
-  expiration: ${APP_JWT_EXPIRATION:7200}
+  expiration: ${APP_JWT_EXPIRATION:43200}
   external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
 
 # 内部文件服务客户端配置
