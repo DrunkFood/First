@@ -191,12 +191,6 @@ public class ProjectServiceImpl implements IProjectService {
         }
     }
 
-    private void validateProjectReviewType(TbProject project) {
-        if (!StringUtils.hasText(project.getReviewType())) {
-            throw new BusinessException(ResponseCode.PARAM_ERROR, "评审方式不能为空");
-        }
-    }
-
     @Override
     public ProjectPhaseVO getPhase(Long projectId) {
         TbProject project = getById(projectId); // 内部已做归属校验

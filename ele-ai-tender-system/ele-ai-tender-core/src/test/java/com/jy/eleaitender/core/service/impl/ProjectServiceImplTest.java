@@ -84,6 +84,23 @@ class ProjectServiceImplTest {
         assertThat(projectCaptor.getValue().getProjectCode()).isEqualTo("PRJ-001");
     }
 
+    @Test
+    void updateAllowsRequirementContentOnlyPayload() {
+        TbProject existing = validProject("PRJ-001");
+        existing.setId(10L);
+        TbProject update = new TbProject();
+        update.setRequirementContent("需求内容");
+        when(projectMapper.selectById(10L)).thenReturn(existing);
+
+        projectService.update(10L, update);
+
+        ArgumentCaptor<TbProject> projectCaptor = ArgumentCaptor.forClass(TbProject.class);
+        verify(projectMapper).updateById(projectCaptor.capture());
+        verify(projectMapper, never()).selectCount(any());
+        assertThat(projectCaptor.getValue().getProjectCode()).isEqualTo("PRJ-001");
+        assertThat(projectCaptor.getValue().getRequirementContent()).isEqualTo("需求内容");
+    }
+
     private TbProject validProject(String projectCode) {
         TbProject project = new TbProject();
         project.setProjectCode(projectCode);
