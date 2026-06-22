@@ -41,13 +41,13 @@ export interface ProjectQueryParams {
 }
 
 export interface ProjectCreateParams {
-  projectCode?: string
+  projectCode: string
   projectName: string
   projectCategory: string
   projectType: string
   serviceSubType?: string
   budget?: number
-  reviewType?: string
+  reviewType: string
   requirementContent?: string
   templateId?: number
   requirementId?: number

@@ -8,7 +8,7 @@
         <el-input v-model="searchForm.fileName" placeholder="请输入文件名称" clearable />
       </el-form-item>
       <el-form-item label="文件分类">
-        <el-select v-model="searchForm.fileCategory" placeholder="请选择分类" clearable>
+        <el-select v-model="searchForm.fileCategory" placeholder="请选择分类" clearable style="width: 140px">
           <el-option label="法律法规" value="LAW" />
           <el-option label="规章制度" value="REGULATION" />
           <el-option label="政策文件" value="POLICY" />

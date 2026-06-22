@@ -60,7 +60,7 @@
             <el-form-item label="项目编号" prop="projectCode">
               <el-input
                 v-model="form.projectCode"
-                placeholder="不填则自动生成"
+                placeholder="请输入项目编号，不可重复。"
                 maxlength="50"
                 show-word-limit
               />
@@ -130,12 +130,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="评审方式">
+            <el-form-item label="评审方式" prop="reviewType">
               <div class="review-type-wrapper">
                 <el-select
                   v-model="form.reviewType"
                   placeholder="请选择评审方式"
-                  clearable
                   style="flex: 1"
                 >
                   <el-option label="人工评审" value="MANUAL" />
@@ -315,7 +314,7 @@ const usedTemplateName = computed(() => {
 })
 
 const form = reactive<ProjectCreateParams>({
-  projectCode: undefined,
+  projectCode: '',
   projectName: '',
   projectCategory: '',
   projectType: '',
@@ -334,6 +333,7 @@ const form = reactive<ProjectCreateParams>({
 
 const rules = {
   projectCode: [
+    { required: true, message: '请输入项目编号', trigger: 'blur' },
     { max: 50, message: '项目编号不超过50个字符', trigger: 'blur' },
   ],
   projectName: [
@@ -358,6 +358,7 @@ const rules = {
   ],
   projectCategory: [{ required: true, message: '请选择项目类别', trigger: 'change' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
+  reviewType: [{ required: true, message: '请选择评审方式', trigger: 'change' }],
   budget: [
     { required: true, message: '请输入预算金额', trigger: 'blur' },
     {

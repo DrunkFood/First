@@ -1,0 +1,93 @@
+package com.jy.eleaitender.core.service.impl;
+
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.core.mapper.TbProjectMapper;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class ProjectServiceImplTest {
+
+    @InjectMocks
+    private ProjectServiceImpl projectService;
+
+    @Mock
+    private TbProjectMapper projectMapper;
+
+    @Test
+    void createRejectsDuplicateProjectCodeGlobally() {
+        TbProject project = validProject("PRJ-001");
+        when(projectMapper.selectCount(any())).thenReturn(1L);
+
+        assertThatThrownBy(() -> projectService.create(project))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("项目编号已存在");
+
+        verify(projectMapper, never()).insert(any(TbProject.class));
+    }
+
+    @Test
+    void updateAllowsKeepingOwnProjectCode() {
+        TbProject existing = validProject("PRJ-001");
+        existing.setId(10L);
+        TbProject update = validProject("PRJ-001");
+        when(projectMapper.selectById(10L)).thenReturn(existing);
+        when(projectMapper.selectCount(any())).thenReturn(0L, 0L);
+
+        projectService.update(10L, update);
+
+        ArgumentCaptor<TbProject> projectCaptor = ArgumentCaptor.forClass(TbProject.class);
+        verify(projectMapper).updateById(projectCaptor.capture());
+        assertThat(projectCaptor.getValue().getProjectCode()).isEqualTo("PRJ-001");
+    }
+
+    @Test
+    void updateAllowsChangingToUnusedProjectCode() {
+        TbProject existing = validProject("PRJ-001");
+        existing.setId(10L);
+        TbProject update = validProject("PRJ-002");
+        when(projectMapper.selectById(10L)).thenReturn(existing);
+        when(projectMapper.selectCount(any())).thenReturn(0L, 0L);
+
+        projectService.update(10L, update);
+
+        ArgumentCaptor<TbProject> projectCaptor = ArgumentCaptor.forClass(TbProject.class);
+        verify(projectMapper).updateById(projectCaptor.capture());
+        assertThat(projectCaptor.getValue().getProjectCode()).isEqualTo("PRJ-002");
+    }
+
+    @Test
+    void updateRejectsProjectCodeUsedByAnotherProject() {
+        TbProject existing = validProject("PRJ-001");
+        existing.setId(10L);
+        TbProject update = validProject("PRJ-002");
+        when(projectMapper.selectById(10L)).thenReturn(existing);
+        when(projectMapper.selectCount(any())).thenReturn(1L);
+
+        assertThatThrownBy(() -> projectService.update(10L, update))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("项目编号已存在");
+
+        verify(projectMapper, never()).updateById(any(TbProject.class));
+    }
+
+    private TbProject validProject(String projectCode) {
+        TbProject project = new TbProject();
+        project.setProjectCode(projectCode);
+        project.setProjectName("项目名称");
+        project.setReviewType("MANUAL");
+        return project;
+    }
+}
