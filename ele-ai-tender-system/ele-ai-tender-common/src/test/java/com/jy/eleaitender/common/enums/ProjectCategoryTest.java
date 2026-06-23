@@ -18,9 +18,4 @@ class ProjectCategoryTest {
         assertThat(ProjectCategory.fromCode("COMPREHENSIVE_TRADE").getLabel()).isEqualTo("综合交易");
     }
 
-    @Test
-    void shouldResolveLegacyProjectCategoryCodesForExistingData() {
-        assertThat(ProjectCategory.fromCode("LIMITED_BELOW")).isSameAs(ProjectCategory.SMALL_TRADE);
-        assertThat(ProjectCategory.fromCode("PROPERTY_TRADE")).isSameAs(ProjectCategory.COMPREHENSIVE_TRADE);
-    }
 }

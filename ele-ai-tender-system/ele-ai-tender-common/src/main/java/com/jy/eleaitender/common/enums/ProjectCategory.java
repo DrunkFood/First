@@ -23,12 +23,6 @@ public enum ProjectCategory {
                 return type;
             }
         }
-        if ("LIMITED_BELOW".equals(code)) {
-            return SMALL_TRADE;
-        }
-        if ("PROPERTY_TRADE".equals(code)) {
-            return COMPREHENSIVE_TRADE;
-        }
         throw new IllegalArgumentException("未知的项目类别: " + code);
     }
 }
