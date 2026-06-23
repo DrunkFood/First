@@ -27,6 +27,9 @@ fileService.interceptors.request.use(
 // 响应拦截器
 fileService.interceptors.response.use(
   (response) => {
+    if (response.config.responseType === 'blob') {
+      return response
+    }
     const res = response.data
     if (res.code !== 200) {
       ElMessage.error(res.message || '文件操作失败')
@@ -66,6 +69,12 @@ export const fileApi = {
   },
   
   // 删除文件
+  download(fileId: string | number): Promise<Blob> {
+    return fileService.get(`/api/file/download/${fileId}`, {
+      responseType: 'blob',
+    }).then(res => res.data as Blob)
+  },
+
   delete(fileId: string): Promise<ApiResponse<void>> {
     return fileService.delete(`/api/file/delete/${fileId}`).then(res => res.data)
   },

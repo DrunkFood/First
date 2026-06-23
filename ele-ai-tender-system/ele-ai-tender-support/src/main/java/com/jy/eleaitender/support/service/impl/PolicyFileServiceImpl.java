@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.common.util.CommaSeparatedFieldSql;
 import com.jy.eleaitender.support.mapper.PolicyFileMapper;
 import com.jy.eleaitender.support.service.IPolicyFileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
             wrapper.eq(SupPolicyFile::getFileCategory, fileCategory);
         }
         if (StringUtils.hasText(applicableCategory)) {
-            wrapper.eq(SupPolicyFile::getApplicableCategory, applicableCategory);
+            wrapper.apply(CommaSeparatedFieldSql.contains("applicable_category"), applicableCategory);
         }
         wrapper.orderByDesc(SupPolicyFile::getCreateTime);
 

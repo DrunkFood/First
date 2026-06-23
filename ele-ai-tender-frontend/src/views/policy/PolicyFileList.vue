@@ -29,9 +29,19 @@
       <el-table-column prop="fileCategory" label="文件分类" width="120">
         <template #default="{ row }">{{ fileCategoryMap[row.fileCategory] || row.fileCategory }}</template>
       </el-table-column>
-      <el-table-column prop="applicableCategory" label="适用类别" width="120">
+      <el-table-column prop="applicableCategory" label="适用类别" min-width="180">
         <template #default="{ row }">
-          {{ applicableCategoryMap[row.applicableCategory] || row.applicableCategory }}
+          <template v-if="applicableCategories(row.applicableCategory).length">
+            <el-tag
+              v-for="code in applicableCategories(row.applicableCategory)"
+              :key="code"
+              size="small"
+              class="applicable-category-tag"
+            >
+              {{ applicableCategoryMap[code] || code }}
+            </el-tag>
+          </template>
+          <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column prop="createName" label="上传人" width="100" />
@@ -82,8 +92,15 @@
             <el-option label="政策文件" value="POLICY" />
           </el-select>
         </el-form-item>
-        <el-form-item label="适用类别" prop="applicableCategory">
-          <el-select v-model="uploadForm.applicableCategory" placeholder="请选择适用类别" style="width: 100%">
+        <el-form-item label="适用类别" prop="applicableCategories">
+          <el-select
+            v-model="uploadForm.applicableCategories"
+            placeholder="请选择适用类别"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            style="width: 100%"
+          >
             <el-option label="小额交易" value="SMALL_TRADE" />
             <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
             <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
@@ -122,7 +139,7 @@
       <el-descriptions :column="1" border v-if="currentDetail">
         <el-descriptions-item label="文件名">{{ currentDetail.fileName }}</el-descriptions-item>
         <el-descriptions-item label="文件分类">{{ fileCategoryMap[currentDetail.fileCategory] || currentDetail.fileCategory }}</el-descriptions-item>
-        <el-descriptions-item label="适用类别">{{ applicableCategoryMap[currentDetail.applicableCategory] || currentDetail.applicableCategory }}</el-descriptions-item>
+        <el-descriptions-item label="适用类别">{{ formatApplicableCategories(currentDetail.applicableCategory) }}</el-descriptions-item>
         <el-descriptions-item label="上传人">{{ currentDetail.createName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="文件大小">{{ formatFileSize(currentDetail.fileSize) }}</el-descriptions-item>
         <el-descriptions-item label="文件类型">{{ currentDetail.fileType }}</el-descriptions-item>
@@ -203,7 +220,7 @@ const fileList = ref<UploadUserFile[]>([])
 
 const uploadForm = ref({
   fileCategory: '',
-  applicableCategory: '',
+  applicableCategories: [] as string[],
   fileId: 0,
   fileName: '',
   fileSize: 0,
@@ -223,9 +240,20 @@ const fileCategoryMap: Record<string, string> = {
   POLICY: '政策文件',
 }
 
+const applicableCategories = (value?: string) => {
+  if (!value) return []
+  return value.split(',').map(item => item.trim()).filter(Boolean)
+}
+
+const formatApplicableCategories = (value?: string) => {
+  const categories = applicableCategories(value)
+  if (!categories.length) return '-'
+  return categories.map(code => applicableCategoryMap[code] || code).join('、')
+}
+
 const uploadRules: FormRules = {
   fileCategory: [{ required: true, message: '请选择文件分类', trigger: 'change' }],
-  applicableCategory: [{ required: true, message: '请选择适用类别', trigger: 'change' }],
+  applicableCategories: [{ type: 'array', required: true, min: 1, message: '请选择适用类别', trigger: 'change' }],
 }
 
 const uploadAction = '/file-api/file/upload?bizType=policy_file'
@@ -268,7 +296,7 @@ function extractFileExt(fileName: string): string {
 const resetUploadForm = () => {
   uploadForm.value = {
     fileCategory: '',
-    applicableCategory: '',
+    applicableCategories: [],
     fileId: 0,
     fileName: '',
     fileSize: 0,
@@ -293,7 +321,7 @@ const handleSubmitUpload = async () => {
     await policyFileApi.create({
       fileName: uploadForm.value.fileName || fileList.value[0]?.name || '',
       fileCategory: uploadForm.value.fileCategory,
-      applicableCategory: uploadForm.value.applicableCategory,
+      applicableCategory: uploadForm.value.applicableCategories.join(','),
       fileId: uploadForm.value.fileId,
       fileSize: uploadForm.value.fileSize,
       fileType: uploadForm.value.fileType,
@@ -347,5 +375,9 @@ onMounted(loadData)
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+.applicable-category-tag {
+  margin-right: 4px;
 }
 </style>

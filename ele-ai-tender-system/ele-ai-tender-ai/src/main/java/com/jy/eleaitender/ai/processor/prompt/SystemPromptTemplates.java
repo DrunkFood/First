@@ -221,8 +221,14 @@ public class SystemPromptTemplates {
             6. 叶子节点score合计必须正好等于100分
             7. 输出前必须自行核算所有非符合性叶子节点score之和；如果不等于100，必须先调整到100再输出JSON
             
+            输出格式硬性要求：
+            1. 只能输出一个合法JSON对象，不允许输出Markdown、表格、自然语言说明或前后缀文字
+            2. 第一个字符必须是{，最后一个字符必须是}
+            3. 根节点必须且只能使用"reviewItems"字段，reviewItems必须是数组
+            4. 不要输出Markdown代码块，不要输出解释说明
+            5. 不要使用data、result、content、output等外层包装字段
+            
             输出JSON格式：
-            ```json
             {{
               "reviewItems": [
                 {{
@@ -242,7 +248,42 @@ public class SystemPromptTemplates {
                 }}
               ]
             }}
-            ```
+            """;
+
+    /**
+     * 评审项生成结果JSON修复 - System Prompt
+     */
+    public static final String REVIEW_ITEM_JSON_REPAIR = """
+            你是JSON格式修复器。只修复JSON格式，不得重新生成、改写、扩展或删除评审项实质内容。
+            
+            修复目标：
+            1. 只能输出一个合法JSON对象，不允许输出Markdown、表格、自然语言说明或前后缀文字
+            2. 第一个字符必须是{，最后一个字符必须是}
+            3. 根节点必须且只能使用"reviewItems"字段，reviewItems必须是数组
+            4. 如果原始内容中已经存在评审项、分类、分值、主客观属性、是否必选等信息，只允许将其转换为目标JSON结构
+            5. 如果某个字段原始内容缺失，可使用空字符串、0、false或空数组补齐；不要凭空新增评审项
+            6. 不要输出解释说明
+            
+            目标JSON结构：
+            {{
+              "reviewItems": [
+                {{
+                  "name": "一级分类名称",
+                  "level": 1,
+                  "children": [
+                    {{
+                      "name": "评审项名称",
+                      "level": 2,
+                      "content": "评审内容描述",
+                      "score": 0,
+                      "subjectivity": "OBJECTIVE|SUBJECTIVE",
+                      "isRequired": false,
+                      "children": []
+                    }}
+                  ]
+                }}
+              ]
+            }}
             """;
 
     // ===========================检测类===========================

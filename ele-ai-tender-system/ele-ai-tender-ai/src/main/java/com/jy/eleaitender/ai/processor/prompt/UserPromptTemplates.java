@@ -112,6 +112,38 @@ public final class UserPromptTemplates {
             2. 只给资信评审、技术评审、商务评审中的叶子评审项设置score；分类节点和有children的非叶子节点score必须为0或省略。
             3. 在上述评审类型配置范围内，所有非符合性评审类型的叶子节点score合计必须正好等于100分。
             4. 输出前必须逐项累加自检；不要输出总分不等于100分的JSON。
+            
+            输出格式硬性要求：
+            1. 根节点必须是reviewItems，且reviewItems必须是数组。
+            2. 不要输出Markdown代码块，不要输出解释说明，不要输出JSON以外的任何文字。
+            3. 不要使用data、result、content、output等外层包装字段。
+            """;
+
+    /**
+     * 评审项JSON修复 - User Prompt 模板
+     * 参数: aiOutput
+     */
+    public static final String REVIEW_ITEM_JSON_REPAIR_USER = """
+            请只修复JSON格式，不要重新生成评审项内容。
+            
+            原始AI输出：
+            %s
+            
+            目标JSON结构：
+            {{
+              "reviewItems": [
+                {{
+                  "name": "一级分类名称",
+                  "level": 1,
+                  "children": []
+                }}
+              ]
+            }}
+            
+            要求：
+            1. 只输出目标JSON，不要输出解释说明。
+            2. 根节点必须是reviewItems，且reviewItems必须是数组。
+            3. 尽量保留原始AI输出中的分类、评审项、评分标准、score、subjectivity、isRequired和children。
             """;
 
     // ===========================检测类===========================

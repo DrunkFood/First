@@ -51,9 +51,19 @@
             {{ categoryLabel(row.fileCategory) }}
           </template>
         </el-table-column>
-        <el-table-column prop="applicableCategory" label="适用类别" width="120">
+        <el-table-column prop="applicableCategory" label="适用类别" min-width="180">
           <template #default="{ row }">
-            {{ applicableLabel(row.applicableCategory) }}
+            <template v-if="applicableCategories(row.applicableCategory).length">
+              <el-tag
+                v-for="code in applicableCategories(row.applicableCategory)"
+                :key="code"
+                size="small"
+                class="applicable-category-tag"
+              >
+                {{ applicableLabel(code) }}
+              </el-tag>
+            </template>
+            <span v-else>-</span>
           </template>
         </el-table-column>
         <el-table-column prop="fileType" label="格式" width="80" />
@@ -124,7 +134,15 @@
           </el-select>
         </el-form-item>
         <el-form-item label="适用类别">
-          <el-select v-model="form.applicableCategory" placeholder="请选择" clearable style="width: 100%">
+          <el-select
+            v-model="form.applicableCategories"
+            placeholder="请选择"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            style="width: 100%"
+          >
             <el-option label="小额交易" value="SMALL_TRADE" />
             <el-option label="政府采购" value="GOVERNMENT_PROCUREMENT" />
             <el-option label="综合交易" value="COMPREHENSIVE_TRADE" />
@@ -170,7 +188,7 @@ const fileList = ref<UploadUserFile[]>([])
 const form = reactive({
   fileName: '',
   fileCategory: '',
-  applicableCategory: '',
+  applicableCategories: [] as string[],
   fileId: 0 as number | string,
   fileSize: 0,
   fileType: '',
@@ -182,6 +200,10 @@ const applicableMap: Record<string, string> = { SMALL_TRADE: '小额交易', GOV
 
 const categoryLabel = (code?: string) => (code ? categoryMap[code] || code : '-')
 const applicableLabel = (code?: string) => (code ? applicableMap[code] || code : '-')
+const applicableCategories = (value?: string) => {
+  if (!value) return []
+  return value.split(',').map(item => item.trim()).filter(Boolean)
+}
 
 const formatSize = (bytes?: number) => {
   if (!bytes) return '-'
@@ -231,7 +253,7 @@ const handleReset = () => {
 const handleCreate = () => {
   form.fileName = ''
   form.fileCategory = ''
-  form.applicableCategory = ''
+  form.applicableCategories = []
   form.fileId = 0
   form.fileSize = 0
   form.fileType = ''
@@ -278,7 +300,15 @@ const handleSubmit = async () => {
   }
   submitting.value = true
   try {
-    await policyFileApi.create(form)
+    await policyFileApi.create({
+      fileName: form.fileName,
+      fileCategory: form.fileCategory,
+      applicableCategory: form.applicableCategories.join(',') || undefined,
+      fileId: form.fileId,
+      fileSize: form.fileSize,
+      fileType: form.fileType,
+      description: form.description,
+    })
     ElMessage.success('创建成功')
     dialogVisible.value = false
     fetchData()
@@ -316,3 +346,9 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+<style scoped>
+.applicable-category-tag {
+  margin-right: 4px;
+}
+</style>

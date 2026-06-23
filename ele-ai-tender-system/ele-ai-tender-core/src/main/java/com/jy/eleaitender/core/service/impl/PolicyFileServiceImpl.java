@@ -8,6 +8,7 @@ import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
+import com.jy.eleaitender.common.util.CommaSeparatedFieldSql;
 import com.jy.eleaitender.core.dto.response.PolicyFileVO;
 import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
@@ -45,7 +46,7 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
             wrapper.eq(TbPolicyFile::getFileCategory, fileCategory);
         }
         if (StringUtils.hasText(applicableCategory)) {
-            wrapper.eq(TbPolicyFile::getApplicableCategory, applicableCategory);
+            wrapper.apply(CommaSeparatedFieldSql.contains("applicable_category"), applicableCategory);
         }
         wrapper.orderByDesc(TbPolicyFile::getCreateTime);
         Page<TbPolicyFile> entityPage = aiPolicyFileMapper.selectPage(page, wrapper);
@@ -107,8 +108,9 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
         LambdaQueryWrapper<SupPolicyFile> sysWrapper = new LambdaQueryWrapper<>();
         sysWrapper.eq(SupPolicyFile::getStatus, 1);
         if (StringUtils.hasText(applicableCategory)) {
-            sysWrapper.and(w -> w.eq(SupPolicyFile::getApplicableCategory, applicableCategory)
-                    .or().isNull(SupPolicyFile::getApplicableCategory));
+            sysWrapper.and(w -> w.apply(CommaSeparatedFieldSql.contains("applicable_category"), applicableCategory)
+                    .or().isNull(SupPolicyFile::getApplicableCategory)
+                    .or().eq(SupPolicyFile::getApplicableCategory, ""));
         }
         List<SupPolicyFile> sysFiles = supPolicyFileMapper.selectList(sysWrapper);
         for (SupPolicyFile f : sysFiles) {
@@ -120,8 +122,9 @@ public class PolicyFileServiceImpl implements IPolicyFileService {
         userWrapper.eq(TbPolicyFile::getUserId, SecurityContextHolder.getUserId())
                 .eq(TbPolicyFile::getStatus, 1);
         if (StringUtils.hasText(applicableCategory)) {
-            userWrapper.and(w -> w.eq(TbPolicyFile::getApplicableCategory, applicableCategory)
-                    .or().isNull(TbPolicyFile::getApplicableCategory));
+            userWrapper.and(w -> w.apply(CommaSeparatedFieldSql.contains("applicable_category"), applicableCategory)
+                    .or().isNull(TbPolicyFile::getApplicableCategory)
+                    .or().eq(TbPolicyFile::getApplicableCategory, ""));
         }
         List<TbPolicyFile> userFiles = aiPolicyFileMapper.selectList(userWrapper);
         for (TbPolicyFile f : userFiles) {

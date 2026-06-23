@@ -16,7 +16,7 @@ public class PolicyFileRequest {
     @Schema(description = "文件分类: LAW/REGULATION/POLICY", required = true)
     private String fileCategory;
 
-    @Schema(description = "适用项目类别")
+    @Schema(description = "适用项目类别，多个用逗号分隔")
     private String applicableCategory;
 
     @Schema(description = "关联file_info的id")

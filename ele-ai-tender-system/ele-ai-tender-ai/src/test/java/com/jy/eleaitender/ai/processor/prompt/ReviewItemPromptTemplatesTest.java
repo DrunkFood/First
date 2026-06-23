@@ -42,4 +42,39 @@ class ReviewItemPromptTemplatesTest {
                 .contains("模板")
                 .contains("综合评分法评审标准表");
     }
+
+    @Test
+    void reviewItemPromptShouldForbidMarkdownAndRequireReviewItemsRoot() {
+        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE)
+                .contains("只能输出一个合法JSON对象")
+                .contains("第一个字符必须是{")
+                .contains("\"reviewItems\"")
+                .doesNotContain("```json");
+
+        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG)
+                .contains("根节点必须是reviewItems")
+                .contains("不要输出Markdown代码块")
+                .contains("不要输出解释说明");
+    }
+
+    @Test
+    void reviewItemRepairPromptShouldOnlyRepairJsonFormat() {
+        assertThat(SystemPromptTemplates.REVIEW_ITEM_JSON_REPAIR)
+                .contains("只修复JSON格式")
+                .contains("不得重新生成")
+                .contains("只能输出一个合法JSON对象")
+                .contains("\"reviewItems\"")
+                .doesNotContain("```json");
+
+        assertThat(UserPromptTemplates.REVIEW_ITEM_JSON_REPAIR_USER)
+                .contains("原始AI输出")
+                .contains("目标JSON结构")
+                .contains("不要输出解释说明");
+    }
+
+    @Test
+    void reviewItemRepairPromptShouldEscapeRawJsonBracesForPromptTemplate() {
+        assertThat(PromptBuilder.buildReviewItemJsonRepair("{\"items\":[]}"))
+                .contains("{{\"items\":[]}}");
+    }
 }

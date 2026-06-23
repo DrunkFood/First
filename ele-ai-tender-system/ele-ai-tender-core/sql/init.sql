@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS `tb_policy_file` (
     `id`                   BIGINT       NOT NULL AUTO_INCREMENT COMMENT '文件ID',
     `file_name`            VARCHAR(200) NOT NULL COMMENT '文件名称',
     `file_category`        VARCHAR(30)  DEFAULT NULL COMMENT '文件分类: LAW/REGULATION/POLICY',
-    `applicable_category`  VARCHAR(30)  DEFAULT NULL COMMENT '适用项目类别',
+    `applicable_category`  VARCHAR(100) DEFAULT NULL COMMENT '适用项目类别，多个用逗号分隔',
     `file_id`              BIGINT       DEFAULT NULL COMMENT '关联file_info的ID',
     `file_size`            BIGINT       DEFAULT NULL COMMENT '文件大小(字节)',
     `file_type`            VARCHAR(20)  DEFAULT NULL COMMENT '文件格式: PDF/DOCX/DOC/XLSX',

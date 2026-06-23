@@ -305,7 +305,7 @@ CREATE TABLE `sup_policy_file` (
     `id`                    BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `file_name`             VARCHAR(200) NOT NULL COMMENT '文件名称',
     `file_category`         VARCHAR(30)  NOT NULL COMMENT '文件分类: LAW(法律法规)/REGULATION(规章制度)/POLICY(政策文件)',
-    `applicable_category`   VARCHAR(30)  DEFAULT NULL COMMENT '适用项目类别: SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE',
+    `applicable_category`   VARCHAR(100) DEFAULT NULL COMMENT '适用项目类别，多个用逗号分隔: SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE',
     `file_id`               BIGINT       DEFAULT NULL COMMENT '关联文件服务的file_id',
     `file_size`             BIGINT       DEFAULT NULL COMMENT '文件大小(字节)',
     `file_type`             VARCHAR(20)  DEFAULT NULL COMMENT '文件格式: PDF/DOCX/DOC/XLSX',

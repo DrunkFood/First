@@ -167,6 +167,26 @@
             <template #tip>
               <div class="el-upload__tip">仅支持 .docx 格式</div>
             </template>
+            <template #file="{ file }">
+              <div class="template-file-row">
+                <div class="template-file-info">
+                  <el-icon><Document /></el-icon>
+                  <span class="template-file-name">{{ file.name }}</span>
+                  <el-icon v-if="formData.fileId || file.status === 'success'" class="template-file-success">
+                    <CircleCheck />
+                  </el-icon>
+                </div>
+                <div class="template-file-row-actions">
+                  <el-button v-if="formData.fileId" type="primary" link @click.stop="handlePreviewTemplate">
+                    <el-icon><View /></el-icon>
+                    预览Word
+                  </el-button>
+                  <el-button link class="template-file-remove" @click.stop="handleFileRemove">
+                    <el-icon><Close /></el-icon>
+                  </el-button>
+                </div>
+              </div>
+            </template>
           </el-upload>
         </el-form-item>
         <el-form-item label="用途说明">
@@ -214,16 +234,29 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="previewVisible"
+      title="Word模板预览"
+      width="88%"
+      top="4vh"
+      class="word-preview-dialog"
+      destroy-on-close
+      append-to-body
+    >
+      <DocxPreview :file-id="previewFileId" />
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Search, Refresh, Plus, Delete } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Delete, View, Document, CircleCheck, Close } from '@element-plus/icons-vue'
 import { templateApi, templateFileApi } from '@/api/template'
 import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams, ReviewConfig } from '@/types/template'
 import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig } from '@/types/template'
+import DocxPreview from '@/components/document/DocxPreview.vue'
 
 const loading = ref(false)
 const tableData = ref<TemplateInfo[]>([])
@@ -241,6 +274,8 @@ const queryParams = reactive<TemplateQueryParams>({
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const submitLoading = ref(false)
+const previewVisible = ref(false)
+const previewFileId = ref<number | string | null>(null)
 const formRef = ref<FormInstance>()
 const fileList = ref<any[]>([])
 const uploadingFile = ref<File | null>(null)
@@ -263,6 +298,7 @@ const formRules = reactive<FormRules>({
 const handleFileChange = (uploadFile: any) => {
   uploadingFile.value = uploadFile.raw
   fileList.value = [uploadFile]
+  formData.fileId = undefined
 }
 
 const handleFileRemove = () => {
@@ -388,6 +424,15 @@ const handleSelectionChange = (selection: TemplateInfo[]) => {
   selectedIds.value = selection.map((item) => item.id)
 }
 
+const handlePreviewTemplate = () => {
+  if (!formData.fileId) {
+    ElMessage.warning('请先上传Word模板文件')
+    return
+  }
+  previewFileId.value = formData.fileId
+  previewVisible.value = true
+}
+
 const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
@@ -447,4 +492,49 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @import '@/assets/styles/index.scss';
+
+.template-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 24px;
+}
+
+.template-file-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #606266;
+}
+
+.template-file-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-file-success {
+  color: #67c23a;
+}
+
+.template-file-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.template-file-remove {
+  color: #909399;
+  padding: 0;
+}
+
+.word-preview-dialog :deep(.el-dialog__body) {
+  max-height: 82vh;
+  overflow: hidden;
+  padding: 12px;
+  background: #f5f7fa;
+}
 </style>

@@ -107,6 +107,14 @@ public final class PromptBuilder {
                 defaultStr(enabledTypes, ReviewType.getLabels()));
     }
 
+    /**
+     * 构建评审项JSON修复的User Prompt
+     */
+    public static String buildReviewItemJsonRepair(String aiOutput) {
+        return String.format(UserPromptTemplates.REVIEW_ITEM_JSON_REPAIR_USER,
+                escapePromptBraces(defaultStr(aiOutput)));
+    }
+
     // ===========================检测类===========================
 
     /**
@@ -142,5 +150,9 @@ public final class PromptBuilder {
 
     private static String defaultStr(String value, String defaultValue) {
         return value != null && !value.isBlank() ? value : defaultValue;
+    }
+
+    private static String escapePromptBraces(String value) {
+        return value.replace("{", "{{").replace("}", "}}");
     }
 }

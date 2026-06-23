@@ -21,7 +21,7 @@ public class SupPolicyFile extends BaseEntity {
     @Schema(description = "文件分类: LAW/REGULATION/POLICY")
     private String fileCategory;
 
-    @Schema(description = "适用项目类别: SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE")
+    @Schema(description = "适用项目类别，多个用逗号分隔: SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE")
     private String applicableCategory;
 
     @Schema(description = "关联文件服务的file_id")

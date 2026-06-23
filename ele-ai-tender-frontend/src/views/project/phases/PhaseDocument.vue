@@ -169,16 +169,27 @@
           <div class="policy-file-list">
             <label
               v-for="file in knowledgePolicyDocs"
-              :key="file.id"
+              :key="policySelectionKey('KNOWLEDGE', file.id)"
               class="policy-file-item"
             >
-              <input v-model="selectedPolicyMap[file.id]" type="checkbox" class="policy-checkbox" />
+              <input v-model="selectedPolicyMap[policySelectionKey('KNOWLEDGE', file.id)]" type="checkbox" class="policy-checkbox" />
               <div class="policy-file-info">
                 <div class="policy-file-name">{{ file.docName }}</div>
                 <div class="policy-file-meta">政策文件 - {{ file.fileType || 'PDF' }}</div>
               </div>
             </label>
-            <div v-if="!knowledgePolicyDocs.length" class="policy-empty">暂无政策文件</div>
+            <label
+              v-for="file in systemPolicyFiles"
+              :key="policySelectionKey(file.source, file.id)"
+              class="policy-file-item"
+            >
+              <input v-model="selectedPolicyMap[policySelectionKey(file.source, file.id)]" type="checkbox" class="policy-checkbox" />
+              <div class="policy-file-info">
+                <div class="policy-file-name">{{ file.fileName }}</div>
+                <div class="policy-file-meta">平台文件 - {{ file.fileType || 'DOCX' }}</div>
+              </div>
+            </label>
+            <div v-if="!knowledgePolicyDocs.length && !systemPolicyFiles.length" class="policy-empty">暂无政策文件</div>
           </div>
         </div>
         <div class="policy-group">
@@ -186,10 +197,10 @@
           <div class="policy-file-list">
             <label
               v-for="file in otherPolicyFiles"
-              :key="file.id"
+              :key="policySelectionKey(file.source, file.id)"
               class="policy-file-item"
             >
-              <input v-model="selectedPolicyMap[file.id]" type="checkbox" class="policy-checkbox" />
+              <input v-model="selectedPolicyMap[policySelectionKey(file.source, file.id)]" type="checkbox" class="policy-checkbox" />
               <div class="policy-file-info">
                 <div class="policy-file-name">{{ file.fileName }}</div>
                 <div class="policy-file-meta">内部文件 - {{ file.fileType || 'DOCX' }}</div>
@@ -285,10 +296,12 @@ const formatTime = (time?: string) => {
 // --- 政策文件匹配 ---
 const knowledgePolicyDocs = ref<KnowledgeDocumentPolicyVO[]>([])
 const policyFiles = ref<PolicyFileVO[]>([])
-const selectedPolicyMap = reactive<Record<number, boolean>>({})
+const selectedPolicyMap = reactive<Record<string, boolean>>({})
 const project = ref<ProjectInfo | null>(null)
 
-const otherPolicyFiles = computed(() => policyFiles.value)
+const systemPolicyFiles = computed(() => policyFiles.value.filter(file => file.source === 'SYSTEM'))
+const otherPolicyFiles = computed(() => policyFiles.value.filter(file => file.source !== 'SYSTEM'))
+const policySelectionKey = (source: string, id: number) => `${source}:${id}`
 
 const loadKnowledgePolicyDocs = async () => {
   try {
@@ -307,18 +320,13 @@ const loadPolicyFiles = async () => {
 }
 
 const handleConfirmPolicyFiles = async () => {
-  // 提取选中的文件ID
-  const selectedDocIds = Object.entries(selectedPolicyMap)
-    .filter(([, checked]) => checked)
-    .map(([id]) => Number(id))
-
   // 知识库文档的 fileId
   const knowledgeFileIds = knowledgePolicyDocs.value
-    .filter(doc => selectedDocIds.includes(doc.id))
+    .filter(doc => selectedPolicyMap[policySelectionKey('KNOWLEDGE', doc.id)])
     .map(doc => doc.fileId)
-  // 本单位政策文件的 fileId（直接就是 fileId）
+  // 平台/本单位政策文件的 fileId（直接就是文件服务 fileId）
   const policyFileIds = policyFiles.value
-    .filter(f => selectedDocIds.includes(f.id))
+    .filter(f => selectedPolicyMap[policySelectionKey(f.source, f.id)])
     .map(f => f.fileId)
   const allFileIds = [...knowledgeFileIds, ...policyFileIds]
   // 允许不选政策文件直接提交检测（政策文件列表可能为空）
