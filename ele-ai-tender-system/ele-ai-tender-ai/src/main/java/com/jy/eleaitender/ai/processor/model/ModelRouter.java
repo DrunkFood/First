@@ -65,6 +65,18 @@ public class ModelRouter {
     }
 
     /**
+     * 根据指定模型配置ID创建ChatClient。
+     * 用于模型连通性测试等需要绕过场景优先级、但仍复用路由校验和构建逻辑的场景。
+     */
+    public ChatClient routeModel(Long modelId) {
+        ChatClient client = tryCreateClient(modelId, "指定");
+        if (client == null) {
+            throw new AiUnavailableException("模型不可用: modelId=" + modelId);
+        }
+        return client;
+    }
+
+    /**
      * 尝试根据模型ID创建ChatClient
      */
     private ChatClient tryCreateClient(Long modelId, String roleLabel) {
