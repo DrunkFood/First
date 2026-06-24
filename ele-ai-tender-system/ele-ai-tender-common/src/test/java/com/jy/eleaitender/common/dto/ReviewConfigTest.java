@@ -1,5 +1,6 @@
 package com.jy.eleaitender.common.dto;
 
+import com.jy.eleaitender.common.enums.ScoreMode;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,7 +12,8 @@ class ReviewConfigTest {
     @Test
     void defaultConfig_shouldBeScoreMode() {
         ReviewConfig config = ReviewConfig.defaultConfig();
-        assertThat(config.getScoreMode()).isEqualTo("SCORE");
+        assertThat(config.getScoreModeOrDefault()).isEqualTo(ScoreMode.SCORE);
+        assertThat(config.isWeightMode()).isFalse();
     }
 
     @Test
@@ -20,8 +22,8 @@ class ReviewConfigTest {
                 {"reviewTypes":[{"reviewType":"TECHNICAL","enabled":true,"generateStandard":true}]}
                 """;
         ReviewConfig config = ReviewConfig.fromJson(json);
-        assertThat(config.getScoreMode()).isEqualTo("SCORE");
         assertThat(config.isWeightMode()).isFalse();
+        assertThat(config.getScoreModeOrDefault()).isEqualTo(ScoreMode.SCORE);
     }
 
     @Test
@@ -31,6 +33,16 @@ class ReviewConfigTest {
                 """;
         ReviewConfig config = ReviewConfig.fromJson(json);
         assertThat(config.isWeightMode()).isTrue();
+    }
+
+    @Test
+    void fromJson_invalidScoreMode_shouldFallbackToScore() {
+        String json = """
+                {"scoreMode":"INVALID","reviewTypes":[{"reviewType":"TECHNICAL","enabled":true,"generateStandard":true}]}
+                """;
+        ReviewConfig config = ReviewConfig.fromJson(json);
+        assertThat(config.isWeightMode()).isFalse();
+        assertThat(config.getScoreModeOrDefault()).isEqualTo(ScoreMode.SCORE);
     }
 
     @Test

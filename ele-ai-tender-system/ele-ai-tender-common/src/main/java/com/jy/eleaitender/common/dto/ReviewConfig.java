@@ -1,5 +1,6 @@
 package com.jy.eleaitender.common.dto;
 
+import com.jy.eleaitender.common.enums.ScoreMode;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ public class ReviewConfig {
     /**
      * 评分模式：SCORE(分值模式,默认) / WEIGHT(权重模式)
      */
-    private String scoreMode;
+    private ScoreMode scoreMode;
 
     private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
             new com.fasterxml.jackson.databind.ObjectMapper();
@@ -39,7 +40,7 @@ public class ReviewConfig {
                 ReviewTypeConfig.of("CREDIT", true, true, true),
                 ReviewTypeConfig.of("COMMERCIAL", true, true, false)
         ));
-        config.setScoreMode("SCORE");
+        config.setScoreMode(ScoreMode.SCORE);
         return config;
     }
 
@@ -96,16 +97,18 @@ public class ReviewConfig {
     }
 
     /**
-     * 读取评分模式：字段为 null（老数据未设置）时回退到 SCORE，向后兼容
+     * 读取评分模式：序列化时 null 会被规范化为 SCORE，向后兼容老数据。
+     * Lombok @Data 生成的 getScoreMode() 返回原始字段（可能为 null），
+     * 需要非 null 语义的调用方请使用本方法或 isWeightMode()。
      */
-    public String getScoreMode() {
-        return scoreMode == null ? "SCORE" : scoreMode;
+    public ScoreMode getScoreModeOrDefault() {
+        return scoreMode == null ? ScoreMode.SCORE : scoreMode;
     }
 
     /**
-     * 是否权重模式（scoreMode 为 null 视为 SCORE，向后兼容）
+     * 仅当 scoreMode 显式为 WEIGHT 返回 true，其余（含 null 老数据）均返回 false
      */
     public boolean isWeightMode() {
-        return "WEIGHT".equals(scoreMode);
+        return scoreMode == ScoreMode.WEIGHT;
     }
 }
