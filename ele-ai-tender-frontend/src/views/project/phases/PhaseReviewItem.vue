@@ -14,39 +14,83 @@
 
     <!-- 评分摘要栏 -->
     <div class="score-summary">
-      <template v-for="typeConfig in enabledTypes" :key="typeConfig.reviewType">
-        <div v-if="typeConfig.reviewType === 'COMPLIANCE'" class="score-item">
-          <div class="score-label">符合性审查</div>
-          <div class="score-value info">通过/不通过</div>
-        </div>
-        <div v-else-if="typeConfig.reviewType === 'CREDIT'" class="score-item">
-          <div class="score-label">资信评审</div>
-          <div class="score-value">{{ creditScore }}分</div>
-        </div>
-        <div v-else-if="typeConfig.reviewType === 'TECHNICAL'" class="score-item">
-          <div class="score-label">技术评审</div>
-          <div class="score-value">{{ technicalScore }}分</div>
-        </div>
-        <div v-else-if="typeConfig.reviewType === 'COMMERCIAL'" class="score-item">
-          <div class="score-label">商务评审</div>
-          <div class="score-value">{{ commercialScore }}分</div>
+      <template v-if="isWeightMode">
+        <!-- 权重模式：每评分类型显示权重%输入（绑定 level-1 根节点 weight）+ 类型内满分 -->
+        <template v-for="typeConfig in enabledTypes" :key="typeConfig.reviewType">
+          <div v-if="typeConfig.reviewType === 'COMPLIANCE'" class="score-item">
+            <div class="score-label">符合性审查</div>
+            <div class="score-value info">通过/不通过</div>
+          </div>
+          <div v-else class="score-item">
+            <div class="score-label">{{ REVIEW_TYPE_LABELS[typeConfig.reviewType] }}</div>
+            <div class="score-value weight-value">
+              <el-input-number
+                v-if="rootsByType[typeConfig.reviewType]"
+                v-model="rootsByType[typeConfig.reviewType]!.weight"
+                :min="0"
+                :max="100"
+                :precision="1"
+                :step="5"
+                size="small"
+                class="weight-input"
+                :disabled="isEditingDisabled"
+              />
+              <span v-else>—</span>
+              <span class="weight-unit">%</span>
+            </div>
+            <div class="score-sub">类型满分 {{ typeInternalScore(typeConfig.reviewType) }}/100</div>
+          </div>
+        </template>
+        <div v-if="scoringTypes.length > 0" class="score-item">
+          <div class="score-label">权重合计</div>
+          <div class="score-value" :class="weightTotal === 100 ? 'success' : weightTotal > 0 ? 'warning' : ''">
+            {{ weightTotal }}%
+          </div>
+          <div class="score-sub">须等于100%</div>
         </div>
       </template>
-      <div v-if="scoringTypes.length > 0" class="score-item">
-        <div class="score-label">合计总分</div>
-        <div class="score-value" :class="scoreTotal === 100 ? 'success' : scoreTotal > 0 ? 'warning' : ''">
-          {{ scoreTotal }}分
+      <template v-else>
+        <!-- 分值模式：各类分值直接计入总分 -->
+        <template v-for="typeConfig in enabledTypes" :key="typeConfig.reviewType">
+          <div v-if="typeConfig.reviewType === 'COMPLIANCE'" class="score-item">
+            <div class="score-label">符合性审查</div>
+            <div class="score-value info">通过/不通过</div>
+          </div>
+          <div v-else-if="typeConfig.reviewType === 'CREDIT'" class="score-item">
+            <div class="score-label">资信评审</div>
+            <div class="score-value">{{ creditScore }}分</div>
+          </div>
+          <div v-else-if="typeConfig.reviewType === 'TECHNICAL'" class="score-item">
+            <div class="score-label">技术评审</div>
+            <div class="score-value">{{ technicalScore }}分</div>
+          </div>
+          <div v-else-if="typeConfig.reviewType === 'COMMERCIAL'" class="score-item">
+            <div class="score-label">商务评审</div>
+            <div class="score-value">{{ commercialScore }}分</div>
+          </div>
+        </template>
+        <div v-if="scoringTypes.length > 0" class="score-item">
+          <div class="score-label">合计总分</div>
+          <div class="score-value" :class="scoreTotal === 100 ? 'success' : scoreTotal > 0 ? 'warning' : ''">
+            {{ scoreTotal }}分
+          </div>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- 评分说明 -->
     <div v-if="scoringTypes.length > 0" class="score-notice info-notice">
-      <strong>评分说明：</strong>{{ scoringTypes.map(t => REVIEW_TYPE_LABELS[t.reviewType]).join('、') }}合计总分必须为100分。允许其中一项或两项为0分。
+      <strong>评分说明：</strong>
+      <template v-if="isWeightMode">
+        {{ scoringTypes.map(t => REVIEW_TYPE_LABELS[t.reviewType]).join('、') }}各类型权重%合计必须为100%，且每个类型内分值合计为100分。
+      </template>
+      <template v-else>
+        {{ scoringTypes.map(t => REVIEW_TYPE_LABELS[t.reviewType]).join('、') }}合计总分必须为100分。允许其中一项或两项为0分。
+      </template>
     </div>
 
-    <!-- 评分建议 -->
-    <div v-if="scoringTypes.length > 0" class="score-notice warning-notice">
+    <!-- 评分建议（仅分值模式） -->
+    <div v-if="scoringTypes.length > 0 && !isWeightMode" class="score-notice warning-notice">
       <strong>评分建议：</strong>建议货物类项目商务分30-60，资信10-25分；建议服务类项目商务分10-30，资信10-25分。
     </div>
 
@@ -523,6 +567,33 @@ const scoringTypes = computed(() =>
   enabledTypes.value.filter(t => t.reviewType !== 'COMPLIANCE')
 )
 
+/** 权重模式：scoreMode === 'WEIGHT'（未配置视为分值模式） */
+const isWeightMode = computed(() => reviewConfig.value?.scoreMode === 'WEIGHT')
+
+/** 各评分类型的 level-1 根节点（权重模式下权重%存在根节点 weight 字段） */
+const rootsByType = computed<Record<string, ReviewItemTree | undefined>>(() => {
+  const map: Record<string, ReviewItemTree | undefined> = {}
+  for (const t of ['CREDIT', 'TECHNICAL', 'COMMERCIAL']) {
+    map[t] = allItems.value.find(i => i.reviewType === t && i.level === 1)
+  }
+  return map
+})
+
+/** 某评分类型的类型内分值合计（权重模式下每类型应为100） */
+const typeInternalScore = (reviewType: string): number => {
+  const root = rootsByType.value[reviewType]
+  if (!root) return 0
+  return sumLeafScores(root)
+}
+
+/** 权重合计（权重模式，应为100%） */
+const weightTotal = computed(() =>
+  scoringTypes.value.reduce((sum, t) => {
+    const root = rootsByType.value[t.reviewType]
+    return sum + (root?.weight || 0)
+  }, 0)
+)
+
 const scoreTotal = computed(() => {
   return scoringTypes.value.reduce((sum, t) => {
     const tree = getTreeByType(t.reviewType)
@@ -657,13 +728,26 @@ const handleDeleteItem = async (row: ReviewItemTree) => {
 
 /** 确认评审项并推进阶段 */
 const handleNext = async () => {
-  // 校验100分（仅校验启用且生成评审标准的非符合性类型）
-  const scoringTypeNames = scoringTypes.value
-    .map(t => REVIEW_TYPE_LABELS[t.reviewType] || t.reviewType)
-    .join('+')
-  if (scoreTotal.value > 0 && scoreTotal.value !== 100) {
-    ElMessage.warning(`${scoringTypeNames}评审合计应为100分，当前为${scoreTotal.value}分`)
-    return
+  if (isWeightMode.value) {
+    // 权重模式：校验权重合计100% + 每类型内分值合计100
+    if (weightTotal.value !== 100) {
+      ElMessage.warning(`各类型权重合计应为100%，当前为${weightTotal.value}%`)
+      return
+    }
+    const badType = scoringTypes.value.find(t => typeInternalScore(t.reviewType) !== 100)
+    if (badType) {
+      ElMessage.warning(`${REVIEW_TYPE_LABELS[badType.reviewType]}类型内分值合计应为100分，当前为${typeInternalScore(badType.reviewType)}分`)
+      return
+    }
+  } else {
+    // 分值模式：校验合计100分（仅校验启用且生成评审标准的非符合性类型）
+    const scoringTypeNames = scoringTypes.value
+      .map(t => REVIEW_TYPE_LABELS[t.reviewType] || t.reviewType)
+      .join('+')
+    if (scoreTotal.value > 0 && scoreTotal.value !== 100) {
+      ElMessage.warning(`${scoringTypeNames}评审合计应为100分，当前为${scoreTotal.value}分`)
+      return
+    }
   }
 
   // 保存所有修改：将树形数据展平
@@ -681,6 +765,8 @@ const handleNext = async () => {
           reviewType: node.reviewType,
           subjectivity: node.subjectivity,
           score: isLeaf(node) ? node.score : undefined,
+          // 权重模式下权重%存在 level-1 根节点；其他节点 weight 为 undefined（NOT_NULL 策略不更新）
+          weight: node.level === 1 ? node.weight : undefined,
         })
         if (node.children?.length) flatten(node.children)
       }
@@ -765,6 +851,44 @@ onMounted(() => {
   &.warning {
     color: var(--app-color-warning);
   }
+}
+
+// 权重模式摘要
+.weight-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.weight-input {
+  width: 90px;
+
+  :deep(.el-input__wrapper) {
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-border-light);
+    border-radius: 4px;
+    box-shadow: none;
+
+    .el-input__inner {
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--app-text-primary);
+    }
+  }
+}
+
+.weight-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--app-text-secondary);
+}
+
+.score-sub {
+  font-size: 12px;
+  color: var(--app-text-secondary);
+  margin-top: 4px;
 }
 
 // ============================================================
