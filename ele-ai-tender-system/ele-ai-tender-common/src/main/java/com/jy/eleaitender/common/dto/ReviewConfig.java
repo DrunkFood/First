@@ -28,7 +28,8 @@ public class ReviewConfig {
     private ScoreMode scoreMode;
 
     private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
-            new com.fasterxml.jackson.databind.ObjectMapper();
+            new com.fasterxml.jackson.databind.ObjectMapper()
+                    .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     /**
      * 构建默认配置：4种类型全部启用+生成评审标准
