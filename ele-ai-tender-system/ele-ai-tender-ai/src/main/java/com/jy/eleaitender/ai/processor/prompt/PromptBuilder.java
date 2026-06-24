@@ -11,7 +11,7 @@ import com.jy.eleaitender.common.enums.ReviewType;
  * <p>
  * 注意：Spring AI 的 ChatClient.prompt().system() / .user() 会通过 PromptTemplate 处理字符串，
  * PromptTemplate 使用 {variableName} 语法做变量占位。如果模板内容包含字面量花括号（如 JSON 示例），
- * 必须使用双花括号转义：{ → {{，} → }}，否则 PromptTemplate 构造时会抛出
+ * 必须在发送前通过 PromptTemplateEscaper 转义，否则 PromptTemplate 构造时会抛出
  * IllegalArgumentException: The template string is not valid.
  */
 public final class PromptBuilder {
@@ -112,7 +112,7 @@ public final class PromptBuilder {
      */
     public static String buildReviewItemJsonRepair(String aiOutput) {
         return String.format(UserPromptTemplates.REVIEW_ITEM_JSON_REPAIR_USER,
-                escapePromptBraces(defaultStr(aiOutput)));
+                defaultStr(aiOutput));
     }
 
     // ===========================检测类===========================
@@ -152,7 +152,4 @@ public final class PromptBuilder {
         return value != null && !value.isBlank() ? value : defaultValue;
     }
 
-    private static String escapePromptBraces(String value) {
-        return value.replace("{", "{{").replace("}", "}}");
-    }
 }

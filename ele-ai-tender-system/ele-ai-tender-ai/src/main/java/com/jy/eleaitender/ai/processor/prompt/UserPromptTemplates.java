@@ -130,15 +130,15 @@ public final class UserPromptTemplates {
             %s
             
             目标JSON结构：
-            {{
+            {
               "reviewItems": [
-                {{
+                {
                   "name": "一级分类名称",
                   "level": 1,
                   "children": []
-                }}
+                }
               ]
-            }}
+            }
             
             要求：
             1. 只输出目标JSON，不要输出解释说明。

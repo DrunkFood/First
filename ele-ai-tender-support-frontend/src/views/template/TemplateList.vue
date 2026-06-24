@@ -181,6 +181,16 @@
                     <el-icon><View /></el-icon>
                     预览Word
                   </el-button>
+                  <el-button
+                    v-if="formData.fileId"
+                    type="primary"
+                    link
+                    :loading="templateDownloadLoading"
+                    @click.stop="handleDownloadTemplate"
+                  >
+                    <el-icon><Download /></el-icon>
+                    下载模板
+                  </el-button>
                   <el-button link class="template-file-remove" @click.stop="handleFileRemove">
                     <el-icon><Close /></el-icon>
                   </el-button>
@@ -252,8 +262,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Search, Refresh, Plus, Delete, View, Document, CircleCheck, Close } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Delete, View, Document, CircleCheck, Close, Download } from '@element-plus/icons-vue'
 import { templateApi, templateFileApi } from '@/api/template'
+import { fileApi } from '@/api/file'
 import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams, ReviewConfig } from '@/types/template'
 import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig } from '@/types/template'
 import DocxPreview from '@/components/document/DocxPreview.vue'
@@ -276,6 +287,7 @@ const dialogTitle = ref('')
 const submitLoading = ref(false)
 const previewVisible = ref(false)
 const previewFileId = ref<number | string | null>(null)
+const templateDownloadLoading = ref(false)
 const formRef = ref<FormInstance>()
 const fileList = ref<any[]>([])
 const uploadingFile = ref<File | null>(null)
@@ -431,6 +443,41 @@ const handlePreviewTemplate = () => {
   }
   previewFileId.value = formData.fileId
   previewVisible.value = true
+}
+
+const getTemplateDownloadFileName = () => {
+  const defaultUploadedName = '已上传模板文件'
+  const currentFileName = fileList.value[0]?.name
+  const rawName = currentFileName && currentFileName !== defaultUploadedName
+    ? currentFileName
+    : (formData.templateName || defaultUploadedName)
+  const safeName = rawName.trim().replace(/[\\/:*?"<>|]/g, '_')
+  return /\.docx$/i.test(safeName) ? safeName : `${safeName}.docx`
+}
+
+const handleDownloadTemplate = async () => {
+  if (!formData.fileId) {
+    ElMessage.warning('请先上传Word模板文件')
+    return
+  }
+
+  templateDownloadLoading.value = true
+  try {
+    const blob = await fileApi.download(formData.fileId)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = getTemplateDownloadFileName()
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => URL.revokeObjectURL(url), 0)
+  } catch (error) {
+    console.error('下载模板文件失败:', error)
+    ElMessage.error('下载模板文件失败')
+  } finally {
+    templateDownloadLoading.value = false
+  }
 }
 
 const handleSubmit = async () => {

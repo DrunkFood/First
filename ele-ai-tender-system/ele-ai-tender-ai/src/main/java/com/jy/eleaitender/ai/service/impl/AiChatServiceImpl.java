@@ -3,6 +3,7 @@ package com.jy.eleaitender.ai.service.impl;
 import com.jy.eleaitender.ai.dto.request.ChatRequest;
 import com.jy.eleaitender.ai.dto.request.OptimizeRequest;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.prompt.PromptTemplateEscaper;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
@@ -88,7 +89,7 @@ public class AiChatServiceImpl implements IAiChatService {
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
                         .system(SystemPromptTemplates.AI_ASSISTANT)
                         .messages(chatMessages)
-                        .user(userPrompt)
+                        .user(PromptTemplateEscaper.escapeBraces(userPrompt))
                         .stream()
                         .chatResponse();
 
@@ -135,7 +136,7 @@ public class AiChatServiceImpl implements IAiChatService {
 
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
                         .system(SystemPromptTemplates.TEXT_OPTIMIZE)
-                        .user(userPrompt)
+                        .user(PromptTemplateEscaper.escapeBraces(userPrompt))
                         .stream()
                         .chatResponse();
 

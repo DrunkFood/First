@@ -1,6 +1,7 @@
 package com.jy.eleaitender.ai.processor.recorder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.eleaitender.ai.processor.prompt.PromptTemplateEscaper;
 import com.jy.eleaitender.ai.service.FileContentService;
 import com.jy.eleaitender.ai.service.IAiResponseLogService;
 import com.jy.eleaitender.common.entity.ai.AiResponseLog;
@@ -49,13 +50,14 @@ public class AiCallRecorder {
     public String callAndRecord(ChatClient client, String systemPrompt, String userPrompt,
                                 String role, Long taskId, Long userId, List<String> fileIds) {
         String resolvedUserPrompt = buildUserPromptWithFiles(userPrompt, fileIds);
+        String promptTemplateSafeUserPrompt = PromptTemplateEscaper.escapeBraces(resolvedUserPrompt);
 
         // 记录开始时间
         Date startTime = new Date();
 
         ChatResponse chatResponse = client.prompt()
                 .system(systemPrompt)
-                .user(resolvedUserPrompt)
+                .user(promptTemplateSafeUserPrompt)
                 .call()
                 .chatResponse();
 
