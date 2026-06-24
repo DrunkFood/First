@@ -3,6 +3,7 @@ package com.jy.eleaitender.core.engine;
 import com.jy.eleaitender.common.dto.*;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
+import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
@@ -58,6 +59,17 @@ public class DocumentDataAssembler {
         fillDataList.add(FillData.markdown("requirementContent", nullSafe(project.getRequirementContent()), "招标需求内容"));
         fillDataList.add(FillData.text("reviewType", nullSafe(project.getReviewType()), "评审类型"));
 
+        // 加载评审项配置（用于控制汇总表是否输出主观/客观列）
+        ReviewConfig reviewConfig = null;
+        try {
+            TbProjectTemplate projectTemplate = projectTemplateService.getByProjectId(projectId);
+            if (projectTemplate != null && projectTemplate.getReviewConfig() != null) {
+                reviewConfig = ReviewConfig.fromJson(projectTemplate.getReviewConfig());
+            }
+        } catch (Exception e) {
+            log.warn("加载reviewConfig失败，回退硬编码: {}", e.getMessage());
+        }
+
         // 评审项（按类型分组）
         List<TbProjectReviewItem> reviewItems = reviewItemMapper.selectByProjectId(projectId);
         Map<String, List<TbProjectReviewItem>> grouped = reviewItems.stream()
@@ -74,7 +86,7 @@ public class DocumentDataAssembler {
 
         // 评审项汇总表格
         fillDataList.add(FillData.table("allReviewItems",
-                buildReviewSummaryTable(grouped), "评审项汇总表格"));
+                buildReviewSummaryTable(grouped, reviewConfig), "评审项汇总表格"));
 
         return fillDataList;
     }
@@ -84,7 +96,7 @@ public class DocumentDataAssembler {
     /**
      * 构建评审汇总表数据（方式一：资信标→技术标→商务标，含合并规则）
      */
-    private TableData buildReviewSummaryTable(Map<String, List<TbProjectReviewItem>> grouped) {
+    private TableData buildReviewSummaryTable(Map<String, List<TbProjectReviewItem>> grouped, ReviewConfig reviewConfig) {
         TableData tableData = new TableData();
         tableData.setColumns(List.of(
                 new ColumnDef("categoryName", "类别"),
@@ -93,7 +105,7 @@ public class DocumentDataAssembler {
                 new ColumnDef("subjectivity", "主观分/客观分属性"),
                 new ColumnDef("responseFileCatalog", "响应文件中评审标准相应的资信、技术资料目录")
         ));
-        tableData.setRows(toReviewSummaryList(grouped));
+        tableData.setRows(toReviewSummaryList(grouped, reviewConfig));
         // 第一列（categoryName）按相同文本合并
         tableData.setMergeRules(List.of(
                 new MergeRule(0, MergeStrategy.BY_SAME_TEXT)
@@ -143,7 +155,7 @@ public class DocumentDataAssembler {
 
     // ==================== 数据转换 ====================
 
-    private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped) {
+    private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped, ReviewConfig reviewConfig) {
         List<Map<String, String>> result = new ArrayList<>();
 
         Map<String, String> typeLabels = Map.of(
@@ -154,7 +166,9 @@ public class DocumentDataAssembler {
             List<TbProjectReviewItem> items = grouped.getOrDefault(reviewType, Collections.emptyList());
             if (items.isEmpty()) continue;
 
-            boolean hasSubjectivity = "CREDIT".equals(reviewType) || "TECHNICAL".equals(reviewType);
+            boolean hasSubjectivity = reviewConfig != null
+                    ? reviewConfig.isDistinguishSubjectivity(reviewType)
+                    : ("CREDIT".equals(reviewType) || "TECHNICAL".equals(reviewType));
 
             // 分类总分：取所有叶子节点 score 之和
             Set<Long> parentIds = items.stream()
