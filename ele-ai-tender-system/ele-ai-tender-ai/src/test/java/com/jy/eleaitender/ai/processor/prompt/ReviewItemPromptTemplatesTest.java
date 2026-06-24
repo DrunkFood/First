@@ -72,4 +72,14 @@ class ReviewItemPromptTemplatesTest {
                 .contains("不要输出解释说明");
     }
 
+    @Test
+    void weightModePrompts_shouldExistAndContainWeightRules() {
+        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE_WEIGHT)
+                .contains("权重")
+                .contains("100%");
+        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_WEIGHT)
+                .contains("%s")
+                .contains("权重");
+    }
+
 }

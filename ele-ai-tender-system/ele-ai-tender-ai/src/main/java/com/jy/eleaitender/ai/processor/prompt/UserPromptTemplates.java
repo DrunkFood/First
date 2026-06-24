@@ -120,6 +120,41 @@ public final class UserPromptTemplates {
             """;
 
     /**
+     * 评审项生成 User Prompt（权重模式）
+     * 参数: projectName, projectType, projectCategory, budget, requirementContent, reviewMethod, enabledTypes
+     */
+    public static final String REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_WEIGHT = """
+            请根据以下项目信息和需求内容生成《综合评分法评审标准表》（权重模式）：
+
+            项目名称：%s
+            项目类型：%s
+            项目类别：%s
+            项目预算：%s元
+
+            招标（采购）需求书：
+            %s
+
+            评审方式：%s
+
+            评审类型配置（只生成以下列出的类型，严禁添加其他类型）：
+            %s
+
+            输出JSON的一级分类name必须严格使用上述类型名称。
+
+            硬性计分规则（权重模式）：
+            1. 符合性审查不计分、不参与权重，其节点 score/weight 必须为0或省略。
+            2. 技术标/资信标/商务评审的一级分类节点设置 weight（权重百分比），其下叶子节点设置 score；分类节点和有children的非叶子节点 score 必须为0或省略。
+            3. 所有非符合性评分类型的 weight 合计必须正好等于100%。
+            4. 每个评分类型内，叶子节点 score 合计必须正好等于100分（该类型满分100）。
+            5. 输出前必须逐项累加自检：权重合计=100% 且 每类型内 score 合计=100分。
+
+            输出格式硬性要求：
+            1. 根节点必须是reviewItems，且reviewItems必须是数组。
+            2. 不要输出Markdown代码块、解释说明或JSON以外文字。
+            3. 不要使用data、result、content、output等外层包装字段。
+            """;
+
+    /**
      * 评审项JSON修复 - User Prompt 模板
      * 参数: aiOutput
      */
