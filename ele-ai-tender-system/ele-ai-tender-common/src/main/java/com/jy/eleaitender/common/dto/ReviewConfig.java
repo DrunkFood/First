@@ -19,6 +19,11 @@ public class ReviewConfig {
      */
     private List<ReviewTypeConfig> reviewTypes;
 
+    /**
+     * 评分模式：SCORE(分值模式,默认) / WEIGHT(权重模式)
+     */
+    private String scoreMode;
+
     private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
             new com.fasterxml.jackson.databind.ObjectMapper();
 
@@ -34,6 +39,7 @@ public class ReviewConfig {
                 ReviewTypeConfig.of("CREDIT", true, true, true),
                 ReviewTypeConfig.of("COMMERCIAL", true, true, false)
         ));
+        config.setScoreMode("SCORE");
         return config;
     }
 
@@ -87,5 +93,19 @@ public class ReviewConfig {
     public List<ReviewTypeConfig> getEnabledTypes() {
         if (reviewTypes == null) return List.of();
         return reviewTypes.stream().filter(ReviewTypeConfig::isEnabled).toList();
+    }
+
+    /**
+     * 读取评分模式：字段为 null（老数据未设置）时回退到 SCORE，向后兼容
+     */
+    public String getScoreMode() {
+        return scoreMode == null ? "SCORE" : scoreMode;
+    }
+
+    /**
+     * 是否权重模式（scoreMode 为 null 视为 SCORE，向后兼容）
+     */
+    public boolean isWeightMode() {
+        return "WEIGHT".equals(scoreMode);
     }
 }

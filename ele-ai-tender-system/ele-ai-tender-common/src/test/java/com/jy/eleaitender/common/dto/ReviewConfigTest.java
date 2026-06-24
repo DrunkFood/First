@@ -2,10 +2,36 @@ package com.jy.eleaitender.common.dto;
 
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReviewConfigTest {
+
+    @Test
+    void defaultConfig_shouldBeScoreMode() {
+        ReviewConfig config = ReviewConfig.defaultConfig();
+        assertThat(config.getScoreMode()).isEqualTo("SCORE");
+    }
+
+    @Test
+    void fromJson_missingScoreMode_shouldFallbackToScore() {
+        String json = """
+                {"reviewTypes":[{"reviewType":"TECHNICAL","enabled":true,"generateStandard":true}]}
+                """;
+        ReviewConfig config = ReviewConfig.fromJson(json);
+        assertThat(config.getScoreMode()).isEqualTo("SCORE");
+        assertThat(config.isWeightMode()).isFalse();
+    }
+
+    @Test
+    void fromJson_weightMode_shouldParse() {
+        String json = """
+                {"scoreMode":"WEIGHT","reviewTypes":[{"reviewType":"TECHNICAL","enabled":true,"generateStandard":true}]}
+                """;
+        ReviewConfig config = ReviewConfig.fromJson(json);
+        assertThat(config.isWeightMode()).isTrue();
+    }
 
     @Test
     void defaultConfig_技术标和资信标区分主客观_其他不区分() {
