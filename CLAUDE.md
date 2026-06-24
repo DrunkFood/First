@@ -24,7 +24,7 @@
 | `ele-ai-tender-support` | 8080 | 认证(含外部系统对接)、用户、角色、菜单、模板配置、知识库配置、模型配置与路由、系统参数、政策文件、消息通知、统计分析、访问/操作日志、版本管理 | 支撑中心 |
 | `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除、文档生成(Markdown→Word引擎) | 含MarkdownTemplateEngine/WordTemplateEngine/WordDocumentGenerator |
 | `ele-ai-tender-core` | 8082 | 项目管理、业务需求编制、AI编制任务、AI内容反馈、检测管理、评审项管理、文档集成、用户消息、政策文件(用户级)、项目模板快照 | 核心业务模块 |
-| `ele-ai-tender-ai` | 8083 | AI对话、知识库管理、文档匹配、智能检测、模型路由 | 检测引擎(DetectionEngine)和模型路由(ModelRouter)在Service层 |
+| `ele-ai-tender-ai` | 8083 | AI对话、知识库管理、文档匹配、智能检测、模型路由、模型连通性测试 | 检测引擎(DetectionEngine)和模型路由(ModelRouter)在Service层 |
 
 ## 术语规范
 
@@ -58,6 +58,10 @@
 **项目-需求关系**: 项目通过 `requirementId` 单向引用需求（`tb_requirement` 无 `projectId`）。进入需求阶段时，有关联需求→复制内容到 `project.requirementContent`；无关联→触发 `PROJECT_REQUIREMENT_GENERATE` AI任务。之后项目和需求再无关联，后续阶段均从 `project.requirementContent` 读取。
 
 **检测类型**: SENSITIVE_WORD(敏感词) / TYPO(错别字) / POLICY_REVIEW(政策文件审查) / FORMAT_CHECK(格式规范检测)
+
+**智能检测范围**: 仅检测系统生成的招标需求内容(`project.requirementContent`)+评审项标准纯文本，不检测模板内容；`tb_detection_record.content_file_id` 始终为 null，检测内容存 `content_snapshot`。issue 的 `locationRef` 仍基于 `generated_file_id` 的 Word 文件定位。详见 [DETECTION_FLOW_SPEC.md](docs/rules/DETECTION_FLOW_SPEC.md)
+
+**需求生成模式**: 三步式 Agent 编排（大纲生成→分章并行生成→审查修订，拼接为纯代码步骤），通过 `ai_task.result` 渐进式推送进度（`contentStage`），全文硬约束 5000 字内。详见 [AI_MODULE_SPEC.md](docs/rules/AI_MODULE_SPEC.md)
 
 **评审类型**: COMPLIANCE(符合性审查) / TECHNICAL(技术标评审) / CREDIT(资信标评审) / COMMERCIAL(商务评审)
 

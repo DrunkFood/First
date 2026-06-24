@@ -148,7 +148,7 @@ AI能力由 ai 模块通过 `ai_task` 表异步解耦提供，core 模块负责"
 | `tb_project_template` | 项目模板快照表：project_id / template_id / template_name / project_category / project_type / file_id / content / structure_definition(JSON) / version_no |
 | `tb_detection_record` | 检测记录表：requirement_id / project_id / detection_type / content_snapshot / result(JSON) / status / task_id / policy_file_ids / started_at / completed_at |
 | `tb_project_review_item` | 评审项表：project_id / parent_id / level / item_name / item_content / sort_order / review_type / score / max_score / weight / subjectivity / is_required |
-| `tb_policy_file` | 用户政策文件表：file_name / file_category / applicable_category / file_id / file_size / file_type / description / user_id / status |
+| `tb_policy_file` | 用户政策文件表：file_name / file_category / applicable_category（多选，逗号分隔 `SMALL_TRADE,GOVERNMENT_PROCUREMENT`，VARCHAR(100)）/ file_id / file_size / file_type / description / user_id / status |
 
 所有表继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`ver`、`is_delete` 等）。
 
@@ -260,6 +260,26 @@ PENDING → PROCESSING → COMPLETED → (result_synced: 0→1/2)
 - 每个 AI 模型配置独立的 Token 用量统计
 - 支持按用户/项目设置 Token 上限
 - Token 使用量缓存到 Redis：`ai:token:limit:{user_id}:{date}`
+
+### 4.10 项目创建校验
+
+`ProjectServiceImpl.create()` 通过 `validateProjectRequiredFields()` 校验：
+
+- **项目编号 `projectCode` 必填**：不再允许空编号时自动生成，由前端填写（不可重复）
+- **评审方式 `reviewType` 必填**：前端默认 `MANUAL`（人工评审），预算 ≥ 500 万或工程/货物类自动推荐人工评审
+- **编号唯一性含已删除记录**：`TbProjectMapper.countByProjectCodeIncludingDeleted()` 直接查全表（绕过 MyBatis-Plus 逻辑删除过滤），避免与已删除项目编号冲突
+- **并发安全**：`insert` 捕获 `DataIntegrityViolationException`，检测 `uk_project_code` 唯一索引冲突并转为友好业务异常
+
+> 预算 `budget` 后端不强制必填（`DECIMAL(15,2) DEFAULT NULL`），必填由前端表单校验保证。
+
+### 4.11 政策文件适用类别多选筛选
+
+`applicable_category` 字段（`tb_policy_file` / `sup_policy_file`）从单选改为**逗号分隔多选**，配套 `CommaSeparatedFieldSql` 工具类（`common/util`）：
+
+- `contains(columnName)`：生成参数化 SQL 片段 `CONCAT(',', REPLACE(col, ' ', ''), ',') LIKE CONCAT('%,', {0}, ',%')`，精确匹配逗号分隔的某个 token，避免部分匹配
+- `containsValue(fieldValue, expectedValue)`：Java 端按逗号 split + trim 后精确比较
+
+`PolicyFileServiceImpl.getPage()` / `getAllAvailable()` 用 `wrapper.apply(CommaSeparatedFieldSql.contains("applicable_category"), category)` 筛选；`getAllAvailable()` 额外匹配 `NULL` 或空字符串（不限类别）。`getAllAvailable` 按项目类别返回适用政策文件，供检测阶段使用。
 
 ## 5. Redis 数据结构
 

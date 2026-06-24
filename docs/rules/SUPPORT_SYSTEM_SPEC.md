@@ -123,6 +123,8 @@
 | PUT | `/api/v1/policy-files/{id}/status` | 启用/禁用 |
 
 > 平台政策文件(`sup_policy_file`)与用户政策文件(`tb_policy_file`)是独立的两张表，各自管理。
+>
+> **适用类别多选**：`applicable_category` 支持多选（枚举同步项目类别 `SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE`），以逗号分隔存储；上传时前端传 `applicableCategories` 数组并 `join(',')`，查询用 `CommaSeparatedFieldSql.contains()` 筛选（详见 [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) 4.11）。
 
 ### 2.11 消息中心 (`/api/v1/messages`)
 
@@ -205,10 +207,10 @@
 | `sup_operation_log` | SysOperationLog | 操作日志（AOP切面写入） |
 | `sup_access_log` | SysAccessLog | HTTP访问日志 |
 | `sup_sys_parameter` | SysParameter | 系统参数，`param_group` / `param_key` / `param_value` / `param_type` / `param_name` / `description` / `sort_order` |
-| `sup_policy_file` | SupPolicyFile | 平台政策文件，`file_name` / `file_category` / `applicable_category` / `file_id` / `file_size` / `file_type` / `description` / `status` |
+| `sup_policy_file` | SupPolicyFile | 平台政策文件，`file_name` / `file_category` / `applicable_category`（多选逗号分隔 `SMALL_TRADE,GOVERNMENT_PROCUREMENT`，VARCHAR(100)）/ `file_id` / `file_size` / `file_type` / `description` / `status` |
 | `sup_message` | SupMessage | 消息通知，`user_id` / `title` / `content` / `message_type` / `biz_id` / `biz_type` / `is_read` / `read_time` |
 | `sup_sms_code` | SupSmsCode | 短信验证码 |
-| `sup_template` | SupTemplate | 招标文件模板，`template_name` / `project_category` / `project_type` / `file_id` / `content` / `structure_definition`(JSON) / `version_no` / `is_default` / `status` |
+| `sup_template` | SupTemplate | 招标文件模板，`template_name` / `project_category`（单选 SMALL_TRADE/GOVERNMENT_PROCUREMENT/COMPREHENSIVE_TRADE）/ `project_type`（单选 ENGINEERING/GOODS/SERVICE）/ `file_id` / `content` / `structure_definition`(JSON) / `review_config`(JSON，评审项配置) / `version_no` / `is_default` / `status` |
 | `sup_model_config` | SupModelConfig | AI模型配置，`model_name` / `model_type` / `provider` / `api_endpoint` / `api_key` / `model_params`(JSON) / `usage_scenario` / `is_active` / `token_usage` / `cost` |
 | `sup_model_route_rule` | SupModelRouteRule | 模型路由规则，`usage_scenario` / `primary_model_id` / `fallback_model_id` / `priority` / `is_active` |
 
@@ -223,6 +225,9 @@
 - 外部系统签名使用 `HMAC-SHA256`
 - 权限接口统一使用 `@RequirePermission`
 - 访问/操作日志查询后端接口统一归属本模块
+- **模板按 `project_category` + `project_type` 双维度配置**：`TemplateConfigServiceImpl.getPage()` 支持按两维度精确筛选；`setDefault()` 按同维度清除其他默认模板。5 份交易文件模板（小额交易货物/服务、政府采购货物/服务、综合交易）通过后台手动创建（init.sql 无种子数据），按对应类别+类型配置。
+- **模板 `review_config`**：JSON 配置启用的评审类型及是否生成评审标准（`reviewTypes[]{reviewType,enabled,generateStandard}`），驱动评审项按项目类别差异化生成（政府采购无符合性/资信标、技术用权重；综合交易无符合性、商务 AI 生成）。详见 [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) 4.6。
+- **模型配置种子数据**：`sup_model_config` init.sql 预置 DeepSeek 模型（GENERATION/OPTIMIZATION/DETECTION 三场景），运行时由 ai 模块 `ModelRouter` 路由。
 
 JWT 约束、字符集约束与通用安全规范见 [PROJECT_SPEC_FINAL.md](PROJECT_SPEC_FINAL.md)。
 

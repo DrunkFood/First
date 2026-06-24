@@ -48,13 +48,35 @@ flowchart TD
 
 ### 4.2 DetectionService.submit() 职责
 
-- 创建4条 `tb_detection_record`（每种检测类型一条）
-- 提交4项 AI任务到 `ai_task` 表
+- 调用 `buildDetectionContent()` 构建检测内容（见 4.4）
+- 创建4条 `tb_detection_record`（每种检测类型一条，`content_file_id=null`，`content_snapshot=检测内容`）
+- 提交4项 AI任务到 `ai_task` 表，`DetectionParams.content` 传入检测内容文本
 - 更新项目 Status 为 DETECTING
 
 ### 4.3 DetectionService.submit() 不做的事
 
 - **不自行推进阶段**，阶段推进由 PhaseFlowController 统一管理
+
+### 4.4 检测内容范围（仅系统生成内容）
+
+智能检测**仅检测系统生成的招标需求内容 + 评审项标准，不检测模板内容**。`buildDetectionContent(project, reviewItems)` 拼接纯文本：
+
+```
+Requirement Content
+{project.requirementContent}
+
+Review Items
+- [COMPLIANCE] {评审项标准}
+- [TECHNICAL] {评审项标准}
+...
+```
+
+- `tb_detection_record.content_file_id` 始终为 `null`（旧版本传 `project.generatedFileId` 检测最终 Word 文件，已废弃）
+- 检测内容存入 `content_snapshot` 字段并作为 `DetectionParams.content` 传入 AI 任务
+- 模板的 `content`/`structureDefinition`/`reviewConfig` 等完全不在检测范围内
+- `retry()` 重试同样用 `buildDetectionContent()` 重建内容
+
+> **检测对象 vs 定位对象**：检测对象是上述纯文本快照，但 issue 的 `locationRef` 仍基于 `project.generated_file_id` 对应的 Word 文件提取 segments 来定位（见第 6 节），用于后续"接受即修复"时精准定位 Word 段落。
 
 ## 5. 检测执行
 
@@ -75,7 +97,7 @@ flowchart TD
 
 ## 6. locationRef 自动填充
 
-检测完成后自动为每个 issue 填充 `locationRef`，用于精准定位 Word 文档中的问题位置。
+检测完成后自动为每个 issue 填充 `locationRef`，用于精准定位 Word 文档中的问题位置。注意：检测内容是 4.4 节的纯文本快照，但 `locationRef` 基于 `project.generated_file_id` 对应的 Word 文件提取 segments 来定位——即"检测纯文本、定位 Word 文件"，便于后续"接受即修复"直接修改 Word 段落。
 
 ### 6.1 流程
 
@@ -184,6 +206,7 @@ DETECTION_FAILED → IN_PROGRESS → PENDING_DETECTION → DETECTING
 | 检测后状态未流转 | 检查是否所有 detection_record 已终态、是否仍有 handleStatus=0 的问题 |
 | 修复替换了错误位置 | 检查 `FixReplacement.locationRef` 是否为空（为空走全文档替换）、elementIndex 对应的 IBodyElement 类型是否与 type 字段一致 |
 | locationRef 定位失败 | 检查 `elementIndex` 是否越界、`WordTextExtractor` 是否已执行 |
+| 模板内容被误报为问题 | 检测仅作用于 `buildDetectionContent`（需求内容 + 评审项标准纯文本），模板内容不在检测范围；确认 `tb_detection_record.content_file_id` 为 null、`content_snapshot` 仅含需求与评审项 |
 
 ## 相关规范
 
