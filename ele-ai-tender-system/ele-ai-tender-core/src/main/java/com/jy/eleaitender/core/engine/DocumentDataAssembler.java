@@ -164,6 +164,7 @@ public class DocumentDataAssembler {
 
     private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped, ReviewConfig reviewConfig) {
         List<Map<String, String>> result = new ArrayList<>();
+        boolean weightMode = reviewConfig != null && reviewConfig.isWeightMode();
 
         for (String reviewType : typeLabels.keySet()) {
             List<TbProjectReviewItem> items = grouped.getOrDefault(reviewType, Collections.emptyList());
@@ -173,7 +174,7 @@ public class DocumentDataAssembler {
                     ? reviewConfig.isDistinguishSubjectivity(reviewType)
                     : (ReviewType.CREDIT.getCode().equals(reviewType) || ReviewType.TECHNICAL.getCode().equals(reviewType));
 
-            // 分类总分：取所有叶子节点 score 之和
+            // 分类总分：取所有叶子节点 score 之和（SCORE模式用于类别标签）
             Set<Long> parentIds = items.stream()
                     .map(TbProjectReviewItem::getParentId)
                     .filter(pid -> pid != null && pid > 0)
@@ -184,6 +185,7 @@ public class DocumentDataAssembler {
                     .filter(Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+            // SCORE模式：技术标（100分）；WEIGHT模式：类别标签在roots循环里按一级节点权重%拼接
             String categoryLabel = typeLabels.get(reviewType) + "（" + categoryScore.toPlainString() + "分）";
 
             Map<Long, List<TbProjectReviewItem>> childrenMap = items.stream()
@@ -197,7 +199,10 @@ public class DocumentDataAssembler {
                     .toList();
 
             for (TbProjectReviewItem root : roots) {
-                flattenForSummary(root, categoryLabel, hasSubjectivity, childrenMap, result);
+                String label = weightMode && root.getWeight() != null
+                        ? typeLabels.get(reviewType) + "（权重" + root.getWeight().toPlainString() + "%）"
+                        : categoryLabel;
+                flattenForSummary(root, label, hasSubjectivity, childrenMap, result);
             }
         }
         return result;
