@@ -72,7 +72,7 @@
               <el-button type="warning" disabled>回传至交易系统</el-button>
             </el-tooltip>
             <el-button type="primary" :icon="View" :disabled="!project?.generatedFileId" @click="showPreview = true">预览文档</el-button>
-            <el-button type="success" :icon="Download" @click="handleExport" :loading="exportLoading">导出文档</el-button>
+            <el-button type="success" :icon="Download" :disabled="!project?.generatedFileId" @click="handleExport" :loading="exportLoading">导出文档</el-button>
           </div>
         </div>
 
@@ -197,6 +197,7 @@ import {
   Document,
 } from '@element-plus/icons-vue'
 import { projectApi } from '@/api/project'
+import { fileApi } from '@/api/file'
 import { formatBudgetWanYuan } from '@/utils/budget'
 import { PROJECT_STATUS_MAP, PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -318,9 +319,23 @@ function handleEditProject() {
 }
 
 async function handleExport() {
+  const currentProject = project.value
+  if (!currentProject?.generatedFileId) {
+    ElMessage.warning('文档尚未生成，无法下载')
+    return
+  }
+
   exportLoading.value = true
   try {
-    await projectApi.export(projectId.value)
+    const blob = await fileApi.download(currentProject.generatedFileId) as unknown as Blob
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${currentProject.projectName || '招标文件'}.docx`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
     ElMessage.success('文档导出成功')
   } catch {
     ElMessage.error('文档导出失败')
