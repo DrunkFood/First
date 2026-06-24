@@ -6,6 +6,8 @@ import com.jy.eleaitender.ai.service.IModelConnectivityTestService;
 import com.jy.eleaitender.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,8 +46,7 @@ public class ModelConnectivityTestServiceImpl implements IModelConnectivityTestS
         try {
             ChatClient client = modelRouter.routeModel(modelConfigId);
             ChatResponse chatResponse = client.prompt()
-                    .system(SYSTEM_PROMPT)
-                    .user(DEFAULT_PROMPT)
+                    .messages(new SystemMessage(SYSTEM_PROMPT), new UserMessage(DEFAULT_PROMPT))
                     .call()
                     .chatResponse();
             response.setContent(extractContent(chatResponse));

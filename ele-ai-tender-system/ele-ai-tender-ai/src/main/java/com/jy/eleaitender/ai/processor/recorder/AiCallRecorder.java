@@ -1,12 +1,14 @@
 package com.jy.eleaitender.ai.processor.recorder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplateEscaper;
 import com.jy.eleaitender.ai.service.FileContentService;
 import com.jy.eleaitender.ai.service.IAiResponseLogService;
 import com.jy.eleaitender.common.entity.ai.AiResponseLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,20 +52,30 @@ public class AiCallRecorder {
     public String callAndRecord(ChatClient client, String systemPrompt, String userPrompt,
                                 String role, Long taskId, Long userId, List<String> fileIds) {
         String resolvedUserPrompt = buildUserPromptWithFiles(userPrompt, fileIds);
-        String promptTemplateSafeUserPrompt = PromptTemplateEscaper.escapeBraces(resolvedUserPrompt);
+        List<Message> messages = buildChatMessages(systemPrompt, resolvedUserPrompt);
 
         // 记录开始时间
         Date startTime = new Date();
 
         ChatResponse chatResponse = client.prompt()
-                .system(systemPrompt)
-                .user(promptTemplateSafeUserPrompt)
+                .messages(messages)
                 .call()
                 .chatResponse();
 
         String content = extractContent(chatResponse);
         record(chatResponse, content, systemPrompt, resolvedUserPrompt, startTime, role, taskId, null, userId);
         return content;
+    }
+
+    private List<Message> buildChatMessages(String systemPrompt, String userPrompt) {
+        List<Message> messages = new ArrayList<>();
+        if (systemPrompt != null && !systemPrompt.isBlank()) {
+            messages.add(new SystemMessage(systemPrompt));
+        }
+        if (userPrompt != null && !userPrompt.isBlank()) {
+            messages.add(new UserMessage(userPrompt));
+        }
+        return messages;
     }
 
     /**

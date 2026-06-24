@@ -3,7 +3,6 @@ package com.jy.eleaitender.ai.service.impl;
 import com.jy.eleaitender.ai.dto.request.ChatRequest;
 import com.jy.eleaitender.ai.dto.request.OptimizeRequest;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
-import com.jy.eleaitender.ai.processor.prompt.PromptTemplateEscaper;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
@@ -14,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +78,10 @@ public class AiChatServiceImpl implements IAiChatService {
                 }
 
                 String userPrompt = buildUserPrompt(request);
+                List<Message> messages = new ArrayList<>();
+                messages.add(new SystemMessage(SystemPromptTemplates.AI_ASSISTANT));
+                messages.addAll(chatMessages);
+                messages.add(new UserMessage(userPrompt));
 
                 // 记录开始时间
                 Date startTime = new Date();
@@ -87,9 +91,7 @@ public class AiChatServiceImpl implements IAiChatService {
                 AtomicReference<ChatResponse> lastResponseRef = new AtomicReference<>();
 
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
-                        .system(SystemPromptTemplates.AI_ASSISTANT)
-                        .messages(chatMessages)
-                        .user(PromptTemplateEscaper.escapeBraces(userPrompt))
+                        .messages(messages)
                         .stream()
                         .chatResponse();
 
@@ -126,6 +128,9 @@ public class AiChatServiceImpl implements IAiChatService {
 
                 String userPrompt = PromptBuilder.buildTextOptimize(
                         request.getContent(), request.getRequirement());
+                List<Message> messages = List.of(
+                        new SystemMessage(SystemPromptTemplates.TEXT_OPTIMIZE),
+                        new UserMessage(userPrompt));
 
                 // 记录开始时间
                 Date startTime = new Date();
@@ -135,8 +140,7 @@ public class AiChatServiceImpl implements IAiChatService {
                 AtomicReference<ChatResponse> lastResponseRef = new AtomicReference<>();
 
                 Flux<ChatResponse> chatResponseFlux = chatClient.prompt()
-                        .system(SystemPromptTemplates.TEXT_OPTIMIZE)
-                        .user(PromptTemplateEscaper.escapeBraces(userPrompt))
+                        .messages(messages)
                         .stream()
                         .chatResponse();
 

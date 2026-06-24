@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
         '/file-api': {
           target: fileApiTarget,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/file-api/, ''),
+          rewrite: (path) => path.replace(/^\/file-api/, '/api'),
           configure: (proxy) => {
             proxy.on('proxyReq', logProxyRequest(fileApiTarget))
           },
