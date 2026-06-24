@@ -52,7 +52,7 @@ public class DetectionPhaseTrigger implements PhaseTrigger {
             log.info("自动提交智能检测: projectId={}, policyFileCount={}",
                     project.getId(), policyFileIds != null ? policyFileIds.size() : 0);
         } catch (Exception e) {
-            log.warn("自动提交检测失败: projectId={}, error={}", project.getId(), e.getMessage());
+            log.warn("自动提交检测失败: projectId={}, error={}", project.getId(), e.getMessage(), e);
         }
     }
 

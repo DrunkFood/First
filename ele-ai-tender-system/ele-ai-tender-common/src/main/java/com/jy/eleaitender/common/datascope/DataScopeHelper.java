@@ -3,12 +3,14 @@ package com.jy.eleaitender.common.datascope;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.mapping.MappedStatement;
 
 /**
  * 数据隔离工具类
  * 提供管理员判断、用户ID获取、归属校验等通用方法
  */
+@Slf4j
 public class DataScopeHelper {
 
     private DataScopeHelper() {
@@ -95,13 +97,14 @@ public class DataScopeHelper {
      * 检查 MappedStatement 对应的方法是否标记了 @DataScope(skip=true)
      */
     public static boolean isDataScopeSkip(MappedStatement ms) {
+        String className = null;
         try {
             String id = ms.getId();
             int lastDot = id.lastIndexOf('.');
             if (lastDot < 0) {
                 return false;
             }
-            String className = id.substring(0, lastDot);
+            className = id.substring(0, lastDot);
             String methodName = id.substring(lastDot + 1);
 
             Class<?> mapperClass = Class.forName(className);
@@ -117,7 +120,7 @@ public class DataScopeHelper {
                 }
             }
         } catch (ClassNotFoundException e) {
-            // Mapper 接口找不到，不影响主流程
+            log.warn("Mapper接口找不到，跳过DataScope注解检查: mapperClass={}", className, e);
         }
         return false;
     }

@@ -2,6 +2,7 @@ package com.jy.eleaitender.interaction.core.support;
 
 import com.jy.eleaitender.common.interaction.constant.InteractionHeaderConstants;
 import com.jy.eleaitender.common.interaction.dto.InteractionResult;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -16,6 +17,7 @@ import java.util.Map;
 /**
  * 提取交互日志的业务上下文。
  */
+@Slf4j
 public final class InteractionLogContextExtractor {
 
     private InteractionLogContextExtractor() {
@@ -105,8 +107,10 @@ public final class InteractionLogContextExtractor {
             }
             return values;
         } catch (IntrospectionException e) {
+            log.warn("交互日志上下文内省失败: sourceType={}", resolveTypeName(source), e);
             return java.util.Collections.emptyMap();
         } catch (ReflectiveOperationException e) {
+            log.warn("交互日志上下文读取属性失败: sourceType={}", resolveTypeName(source), e);
             return java.util.Collections.emptyMap();
         }
     }

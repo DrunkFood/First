@@ -78,13 +78,13 @@ public class AiContentFeedbackServiceImpl implements IAiContentFeedbackService {
         try {
             FeedbackType.fromCode(request.getFeedbackType());
         } catch (IllegalArgumentException e) {
-            throw new BusinessException(ResponseCode.PARAM_ERROR, "无效的反馈类型: " + request.getFeedbackType());
+            throw new BusinessException(ResponseCode.PARAM_ERROR, "无效的反馈类型: " + request.getFeedbackType(), e);
         }
         // 校验反馈场景
         try {
             FeedbackScene.fromCode(request.getFeedbackScene());
         } catch (IllegalArgumentException e) {
-            throw new BusinessException(ResponseCode.PARAM_ERROR, "无效的反馈场景: " + request.getFeedbackScene());
+            throw new BusinessException(ResponseCode.PARAM_ERROR, "无效的反馈场景: " + request.getFeedbackScene(), e);
         }
         // 生成内容反馈必须有 taskId
         if (FeedbackScene.GENERATION_CONTENT.getCode().equals(request.getFeedbackScene())

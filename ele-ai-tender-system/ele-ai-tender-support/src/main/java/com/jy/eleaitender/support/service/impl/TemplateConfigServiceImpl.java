@@ -72,7 +72,7 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
                 WordStructureVO structure = fileServiceClient.getFileStructure(template.getFileId());
                 template.setStructureDefinition(toStructureJson(structure));
             } catch (Exception e) {
-                log.warn("解析Word文件结构失败，fileId={}: {}", template.getFileId(), e.getMessage());
+                log.warn("解析Word文件结构失败，fileId={}: {}", template.getFileId(), e.getMessage(), e);
             }
         }
         templateMapper.insert(template);
@@ -90,7 +90,7 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
                     WordStructureVO structure = fileServiceClient.getFileStructure(template.getFileId());
                     template.setStructureDefinition(toStructureJson(structure));
                 } catch (Exception e) {
-                    log.warn("解析Word文件结构失败，fileId={}: {}", template.getFileId(), e.getMessage());
+                    log.warn("解析Word文件结构失败，fileId={}: {}", template.getFileId(), e.getMessage(), e);
                 }
             }
         }
@@ -147,7 +147,7 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             return mapper.writeValueAsString(structure);
         } catch (Exception e) {
-            log.warn("序列化Word结构失败: {}", e.getMessage());
+            log.warn("序列化Word结构失败: {}", e.getMessage(), e);
             return null;
         }
     }

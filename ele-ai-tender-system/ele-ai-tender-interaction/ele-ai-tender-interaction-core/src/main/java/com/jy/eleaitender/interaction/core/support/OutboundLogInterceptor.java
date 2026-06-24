@@ -52,8 +52,8 @@ public class OutboundLogInterceptor implements ClientHttpRequestInterceptor {
                 if (response != null) {
                     status = response.getStatusCode().value();
                 }
-            } catch (IOException ignored) {
-                // ignore response status parsing issues for logging only
+            } catch (IOException e) {
+                log.warn("读取出站HTTP响应状态失败: traceId={}", traceId, e);
             }
             log.info("HTTP OUT traceId={} method={} url={} status={} elapsedMs={} auth={} appKey={} signature={}",
                     traceId,

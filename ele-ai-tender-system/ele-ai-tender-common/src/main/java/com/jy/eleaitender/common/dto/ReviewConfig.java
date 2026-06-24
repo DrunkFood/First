@@ -43,7 +43,7 @@ public class ReviewConfig {
         try {
             return objectMapper.readValue(json, ReviewConfig.class);
         } catch (Exception e) {
-            log.warn("ReviewConfig JSON解析失败，回退默认配置: {}", e.getMessage());
+            log.warn("ReviewConfig JSON解析失败，回退默认配置: {}", e.getMessage(), e);
             return defaultConfig();
         }
     }

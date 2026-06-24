@@ -109,7 +109,7 @@ public abstract class BaseDetector {
                 result.setScore(100);
             }
         } catch (Exception e) {
-            log.warn("解析检测结果失败, type={}: {}", getDetectionType(), e.getMessage());
+            log.warn("解析检测结果失败, type={}: {}", getDetectionType(), e.getMessage(), e);
             result.setIssues(new ArrayList<>());
             result.setScore(0);
             result.setError("检测结果解析失败: " + e.getMessage());

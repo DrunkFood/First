@@ -162,6 +162,7 @@ public class ModelConfigServiceImpl implements IModelConfigService {
                 vo.setApiKey(AesUtil.mask(plainApiKey));
             } catch (Exception e) {
                 // 解密失败（如历史明文数据），直接脱敏
+                log.warn("API密钥解密失败，按原值脱敏展示: modelConfigId={}", entity.getId(), e);
                 vo.setApiKey(AesUtil.mask(entity.getApiKey()));
             }
         }

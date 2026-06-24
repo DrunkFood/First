@@ -73,7 +73,7 @@ public class RsaKeyUtil {
         try {
             return RsaKeyUtil.decrypt(keyId, encryptedPassword);
         } catch (SecurityException e) {
-            log.warn("RSA解密失败，keyId={}: {}", keyId, e.getMessage());
+            log.warn("RSA解密失败，keyId={}: {}", keyId, e.getMessage(), e);
             throw new BusinessException("密码解密失败，请重新获取公钥");
         } catch (Exception e) {
             log.error("RSA解密异常，keyId={}", keyId, e);

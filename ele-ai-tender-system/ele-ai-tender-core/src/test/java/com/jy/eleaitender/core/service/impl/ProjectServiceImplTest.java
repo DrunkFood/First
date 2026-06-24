@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
@@ -9,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,13 +31,28 @@ class ProjectServiceImplTest {
     @Test
     void createRejectsDuplicateProjectCodeGlobally() {
         TbProject project = validProject("PRJ-001");
-        when(projectMapper.selectCount(any())).thenReturn(1L);
+        when(projectMapper.countByProjectCodeIncludingDeleted("PRJ-001", null)).thenReturn(1L);
 
         assertThatThrownBy(() -> projectService.create(project))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("项目编号已存在");
 
         verify(projectMapper, never()).insert(any(TbProject.class));
+    }
+
+    @Test
+    void createConvertsProjectCodeUniqueConstraintToBusinessException() {
+        TbProject project = validProject("PRJ-001");
+        when(projectMapper.countByProjectCodeIncludingDeleted("PRJ-001", null)).thenReturn(0L);
+        when(projectMapper.selectCount(any())).thenReturn(0L);
+        when(projectMapper.insert(any(TbProject.class)))
+                .thenThrow(new DuplicateKeyException("Duplicate entry 'PRJ-001' for key 'uk_project_code'"));
+
+        assertThatThrownBy(() -> projectService.create(project))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("项目编号已存在")
+                .satisfies(exception -> assertThat(((BusinessException) exception).getCode())
+                        .isEqualTo(ResponseCode.PROJECT_EXISTS.getCode()));
     }
 
     @Test

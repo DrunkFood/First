@@ -50,7 +50,7 @@ public class ReviewItemTrigger implements PhaseTrigger {
             log.info("自动触发评审项生成: projectId={}, taskId={}", project.getId(), task.getId());
         } catch (Exception e) {
             log.warn("自动触发评审项生成失败（可能已有活跃任务）: projectId={}, error={}",
-                    project.getId(), e.getMessage());
+                    project.getId(), e.getMessage(), e);
         }
     }
 

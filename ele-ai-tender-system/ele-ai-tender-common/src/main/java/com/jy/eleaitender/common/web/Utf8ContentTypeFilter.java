@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -17,6 +18,7 @@ import java.util.Locale;
  * 1. 请求/响应编码统一兜底 UTF-8
  * 2. 文本类响应未携带 charset 时自动追加 charset=UTF-8
  */
+@Slf4j
 public class Utf8ContentTypeFilter extends OncePerRequestFilter {
 
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
@@ -85,6 +87,7 @@ public class Utf8ContentTypeFilter extends OncePerRequestFilter {
         try {
             return StandardCharsets.ISO_8859_1.name().equalsIgnoreCase(Charset.forName(encoding).name());
         } catch (Exception ex) {
+            log.warn("判断请求编码是否ISO-8859-1失败: encoding={}", encoding, ex);
             return false;
         }
     }

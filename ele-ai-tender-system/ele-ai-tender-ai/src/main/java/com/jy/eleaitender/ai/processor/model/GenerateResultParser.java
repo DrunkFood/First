@@ -43,6 +43,7 @@ public class GenerateResultParser {
         try {
             return objectMapper.writeValueAsString(Map.of(key, value));
         } catch (Exception e) {
+            log.warn("构造JSON结果失败: key={}, error={}", key, e.getMessage(), e);
             return "{\"" + key + "\": \"\"}";
         }
     }
@@ -75,7 +76,7 @@ public class GenerateResultParser {
             objectMapper.readTree(cleaned);
             return cleaned;
         } catch (Exception e) {
-            log.warn("AI输出非合法JSON，尝试容错处理: {}", e.getMessage());
+            log.warn("AI输出非合法JSON，尝试容错处理: {}", e.getMessage(), e);
             // 尝试找到第一个 { 和最后一个 }
             return tryExtractJsonBlock(cleaned);
         }
@@ -113,6 +114,7 @@ public class GenerateResultParser {
             JsonNode node = objectMapper.readTree(json);
             return node.has(fieldName);
         } catch (Exception e) {
+            log.warn("校验JSON字段失败: fieldName={}, error={}", fieldName, e.getMessage(), e);
             return false;
         }
     }
@@ -129,7 +131,7 @@ public class GenerateResultParser {
                 objectMapper.readTree(candidate);
                 return candidate;
             } catch (Exception e) {
-                log.warn("容错提取JSON失败");
+                log.warn("容错提取JSON失败: {}", e.getMessage(), e);
             }
         }
         // 无法提取，返回原始内容包装为JSON
@@ -140,6 +142,7 @@ public class GenerateResultParser {
         try {
             return objectMapper.writeValueAsString(text);
         } catch (Exception e) {
+            log.warn("转义JSON字符串失败，使用手动转义兜底: {}", e.getMessage(), e);
             return "\"" + text.replace("\"", "\\\"").replace("\n", "\\n") + "\"";
         }
     }

@@ -16,8 +16,10 @@ import com.jy.eleaitender.core.statemachine.PhaseFlowController;
 import com.jy.eleaitender.core.statemachine.ProjectStateMachine;
 import com.jy.eleaitender.core.statemachine.trigger.*;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -32,8 +34,11 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * 项目服务实现
  */
+@Slf4j
 @Service
 public class ProjectServiceImpl implements IProjectService {
+
+    private static final String PROJECT_CODE_UNIQUE_KEY = "uk_project_code";
 
     @Autowired
     private TbProjectMapper projectMapper;
@@ -142,7 +147,15 @@ public class ProjectServiceImpl implements IProjectService {
         if (project.getProgress() == null) {
             project.setProgress(0);
         }
-        projectMapper.insert(project);
+        try {
+            projectMapper.insert(project);
+        } catch (DataIntegrityViolationException e) {
+            if (isProjectCodeUniqueViolation(e)) {
+                log.warn("项目编号重复: projectCode={}", project.getProjectCode(), e);
+                throwProjectCodeExists(project.getProjectCode());
+            }
+            throw e;
+        }
         return project;
     }
 
@@ -203,12 +216,14 @@ public class ProjectServiceImpl implements IProjectService {
             ProjectPhase phase = ProjectPhase.fromCode(project.getCurrentPhase());
             vo.setCurrentPhaseName(phase.getLabel());
         } catch (Exception e) {
+            log.warn("项目阶段转换失败: projectId={}, currentPhase={}", projectId, project.getCurrentPhase(), e);
             vo.setCurrentPhaseName("未知");
         }
         try {
             ProjectStatus status = ProjectStatus.fromCode(project.getStatus());
             vo.setStatusName(status.getLabel());
         } catch (Exception e) {
+            log.warn("项目状态转换失败: projectId={}, status={}", projectId, project.getStatus(), e);
             vo.setStatusName(project.getStatus());
         }
         return vo;
@@ -281,14 +296,26 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     private void validateProjectCodeUnique(String projectCode, Long excludeId) {
-        LambdaQueryWrapper<TbProject> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(TbProject::getProjectCode, projectCode);
-        if (excludeId != null) {
-            wrapper.ne(TbProject::getId, excludeId);
+        if (projectMapper.countByProjectCodeIncludingDeleted(projectCode, excludeId) > 0) {
+            throwProjectCodeExists(projectCode);
         }
-        if (projectMapper.selectCount(wrapper) > 0) {
-            throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目编号已存在: " + projectCode);
+    }
+
+    private void throwProjectCodeExists(String projectCode) {
+        throw new BusinessException(ResponseCode.PROJECT_EXISTS, "项目编号已存在，请更换项目编号: " + projectCode);
+    }
+
+    private boolean isProjectCodeUniqueViolation(Throwable e) {
+        Throwable current = e;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && (message.contains(PROJECT_CODE_UNIQUE_KEY)
+                    || (message.contains("project_code") && message.contains("Duplicate entry")))) {
+                return true;
+            }
+            current = current.getCause();
         }
+        return false;
     }
 
     private void validateProjectNameUnique(String projectName, Long excludeId) {

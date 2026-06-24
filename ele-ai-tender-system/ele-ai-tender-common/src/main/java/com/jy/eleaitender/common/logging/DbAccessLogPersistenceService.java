@@ -43,7 +43,8 @@ public class DbAccessLogPersistenceService implements AccessLogPersistenceServic
                     log.warn("访问日志落库失败 traceId={} uri={} error={}",
                             accessLog.getTraceId(),
                             accessLog.getRequestUri(),
-                            e.getMessage());
+                            e.getMessage(),
+                            e);
                 }
             }
         };
@@ -54,7 +55,8 @@ public class DbAccessLogPersistenceService implements AccessLogPersistenceServic
             } catch (RuntimeException e) {
                 log.warn("访问日志异步提交失败，改为同步落库 traceId={} error={}",
                         accessLog.getTraceId(),
-                        e.getMessage());
+                        e.getMessage(),
+                        e);
             }
         }
         task.run();

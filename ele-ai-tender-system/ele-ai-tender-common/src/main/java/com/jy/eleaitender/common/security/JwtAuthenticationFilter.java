@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final StringRedisTemplate redisTemplate;
@@ -159,7 +161,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 loginUser.setRoles(new ArrayList<>(roles));
             }
         } catch (Exception e) {
-            // Redis 读取失败不影响主流程
+            log.warn("从Redis加载用户角色失败: userId={}", loginUser.getUserId(), e);
         }
     }
 }

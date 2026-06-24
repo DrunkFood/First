@@ -124,6 +124,7 @@ public class DynamicThreadPoolManager {
                     oldExecutor.shutdownNow();
                 }
             } catch (InterruptedException e) {
+                log.warn("等待旧线程池关闭被中断", e);
                 oldExecutor.shutdownNow();
                 Thread.currentThread().interrupt();
             }

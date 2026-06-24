@@ -182,6 +182,7 @@ public class DetectionResultParser {
         try {
             return DetectionType.fromCode(code).getLabel();
         } catch (Exception e) {
+            log.warn("检测类型转换失败: code={}", code, e);
             return code;
         }
     }

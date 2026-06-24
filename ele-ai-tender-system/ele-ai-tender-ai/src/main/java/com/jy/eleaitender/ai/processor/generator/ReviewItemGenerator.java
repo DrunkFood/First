@@ -136,6 +136,7 @@ public class ReviewItemGenerator {
             JsonNode reviewItems = root.get("reviewItems");
             return reviewItems != null && reviewItems.isArray();
         } catch (Exception e) {
+            log.warn("校验评审项JSON失败: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -158,7 +159,7 @@ public class ReviewItemGenerator {
                 return toReviewItemsJson(categoryItems);
             }
         } catch (Exception e) {
-            log.warn("评审项生成结果JSON归一化失败: taskId={}, error={}", taskId, e.getMessage());
+            log.warn("评审项生成结果JSON归一化失败: taskId={}, error={}", taskId, e.getMessage(), e);
         }
         return extractedJson;
     }

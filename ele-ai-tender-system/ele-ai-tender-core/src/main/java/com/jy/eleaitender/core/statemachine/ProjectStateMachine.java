@@ -4,6 +4,7 @@ import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.entity.core.TbProject;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +13,7 @@ import java.util.Set;
  * 项目状态机
  * 定义合法的状态转换规则
  */
+@Slf4j
 public class ProjectStateMachine {
 
     private static final Map<ProjectStatus, Set<ProjectStatus>> TRANSITIONS = Map.of(
@@ -50,6 +52,7 @@ public class ProjectStateMachine {
             ProjectStatus current = ProjectStatus.fromCode(currentStatusCode);
             return TRANSITIONS.getOrDefault(current, Set.of()).contains(target);
         } catch (Exception e) {
+            log.warn("检查项目状态转换失败: currentStatusCode={}, target={}", currentStatusCode, target, e);
             return false;
         }
     }

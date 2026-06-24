@@ -50,7 +50,7 @@ export const fileApi = {
     formData.append('file', file)
     formData.append('bizType', bizType)
     
-    return fileService.post('/api/file/upload', formData, {
+    return fileService.post('/file/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -65,17 +65,17 @@ export const fileApi = {
   
   // 获取文件下载地址
   getDownloadUrl(fileId: string): string {
-    return `/file-api/api/file/download/${fileId}`
+    return `/file-api/file/download/${fileId}`
   },
   
   // 删除文件
   download(fileId: string | number): Promise<Blob> {
-    return fileService.get(`/api/file/download/${fileId}`, {
+    return fileService.get(`/file/download/${fileId}`, {
       responseType: 'blob',
     }).then(res => res.data as Blob)
   },
 
   delete(fileId: string): Promise<ApiResponse<void>> {
-    return fileService.delete(`/api/file/delete/${fileId}`).then(res => res.data)
+    return fileService.delete(`/file/delete/${fileId}`).then(res => res.data)
   },
 }

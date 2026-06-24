@@ -130,6 +130,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
             AiTaskType taskType = AiTaskType.fromCode(task.getTaskType());
             vo.setTaskTypeName(taskType.getLabel());
         } catch (Exception e) {
+            log.warn("AI任务类型转换失败: taskId={}, taskType={}", task.getId(), task.getTaskType(), e);
             vo.setTaskTypeName(task.getTaskType());
         }
 
@@ -137,6 +138,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
             AiTaskStatus taskStatus = AiTaskStatus.fromCode(task.getStatus());
             vo.setStatusName(taskStatus.getLabel());
         } catch (Exception e) {
+            log.warn("AI任务状态转换失败: taskId={}, status={}", task.getId(), task.getStatus(), e);
             vo.setStatusName(task.getStatus());
         }
 

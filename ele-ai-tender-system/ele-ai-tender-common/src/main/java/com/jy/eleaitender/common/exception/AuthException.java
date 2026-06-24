@@ -18,8 +18,18 @@ public class AuthException extends RuntimeException {
         this.code = ResponseCode.UNAUTHORIZED.getCode();
     }
 
+    public AuthException(String message, Throwable cause) {
+        super(message, cause);
+        this.code = ResponseCode.UNAUTHORIZED.getCode();
+    }
+
     public AuthException(int code, String message) {
         super(message);
+        this.code = code;
+    }
+
+    public AuthException(int code, String message, Throwable cause) {
+        super(message, cause);
         this.code = code;
     }
 
@@ -30,6 +40,11 @@ public class AuthException extends RuntimeException {
 
     public AuthException(ResponseCode responseCode, String message) {
         super(message);
+        this.code = responseCode.getCode();
+    }
+
+    public AuthException(ResponseCode responseCode, String message, Throwable cause) {
+        super(message, cause);
         this.code = responseCode.getCode();
     }
 }

@@ -35,7 +35,7 @@ public class InteractionSignatureInterceptor implements HandlerInterceptor {
         try {
             timestamp = Long.parseLong(timestampText);
         } catch (NumberFormatException e) {
-            throw new InteractionException(InteractionResponseCode.PARAM_ERROR, "时间戳格式错误");
+            throw new InteractionException(InteractionResponseCode.PARAM_ERROR, "时间戳格式错误", e);
         }
         // 只有 appKey 匹配当前 starter 配置且签名正确，才允许进入业务 SPI。
         if (!equals(properties.getAppKey(), appKey)

@@ -107,6 +107,7 @@ public class DetectionEngine {
                     "score", result.getScore()
             ));
         } catch (Exception e) {
+            log.warn("序列化检测结果失败: {}", e.getMessage(), e);
             return "{\"issues\": [], \"score\": 0, \"error\": \"结果序列化失败\"}";
         }
     }

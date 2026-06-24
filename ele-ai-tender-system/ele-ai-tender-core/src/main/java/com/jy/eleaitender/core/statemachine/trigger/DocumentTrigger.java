@@ -30,7 +30,7 @@ public class DocumentTrigger implements PhaseTrigger {
                     project.getId(), task.getId());
         } catch (Exception e) {
             log.warn("自动触发项目文档集成失败（可能已有活跃任务）: projectId={}, error={}",
-                    project.getId(), e.getMessage());
+                    project.getId(), e.getMessage(), e);
         }
     }
 

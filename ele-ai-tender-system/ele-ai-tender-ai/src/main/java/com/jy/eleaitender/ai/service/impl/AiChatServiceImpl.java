@@ -212,7 +212,7 @@ public class AiChatServiceImpl implements IAiChatService {
                     .name("message")
                     .data("{\"content\":\"" + escapeJson(chunk) + "\"}"));
         } catch (IOException e) {
-            log.debug("SSE发送失败(客户端可能已断开): {}", e.getMessage());
+            log.debug("SSE发送失败(客户端可能已断开): {}", e.getMessage(), e);
         }
     }
 
@@ -223,7 +223,7 @@ public class AiChatServiceImpl implements IAiChatService {
                     .data("{\"content\":\"[DONE]\"}"));
             emitter.complete();
         } catch (IOException e) {
-            log.debug("SSE完成通知发送失败: {}", e.getMessage());
+            log.debug("SSE完成通知发送失败: {}", e.getMessage(), e);
         }
     }
 
@@ -235,6 +235,7 @@ public class AiChatServiceImpl implements IAiChatService {
                     .data("{\"error\":\"" + escapeJson(error.getMessage()) + "\"}"));
             emitter.complete();
         } catch (IOException e) {
+            log.warn("SSE错误通知发送失败: {}", e.getMessage(), e);
             emitter.completeWithError(error);
         }
     }

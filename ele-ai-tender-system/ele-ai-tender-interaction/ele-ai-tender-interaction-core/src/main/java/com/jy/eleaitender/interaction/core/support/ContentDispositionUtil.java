@@ -1,11 +1,13 @@
 package com.jy.eleaitender.interaction.core.support;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 
 /**
  * Content-Disposition 头解析工具。
  */
+@Slf4j
 public final class ContentDispositionUtil {
 
     private ContentDispositionUtil() {
@@ -21,7 +23,8 @@ public final class ContentDispositionUtil {
             if (disposition != null && disposition.getFilename() != null) {
                 return disposition.getFilename();
             }
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException e) {
+            log.warn("标准Content-Disposition解析失败，使用原始头兜底解析: {}", e.getMessage(), e);
         }
 
         String contentDisposition = headers.getFirst(HttpHeaders.CONTENT_DISPOSITION);

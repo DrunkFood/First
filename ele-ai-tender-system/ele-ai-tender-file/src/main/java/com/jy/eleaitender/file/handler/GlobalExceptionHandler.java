@@ -21,28 +21,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleAuthException(AuthException e) {
-        log.error("认证异常: {}", e.getMessage());
+        log.error("认证异常: {}", e.getMessage(), e);
         return Result.fail(e.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(FileException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleFileException(FileException e) {
-        log.error("文件异常: {}", e.getMessage());
+        log.error("文件异常: {}", e.getMessage(), e);
         return Result.fail(e.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleBusinessException(BusinessException e) {
-        log.error("业务异常: {}", e.getMessage());
+        log.error("业务异常: {}", e.getMessage(), e);
         return Result.fail(e.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
-        log.error("文件大小超出限制: {}", e.getMessage());
+        log.error("文件大小超出限制: {}", e.getMessage(), e);
         return Result.fail(5004, "文件大小超出限制");
     }
 

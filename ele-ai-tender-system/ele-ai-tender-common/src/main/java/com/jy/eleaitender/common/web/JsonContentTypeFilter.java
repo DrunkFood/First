@@ -7,6 +7,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ import java.util.Set;
 /**
  * 统一约束请求体媒体类型：仅允许 JSON（文件上传场景允许 multipart/form-data）。
  */
+@Slf4j
 public class JsonContentTypeFilter extends OncePerRequestFilter {
 
     private static final Set<String> CONTENT_TYPE_CHECK_METHODS = Set.of(
@@ -65,6 +67,7 @@ public class JsonContentTypeFilter extends OncePerRequestFilter {
         try {
             mediaType = MediaType.parseMediaType(contentType);
         } catch (IllegalArgumentException ex) {
+            log.warn("解析Content-Type失败: contentType={}", contentType, ex);
             return false;
         }
         if (MediaType.MULTIPART_FORM_DATA.includes(mediaType)) {

@@ -37,7 +37,7 @@ public class InteractionGlobalExceptionHandler {
     @ExceptionHandler(InteractionException.class)
     @ResponseStatus(HttpStatus.OK)
     public InteractionResult<?> handleInteractionException(InteractionException e) {
-        log.error("交互业务异常: {}", e.getMessage());
+        log.error("交互业务异常: {}", e.getMessage(), e);
         return InteractionResult.fail(e.getCode(), e.getMessage());
     }
 
@@ -47,6 +47,7 @@ public class InteractionGlobalExceptionHandler {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
+        log.error("交互参数校验失败: {}", message, e);
         return InteractionResult.fail(400, message);
     }
 
@@ -57,6 +58,7 @@ public class InteractionGlobalExceptionHandler {
         String message = fieldErrors.stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
+        log.error("交互参数绑定失败: {}", message, e);
         return InteractionResult.fail(400, message);
     }
 

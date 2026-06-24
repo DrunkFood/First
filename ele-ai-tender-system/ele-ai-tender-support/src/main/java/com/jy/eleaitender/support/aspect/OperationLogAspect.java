@@ -109,6 +109,7 @@ public class OperationLogAspect {
             }
             return ip;
         } catch (Exception e) {
+            log.warn("获取客户端IP失败: {}", e.getMessage(), e);
             return "unknown";
         }
     }
@@ -137,6 +138,7 @@ public class OperationLogAspect {
             String result = sb.toString();
             return result.length() > 2000 ? result.substring(0, 2000) : result;
         } catch (Exception e) {
+            log.warn("操作日志参数序列化失败: {}", e.getMessage(), e);
             return "参数序列化失败";
         }
     }

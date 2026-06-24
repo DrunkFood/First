@@ -28,14 +28,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleAuthException(AuthException e) {
-        log.error("认证异常: {}", e.getMessage());
+        log.error("认证异常: {}", e.getMessage(), e);
         return Result.fail(e.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleBusinessException(BusinessException e) {
-        log.error("业务异常: {}", e.getMessage());
+        log.error("业务异常: {}", e.getMessage(), e);
         return Result.fail(e.getCode(), e.getMessage());
     }
 
@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
         String message = fieldErrors.stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        log.error("参数校验失败: {}", message);
+        log.error("参数校验失败: {}", message, e);
         return Result.fail(400, message);
     }
 
@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
         String message = fieldErrors.stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        log.error("参数绑定失败: {}", message);
+        log.error("参数绑定失败: {}", message, e);
         return Result.fail(400, message);
     }
 
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
         String message = "不支持的Content-Type，请使用application/json";
-        log.error("媒体类型不支持: {}", e.getMessage());
+        log.error("媒体类型不支持: {}", e.getMessage(), e);
         return Result.fail(ResponseCode.PARAM_ERROR.getCode(), message);
     }
 
@@ -73,7 +73,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.OK)
     public Result<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         String message = "请求体格式错误，请检查JSON结构";
-        log.error("请求体解析失败: {}", e.getMessage());
+        log.error("请求体解析失败: {}", e.getMessage(), e);
         return Result.fail(ResponseCode.PARAM_ERROR.getCode(), message);
     }
 

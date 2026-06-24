@@ -4,6 +4,7 @@ import com.jy.eleaitender.common.constant.CommonConstant;
 import com.jy.eleaitender.common.exception.AuthException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.crypto.SecretKey;
@@ -16,6 +17,7 @@ import java.util.UUID;
 /**
  * JWT工具类 (JJWT 0.12.x API)
  */
+@Slf4j
 public class JwtUtil {
 
     private JwtUtil() {}
@@ -220,9 +222,9 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException e) {
-            throw new AuthException("Token已过期");
+            throw new AuthException("Token已过期", e);
         } catch (Exception e) {
-            throw new AuthException("Token无效");
+            throw new AuthException("Token无效", e);
         }
     }
 
@@ -279,6 +281,7 @@ public class JwtUtil {
                     .parseSignedClaims(token);
             return true;
         } catch (Exception e) {
+            log.warn("Token校验失败: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -300,6 +303,7 @@ public class JwtUtil {
             long diff = expiration.getTime() - System.currentTimeMillis();
             return diff > 0 && diff < 5 * 60 * 1000;
         } catch (Exception e) {
+            log.warn("判断Token是否即将过期失败: {}", e.getMessage(), e);
             return false;
         }
     }

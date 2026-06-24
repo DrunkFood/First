@@ -6,6 +6,7 @@ import com.jy.eleaitender.common.entity.support.SysAccessLog;
 import com.jy.eleaitender.common.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ import java.util.Map;
 /**
  * HTTP访问日志辅助工具。
  */
+@Slf4j
 public final class HttpAccessLogSupport {
 
     private static final String LOG_TYPE_HTTP_IN = "HTTP_IN";
@@ -155,7 +157,8 @@ public final class HttpAccessLogSupport {
             }
             accessLog.setUserId(stringValue(claims.get("userId")));
             accessLog.setUserName(firstNonBlank(stringValue(claims.get("realName")), stringValue(claims.get("username"))));
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException e) {
+            log.warn("访问日志解析Token上下文失败: {}", e.getMessage(), e);
         }
     }
 
@@ -252,6 +255,7 @@ public final class HttpAccessLogSupport {
             return objectMapper.readValue(content, new TypeReference<Map<String, Object>>() {
             });
         } catch (Exception e) {
+            log.warn("访问日志解析请求JSON体失败: {}", e.getMessage(), e);
             return java.util.Collections.emptyMap();
         }
     }
@@ -293,6 +297,7 @@ public final class HttpAccessLogSupport {
         try {
             return Charset.forName(encoding);
         } catch (RuntimeException e) {
+            log.warn("访问日志解析字符集失败: encoding={}", encoding, e);
             return StandardCharsets.UTF_8;
         }
     }
@@ -304,6 +309,7 @@ public final class HttpAccessLogSupport {
         try {
             return StandardCharsets.ISO_8859_1.name().equalsIgnoreCase(Charset.forName(encoding.trim()).name());
         } catch (RuntimeException e) {
+            log.warn("访问日志判断字符集失败: encoding={}", encoding, e);
             return false;
         }
     }

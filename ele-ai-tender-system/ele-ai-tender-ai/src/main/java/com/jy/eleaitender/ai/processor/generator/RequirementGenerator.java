@@ -416,6 +416,7 @@ public class RequirementGenerator {
                 String content = future.getNow(null);
                 contents.add(content != null ? content : "> ⚠️ 本章节内容生成失败，请手动补充");
             } catch (Exception e) {
+                log.warn("读取章节生成结果失败: taskId={}", task.getId(), e);
                 contents.add("> ⚠️ 本章节内容生成失败，请手动补充");
             }
         }
@@ -542,7 +543,7 @@ public class RequirementGenerator {
         try {
             aiTaskMapper.updateResult(task.getId(), result);
         } catch (Exception e) {
-            log.warn("更新需求生成过程态失败: taskId={}, error={}", task.getId(), e.getMessage());
+            log.warn("更新需求生成过程态失败: taskId={}, error={}", task.getId(), e.getMessage(), e);
         }
     }
 
@@ -569,7 +570,7 @@ public class RequirementGenerator {
         try {
             return objectMapper.writeValueAsString(result);
         } catch (Exception e) {
-            log.warn("序列化需求生成过程态失败: {}", e.getMessage());
+            log.warn("序列化需求生成过程态失败: {}", e.getMessage(), e);
             return hasText(content) ? resultParser.toJsonResult("content", content) : "{}";
         }
     }
@@ -681,7 +682,7 @@ public class RequirementGenerator {
                     applyParams);
             return refinedContent;
         } catch (Exception e) {
-            log.warn("审查修订失败，使用原始内容: taskId={}, error={}", task.getId(), e.getMessage());
+            log.warn("审查修订失败，使用原始内容: taskId={}, error={}", task.getId(), e.getMessage(), e);
             return fullContent;
         }
     }
@@ -753,7 +754,7 @@ public class RequirementGenerator {
             log.info("审查修订完成: 应用{}项, 跳过{}项", applied, skipped);
             return result.toString();
         } catch (Exception e) {
-            log.warn("修订JSON解析失败，使用原始内容: {}", e.getMessage());
+            log.warn("修订JSON解析失败，使用原始内容: {}", e.getMessage(), e);
             return fullContent;
         }
     }
@@ -892,7 +893,8 @@ public class RequirementGenerator {
         }
         try {
             return objectMapper.writeValueAsString(objectMapper.readTree(rawJson));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("格式化JSON日志失败，使用原始文本: {}", e.getMessage(), e);
             return toJsonLog(rawJson);
         }
     }
@@ -900,7 +902,8 @@ public class RequirementGenerator {
     private String toJsonLog(Object value) {
         try {
             return objectMapper.writeValueAsString(value);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("序列化日志字段失败，使用字符串兜底: {}", e.getMessage(), e);
             return "\"" + safeLogValue(String.valueOf(value)) + "\"";
         }
     }

@@ -68,7 +68,7 @@ public class ExternalAuthController {
                     appKey, command.getUserId(), command.getEnterpriseId());
             return Result.success(response);
         } catch (RuntimeException e) {
-            log.warn("外部系统获取Token失败: appKey={}, request={}, reason={}", appKey, request, e.getMessage());
+            log.warn("外部系统获取Token失败: appKey={}, request={}, reason={}", appKey, request, e.getMessage(), e);
             throw e;
         }
     }

@@ -51,7 +51,7 @@ public class RequirementTrigger implements PhaseTrigger {
                     project.getId(), task.getId());
         } catch (Exception e) {
             log.warn("自动触发项目需求生成失败（可能已有活跃任务）: projectId={}, error={}",
-                    project.getId(), e.getMessage());
+                    project.getId(), e.getMessage(), e);
         }
     }
 

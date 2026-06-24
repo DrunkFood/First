@@ -248,7 +248,7 @@ public class DetectionServiceImpl implements IDetectionService {
                 try {
                     policyIds.add(Long.parseLong(idStr.trim()));
                 } catch (NumberFormatException e) {
-                    log.debug("政策文件ID格式异常: '{}'", idStr.trim());
+                    log.warn("政策文件ID格式异常: '{}'", idStr.trim(), e);
                 }
             }
         }
@@ -519,6 +519,7 @@ public class DetectionServiceImpl implements IDetectionService {
         try {
             return DetectionType.fromCode(code).getLabel();
         } catch (Exception e) {
+            log.warn("检测类型转换失败: code={}", code, e);
             return code;
         }
     }
