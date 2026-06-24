@@ -220,7 +220,7 @@
           </el-table-column>
           <el-table-column label="启用" width="80" align="center">
             <template #default="{ row }">
-              <el-switch v-model="row.enabled" size="small" @change="(val: boolean) => { if (!val) row.generateStandard = true }" />
+              <el-switch v-model="row.enabled" size="small" @change="(val: boolean) => { if (!val) { row.generateStandard = true; row.distinguishSubjectivity = true } }" />
             </template>
           </el-table-column>
           <el-table-column label="生成评审标准" width="120" align="center">
@@ -228,11 +228,17 @@
               <el-switch v-model="row.generateStandard" size="small" :disabled="!row.enabled" />
             </template>
           </el-table-column>
+          <el-table-column label="区分客观主观" width="120" align="center">
+            <template #default="{ row }">
+              <el-switch v-model="row.distinguishSubjectivity" size="small" :disabled="!row.enabled" />
+            </template>
+          </el-table-column>
           <el-table-column label="说明">
             <template #default="{ row }">
               <span v-if="!row.enabled" style="color: #909399">该类型不参与评审</span>
               <span v-else-if="!row.generateStandard" style="color: #E6A23C">item_name 将填充"详见评审文件"</span>
-              <span v-else style="color: #909399">AI 生成详细评审项内容</span>
+              <span v-else-if="!row.distinguishSubjectivity" style="color: #909399">AI 生成详细评审项内容（不区分主客观）</span>
+              <span v-else style="color: #909399">AI 生成详细评审项内容（区分主客观）</span>
             </template>
           </el-table-column>
         </el-table>
@@ -266,7 +272,7 @@ import { Search, Refresh, Plus, Delete, View, Document, CircleCheck, Close, Down
 import { templateApi, templateFileApi } from '@/api/template'
 import { fileApi } from '@/api/file'
 import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams, ReviewConfig } from '@/types/template'
-import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig } from '@/types/template'
+import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig, normalizeReviewConfig } from '@/types/template'
 import DocxPreview from '@/components/document/DocxPreview.vue'
 
 const loading = ref(false)
@@ -369,9 +375,10 @@ const handleEdit = (row: TemplateInfo) => {
   }
   // 解析评审项配置
   if (row.reviewConfig) {
-    formData.reviewConfig = typeof row.reviewConfig === 'string'
+    const parsed = typeof row.reviewConfig === 'string'
       ? JSON.parse(row.reviewConfig)
       : row.reviewConfig
+    formData.reviewConfig = normalizeReviewConfig(parsed)
   } else {
     formData.reviewConfig = buildDefaultReviewConfig()
   }

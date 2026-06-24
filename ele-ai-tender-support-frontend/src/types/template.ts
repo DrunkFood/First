@@ -3,6 +3,7 @@ export interface ReviewTypeConfig {
   reviewType: string
   enabled: boolean
   generateStandard: boolean
+  distinguishSubjectivity?: boolean
 }
 
 /** 评审项配置 */
@@ -25,6 +26,24 @@ export function buildDefaultReviewConfig(): ReviewConfig {
       reviewType: type,
       enabled: true,
       generateStandard: true,
+      distinguishSubjectivity: type === 'TECHNICAL' || type === 'CREDIT',
+    })),
+  }
+}
+
+/**
+ * 规范化评审配置：补全 distinguishSubjectivity 默认值
+ * 老数据该字段为 undefined，回退到 CREDIT/TECHNICAL=true（与后端 null 回退一致），保证编辑回填时 UI 显示正确
+ */
+export function normalizeReviewConfig(config: ReviewConfig): ReviewConfig {
+  return {
+    reviewTypes: config.reviewTypes.map(t => ({
+      reviewType: t.reviewType,
+      enabled: t.enabled,
+      generateStandard: t.generateStandard,
+      distinguishSubjectivity: t.distinguishSubjectivity !== undefined
+        ? t.distinguishSubjectivity
+        : (t.reviewType === 'TECHNICAL' || t.reviewType === 'CREDIT'),
     })),
   }
 }
