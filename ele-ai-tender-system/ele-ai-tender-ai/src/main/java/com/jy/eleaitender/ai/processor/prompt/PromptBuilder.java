@@ -9,10 +9,9 @@ import com.jy.eleaitender.common.enums.ReviewType;
  * Prompt动态构建器
  * 根据不同场景组装User Prompt
  * <p>
- * 注意：Spring AI 的 ChatClient.prompt().system() / .user() 会通过 PromptTemplate 处理字符串，
- * PromptTemplate 使用 {variableName} 语法做变量占位。如果模板内容包含字面量花括号（如 JSON 示例），
- * 必须在发送前通过 PromptTemplateEscaper 转义，否则 PromptTemplate 构造时会抛出
- * IllegalArgumentException: The template string is not valid.
+ * 注意：Spring AI 的 ChatClient.prompt().system(String) / .user(String) 会通过 PromptTemplate 处理字符串，
+ * PromptTemplate 使用 {variableName} 语法做变量占位。AI调用入口应优先使用 SystemMessage/UserMessage，
+ * 直接发送完整提示词，避免 JSON 示例、正则、代码片段中的字面量花括号被模板解析。
  */
 public final class PromptBuilder {
 

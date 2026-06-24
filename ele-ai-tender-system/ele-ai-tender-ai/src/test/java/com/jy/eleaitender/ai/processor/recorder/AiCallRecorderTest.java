@@ -50,18 +50,20 @@ class AiCallRecorderTest {
     }
 
     @Test
-    void callAndRecordShouldEscapeSystemPromptBracesBeforeSpringPromptTemplateRendering() {
+    void callAndRecordShouldSendRawBracesWithoutSpringPromptTemplateRendering() {
         when(fileContentService.resolveFileContents(isNull())).thenReturn("");
         CapturingChatModel chatModel = new CapturingChatModel();
         ChatClient client = ChatClient.create(chatModel);
 
         assertThatCode(() -> recorder.callAndRecord(client, SystemPromptTemplates.REVIEW_ITEM_GENERATE,
-                "生成评审项", "GENERATION", 7001L, 9L, null))
+                "生成评审项，示例：{\"demo\":true}", "GENERATION", 7001L, 9L, null))
                 .doesNotThrowAnyException();
 
         assertThat(chatModel.prompt.getContents())
                 .contains("\"reviewItems\"")
-                .contains("生成评审项");
+                .contains("{\"demo\":true}")
+                .doesNotContain("\\{")
+                .doesNotContain("\\}");
         verify(responseLogService).record(any(AiResponseLog.class));
     }
 

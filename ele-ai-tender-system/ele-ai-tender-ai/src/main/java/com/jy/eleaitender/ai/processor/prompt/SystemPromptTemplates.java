@@ -106,17 +106,17 @@ public class SystemPromptTemplates {
             - 其他要求
             
             输出JSON格式（不要添加markdown代码块标记）：
-            {{
+            {
               "projectOverview": "项目概况摘要（50-100字，用于后续章节生成时提供上下文）",
               "chapters": [
-                {{
+                {
                   "chapterKey": "英文标识",
                   "chapterTitle": "章节标题",
                   "corePoints": "核心要点，描述该章节需要涵盖的具体子主题和内容方向",
                   "estimatedWords": 800
-                }}
+                }
               ]
-            }}
+            }
             
             总预估字数应控制在5000字以内，章节数量5-6个。estimatedWords是每个章节正文的字数上限，不是最低字数。
             """;
@@ -170,20 +170,20 @@ public class SystemPromptTemplates {
             10. 是否补充现状痛点、核心目标、隐性需求以及项目实施必须覆盖的要求
             
             输出JSON格式（不要添加markdown代码块标记）：
-            {{
+            {
               "revisions": [
-                {{
+                {
                   "original": "原文中需要修改的片段（必须逐字复制原文）",
                   "revised": "修改后的文本",
                   "reason": "修改原因"
-                }}
+                }
               ]
-            }}
+            }
             
             重要规则：
             - original字段必须从原文中逐字复制，不得添加、删除或修改任何字符
             - 只输出确实需要修订的问题，不需要修改的地方不要列出
-            - 如果文档质量良好无需修订，输出 {{"revisions": []}}
+            - 如果文档质量良好无需修订，输出 {"revisions": []}
             - 不要为了修改而修改，仅修复实质性错误和合规问题
             """;
 
@@ -229,13 +229,13 @@ public class SystemPromptTemplates {
             5. 不要使用data、result、content、output等外层包装字段
             
             输出JSON格式：
-            {{
+            {
               "reviewItems": [
-                {{
+                {
                   "name": "评审项名称",
                   "level": 1,
                   "children": [
-                    {{
+                    {
                       "name": "子评审项",
                       "level": 2,
                       "content": "评审内容描述",
@@ -243,11 +243,11 @@ public class SystemPromptTemplates {
                       "subjectivity": "OBJECTIVE|SUBJECTIVE",
                       "isRequired": false,
                       "children": []
-                    }}
+                    }
                   ]
-                }}
+                }
               ]
-            }}
+            }
             """;
 
     /**
@@ -265,13 +265,13 @@ public class SystemPromptTemplates {
             6. 不要输出解释说明
             
             目标JSON结构：
-            {{
+            {
               "reviewItems": [
-                {{
+                {
                   "name": "一级分类名称",
                   "level": 1,
                   "children": [
-                    {{
+                    {
                       "name": "评审项名称",
                       "level": 2,
                       "content": "评审内容描述",
@@ -279,11 +279,11 @@ public class SystemPromptTemplates {
                       "subjectivity": "OBJECTIVE|SUBJECTIVE",
                       "isRequired": false,
                       "children": []
-                    }}
+                    }
                   ]
-                }}
+                }
               ]
-            }}
+            }
             """;
 
     // ===========================检测类===========================
@@ -302,19 +302,19 @@ public class SystemPromptTemplates {
             
             输出JSON格式：
             ```json
-            {{
+            {
               "issues": [
-                {{
+                {
                   "position": "问题位置描述",
                   "original": "原文内容",
                   "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "修改建议",
                   "reason": "问题原因",
                   "severity": "HIGH|MEDIUM|LOW"
-                }}
+                }
               ],
               "score": 85
-            }}
+            }
             ```
             重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，每个HIGH问题-10分，MEDIUM问题-5分，LOW问题-2分。
@@ -334,18 +334,18 @@ public class SystemPromptTemplates {
             
             输出JSON格式：
             ```json
-            {{
+            {
               "issues": [
-                {{
+                {
                   "position": "问题位置描述",
                   "original": "原文错误内容",
                   "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "正确写法",
                   "reason": "错误类型说明"
-                }}
+                }
               ],
               "score": 95
-            }}
+            }
             ```
             重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，每个错误-3分。
@@ -366,19 +366,19 @@ public class SystemPromptTemplates {
             
             输出JSON格式：
             ```json
-            {{
+            {
               "issues": [
-                {{
+                {
                   "position": "问题位置描述",
                   "original": "原文内容",
                   "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "合规修改建议",
                   "policyReference": "相关政策条款引用",
                   "severity": "HIGH|MEDIUM|LOW"
-                }}
+                }
               ],
               "score": 80
-            }}
+            }
             ```
             重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，HIGH问题-15分，MEDIUM问题-8分，LOW问题-3分。
@@ -399,18 +399,18 @@ public class SystemPromptTemplates {
             
             输出JSON格式：
             ```json
-            {{
+            {
               "issues": [
-                {{
+                {
                   "position": "问题位置描述",
                   "original": "原文内容",
                   "targeted": "修改内容(可直接替换原文)",
                   "suggestion": "格式修改建议",
                   "ruleViolated": "违反的格式规则"
-                }}
+                }
               ],
               "score": 90
-            }}
+            }
             ```
             重要规则：original字段必须从原文中逐字复制，不得添加、删除或修改任何字符（包括空格、换行和标点）。如果原文中有换行，original中也必须保留相同的换行。targeted字段应只修改有问题的部分，保持其余内容与original完全一致。
             评分规则：满分100分，每个格式问题-5分。
@@ -433,10 +433,10 @@ public class SystemPromptTemplates {
             
             只输出JSON映射，格式如下，不要添加任何解释：
             ```json
-            {{
+            {
               "模板占位符名": "对应的数据字段key",
               "无匹配占位符": ""
-            }}
+            }
             ```
             """;
 

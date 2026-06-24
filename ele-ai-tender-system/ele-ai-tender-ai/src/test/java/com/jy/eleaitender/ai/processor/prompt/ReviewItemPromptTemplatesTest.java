@@ -1,9 +1,7 @@
 package com.jy.eleaitender.ai.processor.prompt;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ReviewItemPromptTemplatesTest {
@@ -74,29 +72,4 @@ class ReviewItemPromptTemplatesTest {
                 .contains("不要输出解释说明");
     }
 
-    @Test
-    void reviewItemRepairPromptShouldEscapeRawJsonBracesForPromptTemplate() {
-        String prompt = PromptBuilder.buildReviewItemJsonRepair("{\"items\":[]}");
-        String escapedPrompt = PromptTemplateEscaper.escapeBraces(prompt);
-
-        assertThat(prompt).contains("{\"items\":[]}");
-        assertThat(new PromptTemplate(escapedPrompt).render()).contains("{\"items\":[]}");
-    }
-
-    @Test
-    void reviewItemGeneratePromptShouldEscapeRequirementBracesForPromptTemplate() {
-        String prompt = PromptBuilder.buildReviewItemGenerate(
-                "测试项目",
-                "GOODS",
-                "GOVERNMENT_PROCUREMENT",
-                "100000",
-                "需求内容包含JSON示例：{\"reviewItems\":[]}",
-                "MANUAL",
-                "符合性审查、技术标评审、商务评审");
-        String escapedPrompt = PromptTemplateEscaper.escapeBraces(prompt);
-
-        assertThat(prompt).contains("{\"reviewItems\":[]}");
-        assertThatCode(() -> new PromptTemplate(escapedPrompt).render()).doesNotThrowAnyException();
-        assertThat(new PromptTemplate(escapedPrompt).render()).contains("{\"reviewItems\":[]}");
-    }
 }
