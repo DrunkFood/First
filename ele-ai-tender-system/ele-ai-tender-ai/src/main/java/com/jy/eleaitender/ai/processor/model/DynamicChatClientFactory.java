@@ -39,6 +39,13 @@ public class DynamicChatClientFactory {
         return buildChatClient(config);
     }
 
+    public String resolveModelName(SupModelConfig config) {
+        if (config == null) {
+            return "";
+        }
+        return resolveModelName(config, parseModelParams(config.getModelParams()));
+    }
+
     /**
      * 根据模型配置的供应商类型分发构建ChatClient
      */
@@ -59,7 +66,7 @@ public class DynamicChatClientFactory {
                 config.getModelName(), config.getModelType(), config.getApiEndpoint());
 
         ModelParams params = parseModelParams(config.getModelParams());
-        String modelName = params.model != null ? params.model : config.getModelName();
+        String modelName = resolveModelName(config, params);
         String plainApiKey = decryptApiKey(config.getApiKey());
 
         OpenAiApi api = new OpenAiApi(config.getApiEndpoint(), plainApiKey);
@@ -90,7 +97,7 @@ public class DynamicChatClientFactory {
                 config.getModelName(), config.getModelType(), config.getApiEndpoint());
 
         ModelParams params = parseModelParams(config.getModelParams());
-        String modelName = params.model != null ? params.model : config.getModelName();
+        String modelName = resolveModelName(config, params);
         String plainApiKey = decryptApiKey(config.getApiKey());
 
         // 智谱API客户端：支持自定义baseUrl（私有化部署场景）
@@ -158,6 +165,13 @@ public class DynamicChatClientFactory {
             log.warn("解析modelParams失败: {}", modelParamsJson, e);
         }
         return params;
+    }
+
+    private String resolveModelName(SupModelConfig config, ModelParams params) {
+        if (params != null && StringUtils.hasText(params.model)) {
+            return params.model;
+        }
+        return config.getModelName();
     }
 
     /**

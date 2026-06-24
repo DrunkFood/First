@@ -38,8 +38,8 @@ public class TableGenerator {
             if (!(element instanceof XWPFParagraph para)) continue;
 
             String text = para.getText();
-            if (text != null && text.startsWith(TABLE_PLACEHOLDER_PREFIX)) {
-                String key = text.substring(TABLE_PLACEHOLDER_PREFIX.length());
+            String key = findTablePlaceholderKey(text, tableDataMap);
+            if (key != null) {
                 TableData tableData = tableDataMap.get(key);
                 if (tableData != null) {
                     insertTableAtParagraph(doc, para, tableData);
@@ -50,6 +50,23 @@ public class TableGenerator {
                 }
             }
         }
+    }
+
+    private String findTablePlaceholderKey(String text, Map<String, TableData> tableDataMap) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        for (String key : tableDataMap.keySet()) {
+            if (text.contains(TABLE_PLACEHOLDER_PREFIX + key)) {
+                return key;
+            }
+        }
+
+        String trimmed = text.trim();
+        if (trimmed.startsWith(TABLE_PLACEHOLDER_PREFIX)) {
+            return trimmed.substring(TABLE_PLACEHOLDER_PREFIX.length()).trim();
+        }
+        return null;
     }
 
     /**

@@ -73,7 +73,7 @@ export const templateFileApi = {
     formData.append('file', file)
     formData.append('bizType', bizType)
     return fileService.post<ApiResponse<{ fileId: number; fileName: string }>>(
-      '/api/file/upload',
+      '/file/upload',
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     ).then(res => res.data)

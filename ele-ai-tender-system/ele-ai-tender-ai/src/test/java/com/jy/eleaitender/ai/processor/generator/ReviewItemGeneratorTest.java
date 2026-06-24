@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
@@ -152,12 +153,13 @@ class ReviewItemGeneratorTest {
 
     @Test
     void generateShouldAskAiToRepairJsonWhenInitialOutputCannotBeParsed() throws Exception {
-        when(modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE)).thenReturn(chatClient);
+        when(modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE))
+                .thenReturn(new RoutedChatClient(chatClient, "glm-test"));
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE),
-                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull()))
+                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test")))
                 .thenReturn("以下为评审项：技术方案60分，报价40分。");
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_JSON_REPAIR),
-                contains("以下为评审项：技术方案60分，报价40分。"), eq("GENERATION"), eq(7001L), eq(9L), isNull()))
+                contains("以下为评审项：技术方案60分，报价40分。"), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test")))
                 .thenReturn("""
                         {
                           "reviewItems": [
@@ -199,13 +201,14 @@ class ReviewItemGeneratorTest {
 
         assertThat(root.path("reviewItems")).hasSize(2);
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_JSON_REPAIR),
-                contains("只修复JSON格式"), eq("GENERATION"), eq(7001L), eq(9L), isNull());
+                contains("只修复JSON格式"), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test"));
     }
 
     private void mockAiOutput(String aiOutput) {
-        when(modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE)).thenReturn(chatClient);
+        when(modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE))
+                .thenReturn(new RoutedChatClient(chatClient, "glm-test"));
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE),
-                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull()))
+                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test")))
                 .thenReturn(aiOutput);
     }
 

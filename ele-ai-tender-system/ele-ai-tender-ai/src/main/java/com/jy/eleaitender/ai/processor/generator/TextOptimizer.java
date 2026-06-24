@@ -2,6 +2,7 @@ package com.jy.eleaitender.ai.processor.generator;
 
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
@@ -9,7 +10,6 @@ import com.jy.eleaitender.common.dto.ai.TextOptimizeParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,11 +48,12 @@ public class TextOptimizer {
         String userPrompt = PromptBuilder.buildTextOptimize(content, requirement);
 
         // 路由到合适的模型
-        ChatClient client = modelRouter.route(AiTaskType.TEXT_OPTIMIZE);
+        RoutedChatClient routedClient = modelRouter.routeWithInfo(AiTaskType.TEXT_OPTIMIZE);
 
         // 同步调用并记录响应
-        String optimized = aiCallRecorder.callAndRecord(client, SystemPromptTemplates.TEXT_OPTIMIZE,
-                userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId(), task.getFileIdList());
+        String optimized = aiCallRecorder.callAndRecord(routedClient.chatClient(), SystemPromptTemplates.TEXT_OPTIMIZE,
+                userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId(), task.getFileIdList(),
+                routedClient.modelName());
 
         log.info("文本优化完成: taskId={}", task.getId());
         return resultParser.toJsonResult("optimizedContent", optimized != null ? optimized : "");

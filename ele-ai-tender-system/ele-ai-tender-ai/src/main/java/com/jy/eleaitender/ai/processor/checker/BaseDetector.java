@@ -6,11 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.dto.response.DetectionIssueVO;
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.enums.AiUsageScenario;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -49,10 +49,10 @@ public abstract class BaseDetector {
             String systemPrompt = getSystemPrompt();
             String userPrompt = buildUserPrompt(content);
 
-            ChatClient client = modelRouter.route(AiUsageScenario.DETECTION);
+            RoutedChatClient routedClient = modelRouter.routeWithInfo(AiUsageScenario.DETECTION);
 
-            String aiOutput = aiCallRecorder.callAndRecord(client, systemPrompt, userPrompt,
-                    "DETECTION", taskId, userId, fileIds);
+            String aiOutput = aiCallRecorder.callAndRecord(routedClient.chatClient(), systemPrompt, userPrompt,
+                    "DETECTION", taskId, userId, fileIds, routedClient.modelName());
 
             return parseDetectionResult(aiOutput);
         } catch (Exception e) {

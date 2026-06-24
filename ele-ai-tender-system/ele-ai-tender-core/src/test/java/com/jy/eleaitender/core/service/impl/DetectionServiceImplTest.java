@@ -7,6 +7,7 @@ import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ProjectStatus;
+import com.jy.eleaitender.core.dto.request.DetectionSubmitRequest;
 import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
@@ -74,12 +75,15 @@ class DetectionServiceImplTest {
 
         detectionService.submit(projectId, null);
 
+        ArgumentCaptor<AiTaskType> taskTypeCaptor = ArgumentCaptor.forClass(AiTaskType.class);
         ArgumentCaptor<AiTaskParams> paramsCaptor = ArgumentCaptor.forClass(AiTaskParams.class);
-        verify(aiTaskService, times(4)).createTask(any(AiTaskType.class), anyLong(), any(), anyString(),
+        verify(aiTaskService, times(3)).createTask(taskTypeCaptor.capture(), anyLong(), any(), anyString(),
                 paramsCaptor.capture(), anyString());
 
+        assertThat(taskTypeCaptor.getAllValues())
+                .doesNotContain(AiTaskType.DETECTION_POLICY_REVIEW);
         assertThat(paramsCaptor.getAllValues())
-                .hasSize(4)
+                .hasSize(3)
                 .allSatisfy(taskParams -> {
                     DetectionParams params = (DetectionParams) taskParams;
                     assertThat(params.getContentFileId()).isNull();
@@ -89,5 +93,39 @@ class DetectionServiceImplTest {
                             .contains("Review standard")
                             .doesNotContain("999");
                 });
+    }
+
+    @Test
+    void submitIncludesPolicyReviewWhenPolicyFilesSelected() {
+        Long projectId = 100L;
+        TbProject project = new TbProject();
+        project.setId(projectId);
+        project.setStatus(ProjectStatus.IN_PROGRESS.getCode());
+        project.setRequirementContent("Requirement body");
+
+        when(projectMapper.selectById(projectId)).thenReturn(project);
+        when(reviewItemMapper.selectByProjectId(projectId)).thenReturn(List.of());
+
+        AtomicLong taskId = new AtomicLong(1L);
+        when(aiTaskService.createTask(any(AiTaskType.class), anyLong(), any(), anyString(),
+                any(AiTaskParams.class), anyString())).thenAnswer(invocation -> {
+            AiTask task = new AiTask();
+            task.setId(taskId.getAndIncrement());
+            return task;
+        });
+
+        DetectionSubmitRequest request = new DetectionSubmitRequest();
+        request.setPolicyFileIds(List.of(11L, 22L));
+
+        var taskIds = detectionService.submit(projectId, request);
+
+        ArgumentCaptor<AiTaskType> taskTypeCaptor = ArgumentCaptor.forClass(AiTaskType.class);
+        ArgumentCaptor<String> fileIdsCaptor = ArgumentCaptor.forClass(String.class);
+        verify(aiTaskService, times(4)).createTask(taskTypeCaptor.capture(), anyLong(), any(), anyString(),
+                any(AiTaskParams.class), fileIdsCaptor.capture());
+
+        assertThat(taskTypeCaptor.getAllValues()).contains(AiTaskType.DETECTION_POLICY_REVIEW);
+        assertThat(fileIdsCaptor.getAllValues()).allMatch("11,22"::equals);
+        assertThat(taskIds).containsKey("POLICY_REVIEW");
     }
 }

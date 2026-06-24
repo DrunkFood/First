@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.dto.ai.RequirementGenerateParams;
@@ -69,11 +70,12 @@ class RequirementGeneratorTest {
     void generateShouldPublishOutlineChapterAndReviewProgress() throws Exception {
         AiTask task = buildTask();
         ListAppender<ILoggingEvent> logAppender = attachRequirementGenerationLogAppender();
-        when(modelRouter.route(AiTaskType.REQUIREMENT_GENERATE)).thenReturn(chatClient);
+        when(modelRouter.routeWithInfo(AiTaskType.REQUIREMENT_GENERATE))
+                .thenReturn(new RoutedChatClient(chatClient, "glm-test"));
         when(aiCallRecorder.buildUserPromptWithFiles(anyString(), eq(List.of("101"))))
                 .thenAnswer(invocation -> invocation.getArgument(0, String.class) + "\nREFERENCE_FILE_CONTENT");
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_OUTLINE_GENERATE),
-                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull()))
+                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull(), eq("glm-test")))
                 .thenReturn("""
                         {
                           "projectOverview": "Office renovation project.",
@@ -88,13 +90,13 @@ class RequirementGeneratorTest {
                         }
                         """);
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_CHAPTER_GENERATE),
-                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull()))
+                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull(), eq("glm-test")))
                 .thenReturn("""
                         ### 1. Scope
                         1.1 The contractor shall complete office renovation construction.
                         """);
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_REVIEW),
-                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull()))
+                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull(), eq("glm-test")))
                 .thenReturn("{\"revisions\":[]}");
 
         String result;
@@ -152,7 +154,7 @@ class RequirementGeneratorTest {
                 .contains("500000");
 
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_OUTLINE_GENERATE),
-                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull());
+                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull(), eq("glm-test"));
         assertThat(SystemPromptTemplates.REQUIREMENT_OUTLINE_GENERATE)
                 .contains("经验丰富的招标采购需求编制专家")
                 .contains("中华人民共和国招标投标法")
@@ -173,13 +175,13 @@ class RequirementGeneratorTest {
                 .contains("不得指定唯一品牌");
         ArgumentCaptor<String> chapterPromptCaptor = ArgumentCaptor.forClass(String.class);
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_CHAPTER_GENERATE),
-                chapterPromptCaptor.capture(), eq("GENERATION"), eq(9001L), eq(2L), isNull());
+                chapterPromptCaptor.capture(), eq("GENERATION"), eq(9001L), eq(2L), isNull(), eq("glm-test"));
         assertThat(chapterPromptCaptor.getValue())
                 .contains("硬性字数上限：5000字")
                 .contains("不得超过")
                 .contains("超出上限视为无效输出");
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REQUIREMENT_REVIEW),
-                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull());
+                anyString(), eq("GENERATION"), eq(9001L), eq(2L), isNull(), eq("glm-test"));
 
         List<String> logMessages = logAppender.list.stream()
                 .map(ILoggingEvent::getFormattedMessage)

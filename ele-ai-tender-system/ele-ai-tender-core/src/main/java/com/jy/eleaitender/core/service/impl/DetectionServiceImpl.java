@@ -80,6 +80,8 @@ public class DetectionServiceImpl implements IDetectionService {
             DetectionType.FORMAT_CHECK
     };
 
+    private static final String EMPTY_PASS_RESULT = "{\"issues\":[],\"score\":100}";
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Long> submit(Long projectId, DetectionSubmitRequest request) {
@@ -96,12 +98,18 @@ public class DetectionServiceImpl implements IDetectionService {
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));
         }
+        boolean hasPolicyFiles = hasPolicyFileIds(policyFileIdStr);
 
         Map<String, Long> taskIds = new LinkedHashMap<>();
         String detectionContent = buildDetectionContent(project, reviewItemMapper.selectByProjectId(projectId));
 
         // 为每种检测类型创建检测记录 + AI任务
         for (DetectionType type : ALL_DETECTION_TYPES) {
+            if (type == DetectionType.POLICY_REVIEW && !hasPolicyFiles) {
+                log.info("未选择政策文件，跳过政策文件审查: projectId={}", projectId);
+                continue;
+            }
+
             TbDetectionRecord record = new TbDetectionRecord();
             record.setProjectId(projectId);
             record.setDetectionType(type.getCode());
@@ -130,7 +138,7 @@ public class DetectionServiceImpl implements IDetectionService {
         ProjectStateMachine.transition(project, ProjectStatus.DETECTING);
         projectMapper.updateById(project);
 
-        log.info("提交文档检测，项目ID: {}, 创建4个检测任务", projectId);
+        log.info("提交文档检测，项目ID: {}, 创建{}个检测任务", projectId, taskIds.size());
         return taskIds;
     }
 
@@ -422,6 +430,14 @@ public class DetectionServiceImpl implements IDetectionService {
             //if (!status.isRetryable()) {
             //    continue;
             //}
+            if (DetectionType.POLICY_REVIEW.getCode().equals(record.getDetectionType())
+                    && !hasPolicyFileIds(record.getPolicyFileIds())) {
+                completeSkippedPolicyReview(record, detectionContent);
+                log.info("未选择政策文件，重新检测时跳过政策文件审查: projectId={}, recordId={}",
+                        projectId, record.getId());
+                continue;
+            }
+
             record.setStatus(AiTaskStatus.PENDING.getCode());
             record.setResult(null);
             record.setContentFileId(null);
@@ -449,6 +465,25 @@ public class DetectionServiceImpl implements IDetectionService {
 
         log.info("重新检测，项目ID: {}, 重试任务数: {}", projectId, taskIds.size());
         return taskIds;
+    }
+
+    private boolean hasPolicyFileIds(String policyFileIds) {
+        if (!StringUtils.hasText(policyFileIds)) {
+            return false;
+        }
+        return Arrays.stream(policyFileIds.split(","))
+                .map(String::trim)
+                .anyMatch(StringUtils::hasText);
+    }
+
+    private void completeSkippedPolicyReview(TbDetectionRecord record, String detectionContent) {
+        record.setStatus(AiTaskStatus.COMPLETED.getCode());
+        record.setResult(EMPTY_PASS_RESULT);
+        record.setContentFileId(null);
+        record.setContentSnapshot(detectionContent);
+        record.setStartedAt(LocalDateTime.now());
+        record.setCompletedAt(LocalDateTime.now());
+        detectionRecordMapper.updateById(record);
     }
 
     private String buildDetectionContent(TbProject project, List<TbProjectReviewItem> reviewItems) {

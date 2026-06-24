@@ -244,7 +244,7 @@ public class AuthServiceImpl implements IAuthService {
         redisTemplate.delete(permissionKey);
         if (permissions != null && !permissions.isEmpty()) {
             redisTemplate.opsForSet().add(permissionKey, permissions.toArray(new String[0]));
-            redisTemplate.expire(permissionKey, RedisKeyConstant.PERMISSION_CACHE_EXPIRE_SECONDS, TimeUnit.SECONDS);
+            redisTemplate.expire(permissionKey, tokenExpireSeconds, TimeUnit.SECONDS);
         }
 
         // 加载用户角色并缓存（数据隔离需要角色信息判断管理员）
@@ -253,7 +253,7 @@ public class AuthServiceImpl implements IAuthService {
         redisTemplate.delete(roleKey);
         if (roles != null && !roles.isEmpty()) {
             redisTemplate.opsForSet().add(roleKey, roles.toArray(new String[0]));
-            redisTemplate.expire(roleKey, RedisKeyConstant.PERMISSION_CACHE_EXPIRE_SECONDS, TimeUnit.SECONDS);
+            redisTemplate.expire(roleKey, tokenExpireSeconds, TimeUnit.SECONDS);
         }
 
         // 构建响应

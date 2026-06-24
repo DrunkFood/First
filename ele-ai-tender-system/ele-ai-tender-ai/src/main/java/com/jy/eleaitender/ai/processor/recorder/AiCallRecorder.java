@@ -13,6 +13,7 @@ import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * AI调用记录器
- * 封装ChatClient调用，自动记录响应详情（模型、tokens、内容等）
+ * AI 调用记录器。
  */
 @Slf4j
 @Component
@@ -36,25 +36,16 @@ public class AiCallRecorder {
     @Autowired
     private ObjectMapper objectMapper;
 
-    /**
-     * 同步调用AI并记录响应日志
-     * 替代 client.prompt()...call().content()
-     *
-     * @param client       ChatClient实例
-     * @param systemPrompt 系统提示词
-     * @param userPrompt   用户提示词
-     * @param role         对话角色: GENERATION/OPTIMIZATION/DETECTION/CHAT
-     * @param taskId       关联AI任务ID（对话类调用传null）
-     * @param userId       用户ID（任务类调用取task.createId，对话类传null由MetaObjectHandler填充）
-     * @param fileIds      关联文件ID列表
-     * @return AI响应内容
-     */
     public String callAndRecord(ChatClient client, String systemPrompt, String userPrompt,
                                 String role, Long taskId, Long userId, List<String> fileIds) {
+        return callAndRecord(client, systemPrompt, userPrompt, role, taskId, userId, fileIds, null);
+    }
+
+    public String callAndRecord(ChatClient client, String systemPrompt, String userPrompt,
+                                String role, Long taskId, Long userId, List<String> fileIds,
+                                String modelName) {
         String resolvedUserPrompt = buildUserPromptWithFiles(userPrompt, fileIds);
         List<Message> messages = buildChatMessages(systemPrompt, resolvedUserPrompt);
-
-        // 记录开始时间
         Date startTime = new Date();
 
         ChatResponse chatResponse = client.prompt()
@@ -63,47 +54,38 @@ public class AiCallRecorder {
                 .chatResponse();
 
         String content = extractContent(chatResponse);
-        record(chatResponse, content, systemPrompt, resolvedUserPrompt, startTime, role, taskId, null, userId);
+        record(chatResponse, content, systemPrompt, resolvedUserPrompt, startTime, role, taskId, null, userId, modelName);
         return content;
     }
 
     private List<Message> buildChatMessages(String systemPrompt, String userPrompt) {
         List<Message> messages = new ArrayList<>();
-        if (systemPrompt != null && !systemPrompt.isBlank()) {
+        if (StringUtils.hasText(systemPrompt)) {
             messages.add(new SystemMessage(systemPrompt));
         }
-        if (userPrompt != null && !userPrompt.isBlank()) {
+        if (StringUtils.hasText(userPrompt)) {
             messages.add(new UserMessage(userPrompt));
         }
         return messages;
     }
 
-    /**
-     * 构建最终发送给AI的用户提示词，包含关联文件内容。
-     */
     public String buildUserPromptWithFiles(String userPrompt, List<String> fileIds) {
         String fileContents = fileContentService.resolveFileContents(fileIds);
         return (userPrompt == null ? "" : userPrompt) + fileContents;
     }
 
-    /**
-     * 记录流式响应日志（流完成后调用）
-     *
-     * @param chatResponse   ChatResponse对象（包含usage信息）
-     * @param content        内容
-     * @param systemPrompt   系统提示词
-     * @param userPrompt     用户提示词
-     * @param role           对话角色
-     * @param taskId         关联AI任务ID
-     * @param conversationId 对话ID
-     * @param userId         用户ID
-     */
     public void record(ChatResponse chatResponse, String content,
                        String systemPrompt, String userPrompt, Date startTime,
                        String role, Long taskId, String conversationId, Long userId) {
+        record(chatResponse, content, systemPrompt, userPrompt, startTime, role, taskId, conversationId, userId, null);
+    }
+
+    public void record(ChatResponse chatResponse, String content,
+                       String systemPrompt, String userPrompt, Date startTime,
+                       String role, Long taskId, String conversationId, Long userId, String modelName) {
         try {
             AiResponseLog responseLog = new AiResponseLog();
-            responseLog.setModel(getModel(chatResponse));
+            responseLog.setModel(getModel(chatResponse, modelName));
             responseLog.setRole(role);
             responseLog.setMessages(buildMessagesJson(systemPrompt, userPrompt));
             responseLog.setContent(content);
@@ -113,7 +95,6 @@ public class AiCallRecorder {
             responseLog.setTotalTokens(getTotalTokens(chatResponse));
             responseLog.setTaskId(taskId);
             responseLog.setConversationId(conversationId);
-            // 任务类调用显式设置用户ID，对话类由MetaObjectHandler自动填充
             if (userId != null) {
                 responseLog.setCreateId(userId);
             }
@@ -125,8 +106,6 @@ public class AiCallRecorder {
         }
     }
 
-    // ========== ChatResponse 信息提取 ==========
-
     private String extractContent(ChatResponse chatResponse) {
         if (chatResponse == null || chatResponse.getResult() == null
                 || chatResponse.getResult().getOutput() == null) {
@@ -135,13 +114,16 @@ public class AiCallRecorder {
         return chatResponse.getResult().getOutput().getContent();
     }
 
-    private String getModel(ChatResponse chatResponse) {
-        if (chatResponse == null || chatResponse.getMetadata() == null) {
-            return "";
+    private String getModel(ChatResponse chatResponse, String fallbackModelName) {
+        String responseModel = "";
+        if (chatResponse != null && chatResponse.getMetadata() != null) {
+            Object model = chatResponse.getMetadata().get("model");
+            responseModel = model != null ? model.toString() : "";
         }
-        // ChatResponseMetadata 继承 Map<String, Object>，模型名称以 key="model" 存储
-        Object model = chatResponse.getMetadata().get("model");
-        return model != null ? model.toString() : "";
+        if (StringUtils.hasText(responseModel)) {
+            return responseModel;
+        }
+        return StringUtils.hasText(fallbackModelName) ? fallbackModelName : "";
     }
 
     private String getFinishReason(ChatResponse chatResponse) {
@@ -175,15 +157,13 @@ public class AiCallRecorder {
         return chatResponse.getMetadata().getUsage();
     }
 
-    // ========== Messages JSON 构建 ==========
-
     private String buildMessagesJson(String systemPrompt, String userPrompt) {
         try {
             List<Map<String, String>> messages = new ArrayList<>();
-            if (systemPrompt != null && !systemPrompt.isBlank()) {
+            if (StringUtils.hasText(systemPrompt)) {
                 messages.add(Map.of("role", "system", "content", systemPrompt));
             }
-            if (userPrompt != null && !userPrompt.isBlank()) {
+            if (StringUtils.hasText(userPrompt)) {
                 messages.add(Map.of("role", "user", "content", userPrompt));
             }
             return objectMapper.writeValueAsString(messages);
