@@ -107,6 +107,23 @@ public final class PromptBuilder {
     }
 
     /**
+     * 构建评审项生成的 User Prompt（权重模式）
+     */
+    public static String buildReviewItemGenerateWeight(String projectName, String projectType,
+                                                       String projectCategory, String budget,
+                                                       String requirementContent, String reviewMethod,
+                                                       String enabledTypes) {
+        return String.format(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_WEIGHT,
+                defaultStr(projectName),
+                defaultStr(ProjectType.fromCode(projectType).getLabel()),
+                defaultStr(ProjectCategory.fromCode(projectCategory).getLabel()),
+                defaultStr(budget),
+                defaultStr(requirementContent),
+                defaultStr(ReviewMethod.fromCode(reviewMethod).getLabel()),
+                defaultStr(enabledTypes, ReviewType.getLabels()));
+    }
+
+    /**
      * 构建评审项JSON修复的User Prompt
      */
     public static String buildReviewItemJsonRepair(String aiOutput) {
