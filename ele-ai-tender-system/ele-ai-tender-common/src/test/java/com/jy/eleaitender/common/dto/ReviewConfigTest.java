@@ -93,4 +93,22 @@ class ReviewConfigTest {
         ReviewConfig config = ReviewConfig.defaultConfig();
         assertFalse(config.isDistinguishSubjectivity("UNKNOWN"));
     }
+
+    @Test
+    void fromJson_含派生属性污染字段_应正常解析不丢失scoreMode() {
+        // T1 期间 @JsonIgnore 修复前，getEnabledTypes/getScoreModeOrDefault/isWeightMode
+        // 被 Jackson 当 getter 序列化出 enabledTypes/scoreModeOrDefault/weightMode 垃圾字段。
+        // 旧数据可能含这些字段，fromJson 须容忍（FAIL_ON_UNKNOWN_PROPERTIES=false），
+        // 且仍按 scoreMode 字段正确判别模式，不回退 defaultConfig 丢失权重配置。
+        String pollutedJson = """
+                {"scoreMode":"WEIGHT",
+                 "enabledTypes":[],
+                 "scoreModeOrDefault":"SCORE",
+                 "weightMode":true,
+                 "reviewTypes":[{"reviewType":"TECHNICAL","enabled":true,"generateStandard":true}]}
+                """;
+        ReviewConfig config = ReviewConfig.fromJson(pollutedJson);
+        assertThat(config.isWeightMode()).isTrue();
+        assertThat(config.getScoreModeOrDefault()).isEqualTo(ScoreMode.WEIGHT);
+    }
 }
