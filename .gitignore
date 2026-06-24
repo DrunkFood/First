@@ -73,5 +73,19 @@ ele-ai-tender-demo-business-system/
 # Added by code-review-graph
 .code-review-graph/
 
-# Added by superpowers
+# === SuperPowers ===
 .superpowers/
+
+# === Claude ===
+.claude/worktrees/
+.claude/skills
+.claude/settings.local.json
+
+# === Playwright ===
+.playwright-mcp
+
+# === docs ===
+docs/context
+docs/plans
+docs/projects
+docs/test
