@@ -30,6 +30,8 @@ export interface ReviewTypeConfig {
 /** 评审项配置 */
 export interface ReviewConfig {
   reviewTypes: ReviewTypeConfig[]
+  /** 评分模式：SCORE(分值模式,默认) / WEIGHT(权重模式) */
+  scoreMode?: string
 }
 
 /** 评审类型中文标签映射 */

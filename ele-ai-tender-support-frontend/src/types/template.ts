@@ -9,6 +9,8 @@ export interface ReviewTypeConfig {
 /** 评审项配置 */
 export interface ReviewConfig {
   reviewTypes: ReviewTypeConfig[]
+  /** 评分模式：SCORE(分值模式,默认) / WEIGHT(权重模式) */
+  scoreMode?: string
 }
 
 /** 评审类型中文标签映射 */
@@ -28,12 +30,14 @@ export function buildDefaultReviewConfig(): ReviewConfig {
       generateStandard: true,
       distinguishSubjectivity: type === 'TECHNICAL' || type === 'CREDIT',
     })),
+    scoreMode: 'SCORE',
   }
 }
 
 /**
- * 规范化评审配置：补全 distinguishSubjectivity 默认值
+ * 规范化评审配置：补全 distinguishSubjectivity 与 scoreMode 默认值
  * 老数据该字段为 undefined，回退到 CREDIT/TECHNICAL=true（与后端 null 回退一致），保证编辑回填时 UI 显示正确
+ * scoreMode 未设置时回退 SCORE（与后端 getScoreModeOrDefault 一致）
  */
 export function normalizeReviewConfig(config: ReviewConfig): ReviewConfig {
   return {
@@ -45,6 +49,7 @@ export function normalizeReviewConfig(config: ReviewConfig): ReviewConfig {
         ? t.distinguishSubjectivity
         : (t.reviewType === 'TECHNICAL' || t.reviewType === 'CREDIT'),
     })),
+    scoreMode: config.scoreMode ?? 'SCORE',
   }
 }
 
