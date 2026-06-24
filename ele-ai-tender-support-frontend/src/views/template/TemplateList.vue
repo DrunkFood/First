@@ -212,6 +212,13 @@
         </el-form-item>
         <!-- 评审项配置 -->
         <el-divider content-position="left">评审项配置</el-divider>
+        <div class="review-score-mode">
+          <span class="review-score-mode__label">评分模式：</span>
+          <el-radio-group v-model="formData.reviewConfig.scoreMode" size="small">
+            <el-radio value="SCORE">分值模式（各类分值直接计入总分）</el-radio>
+            <el-radio value="WEIGHT">权重模式（每类满分100，类型间按权重%分配，合计100%）</el-radio>
+          </el-radio-group>
+        </div>
         <el-table :data="formData.reviewConfig.reviewTypes" border size="small">
           <el-table-column label="评审类型" prop="reviewType" width="150">
             <template #default="{ row }">
@@ -590,5 +597,18 @@ onMounted(() => {
   overflow: hidden;
   padding: 12px;
   background: #f5f7fa;
+}
+
+.review-score-mode {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  &__label {
+    color: #606266;
+    font-size: 14px;
+  }
 }
 </style>
