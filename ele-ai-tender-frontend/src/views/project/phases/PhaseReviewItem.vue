@@ -583,16 +583,19 @@ const rootsByType = computed<Record<string, ReviewItemTree | undefined>>(() => {
 const typeInternalScore = (reviewType: string): number => {
   const root = rootsByType.value[reviewType]
   if (!root) return 0
-  return sumLeafScores(root)
+  // 归一化到1位小数，避免浮点累加误差导致 !== 100 误判
+  return Math.round(sumLeafScores(root) * 10) / 10
 }
 
 /** 权重合计（权重模式，应为100%） */
-const weightTotal = computed(() =>
-  scoringTypes.value.reduce((sum, t) => {
+const weightTotal = computed(() => {
+  const sum = scoringTypes.value.reduce((sum, t) => {
     const root = rootsByType.value[t.reviewType]
     return sum + (root?.weight || 0)
   }, 0)
-)
+  // 归一化到1位小数，避免 40.1+30.2+29.7=99.999... 误判
+  return Math.round(sum * 10) / 10
+})
 
 const scoreTotal = computed(() => {
   return scoringTypes.value.reduce((sum, t) => {
