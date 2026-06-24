@@ -24,6 +24,7 @@ export interface ReviewTypeConfig {
   reviewType: string
   enabled: boolean
   generateStandard: boolean
+  distinguishSubjectivity?: boolean
 }
 
 /** 评审项配置 */

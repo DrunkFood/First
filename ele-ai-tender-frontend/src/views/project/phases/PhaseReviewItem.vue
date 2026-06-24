@@ -138,7 +138,7 @@
                       <el-input v-model="row.itemContent" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
-                  <el-table-column label="主观/客观" width="120" align="center">
+                  <el-table-column v-if="shouldShowSubjectivity(typeConfig)" label="主观/客观" width="120" align="center">
                     <template #default="{ row }">
                       <el-select
                         v-if="isLeaf(row)"
@@ -213,7 +213,7 @@
                       <el-input v-model="row.itemContent" type="textarea" :rows="2" placeholder="请输入评审标准" class="table-textarea" :disabled="isEditingDisabled" />
                     </template>
                   </el-table-column>
-                  <el-table-column label="主观/客观" width="120" align="center">
+                  <el-table-column v-if="shouldShowSubjectivity(typeConfig)" label="主观/客观" width="120" align="center">
                     <template #default="{ row }">
                       <el-select
                         v-if="isLeaf(row)"
@@ -384,10 +384,20 @@ const enabledTypes = computed<ReviewTypeConfig[]>(() => {
       reviewType: type,
       enabled: true,
       generateStandard: true,
+      distinguishSubjectivity: type === 'TECHNICAL' || type === 'CREDIT',
     }))
   }
   return reviewConfig.value.reviewTypes.filter(t => t.enabled)
 })
+
+/**
+ * 该评审类型是否展示"主观/客观"列
+ * distinguishSubjectivity 非 undefined 时按其值；undefined（老数据）回退到 CREDIT/TECHNICAL 展示
+ */
+const shouldShowSubjectivity = (typeConfig: ReviewTypeConfig): boolean => {
+  if (typeConfig.distinguishSubjectivity !== undefined) return typeConfig.distinguishSubjectivity
+  return typeConfig.reviewType === 'CREDIT' || typeConfig.reviewType === 'TECHNICAL'
+}
 
 /** 当 enabledTypes 变化时，修正 activeReviewType 为首个启用的类型 */
 watch(enabledTypes, (types) => {
