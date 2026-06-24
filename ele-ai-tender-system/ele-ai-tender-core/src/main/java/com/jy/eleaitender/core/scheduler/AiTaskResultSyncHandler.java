@@ -279,7 +279,7 @@ public class AiTaskResultSyncHandler {
         log.info("同步评审项成功: projectId={}, count={}", projectId, items.size());
     }
 
-    private List<TbProjectReviewItem> parseReviewItemsFromResult(String resultJson, Long projectId) {
+    List<TbProjectReviewItem> parseReviewItemsFromResult(String resultJson, Long projectId) {
         if (!StringUtils.hasText(resultJson)) {
             return List.of();
         }

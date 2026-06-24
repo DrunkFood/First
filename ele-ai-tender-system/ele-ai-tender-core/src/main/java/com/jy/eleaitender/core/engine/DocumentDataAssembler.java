@@ -162,7 +162,7 @@ public class DocumentDataAssembler {
 
     // ==================== 数据转换 ====================
 
-    private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped, ReviewConfig reviewConfig) {
+    List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped, ReviewConfig reviewConfig) {
         List<Map<String, String>> result = new ArrayList<>();
         boolean weightMode = reviewConfig != null && reviewConfig.isWeightMode();
 
