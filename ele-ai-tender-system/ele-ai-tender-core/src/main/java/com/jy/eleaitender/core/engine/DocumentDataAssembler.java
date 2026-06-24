@@ -5,6 +5,7 @@ import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.ResponseCode;
+import com.jy.eleaitender.common.enums.ReviewType;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
@@ -24,6 +25,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class DocumentDataAssembler {
+
+   private static final Map<String, String> typeLabels = Map.of(
+            ReviewType.CREDIT.getCode(), "资信标",
+            ReviewType.TECHNICAL.getCode(), "技术标",
+            ReviewType.COMMERCIAL.getCode(), "商务标"
+    );
 
     @Autowired
     private TbProjectMapper projectMapper;
@@ -119,8 +126,8 @@ public class DocumentDataAssembler {
      * 构建符合性审查项 Markdown（列表形式，忽略一级节点）
      * 格式：
      * - 二级项名称
-     *   - 三级项内容
-     *   - 三级项内容
+     * - 三级项内容
+     * - 三级项内容
      */
     private String buildComplianceMarkdown(List<TbProjectReviewItem> items) {
         if (items == null || items.isEmpty()) return "";
@@ -158,17 +165,13 @@ public class DocumentDataAssembler {
     private List<Map<String, String>> toReviewSummaryList(Map<String, List<TbProjectReviewItem>> grouped, ReviewConfig reviewConfig) {
         List<Map<String, String>> result = new ArrayList<>();
 
-        Map<String, String> typeLabels = Map.of(
-                "CREDIT", "资信标", "TECHNICAL", "技术标", "COMMERCIAL", "商务标");
-        Set<String> orderedTypes = typeLabels.keySet();
-
-        for (String reviewType : orderedTypes) {
+        for (String reviewType : typeLabels.keySet()) {
             List<TbProjectReviewItem> items = grouped.getOrDefault(reviewType, Collections.emptyList());
             if (items.isEmpty()) continue;
 
             boolean hasSubjectivity = reviewConfig != null
                     ? reviewConfig.isDistinguishSubjectivity(reviewType)
-                    : ("CREDIT".equals(reviewType) || "TECHNICAL".equals(reviewType));
+                    : (ReviewType.CREDIT.getCode().equals(reviewType) || ReviewType.TECHNICAL.getCode().equals(reviewType));
 
             // 分类总分：取所有叶子节点 score 之和
             Set<Long> parentIds = items.stream()

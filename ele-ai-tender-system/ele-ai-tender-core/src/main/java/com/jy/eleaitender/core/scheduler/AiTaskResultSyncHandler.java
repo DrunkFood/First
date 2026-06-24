@@ -10,10 +10,7 @@ import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.entity.core.TbRequirement;
-import com.jy.eleaitender.common.enums.AiTaskStatus;
-import com.jy.eleaitender.common.enums.AiTaskType;
-import com.jy.eleaitender.common.enums.ProjectPhase;
-import com.jy.eleaitender.common.enums.ProjectStatus;
+import com.jy.eleaitender.common.enums.*;
 import com.jy.eleaitender.core.helper.MessageHelper;
 import com.jy.eleaitender.core.mapper.*;
 import com.jy.eleaitender.core.service.IProjectVersionService;
@@ -360,21 +357,21 @@ public class AiTaskResultSyncHandler {
      */
     private String mapCategoryToReviewType(String categoryName) {
         if (categoryName == null) {
-            return "COMPLIANCE";
+            return ReviewType.COMPLIANCE.getCode();
         }
         if (categoryName.contains("符合") || categoryName.contains("资格") || categoryName.contains("合规")) {
-            return "COMPLIANCE";
+            return ReviewType.COMPLIANCE.getCode();
         }
         if (categoryName.contains("资信") || categoryName.contains("资质") || categoryName.contains("信")) {
-            return "CREDIT";
+            return ReviewType.CREDIT.getCode();
         }
         if (categoryName.contains("技术")) {
-            return "TECHNICAL";
+            return ReviewType.TECHNICAL.getCode();
         }
         if (categoryName.contains("商务") || categoryName.contains("价格") || categoryName.contains("报价")) {
-            return "COMMERCIAL";
+            return ReviewType.COMMERCIAL.getCode();
         }
-        return "COMPLIANCE";
+        return ReviewType.COMPLIANCE.getCode();
     }
 
     // ========== 文档集成同步 ==========

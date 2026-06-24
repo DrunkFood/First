@@ -1,5 +1,6 @@
 package com.jy.eleaitender.common.dto;
 
+import com.jy.eleaitender.common.enums.ReviewType;
 import com.jy.eleaitender.common.enums.ScoreMode;
 import lombok.Data;
 import org.slf4j.Logger;
@@ -35,10 +36,10 @@ public class ReviewConfig {
     public static ReviewConfig defaultConfig() {
         ReviewConfig config = new ReviewConfig();
         config.setReviewTypes(List.of(
-                ReviewTypeConfig.of("COMPLIANCE", true, true, false),
-                ReviewTypeConfig.of("TECHNICAL", true, true, true),
-                ReviewTypeConfig.of("CREDIT", true, true, true),
-                ReviewTypeConfig.of("COMMERCIAL", true, true, false)
+                ReviewTypeConfig.of(ReviewType.COMPLIANCE.getCode(), true, true, false),
+                ReviewTypeConfig.of(ReviewType.TECHNICAL.getCode(), true, true, true),
+                ReviewTypeConfig.of(ReviewType.CREDIT.getCode(), true, true, true),
+                ReviewTypeConfig.of(ReviewType.COMMERCIAL.getCode(), true, true, false)
         ));
         config.setScoreMode(ScoreMode.SCORE);
         return config;
@@ -83,7 +84,7 @@ public class ReviewConfig {
                 .findFirst()
                 .map(t -> {
                     Boolean v = t.getDistinguishSubjectivity();
-                    return v != null ? v : ("CREDIT".equals(reviewType) || "TECHNICAL".equals(reviewType));
+                    return v != null ? v : (ReviewType.CREDIT.getCode().equals(reviewType) || ReviewType.TECHNICAL.getCode().equals(reviewType));
                 })
                 .orElse(false);
     }
