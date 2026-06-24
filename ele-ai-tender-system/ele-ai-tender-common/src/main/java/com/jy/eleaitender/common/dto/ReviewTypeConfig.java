@@ -23,11 +23,17 @@ public class ReviewTypeConfig {
      */
     private boolean generateStandard;
 
-    public static ReviewTypeConfig of(String reviewType, boolean enabled, boolean generateStandard) {
+    /**
+     * 是否区分客观主观（用包装类型：null=老数据未设置，回退到 CREDIT/TECHNICAL 旧硬编码逻辑）
+     */
+    private Boolean distinguishSubjectivity;
+
+    public static ReviewTypeConfig of(String reviewType, boolean enabled, boolean generateStandard, boolean distinguishSubjectivity) {
         ReviewTypeConfig config = new ReviewTypeConfig();
         config.setReviewType(reviewType);
         config.setEnabled(enabled);
         config.setGenerateStandard(generateStandard);
+        config.setDistinguishSubjectivity(distinguishSubjectivity);
         return config;
     }
 }

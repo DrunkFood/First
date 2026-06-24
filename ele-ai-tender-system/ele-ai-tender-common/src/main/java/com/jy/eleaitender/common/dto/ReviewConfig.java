@@ -24,14 +24,15 @@ public class ReviewConfig {
 
     /**
      * 构建默认配置：4种类型全部启用+生成评审标准
+     * 区分客观主观默认仅 TECHNICAL/CREDIT 开启（与改造前硬编码现状一致）
      */
     public static ReviewConfig defaultConfig() {
         ReviewConfig config = new ReviewConfig();
         config.setReviewTypes(List.of(
-                ReviewTypeConfig.of("COMPLIANCE", true, true),
-                ReviewTypeConfig.of("TECHNICAL", true, true),
-                ReviewTypeConfig.of("CREDIT", true, true),
-                ReviewTypeConfig.of("COMMERCIAL", true, true)
+                ReviewTypeConfig.of("COMPLIANCE", true, true, false),
+                ReviewTypeConfig.of("TECHNICAL", true, true, true),
+                ReviewTypeConfig.of("CREDIT", true, true, true),
+                ReviewTypeConfig.of("COMMERCIAL", true, true, false)
         ));
         return config;
     }
@@ -62,6 +63,22 @@ public class ReviewConfig {
     public boolean isGenerateStandard(String reviewType) {
         return reviewTypes != null && reviewTypes.stream()
                 .anyMatch(t -> reviewType.equals(t.getReviewType()) && t.isGenerateStandard());
+    }
+
+    /**
+     * 判断指定评审类型是否区分客观主观
+     * 字段为 null（老数据未设置）时回退到旧硬编码：CREDIT/TECHNICAL 返回 true，其他 false
+     */
+    public boolean isDistinguishSubjectivity(String reviewType) {
+        if (reviewTypes == null) return false;
+        return reviewTypes.stream()
+                .filter(t -> reviewType.equals(t.getReviewType()))
+                .findFirst()
+                .map(t -> {
+                    Boolean v = t.getDistinguishSubjectivity();
+                    return v != null ? v : ("CREDIT".equals(reviewType) || "TECHNICAL".equals(reviewType));
+                })
+                .orElse(false);
     }
 
     /**
