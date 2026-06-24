@@ -240,6 +240,16 @@ public class AiTaskResultSyncHandler {
                     parentMap.put(placeholder, level1Item);
                 }
             }
+
+            // distinguishSubjectivity=false 的启用类型：清空 subjectivity 不落库
+            for (ReviewTypeConfig typeConfig : config.getEnabledTypes()) {
+                if (typeConfig.isEnabled() && !config.isDistinguishSubjectivity(typeConfig.getReviewType())) {
+                    String rt = typeConfig.getReviewType();
+                    items.stream()
+                            .filter(item -> rt.equals(item.getReviewType()))
+                            .forEach(item -> item.setSubjectivity(null));
+                }
+            }
         }
 
         // 按 level 排序确保父节点先插入
