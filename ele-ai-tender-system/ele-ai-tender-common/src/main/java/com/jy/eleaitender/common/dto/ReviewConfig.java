@@ -1,5 +1,6 @@
 package com.jy.eleaitender.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jy.eleaitender.common.enums.ReviewType;
 import com.jy.eleaitender.common.enums.ScoreMode;
 import lombok.Data;
@@ -92,6 +93,7 @@ public class ReviewConfig {
     /**
      * 获取所有启用的评审类型
      */
+    @JsonIgnore
     public List<ReviewTypeConfig> getEnabledTypes() {
         if (reviewTypes == null) return List.of();
         return reviewTypes.stream().filter(ReviewTypeConfig::isEnabled).toList();
@@ -102,6 +104,7 @@ public class ReviewConfig {
      * Lombok @Data 生成的 getScoreMode() 返回原始字段（可能为 null），
      * 需要非 null 语义的调用方请使用本方法或 isWeightMode()。
      */
+    @JsonIgnore
     public ScoreMode getScoreModeOrDefault() {
         return scoreMode == null ? ScoreMode.SCORE : scoreMode;
     }
@@ -109,6 +112,7 @@ public class ReviewConfig {
     /**
      * 仅当 scoreMode 显式为 WEIGHT 返回 true，其余（含 null 老数据）均返回 false
      */
+    @JsonIgnore
     public boolean isWeightMode() {
         return scoreMode == ScoreMode.WEIGHT;
     }

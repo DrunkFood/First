@@ -73,9 +73,10 @@ public class ReviewItemGenerator {
         ReviewItemGenerateParams params = resultParser.parseParams(task.getRequestParams(), ReviewItemGenerateParams.class);
 
         String enabledTypes;
+        ReviewConfig config = null;
         if (StringUtils.hasText(params.getReviewConfig())) {
             // 有配置：生成所有启用的类型（generateStandard=false的类型由同步处理器替换二级节点为占位）
-            ReviewConfig config = ReviewConfig.fromJson(params.getReviewConfig());
+            config = ReviewConfig.fromJson(params.getReviewConfig());
             enabledTypes = config.getEnabledTypes().stream()
                     .map(t -> ReviewType.fromCode(t.getReviewType()).getLabel())
                     .collect(Collectors.joining("、"));
@@ -88,22 +89,34 @@ public class ReviewItemGenerator {
             enabledTypes = ReviewType.getLabels();
         }
 
-        // 构建Prompt
-        String userPrompt = PromptBuilder.buildReviewItemGenerate(
-                params.getProjectName(),
-                params.getProjectType(),
-                params.getProjectCategory(),
-                params.getBudget(),
-                params.getRequirementContent(),
-                params.getReviewMethod(),
-                enabledTypes
-        );
+        // 按评分模式选择 system prompt 与 user prompt 构建方法
+        boolean weightMode = config != null && config.isWeightMode();
+        String systemPrompt = weightMode
+                ? SystemPromptTemplates.REVIEW_ITEM_GENERATE_WEIGHT
+                : SystemPromptTemplates.REVIEW_ITEM_GENERATE;
+        String userPrompt = weightMode
+                ? PromptBuilder.buildReviewItemGenerateWeight(
+                        params.getProjectName(),
+                        params.getProjectType(),
+                        params.getProjectCategory(),
+                        params.getBudget(),
+                        params.getRequirementContent(),
+                        params.getReviewMethod(),
+                        enabledTypes)
+                : PromptBuilder.buildReviewItemGenerate(
+                        params.getProjectName(),
+                        params.getProjectType(),
+                        params.getProjectCategory(),
+                        params.getBudget(),
+                        params.getRequirementContent(),
+                        params.getReviewMethod(),
+                        enabledTypes);
 
         // 路由到合适的模型
         ChatClient client = modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE);
 
         // 同步调用并记录响应
-        String aiOutput = aiCallRecorder.callAndRecord(client, SystemPromptTemplates.REVIEW_ITEM_GENERATE,
+        String aiOutput = aiCallRecorder.callAndRecord(client, systemPrompt,
                 userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList());
 
         // 提取并归一化JSON内容

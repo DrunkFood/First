@@ -6,9 +6,11 @@ import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
+import com.jy.eleaitender.common.dto.ReviewConfig;
 import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.ScoreMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -202,6 +204,45 @@ class ReviewItemGeneratorTest {
                 contains("只修复JSON格式"), eq("GENERATION"), eq(7001L), eq(9L), isNull());
     }
 
+    @Test
+    void generateShouldUseWeightPromptWhenScoreModeIsWeight() throws Exception {
+        // 权重模式：reviewConfig.scoreMode=WEIGHT，应调用 REVIEW_ITEM_GENERATE_WEIGHT 的 system prompt
+        String weightAiOutput = """
+                {
+                  "reviewItems": [
+                    {
+                      "name": "技术评审",
+                      "level": 1,
+                      "weight": 60,
+                      "children": [
+                        {
+                          "name": "施工方案",
+                          "level": 2,
+                          "weight": 60,
+                          "content": "施工方案完整性",
+                          "subjectivity": "SUBJECTIVE",
+                          "isRequired": false,
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        when(modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE)).thenReturn(chatClient);
+        when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE_WEIGHT),
+                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull()))
+                .thenReturn(weightAiOutput);
+
+        JsonNode root = objectMapper.readTree(generator.generate(buildWeightTask()));
+
+        assertThat(root.path("reviewItems")).hasSize(1);
+        assertThat(root.path("reviewItems").get(0).path("name").asText()).isEqualTo("技术评审");
+        // 关键断言：权重模式必须以 WEIGHT system prompt 调用，且不能走 SCORE
+        verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE_WEIGHT),
+                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull());
+    }
+
     private void mockAiOutput(String aiOutput) {
         when(modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE)).thenReturn(chatClient);
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE),
@@ -217,6 +258,30 @@ class ReviewItemGeneratorTest {
         params.setBudget("500000");
         params.setReviewMethod("INTELLIGENT");
         params.setRequirementContent("办公楼装修采购需求。");
+
+        AiTask task = new AiTask();
+        task.setId(7001L);
+        task.setCreateId(9L);
+        task.setTaskType(AiTaskType.REVIEW_ITEM_GENERATE.getCode());
+        task.setRequestParams(objectMapper.writeValueAsString(params));
+        return task;
+    }
+
+    /**
+     * 构建权重模式任务：reviewConfig.scoreMode=WEIGHT，含启用类型
+     */
+    private AiTask buildWeightTask() throws Exception {
+        ReviewConfig config = ReviewConfig.defaultConfig();
+        config.setScoreMode(ScoreMode.WEIGHT);
+
+        ReviewItemGenerateParams params = new ReviewItemGenerateParams();
+        params.setProjectName("办公楼装修");
+        params.setProjectType("ENGINEERING");
+        params.setProjectCategory("SMALL_TRADE");
+        params.setBudget("500000");
+        params.setReviewMethod("INTELLIGENT");
+        params.setRequirementContent("办公楼装修采购需求。");
+        params.setReviewConfig(objectMapper.writeValueAsString(config));
 
         AiTask task = new AiTask();
         task.setId(7001L);
