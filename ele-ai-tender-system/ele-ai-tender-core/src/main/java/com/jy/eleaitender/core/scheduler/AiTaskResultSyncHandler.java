@@ -306,6 +306,8 @@ public class AiTaskResultSyncHandler {
                 categoryItem.setLevel(level);
                 categoryItem.setSortOrder(sortOrder[0]++);
                 categoryItem.setReviewType(reviewType);
+                // 权重模式下一级分类节点存权重%（SCORE模式下AI不输出weight，getDecimal返回null）
+                categoryItem.setWeight(getDecimal(itemNode, "weight"));
                 items.add(categoryItem);
 
                 // 递归解析children
