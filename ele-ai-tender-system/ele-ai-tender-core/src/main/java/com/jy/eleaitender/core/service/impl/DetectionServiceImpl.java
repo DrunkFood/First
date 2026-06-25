@@ -489,7 +489,7 @@ public class DetectionServiceImpl implements IDetectionService {
     private String buildDetectionContent(TbProject project, List<TbProjectReviewItem> reviewItems) {
         StringJoiner content = new StringJoiner("\n\n");
         if (StringUtils.hasText(project.getRequirementContent())) {
-            content.add("Requirement Content\n" + project.getRequirementContent());
+            content.add("招标需求内容: \n" + project.getRequirementContent());
         }
 
         StringJoiner reviewItemContent = new StringJoiner("\n");
@@ -499,14 +499,15 @@ public class DetectionServiceImpl implements IDetectionService {
                 if (!StringUtils.hasText(itemStandard)) {
                     continue;
                 }
-                String prefix = StringUtils.hasText(item.getReviewType()) ? "[" + item.getReviewType() + "] " : "";
+                ReviewType reviewType = ReviewType.fromCode(item.getReviewType());
+                String prefix = StringUtils.hasText(reviewType.getLabel()) ? "[" + reviewType.getLabel() + "] " : "";
                 reviewItemContent.add("- " + prefix + itemStandard);
             }
         }
 
         String reviewItemsText = reviewItemContent.toString();
         if (StringUtils.hasText(reviewItemsText)) {
-            content.add("Review Items\n" + reviewItemsText);
+            content.add("评审项: \n" + reviewItemsText);
         }
         return content.toString();
     }
