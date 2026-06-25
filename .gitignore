@@ -97,3 +97,5 @@ docs/test
 !**/application-test.yml
 !**/application-prod.yml
 !**/application-sysconfig.yml
+ele-ai-tender-support-web
+ele-ai-tender-web
