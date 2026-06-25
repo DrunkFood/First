@@ -18,10 +18,10 @@ public enum AiTaskType {
 
     DOCUMENT_INTEGRATION("DOCUMENT_INTEGRATION", "文档集成", 10, DocumentIntegrationParams.class),
 
-    DETECTION_SENSITIVE_WORD("DETECTION_SENSITIVE_WORD", "敏感词检测", 10, DetectionParams.class),
-    DETECTION_TYPO("DETECTION_TYPO", "错别字检测", 10, DetectionParams.class),
-    DETECTION_POLICY_REVIEW("DETECTION_POLICY_REVIEW", "政策文件审查", 10, DetectionParams.class),
-    DETECTION_FORMAT_CHECK("DETECTION_FORMAT_CHECK", "格式规范检测", 10, DetectionParams.class),
+    DETECTION_SENSITIVE_WORD("DETECTION_SENSITIVE_WORD", "敏感词检测", 15, DetectionParams.class),
+    DETECTION_TYPO("DETECTION_TYPO", "错别字检测", 15, DetectionParams.class),
+    DETECTION_POLICY_REVIEW("DETECTION_POLICY_REVIEW", "政策文件审查", 15, DetectionParams.class),
+    DETECTION_FORMAT_CHECK("DETECTION_FORMAT_CHECK", "格式规范检测", 15, DetectionParams.class),
 
     TEXT_OPTIMIZE("TEXT_OPTIMIZE", "文本优化", 10, TextOptimizeParams.class);
 

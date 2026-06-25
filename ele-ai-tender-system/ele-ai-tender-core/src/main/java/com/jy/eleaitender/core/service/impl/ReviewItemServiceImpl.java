@@ -20,7 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -202,6 +205,71 @@ public class ReviewItemServiceImpl implements IReviewItemService {
             // 校验项目归属
             projectService.getById(existing.getProjectId());
             reviewItemMapper.updateById(item);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void replaceAll(Long projectId, List<TbProjectReviewItem> items) {
+        projectService.getById(projectId);
+
+        List<TbProjectReviewItem> existingItems = reviewItemMapper.selectByProjectId(projectId);
+        for (TbProjectReviewItem existing : existingItems) {
+            reviewItemMapper.deleteById(existing.getId());
+        }
+
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        List<TbProjectReviewItem> orderedItems = new ArrayList<>(items);
+        orderedItems.sort(Comparator.comparingInt(item -> item.getLevel() != null ? item.getLevel() : 1));
+
+        Map<Long, Long> savedIdMap = new LinkedHashMap<>();
+        Map<Long, Integer> savedLevelMap = new HashMap<>();
+        Map<Long, String> savedReviewTypeMap = new HashMap<>();
+
+        int sortOrder = 0;
+        for (TbProjectReviewItem item : orderedItems) {
+            Long clientId = item.getId();
+            Long clientParentId = item.getParentId();
+
+            item.setId(null);
+            item.setProjectId(projectId);
+            if (item.getSortOrder() == null) {
+                item.setSortOrder(sortOrder);
+            }
+            sortOrder++;
+
+            if (clientParentId != null && clientParentId != 0) {
+                Long savedParentId = savedIdMap.get(clientParentId);
+                if (savedParentId == null) {
+                    throw new BusinessException(ResponseCode.REVIEW_ITEM_NOT_FOUND);
+                }
+                item.setParentId(savedParentId);
+                Integer parentLevel = savedLevelMap.get(clientParentId);
+                item.setLevel(parentLevel != null ? parentLevel + 1 : 2);
+                if (item.getReviewType() == null) {
+                    item.setReviewType(savedReviewTypeMap.get(clientParentId));
+                }
+            } else {
+                item.setParentId(null);
+                if (item.getLevel() == null) {
+                    item.setLevel(1);
+                }
+            }
+
+            if (item.getLevel() != null && item.getLevel() > 3) {
+                throw new BusinessException(ResponseCode.REVIEW_ITEM_MAX_LEVEL_EXCEEDED);
+            }
+
+            reviewItemMapper.insert(item);
+
+            if (clientId != null) {
+                savedIdMap.put(clientId, item.getId());
+                savedLevelMap.put(clientId, item.getLevel());
+                savedReviewTypeMap.put(clientId, item.getReviewType());
+            }
         }
     }
 }

@@ -77,4 +77,13 @@ public class ReviewItemController {
         reviewItemService.batchUpdate(items);
         return Result.success();
     }
+
+    @PutMapping("/{projectId}/replace")
+    @RequireLogin
+    @Operation(summary = "替换项目全部评审项")
+    public Result<Void> replaceAll(@PathVariable Long projectId,
+                                   @RequestBody List<TbProjectReviewItem> items) {
+        reviewItemService.replaceAll(projectId, items);
+        return Result.success();
+    }
 }

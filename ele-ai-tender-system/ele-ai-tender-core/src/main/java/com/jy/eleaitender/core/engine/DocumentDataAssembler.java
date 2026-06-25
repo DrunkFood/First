@@ -127,6 +127,11 @@ public class DocumentDataAssembler {
         for (TbProjectReviewItem root : roots) {
             // 一级节点跳过，直接遍历其子节点（二级项）
             List<TbProjectReviewItem> level2Items = childrenMap.getOrDefault(root.getId(), Collections.emptyList());
+            if (level2Items.isEmpty()) {
+                sb.append("- ").append(nullSafe(root.getItemStandard()));
+                sb.append("\n");
+                continue;
+            }
             for (TbProjectReviewItem level2 : level2Items) {
                 sb.append("- ").append(nullSafe(level2.getItemStandard()));
                 sb.append("\n");

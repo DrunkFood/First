@@ -45,4 +45,9 @@ public interface IReviewItemService {
      * 批量更新评审项
      */
     void batchUpdate(List<TbProjectReviewItem> items);
+
+    /**
+     * 替换项目下全部评审项
+     */
+    void replaceAll(Long projectId, List<TbProjectReviewItem> items);
 }
