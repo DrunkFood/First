@@ -401,7 +401,7 @@ import { reviewApi } from '@/api/review'
 import { projectApi } from '@/api/project'
 import { projectTemplateApi } from '@/api/projectTemplate'
 import { useLatestTask } from '@/composables/useLatestTask'
-import { getTaskProgress, isTaskSucceeded } from '@/types/ai-task'
+import { getTaskProgress, isTaskResultSyncing, isTaskSucceeded } from '@/types/ai-task'
 import GenerationStatusCard from '@/components/GenerationStatusCard.vue'
 import type { ReviewItemTree, ReviewConfig, ReviewTypeConfig } from '@/types/review'
 import { REVIEW_TYPE_LABELS } from '@/types/review'
@@ -665,7 +665,7 @@ const isGenerating = computed(() => {
   if (isCreatingGenerationTask.value) return true
   const task = latestTask.value
   if (!task || isTaskSucceeded(task)) return false
-  return task.status === 'PENDING' || task.status === 'PROCESSING' || (task.status === 'COMPLETED' && task.resultSynced === 0)
+  return task.status === 'PENDING' || task.status === 'PROCESSING' || isTaskResultSyncing(task)
 })
 
 const isEditingDisabled = computed(() => props.readonly || isGenerating.value)

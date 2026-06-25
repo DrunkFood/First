@@ -6,7 +6,7 @@ import { isTaskTerminal } from '@/types/ai-task'
 /**
  * AI任务轮询组合式函数
  * 自动轮询任务状态，终态时停止轮询
- * 注意：COMPLETED+resultSynced=0 仍需继续轮询（等待结果同步）
+ * 注意：COMPLETED+resultSynced=0/3 仍需继续轮询（等待结果同步）
  */
 export function useTaskPolling(taskId: Ref<number | null>, interval = 8000) {
   const task = ref<AiTaskVO | null>(null)

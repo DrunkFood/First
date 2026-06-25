@@ -78,6 +78,13 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     List<AiTask> selectUnsyncedTasks(@Param("limit") int limit);
 
     /**
+     * 抢占未同步任务，防止多个core实例重复同步同一条结果。
+     */
+    @DataScope(skip = true)
+    @Update("UPDATE ai_task SET result_synced = 3 WHERE id = #{id} AND result_synced = 0 AND is_delete = 0")
+    int markSyncing(@Param("id") Long id);
+
+    /**
      * 查询项目下是否存在活跃的AI任务（PENDING/PROCESSING）
      */
     @DataScope(skip = true)
@@ -90,7 +97,7 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
      * 跳过数据隔离：后台定时任务无用户上下文
      */
     @DataScope(skip = true)
-    @Update("UPDATE ai_task SET result_synced = #{synced} WHERE id = #{id} AND is_delete = 0")
+    @Update("UPDATE ai_task SET result_synced = #{synced} WHERE id = #{id} AND result_synced = 3 AND is_delete = 0")
     int markSynced(@Param("id") Long id, @Param("synced") int synced);
 
 }

@@ -44,6 +44,10 @@ public class AiTaskResultSyncScheduler {
 
         for (AiTask task : tasks) {
             try {
+                if (aiTaskMapper.markSyncing(task.getId()) == 0) {
+                    log.debug("AI任务结果已被其他实例抢占，跳过同步: id={}, type={}", task.getId(), task.getTaskType());
+                    continue;
+                }
                 syncHandler.sync(task);
                 aiTaskMapper.markSynced(task.getId(), 1);
             } catch (Exception e) {

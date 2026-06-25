@@ -37,7 +37,7 @@ export interface AiTaskVO {
   startedAt?: string
   completedAt?: string
   createTime: string
-  /** 结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败 */
+  /** 结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败 3-同步中 */
   resultSynced?: number
 }
 
@@ -140,12 +140,16 @@ export function isTaskSucceeded(task: AiTaskVO | null): boolean {
   return task?.status === 'COMPLETED' && task.resultSynced === 1
 }
 
+export function isTaskResultSyncing(task: AiTaskVO | null): boolean {
+  return task?.status === 'COMPLETED' && (task.resultSynced === 0 || task.resultSynced === 3)
+}
+
 /** 任务是否处于终态（无需继续轮询） */
 export function isTaskTerminal(task: AiTaskVO | null): boolean {
   if (!task) return true
   if (TERMINAL_STATUSES.includes(task.status)) return true
-  // COMPLETED 需等 resultSynced 有值（0=还在同步，1=成功，2=失败）
-  if (task.status === 'COMPLETED') return task.resultSynced !== 0
+  // COMPLETED 需等 resultSynced 结束（0=待同步，3=同步中，1=成功，2=失败）
+  if (task.status === 'COMPLETED') return !isTaskResultSyncing(task)
   return false
 }
 
