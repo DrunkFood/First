@@ -198,6 +198,23 @@ class MarkdownToDocumentConverterTest {
             List<ParagraphRenderData> paragraphs = getParagraphs(result);
             assertEquals(2, paragraphs.size(), "两个段落应产生两个ParagraphRenderData");
         }
+
+        @Test
+        @DisplayName("连续编号条款行在段落内逐行换行，不挤在同一行")
+        void multiLevelNumberingLineBreak() {
+            // requirementContent 中编号条款为连续纯文本行（无空行分隔、非列表语法），
+            // flexmark 将其解析为单个段落，行间为软换行；应渲染为段落内换行而非空格。
+            String markdown = "4.1 系统应支持功能A\n4.2 系统应支持功能B\n4.2.1 具体要求C";
+            DocumentRenderData result = converter.convert(markdown);
+            List<ParagraphRenderData> paragraphs = getParagraphs(result);
+            assertEquals(1, paragraphs.size(), "连续无空行编号行应归为单个段落");
+
+            String text = getParagraphText(paragraphs.get(0));
+            assertTrue(text.contains("4.1"), "应包含4.1条款");
+            assertTrue(text.contains("4.2.1"), "应包含4.2.1条款");
+            assertTrue(text.contains("\n"), "软换行应渲染为换行符，而非空格");
+            assertFalse(text.contains("功能A 4.2"), "编号行不应被空格拼接挤在同一行");
+        }
     }
 
     // ==================== 行内格式测试 ====================
@@ -441,6 +458,38 @@ class MarkdownToDocumentConverterTest {
                             && t.getStyle() != null
                             && Boolean.TRUE.equals(t.getStyle().isBold()));
             assertTrue(hasBold, "单元格内加粗文本应保留加粗样式");
+        }
+
+        @Test
+        @DisplayName("合并单元格(||)不导致渲染失败且列数对齐")
+        void tableWithColspanAligned() {
+            // || 表示合并列，flexmark 会丢弃被合并单元格使该行 cell 数少于表头
+            String markdown = """
+                    | A | B | C |
+                    | --- | --- | --- |
+                    | 1 || 3 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            // 所有行 cell 数必须一致（=最大列数3），否则 poi-tl 渲染会抛异常导致整篇文档生成失败
+            for (RowRenderData row : table.getRows()) {
+                assertEquals(3, row.getCells().size(), "合并单元格行应补齐到最大列数");
+            }
+        }
+
+        @Test
+        @DisplayName("不规则表格(数据行列数不足)不导致渲染失败且列数对齐")
+        void tableUnevenRowsAligned() {
+            String markdown = """
+                    | A | B | C |
+                    | --- | --- | --- |
+                    | 1 | 2 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            for (RowRenderData row : table.getRows()) {
+                assertEquals(3, row.getCells().size(), "列数不足的行应补齐到最大列数");
+            }
         }
     }
 

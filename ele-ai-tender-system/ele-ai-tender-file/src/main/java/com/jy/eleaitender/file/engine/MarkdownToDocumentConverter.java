@@ -208,7 +208,10 @@ public class MarkdownToDocumentConverter {
                     String content = getNodeText(code);
                     parts.add(createTextData(content, inherit, true));
                 }
-                // 软换行 → 空格
+                // 软换行 → 换行符（Word 段落内换行）
+                // 注：CommonMark 标准下软换行渲染为空格，但本场景为中文招标文档生成，
+                // requirementContent 中编号条款（如 4.1、4.2.1）为连续纯文本行，期望逐行换行显示，
+                // 故与硬换行一致处理，避免多级编号挤在同一行。
                 case SoftLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
                 // 硬换行 → 换行符（Word 段落内换行）
                 case HardLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
@@ -391,9 +394,15 @@ public class MarkdownToDocumentConverter {
      * 显式跳过 |---| 分隔行：flexmark 中 TableSeparator 是 TableBlock 的直接子节点，
      * 其内部还嵌套了内容为 "---" 的 TableRow，需整个跳过避免被当成数据行。
      * TableHead 内的行视为表头并加粗，单元格内行内格式（加粗/斜体/代码）通过 collectInlineText 保留。
+     * <p>
+     * 列数对齐：合并单元格（||）或不规则表格会使某行 cell 数少于表头列数，
+     * poi-tl 渲染要求每行 cell 数一致，否则抛异常导致整篇文档生成失败，故按最大列数补齐空单元格。
      */
     private void convertTable(TableBlock tableBlock, Documents.DocumentBuilder builder) {
-        Tables.TableBuilder tableBuilder = Tables.of();
+        // 阶段一：收集所有行的单元格与表头标记，并求最大列数
+        List<List<CellRenderData>> rowCells = new ArrayList<>();
+        List<Boolean> headerFlags = new ArrayList<>();
+        int maxCols = 0;
         for (Node section : tableBlock.getChildren()) {
             // 跳过分隔行节点（|---|）：flexmark 中 TableSeparator 是 TableBlock 的直接子节点，
             // 其内部还嵌套了内容为 "---" 的 TableRow，必须整个跳过，否则会把分隔行渲染成数据行。
@@ -405,18 +414,33 @@ public class MarkdownToDocumentConverter {
                 if (!(rowNode instanceof TableRow row)) {
                     continue;
                 }
-                Rows.RowBuilder rowBuilder = Rows.of();
+                List<CellRenderData> cells = new ArrayList<>();
                 for (Node cellNode : row.getChildren()) {
                     if (!(cellNode instanceof TableCell cell)) {
                         continue;
                     }
-                    rowBuilder.addCell(buildTableCell(cell));
+                    cells.add(buildTableCell(cell));
                 }
-                if (headerSection) {
-                    rowBuilder.textBold();
-                }
-                tableBuilder.addRow(rowBuilder.create());
+                maxCols = Math.max(maxCols, cells.size());
+                rowCells.add(cells);
+                headerFlags.add(headerSection);
             }
+        }
+        // 阶段二：按最大列数补齐空单元格后构建表格
+        Tables.TableBuilder tableBuilder = Tables.of();
+        for (int i = 0; i < rowCells.size(); i++) {
+            List<CellRenderData> cells = rowCells.get(i);
+            while (cells.size() < maxCols) {
+                cells.add(Cells.of().addParagraph(Paragraphs.of().create()).create());
+            }
+            Rows.RowBuilder rowBuilder = Rows.of();
+            for (CellRenderData cell : cells) {
+                rowBuilder.addCell(cell);
+            }
+            if (Boolean.TRUE.equals(headerFlags.get(i))) {
+                rowBuilder.textBold();
+            }
+            tableBuilder.addRow(rowBuilder.create());
         }
         builder.addTable(tableBuilder.create());
     }
