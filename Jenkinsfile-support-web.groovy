@@ -67,7 +67,7 @@ pipeline {
                         setlocal enabledelayedexpansion
 
                         cd ${env.APP_DIR}
-                        "C:\\Program Files\\7-Zip\\7z.exe" a -tzip ../${env.APP_NAME}.zip ${env.APP_NAME}
+                        "C:\\Program Files\\7-Zip\\7z.exe" a -tzip ../${env.APP_NAME}.zip dist
 
                         endlocal
                     """

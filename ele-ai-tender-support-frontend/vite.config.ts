@@ -58,7 +58,6 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: 'ele-ai-tender-support-web',
       sourcemap: false,
       chunkSizeWarningLimit: 1500,
       rollupOptions: {

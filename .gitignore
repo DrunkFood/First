@@ -90,3 +90,10 @@ docs/context
 docs/plans
 docs/projects
 docs/test
+
+# 忽略所有 application-*.yml，但保留关键配置文件
+**/application-*.yml
+!**/application-dev.yml
+!**/application-test.yml
+!**/application-prod.yml
+!**/application-sysconfig.yml
