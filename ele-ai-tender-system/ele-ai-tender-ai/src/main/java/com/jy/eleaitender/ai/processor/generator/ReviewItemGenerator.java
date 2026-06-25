@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
@@ -16,7 +17,6 @@ import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ReviewType;
 import com.jy.eleaitender.common.exception.AiErrorContentException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -113,17 +113,18 @@ public class ReviewItemGenerator {
                         enabledTypes);
 
         // 路由到合适的模型
-        ChatClient client = modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE);
+        RoutedChatClient routedClient = modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE);
 
         // 同步调用并记录响应
-        String aiOutput = aiCallRecorder.callAndRecord(client, systemPrompt,
-                userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList());
+        String aiOutput = aiCallRecorder.callAndRecord(routedClient.chatClient(), SystemPromptTemplates.REVIEW_ITEM_GENERATE,
+                userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList(),
+                routedClient.modelName());
 
         // 提取并归一化JSON内容
         String jsonResult = normalizeReviewItemJson(aiOutput, task.getId());
         if (!isValidReviewItemsJson(jsonResult)) {
             log.warn("评审项生成结果JSON解析失败，尝试AI修复: taskId={}", task.getId());
-            String repairedOutput = repairReviewItemJson(client, aiOutput, task);
+            String repairedOutput = repairReviewItemJson(routedClient, aiOutput, task);
             jsonResult = normalizeReviewItemJson(repairedOutput, task.getId());
         }
 
@@ -137,10 +138,10 @@ public class ReviewItemGenerator {
         return jsonResult;
     }
 
-    private String repairReviewItemJson(ChatClient client, String aiOutput, AiTask task) {
+    private String repairReviewItemJson(RoutedChatClient routedClient, String aiOutput, AiTask task) {
         String repairPrompt = PromptBuilder.buildReviewItemJsonRepair(aiOutput);
-        return aiCallRecorder.callAndRecord(client, SystemPromptTemplates.REVIEW_ITEM_JSON_REPAIR,
-                repairPrompt, "GENERATION", task.getId(), task.getCreateId(), null);
+        return aiCallRecorder.callAndRecord(routedClient.chatClient(), SystemPromptTemplates.REVIEW_ITEM_JSON_REPAIR,
+                repairPrompt, "GENERATION", task.getId(), task.getCreateId(), null, routedClient.modelName());
     }
 
     private boolean isValidReviewItemsJson(String jsonResult) {

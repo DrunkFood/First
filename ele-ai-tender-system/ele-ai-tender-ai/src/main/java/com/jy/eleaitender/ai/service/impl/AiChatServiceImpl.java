@@ -3,6 +3,7 @@ package com.jy.eleaitender.ai.service.impl;
 import com.jy.eleaitender.ai.dto.request.ChatRequest;
 import com.jy.eleaitender.ai.dto.request.OptimizeRequest;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
@@ -63,7 +64,8 @@ public class AiChatServiceImpl implements IAiChatService {
     public void streamChat(ChatRequest request, SseEmitter emitter) {
         threadPoolManager.execute(() -> {
             try {
-                ChatClient chatClient = modelRouter.route(AiUsageScenario.CHAT);
+                RoutedChatClient routedClient = modelRouter.routeWithInfo(AiUsageScenario.CHAT);
+                ChatClient chatClient = routedClient.chatClient();
 
                 // 构建对话历史
                 List<Message> chatMessages = new ArrayList<>();
@@ -109,7 +111,7 @@ public class AiChatServiceImpl implements IAiChatService {
                             // 流完成后记录响应日志
                             aiCallRecorder.record(lastResponseRef.get(), contentBuilder.toString(),
                                     SystemPromptTemplates.AI_ASSISTANT, userPrompt, startTime,
-                                    "CHAT", null, request.getConversationId(), null);
+                                    "CHAT", null, request.getConversationId(), null, routedClient.modelName());
                             completeSse(emitter);
                         }
                 );
@@ -124,7 +126,8 @@ public class AiChatServiceImpl implements IAiChatService {
     public void streamOptimize(OptimizeRequest request, SseEmitter emitter) {
         threadPoolManager.execute(() -> {
             try {
-                ChatClient chatClient = modelRouter.route(AiUsageScenario.OPTIMIZATION);
+                RoutedChatClient routedClient = modelRouter.routeWithInfo(AiUsageScenario.OPTIMIZATION);
+                ChatClient chatClient = routedClient.chatClient();
 
                 String userPrompt = PromptBuilder.buildTextOptimize(
                         request.getContent(), request.getRequirement());
@@ -157,7 +160,7 @@ public class AiChatServiceImpl implements IAiChatService {
                         () -> {
                             aiCallRecorder.record(lastResponseRef.get(), contentBuilder.toString(),
                                     SystemPromptTemplates.TEXT_OPTIMIZE, userPrompt, startTime,
-                                    "OPTIMIZATION", null, null, null);
+                                    "OPTIMIZATION", null, null, null, routedClient.modelName());
                             completeSse(emitter);
                         }
                 );
@@ -170,12 +173,13 @@ public class AiChatServiceImpl implements IAiChatService {
 
     @Override
     public String suggest(ChatRequest request) {
-        ChatClient chatClient = modelRouter.route(AiUsageScenario.CHAT);
+        RoutedChatClient routedClient = modelRouter.routeWithInfo(AiUsageScenario.CHAT);
+        ChatClient chatClient = routedClient.chatClient();
 
         String userPrompt = buildUserPrompt(request);
 
         return aiCallRecorder.callAndRecord(chatClient, SystemPromptTemplates.AI_ASSISTANT,
-                userPrompt, "CHAT", null, null, null);
+                userPrompt, "CHAT", null, null, null, routedClient.modelName());
     }
 
     String buildUserPrompt(ChatRequest request) {

@@ -19,7 +19,7 @@
 
     <div v-loading="loading" class="document-preview">
       <template v-if="integrated && fileId">
-        <DocxPreview :file-id="fileId" />
+        <DocxPreview ref="docxPreviewRef" :file-id="fileId" />
       </template>
       <el-empty v-else-if="!loading" description="暂无文档内容" />
     </div>
@@ -48,6 +48,7 @@ const loading = ref(false)
 const downloadLoading = ref(false)
 const fileId = ref<number | null>(null)
 const integrated = ref(false)
+const docxPreviewRef = ref<InstanceType<typeof DocxPreview> | null>(null)
 const projectName = ref('文档')
 
 async function handleOpen() {
@@ -91,7 +92,12 @@ async function handleDownload() {
 }
 
 function handlePrint() {
-  window.print()
+  const targetFileId = fileId.value || props.generatedFileId
+  if (!targetFileId) {
+    ElMessage.warning('文档尚未生成，无法打印')
+    return
+  }
+  docxPreviewRef.value?.printDocument(`${projectName.value}.docx`)
 }
 </script>
 

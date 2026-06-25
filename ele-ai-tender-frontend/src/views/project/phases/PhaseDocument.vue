@@ -117,7 +117,7 @@
 
       <!-- Word文档预览内容 -->
       <div class="preview-scroll-area">
-        <DocxPreview :file-id="preview?.generatedFileId ?? null" :zoom="zoomLevel" />
+        <DocxPreview ref="docxPreviewRef" :file-id="preview?.generatedFileId ?? null" :zoom="zoomLevel" />
       </div>
     </div>
 
@@ -239,6 +239,7 @@ const props = defineProps<{ projectId: number; readonly?: boolean }>()
 const emit = defineEmits<{ next: []; prev: [] }>()
 
 const preview = ref<DocumentPreviewVO | null>(null)
+const docxPreviewRef = ref<InstanceType<typeof DocxPreview> | null>(null)
 const showTocPanel = ref(false)
 const zoomLevel = ref(100)
 const policyModalVisible = ref(false)
@@ -286,7 +287,13 @@ const handleTocClick = (data: any) => {
 
 const handleZoomIn = () => { zoomLevel.value = Math.min(200, zoomLevel.value + 10) }
 const handleZoomOut = () => { zoomLevel.value = Math.max(50, zoomLevel.value - 10) }
-const handlePrint = () => window.print()
+const handlePrint = () => {
+  if (!preview.value?.generatedFileId) {
+    ElMessage.warning('文档尚未生成，无法打印')
+    return
+  }
+  docxPreviewRef.value?.printDocument(`${project.value?.projectName || '招标文件'}.docx`)
+}
 
 const formatTime = (time?: string) => {
   if (!time) return '-'

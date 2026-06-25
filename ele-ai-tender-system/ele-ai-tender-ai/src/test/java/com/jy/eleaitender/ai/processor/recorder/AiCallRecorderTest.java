@@ -5,6 +5,7 @@ import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.service.FileContentService;
 import com.jy.eleaitender.ai.service.IAiResponseLogService;
 import com.jy.eleaitender.common.entity.ai.AiResponseLog;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,6 +67,18 @@ class AiCallRecorderTest {
                 .doesNotContain("\\{")
                 .doesNotContain("\\}");
         verify(responseLogService).record(any(AiResponseLog.class));
+    }
+
+    @Test
+    void recordShouldUseRoutedModelNameWhenResponseMetadataDoesNotContainModel() {
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation("content")));
+
+        recorder.record(chatResponse, "content", "system", "user", new Date(0),
+                "GENERATION", 7001L, null, 9L, "glm-4-plus");
+
+        ArgumentCaptor<AiResponseLog> captor = ArgumentCaptor.forClass(AiResponseLog.class);
+        verify(responseLogService).record(captor.capture());
+        assertThat(captor.getValue().getModel()).isEqualTo("glm-4-plus");
     }
 
     private static final class CapturingChatModel implements ChatModel {

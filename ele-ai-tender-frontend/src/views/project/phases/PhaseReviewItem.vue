@@ -416,6 +416,7 @@ const emit = defineEmits<{ next: []; prev: [] }>()
 const allItems = ref<ReviewItemTree[]>([])
 const activeReviewType = ref<string>('COMPLIANCE')
 const isCreatingGenerationTask = ref(false)
+let tempIdSeed = -1
 
 // 评审项配置
 const reviewConfig = ref<ReviewConfig | null>(null)
@@ -499,6 +500,58 @@ function isLeaf(row: ReviewItemTree): boolean {
   return !row.children || row.children.length === 0
 }
 
+function nextTempId(): number {
+  return tempIdSeed--
+}
+
+function isCategoryRoot(row: ReviewItemTree): boolean {
+  const reviewType = row.reviewType || ''
+  return row.level === 1 && row.itemName === REVIEW_TYPE_LABELS[reviewType]
+}
+
+function createLocalItem(type: ReviewCategory, parent: ReviewItemTree | null, sortOrder: number): ReviewItemTree {
+  return {
+    id: nextTempId(),
+    projectId: props.projectId,
+    parentId: parent?.id ?? null,
+    level: parent ? parent.level + 1 : 1,
+    itemName: parent ? '' : (REVIEW_TYPE_LABELS[type] || type),
+    itemContent: '',
+    sortOrder,
+    reviewType: type,
+    score: 0,
+    maxScore: undefined,
+    weight: undefined,
+    subjectivity: 'OBJECTIVE',
+    isRequired: parent ? 1 : 0,
+    createTime: '',
+    children: [],
+  }
+}
+
+function ensureCategoryRoot(type: ReviewCategory): ReviewItemTree {
+  let categoryRoot = allItems.value.find(i => i.reviewType === type && i.level === 1 && (isCategoryRoot(i) || i.children?.length))
+  if (!categoryRoot) {
+    categoryRoot = createLocalItem(type, null, allItems.value.filter(i => i.reviewType === type).length)
+    allItems.value.push(categoryRoot)
+  }
+  return categoryRoot
+}
+
+function removeNodeById(nodes: ReviewItemTree[], id: number): boolean {
+  const index = nodes.findIndex(node => node.id === id)
+  if (index >= 0) {
+    nodes.splice(index, 1)
+    return true
+  }
+  for (const node of nodes) {
+    if (node.children?.length && removeNodeById(node.children, id)) {
+      return true
+    }
+  }
+  return false
+}
+
 /** 计算节点的子项分值汇总 */
 function calcNodeScore(row: ReviewItemTree): number {
   if (isLeaf(row)) return row.score || 0
@@ -531,7 +584,7 @@ function collectLeaves(nodes: ReviewItemTree[]): ReviewItemTree[] {
 function unwrapCategoryRoots(roots: ReviewItemTree[]): ReviewItemTree[] {
   const result: ReviewItemTree[] = []
   for (const node of roots) {
-    if (node.level === 1 && node.children?.length) {
+    if (node.level === 1 && (node.children?.length || isCategoryRoot(node))) {
       result.push(...node.children)
     } else {
       result.push(node)
@@ -619,6 +672,7 @@ const isEditingDisabled = computed(() => props.readonly || isGenerating.value)
 
 const loadReviewItems = async () => {
   const data = await reviewApi.getTree(props.projectId)
+  tempIdSeed = -1
   const flatList = (data || []).map((item: any) => ({
     id: item.id,
     projectId: item.projectId,
@@ -663,54 +717,21 @@ const handleGenerate = async () => {
 }
 
 /** 添加评审项（优先添加为分类根节点的子项，避免创建重复的分类层级） */
-const handleAddItem = async (type: ReviewCategory) => {
-  try {
-    const categoryRoot = allItems.value.find(i => i.reviewType === type && i.level === 1)
-    if (categoryRoot) {
-      await reviewApi.create({
-        projectId: props.projectId,
-        parentId: categoryRoot.id,
-        itemName: '',
-        reviewType: type,
-        subjectivity: 'OBJECTIVE',
-        score: 0,
-      })
-    } else {
-      await reviewApi.create({
-        projectId: props.projectId,
-        itemName: '',
-        level: 1,
-        sortOrder: allItems.value.filter(i => i.reviewType === type).length,
-        reviewType: type,
-        subjectivity: 'OBJECTIVE',
-        score: 0,
-      })
-    }
-    await loadReviewItems()
-  } catch {
-    ElMessage.error('添加失败')
-  }
+const handleAddItem = (type: ReviewCategory) => {
+  const categoryRoot = ensureCategoryRoot(type)
+  const newItem = createLocalItem(type, categoryRoot, categoryRoot.children?.length || 0)
+  categoryRoot.children = [...(categoryRoot.children || []), newItem]
 }
 
 /** 添加子评审项 */
-const handleAddChild = async (parent: ReviewItemTree) => {
+const handleAddChild = (parent: ReviewItemTree) => {
   if (parent.level >= MAX_LEVEL) {
     ElMessage.warning('评审项最多支持3级')
     return
   }
-  try {
-    await reviewApi.create({
-      projectId: props.projectId,
-      parentId: parent.id,
-      itemName: '',
-      reviewType: parent.reviewType,
-      subjectivity: 'OBJECTIVE',
-      score: 0,
-    })
-    await loadReviewItems()
-  } catch {
-    ElMessage.error('添加子项失败')
-  }
+  const type = (parent.reviewType || activeReviewType.value) as ReviewCategory
+  const newItem = createLocalItem(type, parent, parent.children?.length || 0)
+  parent.children = [...(parent.children || []), newItem]
 }
 
 /** 删除评审项 */
@@ -719,11 +740,14 @@ const handleDeleteItem = async (row: ReviewItemTree) => {
   const msg = hasChildren
     ? `确定删除「${row.itemName || '该项'}」及其所有子项？`
     : `确定删除「${row.itemName || '该项'}」？`
-  await ElMessageBox.confirm(msg, '确认')
   try {
-    await reviewApi.deleteById(row.id)
+    await ElMessageBox.confirm(msg, '确认')
+  } catch {
+    return
+  }
+  try {
+    removeNodeById(allItems.value, row.id)
     ElMessage.success('删除成功')
-    await loadReviewItems()
   } catch {
     ElMessage.error('删除失败')
   }
@@ -747,39 +771,47 @@ const handleNext = async () => {
     const scoringTypeNames = scoringTypes.value
       .map(t => REVIEW_TYPE_LABELS[t.reviewType] || t.reviewType)
       .join('+')
-    if (scoreTotal.value > 0 && scoreTotal.value !== 100) {
+    if (scoringTypes.value.length > 0 && Math.abs(scoreTotal.value - 100) > 0.001) {
       ElMessage.warning(`${scoringTypeNames}评审合计应为100分，当前为${scoreTotal.value}分`)
       return
     }
   }
 
-  // 保存所有修改：将树形数据展平
+  // 保存所有修改：将树形数据展平后一次性替换
   try {
     const flatItems: any[] = []
-    function flatten(nodes: ReviewItemTree[]) {
+    function flatten(nodes: ReviewItemTree[], parentId: number | null = null, level = 1) {
       for (const node of nodes) {
+        const hasChildren = !isLeaf(node)
+        if (!hasChildren && isCategoryRoot(node)) {
+          continue
+        }
         flatItems.push({
           id: node.id,
-          parentId: node.parentId,
-          level: node.level,
+          parentId,
+          level: parentId == null ? node.level || level : level,
           itemName: node.itemName,
           itemContent: node.itemContent,
           sortOrder: node.sortOrder,
           reviewType: node.reviewType,
           subjectivity: node.subjectivity,
-          score: isLeaf(node) ? node.score : undefined,
+          score: hasChildren ? undefined : node.score,
           // 权重模式下权重%存在 level-1 根节点；其他节点 weight 为 undefined（NOT_NULL 策略不更新）
           weight: node.level === 1 ? node.weight : undefined,
+          isRequired: node.isRequired,
         })
-        if (node.children?.length) flatten(node.children)
+        if (hasChildren) flatten(node.children, node.id, currentLevel + 1)
       }
     }
     flatten(allItems.value)
 
-    const itemsToUpdate = flatItems.filter(item => item.id)
-    if (itemsToUpdate.length > 0) {
-      await reviewApi.batchUpdate(itemsToUpdate)
+    if (flatItems.length === 0) {
+      ElMessage.warning('请至少保留一个评审项')
+      return
     }
+
+    await reviewApi.replaceAll(props.projectId, flatItems)
+    await loadReviewItems()
   } catch {
     ElMessage.error('保存失败')
     return

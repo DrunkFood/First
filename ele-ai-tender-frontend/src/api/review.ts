@@ -26,4 +26,8 @@ export const reviewApi = {
   batchUpdate(items: any[]) {
     return request.put('/core-api/v1/review-items/batch', items)
   },
+  /** 替换项目全部评审项 */
+  replaceAll(projectId: number, items: any[]) {
+    return request.put(`/core-api/v1/review-items/${projectId}/replace`, items)
+  },
 }

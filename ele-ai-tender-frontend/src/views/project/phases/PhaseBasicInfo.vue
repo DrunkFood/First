@@ -281,13 +281,34 @@ const parseStructure = (sd: WordStructure | string | undefined): WordStructure |
   return sd
 }
 
-const loadTemplates = async () => {
+const loadTemplates = async (): Promise<boolean> => {
+  if (!form.value.projectCategory || !form.value.projectType) {
+    templateList.value = []
+    defaultTemplateId.value = null
+    form.value.templateId = null
+    return false
+  }
+
   templateLoading.value = true
   try {
-    const res = await templateApi.getList({ pageNum: 1, pageSize: 100 })
+    const res = await templateApi.getList({
+      pageNum: 1,
+      pageSize: 100,
+      projectCategory: form.value.projectCategory,
+      projectType: form.value.projectType,
+    })
     templateList.value = res.records || []
+    if (form.value.templateId && !templateList.value.some(tpl => tpl.id === form.value.templateId)) {
+      form.value.templateId = null
+    }
+    if (defaultTemplateId.value && !templateList.value.some(tpl => tpl.id === defaultTemplateId.value)) {
+      defaultTemplateId.value = null
+    }
+    return true
   } catch {
+    templateList.value = []
     ElMessage.error('获取模板列表失败')
+    return false
   } finally {
     templateLoading.value = false
   }
@@ -307,8 +328,17 @@ function formatTime(value?: string): string {
   }
 }
 
-const handleCategoryChange = () => handleAutoSelectDefaultTemplate()
-const handleTypeChange = () => handleAutoSelectDefaultTemplate()
+const handleTemplateScopeChange = async () => {
+  form.value.templateId = null
+  defaultTemplateId.value = null
+  const loaded = await loadTemplates()
+  if (loaded) {
+    await handleAutoSelectDefaultTemplate()
+  }
+}
+
+const handleCategoryChange = () => handleTemplateScopeChange()
+const handleTypeChange = () => handleTemplateScopeChange()
 
 const handleAutoSelectDefaultTemplate = async () => {
   if (!form.value.projectCategory || !form.value.projectType) return
@@ -469,9 +499,9 @@ const handleSaveAndNext = async () => {
   }
 }
 
-onMounted(() => {
-  loadProject()
-  loadTemplates()
+onMounted(async () => {
+  await loadProject()
+  await loadTemplates()
   loadProjectTemplate()
 })
 </script>

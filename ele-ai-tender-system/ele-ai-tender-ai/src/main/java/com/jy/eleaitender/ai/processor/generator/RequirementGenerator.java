@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.mapper.AiTaskMapper;
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
@@ -135,11 +136,13 @@ public class RequirementGenerator {
 
         try {
             RequirementGenerateParams params = resultParser.parseParams(task.getRequestParams(), RequirementGenerateParams.class);
-            ChatClient client = modelRouter.route(AiTaskType.REQUIREMENT_GENERATE);
+            RoutedChatClient routedClient = modelRouter.routeWithInfo(AiTaskType.REQUIREMENT_GENERATE);
+            ChatClient client = routedClient.chatClient();
+            String modelName = routedClient.modelName();
 
             // Step 1: 生成大纲（参考文件内容在此步骤使用）
             long outlineStart = Timing.now();
-            OutlineResult outline = generateOutline(params, client, task);
+            OutlineResult outline = generateOutline(params, client, task, modelName);
             outlineMs = Timing.msSince(outlineStart);
             chapterCount = outline.getChapters().size();
             publishProgress(task, CONTENT_STAGE_OUTLINE_GENERATED, outline,
@@ -148,7 +151,7 @@ public class RequirementGenerator {
 
             // Step 2: 分章并行生成（不传fileIdList，避免参考文件内容重复注入）
             long chaptersStart = Timing.now();
-            List<String> chapterContents = generateChapters(outline, client, task);
+            List<String> chapterContents = generateChapters(outline, client, task, modelName);
             chaptersMs = Timing.msSince(chaptersStart);
             log.info("Step2分章生成完成: taskId={}, 成功章节数={}", task.getId(), chapterContents.size());
 
@@ -172,7 +175,7 @@ public class RequirementGenerator {
                     chapterContents, completedChapterStatuses(chapterContents.size()),
                     fullContent, REVIEW_STATUS_PROCESSING);
             long reviewStart = Timing.now();
-            String finalContent = reviewAndRefine(fullContent, params, client, task);
+            String finalContent = reviewAndRefine(fullContent, params, client, task, modelName);
             reviewMs = Timing.msSince(reviewStart);
             contentLength = finalContent.length();
             log.info("Step4需求生成完成: taskId={}, 最终字符数={}", task.getId(), contentLength);
@@ -194,7 +197,7 @@ public class RequirementGenerator {
     // ==================== Step 1: 生成大纲 ====================
 
     private OutlineResult generateOutline(RequirementGenerateParams params,
-                                          ChatClient client, AiTask task) {
+                                          ChatClient client, AiTask task, String modelName) {
         String userPrompt = PromptBuilder.buildOutline(
                 params.getRequirementName(),
                 params.getProjectType(),
@@ -214,7 +217,7 @@ public class RequirementGenerator {
         try {
             aiOutput = aiCallRecorder.callAndRecord(
                     client, systemPrompt,
-                    resolvedUserPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null);
+                    resolvedUserPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null, modelName);
             aiSuccess = true;
         } catch (Exception e) {
             errorMessage = e.getMessage();
@@ -342,7 +345,7 @@ public class RequirementGenerator {
     // ==================== Step 2: 分章并行生成 ====================
 
     private List<String> generateChapters(OutlineResult outline,
-                                          ChatClient client, AiTask task) {
+                                          ChatClient client, AiTask task, String modelName) {
         List<RequirementOutline> chapters = outline.getChapters();
         if (chapters == null || chapters.isEmpty()) {
             return List.of();
@@ -374,7 +377,7 @@ public class RequirementGenerator {
                     acquired = true;
                     delayMs = Timing.msSince(delayStart);
                     String content = generateSingleChapter(chapter, projectOverview, outlineDirectory,
-                            client, task, chapterIndex, delayMs, chapterStartTime, chapterStart);
+                            client, task, modelName, chapterIndex, delayMs, chapterStartTime, chapterStart);
                     synchronized (progressLock) {
                         progressContents.set(chapterIndex, content);
                         progressStatuses.set(chapterIndex, CHAPTER_STATUS_COMPLETED);
@@ -428,10 +431,11 @@ public class RequirementGenerator {
      * 生成单个章节
      */
     private String generateSingleChapter(RequirementOutline chapter,
-                                         String projectOverview,
-                                         String outlineDirectory,
-                                         ChatClient client, AiTask task,
-                                         int chapterIndex,
+                                          String projectOverview,
+                                          String outlineDirectory,
+                                          ChatClient client, AiTask task,
+                                          String modelName,
+                                          int chapterIndex,
                                          long delayMs,
                                          String chapterStartTime,
                                          long chapterStart) {
@@ -455,7 +459,7 @@ public class RequirementGenerator {
             try {
                 aiOutput = aiCallRecorder.callAndRecord(
                         client, systemPrompt,
-                        userPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null);
+                        userPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null, modelName);
                 aiSuccess = true;
             } catch (Exception e) {
                 errorMessage = e.getMessage();
@@ -640,8 +644,8 @@ public class RequirementGenerator {
     }
 
     private String reviewAndRefine(String fullContent,
-                                   RequirementGenerateParams params,
-                                   ChatClient client, AiTask task) {
+                                    RequirementGenerateParams params,
+                                    ChatClient client, AiTask task, String modelName) {
         String userPrompt = PromptBuilder.buildReview(
                 params.getRequirementName(),
                 params.getProjectType(),
@@ -662,7 +666,7 @@ public class RequirementGenerator {
             try {
                 aiOutput = aiCallRecorder.callAndRecord(
                         client, systemPrompt,
-                        userPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null);
+                        userPrompt, MODEL_SCENE_GENERATION, task.getId(), task.getCreateId(), null, modelName);
                 aiSuccess = true;
             } catch (Exception e) {
                 errorMessage = e.getMessage();

@@ -78,6 +78,13 @@ public class DetectionEngine {
             fileIdList = task.getFileIdList();
         }
 
+        if (taskType == AiTaskType.DETECTION_POLICY_REVIEW && !hasFileIds(fileIdList)) {
+            log.info("未选择政策文件，跳过政策文件审查AI调用: taskId={}", task.getId());
+            BaseDetector.DetectionResult skipped = new BaseDetector.DetectionResult();
+            skipped.setScore(100);
+            return toJson(skipped);
+        }
+
         BaseDetector.DetectionResult result = detector.detect(contentJoiner.toString(),
                 task.getId(), task.getCreateId(), fileIdList);
 
@@ -98,6 +105,10 @@ public class DetectionEngine {
             case DETECTION_FORMAT_CHECK -> formatCheckDetector;
             default -> throw new IllegalArgumentException("非检测类型任务: " + taskType);
         };
+    }
+
+    private boolean hasFileIds(List<String> fileIds) {
+        return fileIds != null && fileIds.stream().anyMatch(StringUtils::hasText);
     }
 
     private String toJson(BaseDetector.DetectionResult result) {

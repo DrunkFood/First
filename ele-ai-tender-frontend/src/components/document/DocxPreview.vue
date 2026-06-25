@@ -31,6 +31,13 @@ const loading = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
 let cancelled = false
 
+const escapeHtml = (value: string) => value
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
+
 onBeforeUnmount(() => {
   cancelled = true
   if (containerRef.value) {
@@ -79,9 +86,105 @@ watch(() => props.fileId, (newId) => {
   }
 }, { immediate: true })
 
+const printDocument = (title = 'Word文档') => {
+  if (loading.value) {
+    ElMessage.warning('Word文档正在加载，请稍后再打印')
+    return
+  }
+  if (!containerRef.value || !containerRef.value.innerHTML.trim()) {
+    ElMessage.warning('暂无可打印的Word文档')
+    return
+  }
+
+  const clonedContent = containerRef.value.cloneNode(true) as HTMLElement
+  clonedContent.style.setProperty('zoom', '1')
+  clonedContent.classList.add('docx-print-content')
+
+  const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+    .map(node => node.outerHTML)
+    .join('\n')
+  const printFrame = document.createElement('iframe')
+  printFrame.style.position = 'fixed'
+  printFrame.style.right = '0'
+  printFrame.style.bottom = '0'
+  printFrame.style.width = '0'
+  printFrame.style.height = '0'
+  printFrame.style.border = '0'
+  printFrame.setAttribute('aria-hidden', 'true')
+  document.body.appendChild(printFrame)
+
+  const printWindow = printFrame.contentWindow
+  const printDocumentRef = printWindow?.document
+  if (!printWindow || !printDocumentRef) {
+    document.body.removeChild(printFrame)
+    ElMessage.error('打开打印窗口失败')
+    return
+  }
+
+  printDocumentRef.open()
+  printDocumentRef.write(`<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${escapeHtml(title)}</title>
+  ${styles}
+  <style>
+    @page { margin: 0; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .docx-print-root {
+      width: 100%;
+      min-height: 100%;
+      background: #fff !important;
+    }
+    .docx-print-root .docx-preview-content,
+    .docx-print-root .docx-preview-wrapper,
+    .docx-print-root .docx-wrapper {
+      margin: 0 auto !important;
+      padding: 0 !important;
+      background: #fff !important;
+      box-shadow: none !important;
+    }
+    .docx-print-root section {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      page-break-after: always;
+      break-after: page;
+    }
+    .docx-print-root section:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="docx-print-root">${clonedContent.outerHTML}</div>
+</body>
+</html>`)
+  printDocumentRef.close()
+
+  const removeFrame = () => {
+    if (printFrame.parentNode) {
+      printFrame.parentNode.removeChild(printFrame)
+    }
+  }
+  printWindow.onafterprint = removeFrame
+  window.setTimeout(() => {
+    printWindow.focus()
+    printWindow.print()
+    window.setTimeout(removeFrame, 1000)
+  }, 300)
+}
+
 defineExpose({
   containerRef,
   loading,
+  printDocument,
 })
 </script>
 

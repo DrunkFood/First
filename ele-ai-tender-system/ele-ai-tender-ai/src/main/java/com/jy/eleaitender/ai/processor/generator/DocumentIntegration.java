@@ -3,6 +3,7 @@ package com.jy.eleaitender.ai.processor.generator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.ai.processor.model.GenerateResultParser;
 import com.jy.eleaitender.ai.processor.model.ModelRouter;
+import com.jy.eleaitender.ai.processor.model.RoutedChatClient;
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
@@ -14,7 +15,6 @@ import com.jy.eleaitender.common.dto.ai.DocumentIntegrationParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -131,11 +131,12 @@ public class DocumentIntegration {
             String userPrompt = PromptBuilder.buildPlaceholderMatch(placeholdersStr, dataFieldsDesc);
 
             // 路由到合适的模型
-            ChatClient client = modelRouter.route(AiTaskType.DOCUMENT_INTEGRATION);
+            RoutedChatClient routedClient = modelRouter.routeWithInfo(AiTaskType.DOCUMENT_INTEGRATION);
 
             // 同步调用并记录响应
-            String aiOutput = aiCallRecorder.callAndRecord(client, SystemPromptTemplates.PLACEHOLDER_MATCH,
-                    userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId(), task.getFileIdList());
+            String aiOutput = aiCallRecorder.callAndRecord(routedClient.chatClient(), SystemPromptTemplates.PLACEHOLDER_MATCH,
+                    userPrompt, "OPTIMIZATION", task.getId(), task.getCreateId(), task.getFileIdList(),
+                    routedClient.modelName());
 
             // 解析AI返回的映射JSON
             String mappingJson = resultParser.extractJson(aiOutput);
