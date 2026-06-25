@@ -209,7 +209,7 @@ public class MarkdownToDocumentConverter {
                     parts.add(createTextData(content, inherit, true));
                 }
                 // 软换行 → 空格
-                case SoftLineBreak ignored -> parts.add(createTextData(" ", inherit, inCode));
+                case SoftLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
                 // 硬换行 → 换行符（Word 段落内换行）
                 case HardLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
                 // 其他行内节点（如链接等），递归提取文本
