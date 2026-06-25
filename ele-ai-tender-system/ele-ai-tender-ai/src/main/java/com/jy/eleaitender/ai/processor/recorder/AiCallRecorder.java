@@ -11,6 +11,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.model.Content;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * AI 调用记录器。
@@ -58,6 +60,25 @@ public class AiCallRecorder {
         return content;
     }
 
+    public String callAndRecord(ChatClient client, List<Message> messages,
+                                String role, Long taskId, Long userId, List<String> fileIds,
+                                String modelName) {
+        String fileContents = fileContentService.resolveFileContents(fileIds);
+        if (StringUtils.hasText(fileContents)) {
+            messages.add(new UserMessage(fileContents));
+        }
+        Date startTime = new Date();
+
+        ChatResponse chatResponse = client.prompt()
+                .messages(messages)
+                .call()
+                .chatResponse();
+
+        String content = extractContent(chatResponse);
+        record(chatResponse, content, messages, startTime, role, taskId, null, userId, modelName);
+        return content;
+    }
+
     private List<Message> buildChatMessages(String systemPrompt, String userPrompt) {
         List<Message> messages = new ArrayList<>();
         if (StringUtils.hasText(systemPrompt)) {
@@ -75,9 +96,17 @@ public class AiCallRecorder {
     }
 
     public void record(ChatResponse chatResponse, String content,
-                       String systemPrompt, String userPrompt, Date startTime,
-                       String role, Long taskId, String conversationId, Long userId) {
-        record(chatResponse, content, systemPrompt, userPrompt, startTime, role, taskId, conversationId, userId, null);
+                       List<Message> messages, Date startTime,
+                       String role, Long taskId, String conversationId, Long userId, String modelName) {
+        String systemPrompt = messages.stream()
+                .filter(message -> message instanceof SystemMessage)
+                .map(Content::getContent)
+                .collect(Collectors.joining("\n"));
+        String userPrompt = messages.stream()
+                .filter(message -> message instanceof UserMessage)
+                .map(Content::getContent)
+                .collect(Collectors.joining("\n"));
+        record(chatResponse, content, systemPrompt, userPrompt, startTime, role, taskId, conversationId, userId, modelName);
     }
 
     public void record(ChatResponse chatResponse, String content,

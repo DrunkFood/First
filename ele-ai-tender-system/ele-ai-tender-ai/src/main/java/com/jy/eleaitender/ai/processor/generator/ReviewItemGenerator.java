@@ -116,7 +116,7 @@ public class ReviewItemGenerator {
         RoutedChatClient routedClient = modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE);
 
         // 同步调用并记录响应
-        String aiOutput = aiCallRecorder.callAndRecord(routedClient.chatClient(), SystemPromptTemplates.REVIEW_ITEM_GENERATE,
+        String aiOutput = aiCallRecorder.callAndRecord(routedClient.chatClient(), systemPrompt,
                 userPrompt, "GENERATION", task.getId(), task.getCreateId(), task.getFileIdList(),
                 routedClient.modelName());
 

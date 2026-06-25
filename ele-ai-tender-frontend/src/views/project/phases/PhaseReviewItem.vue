@@ -782,6 +782,7 @@ const handleNext = async () => {
     const flatItems: any[] = []
     function flatten(nodes: ReviewItemTree[], parentId: number | null = null, level = 1) {
       for (const node of nodes) {
+        const currentLevel = parentId == null ? node.level || level : level
         const hasChildren = !isLeaf(node)
         if (!hasChildren && isCategoryRoot(node)) {
           continue
@@ -789,7 +790,7 @@ const handleNext = async () => {
         flatItems.push({
           id: node.id,
           parentId,
-          level: parentId == null ? node.level || level : level,
+          level: currentLevel,
           itemName: node.itemName,
           itemContent: node.itemContent,
           sortOrder: node.sortOrder,
