@@ -30,11 +30,11 @@
       </div>
       <div class="info-item">
         <div class="info-label">文档大小</div>
-        <div class="info-value">-</div>
+        <div class="info-value">{{ formatFileSize(documentFileSize) }}</div>
       </div>
       <div class="info-item">
         <div class="info-label">页数</div>
-        <div class="info-value">-</div>
+        <div class="info-value">{{ documentPageCount ? `${documentPageCount}页` : '-' }}</div>
       </div>
       <div class="info-item">
         <div class="info-label">生成时间</div>
@@ -117,7 +117,12 @@
 
       <!-- Word文档预览内容 -->
       <div class="preview-scroll-area">
-        <DocxPreview ref="docxPreviewRef" :file-id="preview?.generatedFileId ?? null" :zoom="zoomLevel" />
+        <DocxPreview
+          ref="docxPreviewRef"
+          :file-id="preview?.generatedFileId ?? null"
+          :zoom="zoomLevel"
+          @rendered="handleDocxRendered"
+        />
       </div>
     </div>
 
@@ -243,6 +248,8 @@ const docxPreviewRef = ref<InstanceType<typeof DocxPreview> | null>(null)
 const showTocPanel = ref(false)
 const zoomLevel = ref(100)
 const policyModalVisible = ref(false)
+const documentFileSize = ref<number | null>(null)
+const documentPageCount = ref<number | null>(null)
 
 // 文档集成AI任务状态管理
 const projectIdRef = computed(() => props.projectId)
@@ -300,6 +307,13 @@ const formatTime = (time?: string) => {
   return new Date(time).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/\//g, '-')
 }
 
+const formatFileSize = (size?: number | null) => {
+  if (size == null) return '-'
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
+
 // --- 政策文件匹配 ---
 const knowledgePolicyDocs = ref<KnowledgeDocumentPolicyVO[]>([])
 const policyFiles = ref<PolicyFileVO[]>([])
@@ -351,7 +365,23 @@ const handleConfirmPolicyFiles = async () => {
 
 // --- 文档操作 ---
 const loadPreview = async () => {
-  preview.value = await documentApi.getPreview(props.projectId)
+  const data = await documentApi.getPreview(props.projectId)
+  preview.value = data
+  documentFileSize.value = null
+  documentPageCount.value = null
+
+  if (data.generatedFileId) {
+    try {
+      const fileInfo = await fileApi.getInfo(data.generatedFileId)
+      documentFileSize.value = fileInfo?.fileSize ?? null
+    } catch {
+      documentFileSize.value = null
+    }
+  }
+}
+
+const handleDocxRendered = ({ pageCount }: { pageCount: number }) => {
+  documentPageCount.value = pageCount > 0 ? pageCount : null
 }
 
 const handleIntegrate = async () => {

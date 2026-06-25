@@ -26,6 +26,9 @@ const props = withDefaults(defineProps<{
 }>(), {
   zoom: 100,
 })
+const emit = defineEmits<{
+  rendered: [payload: { pageCount: number }]
+}>()
 
 const loading = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
@@ -37,6 +40,19 @@ const escapeHtml = (value: string) => value
   .replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;')
+
+const countRenderedPages = () => {
+  const container = containerRef.value
+  if (!container) return 0
+
+  const directPages = container.querySelectorAll('.docx-wrapper > section')
+  if (directPages.length > 0) return directPages.length
+
+  const docxPages = container.querySelectorAll('section.docx')
+  if (docxPages.length > 0) return docxPages.length
+
+  return container.querySelectorAll('section').length
+}
 
 onBeforeUnmount(() => {
   cancelled = true
@@ -65,6 +81,10 @@ const renderDocx = async (fileId: number) => {
         trimXmlDeclaration: true,
         debug: false,
       })
+      await nextTick()
+      if (!cancelled) {
+        emit('rendered', { pageCount: countRenderedPages() })
+      }
     }
   } catch (e) {
     if (cancelled) return
@@ -83,6 +103,7 @@ watch(() => props.fileId, (newId) => {
     if (containerRef.value) {
       containerRef.value.innerHTML = ''
     }
+    emit('rendered', { pageCount: 0 })
   }
 }, { immediate: true })
 
