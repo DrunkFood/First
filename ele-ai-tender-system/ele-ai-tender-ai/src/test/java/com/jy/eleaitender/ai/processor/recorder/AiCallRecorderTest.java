@@ -57,7 +57,7 @@ class AiCallRecorderTest {
         CapturingChatModel chatModel = new CapturingChatModel();
         ChatClient client = ChatClient.create(chatModel);
 
-        assertThatCode(() -> recorder.callAndRecord(client, SystemPromptTemplates.REVIEW_ITEM_GENERATE,
+        assertThatCode(() -> recorder.callAndRecord(client, SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE,
                 "生成评审项，示例：{\"demo\":true}", "GENERATION", 7001L, 9L, null))
                 .doesNotThrowAnyException();
 

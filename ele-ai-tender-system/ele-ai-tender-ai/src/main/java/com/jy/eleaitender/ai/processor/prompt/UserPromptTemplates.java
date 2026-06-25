@@ -87,7 +87,7 @@ public final class UserPromptTemplates {
      * 评审项生成 - User Prompt 模板（带评审类型配置）
      * 参数: projectName, projectType, projectCategory, budget, requirementContent, reviewMethod, enabledTypes
      */
-    public static final String REVIEW_ITEM_GENERATE_USER_WITH_CONFIG = """
+    public static final String REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_SCORE = """
             请根据以下项目信息和需求内容生成《综合评分法评审标准表》：
             
             项目名称：%s

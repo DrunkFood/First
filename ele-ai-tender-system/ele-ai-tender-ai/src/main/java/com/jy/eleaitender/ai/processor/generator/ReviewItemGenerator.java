@@ -93,7 +93,7 @@ public class ReviewItemGenerator {
         boolean weightMode = config != null && config.isWeightMode();
         String systemPrompt = weightMode
                 ? SystemPromptTemplates.REVIEW_ITEM_GENERATE_WEIGHT
-                : SystemPromptTemplates.REVIEW_ITEM_GENERATE;
+                : SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE;
         String userPrompt = weightMode
                 ? PromptBuilder.buildReviewItemGenerateWeight(
                         params.getProjectName(),
@@ -103,7 +103,7 @@ public class ReviewItemGenerator {
                         params.getRequirementContent(),
                         params.getReviewMethod(),
                         enabledTypes)
-                : PromptBuilder.buildReviewItemGenerate(
+                : PromptBuilder.buildReviewItemGenerateScore(
                         params.getProjectName(),
                         params.getProjectType(),
                         params.getProjectCategory(),

@@ -157,7 +157,7 @@ class ReviewItemGeneratorTest {
     void generateShouldAskAiToRepairJsonWhenInitialOutputCannotBeParsed() throws Exception {
         when(modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE))
                 .thenReturn(new RoutedChatClient(chatClient, "glm-test"));
-        when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE),
+        when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE),
                 anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test")))
                 .thenReturn("以下为评审项：技术方案60分，报价40分。");
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_JSON_REPAIR),
@@ -248,7 +248,7 @@ class ReviewItemGeneratorTest {
     private void mockAiOutput(String aiOutput) {
         when(modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE))
                 .thenReturn(new RoutedChatClient(chatClient, "glm-test"));
-        when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE),
+        when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE),
                 anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test")))
                 .thenReturn(aiOutput);
     }

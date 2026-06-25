@@ -92,11 +92,11 @@ public final class PromptBuilder {
     /**
      * 构建评审项生成的 User Prompt（带评审类型配置）
      */
-    public static String buildReviewItemGenerate(String projectName, String projectType,
-                                                 String projectCategory, String budget,
-                                                 String requirementContent, String reviewMethod,
-                                                 String enabledTypes) {
-        return String.format(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG,
+    public static String buildReviewItemGenerateScore(String projectName, String projectType,
+                                                      String projectCategory, String budget,
+                                                      String requirementContent, String reviewMethod,
+                                                      String enabledTypes) {
+        return String.format(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_SCORE,
                 defaultStr(projectName),
                 defaultStr(ProjectType.fromCode(projectType).getLabel()),
                 defaultStr(ProjectCategory.fromCode(projectCategory).getLabel()),

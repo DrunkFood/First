@@ -192,7 +192,7 @@ public class SystemPromptTemplates {
     /**
      * 评审项生成 - System Prompt
      */
-    public static final String REVIEW_ITEM_GENERATE = """
+    public static final String REVIEW_ITEM_GENERATE_SCORE = """
             你是一名招标采购评审标准设计专家，精通《中华人民共和国招标投标法》《政府采购需求管理办法》。
             输入材料：以下是本项目的《招标（采购）需求书》（含项目类型、预算、技术/服务要求）。
             任务：请根据上述需求，设计一套完整的《综合评分法评审标准表》，用于评标委员会对投标文件进行打分。

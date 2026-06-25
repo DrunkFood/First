@@ -8,12 +8,12 @@ class ReviewItemPromptTemplatesTest {
 
     @Test
     void reviewItemPromptShouldEnforceExactOneHundredPointScoring() {
-        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE)
+        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE)
                 .contains("符合性审查不计入100分")
                 .contains("叶子节点score合计必须正好等于100分")
                 .contains("输出前必须自行核算");
 
-        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG)
+        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_SCORE)
                 .contains("硬性计分规则")
                 .contains("非符合性评审类型的叶子节点score合计必须正好等于100分")
                 .contains("不要输出总分不等于100分的JSON");
@@ -21,7 +21,7 @@ class ReviewItemPromptTemplatesTest {
 
     @Test
     void reviewItemPromptShouldIncludeDocumentScoringRules() {
-        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE)
+        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE)
                 .contains("招标采购评审标准设计专家")
                 .contains("中华人民共和国招标投标法")
                 .contains("政府采购需求管理办法")
@@ -36,7 +36,7 @@ class ReviewItemPromptTemplatesTest {
                 .contains("特定品牌")
                 .contains("特定厂商");
 
-        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG)
+        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_SCORE)
                 .contains("招标（采购）需求书")
                 .contains("项目类型、预算、技术/服务要求")
                 .contains("模板")
@@ -45,13 +45,13 @@ class ReviewItemPromptTemplatesTest {
 
     @Test
     void reviewItemPromptShouldForbidMarkdownAndRequireReviewItemsRoot() {
-        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE)
+        assertThat(SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE)
                 .contains("只能输出一个合法JSON对象")
                 .contains("第一个字符必须是{")
                 .contains("\"reviewItems\"")
                 .doesNotContain("```json");
 
-        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG)
+        assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_SCORE)
                 .contains("根节点必须是reviewItems")
                 .contains("不要输出Markdown代码块")
                 .contains("不要输出解释说明");
