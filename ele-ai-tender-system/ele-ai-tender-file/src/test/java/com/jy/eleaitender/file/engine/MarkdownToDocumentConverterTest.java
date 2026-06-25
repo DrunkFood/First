@@ -1,8 +1,11 @@
 package com.jy.eleaitender.file.engine;
 
+import com.deepoove.poi.data.CellRenderData;
 import com.deepoove.poi.data.DocumentRenderData;
 import com.deepoove.poi.data.NumberingRenderData;
 import com.deepoove.poi.data.ParagraphRenderData;
+import com.deepoove.poi.data.RowRenderData;
+import com.deepoove.poi.data.TableRenderData;
 import com.deepoove.poi.data.TextRenderData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,6 +40,30 @@ class MarkdownToDocumentConverterTest {
                 .filter(r -> r instanceof NumberingRenderData)
                 .map(r -> (NumberingRenderData) r)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 从 DocumentRenderData 中提取所有表格
+     */
+    private List<TableRenderData> getTables(DocumentRenderData doc) {
+        return doc.getContents().stream()
+                .filter(r -> r instanceof TableRenderData)
+                .map(r -> (TableRenderData) r)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 从单元格中提取纯文本内容
+     */
+    private String getCellText(CellRenderData cell) {
+        if (cell.getParagraphs() == null) {
+            return "";
+        }
+        return cell.getParagraphs().stream()
+                .flatMap(p -> p.getContents() == null ? java.util.stream.Stream.empty() : p.getContents().stream())
+                .filter(r -> r instanceof TextRenderData)
+                .map(r -> ((TextRenderData) r).getText())
+                .collect(Collectors.joining());
     }
 
     /**
@@ -170,6 +197,23 @@ class MarkdownToDocumentConverterTest {
             DocumentRenderData result = converter.convert("第一段\n\n第二段");
             List<ParagraphRenderData> paragraphs = getParagraphs(result);
             assertEquals(2, paragraphs.size(), "两个段落应产生两个ParagraphRenderData");
+        }
+
+        @Test
+        @DisplayName("连续编号条款行在段落内逐行换行，不挤在同一行")
+        void multiLevelNumberingLineBreak() {
+            // requirementContent 中编号条款为连续纯文本行（无空行分隔、非列表语法），
+            // flexmark 将其解析为单个段落，行间为软换行；应渲染为段落内换行而非空格。
+            String markdown = "4.1 系统应支持功能A\n4.2 系统应支持功能B\n4.2.1 具体要求C";
+            DocumentRenderData result = converter.convert(markdown);
+            List<ParagraphRenderData> paragraphs = getParagraphs(result);
+            assertEquals(1, paragraphs.size(), "连续无空行编号行应归为单个段落");
+
+            String text = getParagraphText(paragraphs.get(0));
+            assertTrue(text.contains("4.1"), "应包含4.1条款");
+            assertTrue(text.contains("4.2.1"), "应包含4.2.1条款");
+            assertTrue(text.contains("\n"), "软换行应渲染为换行符，而非空格");
+            assertFalse(text.contains("功能A 4.2"), "编号行不应被空格拼接挤在同一行");
         }
     }
 
@@ -317,6 +361,135 @@ class MarkdownToDocumentConverterTest {
             ParagraphRenderData para = getParagraphs(result).get(0);
             String text = getParagraphText(para);
             assertTrue(text.contains("System.out.println"), "代码块应包含代码内容");
+        }
+    }
+
+    // ==================== 表格转换测试 ====================
+
+    @Nested
+    @DisplayName("表格转换测试")
+    class TableTest {
+
+        @Test
+        @DisplayName("Markdown表格转换为TableRenderData")
+        void tableConvertsToTableRenderData() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 工程名称 | 道路施工 |
+                    | 投资额 | 100万 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            List<TableRenderData> tables = getTables(result);
+            assertFalse(tables.isEmpty(), "表格应产生TableRenderData");
+        }
+
+        @Test
+        @DisplayName("表格行列数正确")
+        void tableRowAndColSize() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 工程名称 | 道路施工 |
+                    | 投资额 | 100万 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            // 表头1行 + 数据2行 = 3行
+            assertEquals(3, table.obtainRowSize(), "表格应有3行(含表头)");
+            assertEquals(2, table.obtainColSize(), "表格应有2列");
+        }
+
+        @Test
+        @DisplayName("表格单元格文本正确")
+        void tableCellText() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 工程名称 | 道路施工 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            List<RowRenderData> rows = table.getRows();
+            // 表头
+            assertEquals("项目", getCellText(rows.get(0).getCells().get(0)), "表头第1列应为'项目'");
+            assertEquals("内容", getCellText(rows.get(0).getCells().get(1)), "表头第2列应为'内容'");
+            // 数据行
+            assertEquals("工程名称", getCellText(rows.get(1).getCells().get(0)), "数据行第1列应为'工程名称'");
+            assertEquals("道路施工", getCellText(rows.get(1).getCells().get(1)), "数据行第2列应为'道路施工'");
+        }
+
+        @Test
+        @DisplayName("表格不再是纯文本带竖线")
+        void tableNotRenderedAsPlainText() {
+            String markdown = """
+                    | A | B |
+                    | --- | --- |
+                    | 1 | 2 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            // 不应把表格降级为段落（旧 bug 的表现）
+            List<ParagraphRenderData> paragraphs = getParagraphs(result);
+            boolean anyParagraphContainsPipe = paragraphs.stream()
+                    .anyMatch(p -> getParagraphText(p).contains("|"));
+            assertFalse(anyParagraphContainsPipe, "表格不应以带'|'的纯文本段落形式出现");
+            assertFalse(getTables(result).isEmpty(), "应生成真正的表格结构");
+        }
+
+        @Test
+        @DisplayName("表格单元格内行内加粗格式保留")
+        void tableCellInlineBold() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 名称 | **重要** |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            RowRenderData dataRow = table.getRows().get(1);
+            CellRenderData cell = dataRow.getCells().get(1);
+            // 单元格内应存在加粗样式的文本片段，且文本为"重要"
+            List<TextRenderData> texts = cell.getParagraphs().get(0).getContents().stream()
+                    .filter(r -> r instanceof TextRenderData)
+                    .map(r -> (TextRenderData) r)
+                    .collect(Collectors.toList());
+            boolean hasBold = texts.stream()
+                    .anyMatch(t -> "重要".equals(t.getText())
+                            && t.getStyle() != null
+                            && Boolean.TRUE.equals(t.getStyle().isBold()));
+            assertTrue(hasBold, "单元格内加粗文本应保留加粗样式");
+        }
+
+        @Test
+        @DisplayName("合并单元格(||)不导致渲染失败且列数对齐")
+        void tableWithColspanAligned() {
+            // || 表示合并列，flexmark 会丢弃被合并单元格使该行 cell 数少于表头
+            String markdown = """
+                    | A | B | C |
+                    | --- | --- | --- |
+                    | 1 || 3 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            // 所有行 cell 数必须一致（=最大列数3），否则 poi-tl 渲染会抛异常导致整篇文档生成失败
+            for (RowRenderData row : table.getRows()) {
+                assertEquals(3, row.getCells().size(), "合并单元格行应补齐到最大列数");
+            }
+        }
+
+        @Test
+        @DisplayName("不规则表格(数据行列数不足)不导致渲染失败且列数对齐")
+        void tableUnevenRowsAligned() {
+            String markdown = """
+                    | A | B | C |
+                    | --- | --- | --- |
+                    | 1 | 2 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            for (RowRenderData row : table.getRows()) {
+                assertEquals(3, row.getCells().size(), "列数不足的行应补齐到最大列数");
+            }
         }
     }
 

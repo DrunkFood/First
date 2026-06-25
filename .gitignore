@@ -21,7 +21,13 @@ build
 # Frontend package/build artifacts
 ele-ai-tender-support-frontend/node_modules/
 ele-ai-tender-support-frontend/dist/
+ele-ai-tender-support-frontend/ele-ai-tender-support-frontend/
 ele-ai-tender-support-frontend/.vite/
+
+ele-ai-tender-frontend/node_modules/
+ele-ai-tender-frontend/dist/
+ele-ai-tender-frontend/ele-ai-tender-frontend/
+ele-ai-tender-frontend/.vite/
 
 # Editor directories and files
 .vscode/*
@@ -33,9 +39,6 @@ ele-ai-tender-support-frontend/.vite/
 *.njsproj
 *.sln
 *.sw?
-
-# Qoder
-.qoder
 
 # Bare repository
 .bare/

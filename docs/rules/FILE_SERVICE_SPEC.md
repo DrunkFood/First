@@ -25,7 +25,7 @@
 | `WordStructureParser` | Word 模板结构解析，提取占位符和结构定义 |
 | `WordDocumentFixEngine` | Word 文档文本替换引擎，基于 Apache POI 实现检测问题修复，支持 locationRef 精准定位 |
 | `WordTextExtractor` | Word 文档文本提取器，提取段落级文本+位置索引（segments + fullText），供检测位置匹配使用 |
-| `MarkdownToDocumentConverter` | Markdown AST → DocumentRenderData 转换器（flexmark 解析，支持标题/加粗/斜体/列表/引用/代码） |
+| `MarkdownToDocumentConverter` | Markdown AST → DocumentRenderData 转换器（flexmark 解析，支持标题/加粗/斜体/列表/引用/代码/表格） |
 | `TableGenerator` | POI 编程生成表格（含单元格合并+边框），绕开 poi-tl 循环标签 |
 
 > **注意**: `MarkdownTemplateEngine` 和 `WordDocumentGenerator` 已移入 core 模块（`com.jy.eleaitender.core.engine`），用于需求导出等 core 内部文档生成场景。

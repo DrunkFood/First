@@ -3,6 +3,7 @@ package com.jy.eleaitender.file.engine;
 import com.deepoove.poi.data.*;
 import com.deepoove.poi.data.style.Style;
 import com.vladsch.flexmark.ast.*;
+import com.vladsch.flexmark.ext.tables.*;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
@@ -27,6 +28,7 @@ import java.util.List;
  *   OrderedList     → NumberingRenderData (DECIMAL 格式)
  *   BlockQuote      → ParagraphRenderData (前缀 "> ")
  *   FencedCodeBlock → ParagraphRenderData (等宽字体)
+ *   TableBlock      → TableRenderData (表头加粗，单元格保留行内格式)
  * </pre>
  */
 @Slf4j
@@ -59,6 +61,8 @@ public class MarkdownToDocumentConverter {
 
     public MarkdownToDocumentConverter() {
         MutableDataSet options = new MutableDataSet();
+        // 启用表格扩展，使 flexmark 识别 Markdown 表格语法 (| A | B |)
+        options.set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
         this.parser = Parser.builder(options).build();
     }
 
@@ -95,10 +99,12 @@ public class MarkdownToDocumentConverter {
             case BulletList bulletList -> builder.addNumbering(convertBulletList(bulletList));
             // 有序列表
             case OrderedList orderedList -> builder.addNumbering(convertOrderedList(orderedList));
-            // 引用
-            case BlockQuote blockQuote -> processBlockQuote(blockQuote, builder);
             // 代码块
             case FencedCodeBlock codeBlock -> builder.addParagraph(convertFencedCodeBlock(codeBlock));
+            // 引用
+            case BlockQuote blockQuote -> processBlockQuote(blockQuote, builder);
+            // 表格
+            case TableBlock tableBlock -> convertTable(tableBlock, builder);
             // 其他块级节点：尝试提取纯文本作为段落
             default -> {
                 String text = getNodeText(node);
@@ -202,8 +208,11 @@ public class MarkdownToDocumentConverter {
                     String content = getNodeText(code);
                     parts.add(createTextData(content, inherit, true));
                 }
-                // 软换行 → 空格
-                case SoftLineBreak ignored -> parts.add(createTextData(" ", inherit, inCode));
+                // 软换行 → 换行符（Word 段落内换行）
+                // 注：CommonMark 标准下软换行渲染为空格，但本场景为中文招标文档生成，
+                // requirementContent 中编号条款（如 4.1、4.2.1）为连续纯文本行，期望逐行换行显示，
+                // 故与硬换行一致处理，避免多级编号挤在同一行。
+                case SoftLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
                 // 硬换行 → 换行符（Word 段落内换行）
                 case HardLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
                 // 其他行内节点（如链接等），递归提取文本
@@ -374,6 +383,82 @@ public class MarkdownToDocumentConverter {
             sb.append(lines[i]);
         }
         return sb.toString();
+    }
+
+    // ==================== 表格 ====================
+
+    /**
+     * 将 Markdown 表格转换为 poi-tl TableRenderData。
+     * <p>
+     * 按结构遍历 TableBlock → TableHead/TableBody → TableRow，仅取直接子行。
+     * 显式跳过 |---| 分隔行：flexmark 中 TableSeparator 是 TableBlock 的直接子节点，
+     * 其内部还嵌套了内容为 "---" 的 TableRow，需整个跳过避免被当成数据行。
+     * TableHead 内的行视为表头并加粗，单元格内行内格式（加粗/斜体/代码）通过 collectInlineText 保留。
+     * <p>
+     * 列数对齐：合并单元格（||）或不规则表格会使某行 cell 数少于表头列数，
+     * poi-tl 渲染要求每行 cell 数一致，否则抛异常导致整篇文档生成失败，故按最大列数补齐空单元格。
+     */
+    private void convertTable(TableBlock tableBlock, Documents.DocumentBuilder builder) {
+        // 阶段一：收集所有行的单元格与表头标记，并求最大列数
+        List<List<CellRenderData>> rowCells = new ArrayList<>();
+        List<Boolean> headerFlags = new ArrayList<>();
+        int maxCols = 0;
+        for (Node section : tableBlock.getChildren()) {
+            // 跳过分隔行节点（|---|）：flexmark 中 TableSeparator 是 TableBlock 的直接子节点，
+            // 其内部还嵌套了内容为 "---" 的 TableRow，必须整个跳过，否则会把分隔行渲染成数据行。
+            if (section instanceof TableSeparator) {
+                continue;
+            }
+            boolean headerSection = section instanceof TableHead;
+            for (Node rowNode : section.getChildren()) {
+                if (!(rowNode instanceof TableRow row)) {
+                    continue;
+                }
+                List<CellRenderData> cells = new ArrayList<>();
+                for (Node cellNode : row.getChildren()) {
+                    if (!(cellNode instanceof TableCell cell)) {
+                        continue;
+                    }
+                    cells.add(buildTableCell(cell));
+                }
+                maxCols = Math.max(maxCols, cells.size());
+                rowCells.add(cells);
+                headerFlags.add(headerSection);
+            }
+        }
+        // 阶段二：按最大列数补齐空单元格后构建表格
+        Tables.TableBuilder tableBuilder = Tables.of();
+        for (int i = 0; i < rowCells.size(); i++) {
+            List<CellRenderData> cells = rowCells.get(i);
+            while (cells.size() < maxCols) {
+                cells.add(Cells.of().addParagraph(Paragraphs.of().create()).create());
+            }
+            Rows.RowBuilder rowBuilder = Rows.of();
+            for (CellRenderData cell : cells) {
+                rowBuilder.addCell(cell);
+            }
+            if (Boolean.TRUE.equals(headerFlags.get(i))) {
+                rowBuilder.textBold();
+            }
+            tableBuilder.addRow(rowBuilder.create());
+        }
+        builder.addTable(tableBuilder.create());
+    }
+
+    /**
+     * 构建表格单元格：将单元格内行内文本片段组装为单段落，再包成 CellRenderData。
+     * 一个单元格内的多个片段（如 "加粗 普通"）合并到同一单元格，避免被错拆为多列。
+     */
+    private CellRenderData buildTableCell(TableCell cell) {
+        List<TextRenderData> parts = collectInlineText(cell, null, false);
+        if (parts.isEmpty()) {
+            parts.add(createTextData("", null, false));
+        }
+        Paragraphs.ParagraphBuilder paraBuilder = Paragraphs.of();
+        for (TextRenderData part : parts) {
+            paraBuilder.addText(part);
+        }
+        return Cells.of().addParagraph(paraBuilder.create()).create();
     }
 
     // ==================== 通用工具 ====================
