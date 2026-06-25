@@ -9,9 +9,9 @@ export const templateApi = {
   getById(id: number) {
     return request.get<any, TemplateInfo>(`/core-api/v1/templates/${id}`)
   },
-  getDefault(projectCategory?: string, projectType?: string) {
+  getDefault(projectCategory?: string) {
     return request.get<any, TemplateInfo>('/core-api/v1/templates/default', {
-      params: { projectCategory, projectType },
+      params: { projectCategory },
     })
   },
 }

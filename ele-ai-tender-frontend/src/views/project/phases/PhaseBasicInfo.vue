@@ -20,7 +20,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="项目类型" prop="projectType">
-            <el-select v-model="form.projectType" placeholder="请选择" style="width: 100%" @change="handleTypeChange">
+            <el-select v-model="form.projectType" placeholder="请选择" style="width: 100%">
               <el-option v-for="(item, key) in PROJECT_TYPE_MAP" :key="key" :label="item.label" :value="key" />
             </el-select>
           </el-form-item>
@@ -243,6 +243,10 @@ const displayTemplateList = computed<TemplateInfo[]>(() => {
   return projectTemplateSnapshot.value ? [projectTemplateSnapshot.value] : []
 })
 
+const isTemplateMatched = (tpl: TemplateInfo) => {
+  return tpl.projectCategory === form.value.projectCategory
+}
+
 /** 只读模式下加载项目模板快照 */
 const loadProjectTemplate = async () => {
   try {
@@ -282,7 +286,7 @@ const parseStructure = (sd: WordStructure | string | undefined): WordStructure |
 }
 
 const loadTemplates = async (): Promise<boolean> => {
-  if (!form.value.projectCategory || !form.value.projectType) {
+  if (!form.value.projectCategory) {
     templateList.value = []
     defaultTemplateId.value = null
     form.value.templateId = null
@@ -295,9 +299,8 @@ const loadTemplates = async (): Promise<boolean> => {
       pageNum: 1,
       pageSize: 100,
       projectCategory: form.value.projectCategory,
-      projectType: form.value.projectType,
     })
-    templateList.value = res.records || []
+    templateList.value = (res.records || []).filter(isTemplateMatched)
     if (form.value.templateId && !templateList.value.some(tpl => tpl.id === form.value.templateId)) {
       form.value.templateId = null
     }
@@ -338,13 +341,12 @@ const handleTemplateScopeChange = async () => {
 }
 
 const handleCategoryChange = () => handleTemplateScopeChange()
-const handleTypeChange = () => handleTemplateScopeChange()
 
 const handleAutoSelectDefaultTemplate = async () => {
-  if (!form.value.projectCategory || !form.value.projectType) return
+  if (!form.value.projectCategory) return
   try {
-    const tpl = await templateApi.getDefault(form.value.projectCategory, form.value.projectType)
-    if (tpl?.id) {
+    const tpl = await templateApi.getDefault(form.value.projectCategory)
+    if (tpl?.id && isTemplateMatched(tpl)) {
       form.value.templateId = tpl.id
       defaultTemplateId.value = tpl.id
       ElMessage.success(`已自动选择默认模板：${tpl.templateName}`)

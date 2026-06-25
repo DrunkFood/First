@@ -111,10 +111,9 @@ public class TemplateConfigServiceImpl implements ITemplateConfigService {
             throw new BusinessException(ResponseCode.TEMPLATE_NOT_FOUND);
         }
 
-        // 清除同category+type下的其他默认模板
+        // 清除同category下的其他默认模板
         UpdateWrapper<SupTemplate> clearWrapper = new UpdateWrapper<>();
         clearWrapper.eq("project_category", template.getProjectCategory());
-        clearWrapper.eq("project_type", template.getProjectType());
         clearWrapper.eq("is_delete", 0);
         clearWrapper.set("is_default", 0);
         templateMapper.update(null, clearWrapper);

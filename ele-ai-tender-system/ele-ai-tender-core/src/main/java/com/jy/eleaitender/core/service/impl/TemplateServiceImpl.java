@@ -34,10 +34,6 @@ public class TemplateServiceImpl implements ITemplateService {
         if (StringUtils.hasText(projectCategory)) {
             wrapper.eq(SupTemplate::getProjectCategory, projectCategory);
         }
-        if (StringUtils.hasText(projectType)) {
-            wrapper.eq(SupTemplate::getProjectType, projectType);
-        }
-
         wrapper.orderByDesc(SupTemplate::getCreateTime);
 
         return templateMapper.selectPage(page, wrapper);
@@ -58,9 +54,6 @@ public class TemplateServiceImpl implements ITemplateService {
         wrapper.eq(SupTemplate::getIsDefault, 1);
         if (StringUtils.hasText(projectCategory)) {
             wrapper.eq(SupTemplate::getProjectCategory, projectCategory);
-        }
-        if (StringUtils.hasText(projectType)) {
-            wrapper.eq(SupTemplate::getProjectType, projectType);
         }
         wrapper.last("LIMIT 1");
 
@@ -109,11 +102,10 @@ public class TemplateServiceImpl implements ITemplateService {
     public void setDefault(Long id) {
         SupTemplate template = getById(id);
 
-        // 先清除同项目类别和类型的其他默认模板
+        // 先清除同项目类别下的其他默认模板
         LambdaQueryWrapper<SupTemplate> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SupTemplate::getIsDefault, 1);
         wrapper.eq(SupTemplate::getProjectCategory, template.getProjectCategory());
-        wrapper.eq(SupTemplate::getProjectType, template.getProjectType());
 
         List<SupTemplate> oldDefaults = templateMapper.selectList(wrapper);
         for (SupTemplate oldDefault : oldDefaults) {
