@@ -33,16 +33,26 @@ import java.util.List;
 @Component
 public class MarkdownToDocumentConverter {
 
-    /** 默认正文字号 */
+    /**
+     * 默认正文字号
+     */
     private static final double BODY_FONT_SIZE = 10.5;
-    /** 默认字体 */
+    /**
+     * 默认字体
+     */
     private static final String DEFAULT_FONT = "宋体";
-    /** 代码块字体 */
+    /**
+     * 代码块字体
+     */
     private static final String CODE_FONT = "Courier New";
-    /** 引用前缀 */
+    /**
+     * 引用前缀
+     */
     private static final String BLOCKQUOTE_PREFIX = "> ";
 
-    /** 各级标题字号映射 (h1=22pt, h2=18pt, h3=15pt, h4=13pt, h5=12pt, h6=11pt) */
+    /**
+     * 各级标题字号映射 (h1=22pt, h2=18pt, h3=15pt, h4=13pt, h5=12pt, h6=11pt)
+     */
     private static final double[] HEADING_FONT_SIZES = {22, 18, 15, 13, 12, 11};
 
     private final Parser parser;
@@ -169,32 +179,41 @@ public class MarkdownToDocumentConverter {
         List<TextRenderData> parts = new ArrayList<>();
 
         for (Node child : node.getChildren()) {
-            if (child instanceof Text textNode) {
-                String content = textNode.getChars().toString();
-                parts.add(createTextData(content, inherit, inCode));
-            } else if (child instanceof StrongEmphasis strong) {
-                // **加粗**
-                Style boldStyle = mergeStyle(inherit, true, null, inCode);
-                parts.addAll(collectInlineText(strong, boldStyle, inCode));
-            } else if (child instanceof Emphasis em) {
-                // *斜体*
-                Style italicStyle = mergeStyle(inherit, null, true, inCode);
-                parts.addAll(collectInlineText(em, italicStyle, inCode));
-            } else if (child instanceof Code code) {
-                // `行内代码`
-                String content = getNodeText(code);
-                parts.add(createTextData(content, inherit, true));
-            } else if (child instanceof SoftLineBreak) {
-                // 软换行 → 空格
-                parts.add(createTextData(" ", inherit, inCode));
-            } else if (child instanceof HardLineBreak) {
-                // 硬换行 → 换行符（Word 段落内换行）
-                parts.add(createTextData("\n", inherit, inCode));
-            } else {
-                // 其他行内节点（如链接等），递归提取文本
-                String content = getNodeText(child);
-                if (StringUtils.hasText(content)) {
+            switch (child) {
+                case Text textNode -> {
+                    // 文本节点
+                    String content = textNode.getChars().toString();
                     parts.add(createTextData(content, inherit, inCode));
+                }
+                case StrongEmphasis strong -> {
+                    // **加粗**
+                    Style boldStyle = mergeStyle(inherit, true, null, inCode);
+                    parts.addAll(collectInlineText(strong, boldStyle, inCode));
+                }
+                case Emphasis em -> {
+                    // *斜体*
+                    Style italicStyle = mergeStyle(inherit, null, true, inCode);
+                    parts.addAll(collectInlineText(em, italicStyle, inCode));
+                }
+                case Code code -> {
+                    // `行内代码`
+                    String content = getNodeText(code);
+                    parts.add(createTextData(content, inherit, true));
+                }
+                case SoftLineBreak softLineBreak -> {
+                    // 软换行 → 空格
+                    parts.add(createTextData(" ", inherit, inCode));
+                }
+                case HardLineBreak hardLineBreak -> {
+                    // 硬换行 → 换行符（Word 段落内换行）
+                    parts.add(createTextData("\n", inherit, inCode));
+                }
+                default -> {
+                    // 其他行内节点（如链接等），递归提取文本
+                    String content = getNodeText(child);
+                    if (StringUtils.hasText(content)) {
+                        parts.add(createTextData(content, inherit, inCode));
+                    }
                 }
             }
         }
