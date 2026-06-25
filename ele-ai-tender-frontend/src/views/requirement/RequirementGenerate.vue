@@ -265,6 +265,7 @@ import {
   getTaskProgress,
   getProgressStatus,
   getProcessingProgressByTime,
+  isTaskResultSyncing,
   isTaskSucceeded,
   isTaskTerminal,
   parseRequirementGenerationProgress,
@@ -361,7 +362,7 @@ const generationLocked = computed(() => {
   if (isTaskSucceeded(task)) return false
   return task.status === 'PENDING'
     || task.status === 'PROCESSING'
-    || (task.status === 'COMPLETED' && task.resultSynced === 0)
+    || isTaskResultSyncing(task)
 })
 const editorReadonly = computed(() => isRequirementCompleted.value || generationLocked.value)
 const generationStageText = computed(() => {
@@ -379,7 +380,7 @@ const generationStageText = computed(() => {
     case 'REVIEWING':
       return '全文审查中'
     case 'COMPLETED':
-      return latestTask.value?.resultSynced === 0 ? '结果同步中' : '已完成'
+      return isTaskResultSyncing(latestTask.value) ? '结果同步中' : '已完成'
     default:
       return '处理中'
   }
@@ -395,7 +396,7 @@ const generationOverlayDetail = computed(() => {
     if (task?.status === 'PENDING') {
       return '任务排队中，等待 AI 服务消费'
     }
-    if (task?.status === 'COMPLETED' && task.resultSynced === 0) {
+    if (isTaskResultSyncing(task)) {
       return 'AI 已完成，正在同步到业务需求'
     }
     return '正在获取任务状态'
@@ -420,7 +421,7 @@ const generationOverlayDetail = computed(() => {
     case 'REVIEWING':
       return '全文审查修订中，审查结束前暂不可编辑'
     case 'COMPLETED':
-      return task?.resultSynced === 0
+      return isTaskResultSyncing(task)
         ? 'AI 已完成，正在同步到业务需求'
         : '生成已完成'
     default:
@@ -500,7 +501,7 @@ watch(latestTask, (task) => {
   if (task.status === 'COMPLETED') {
     if (task.resultSynced === 1) {
       displayProgress.value = 100
-    } else if (task.resultSynced === 0) {
+    } else if (isTaskResultSyncing(task)) {
       // 已完成但结果同步中，进度不低于90%
       displayProgress.value = Math.max(displayProgress.value, 90)
     } else {

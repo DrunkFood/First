@@ -63,7 +63,7 @@ public class AiTask extends BaseEntity {
     @Schema(description = "超时时间(分钟)")
     private Integer timeoutMinutes;
 
-    @Schema(description = "结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败")
+    @Schema(description = "结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败 3-同步中")
     private Integer resultSynced;
 
     public List<String> getFileIdList() {

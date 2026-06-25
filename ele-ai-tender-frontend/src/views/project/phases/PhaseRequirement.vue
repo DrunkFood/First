@@ -157,6 +157,7 @@ import { useFeedback } from '@/composables/useFeedback'
 import {
   buildRequirementGenerationProgressMarkdown,
   getTaskProgress,
+  isTaskResultSyncing,
   isTaskSucceeded,
   parseRequirementGenerationProgress,
 } from '@/types/ai-task'
@@ -235,7 +236,7 @@ const generationLocked = computed(() => {
   if (isTaskSucceeded(task)) return false
   return task.status === 'PENDING'
     || task.status === 'PROCESSING'
-    || (task.status === 'COMPLETED' && task.resultSynced === 0)
+    || isTaskResultSyncing(task)
 })
 
 const editorReadonly = computed(() => props.readonly || generationLocked.value)
@@ -248,7 +249,7 @@ const generationStageText = computed(() => {
   if (!progress) {
     if (task?.status === 'PENDING') return '任务排队中'
     if (task?.status === 'PROCESSING') return 'AI处理中'
-    if (task?.status === 'COMPLETED' && task.resultSynced === 0) return '结果同步中'
+    if (isTaskResultSyncing(task)) return '结果同步中'
     return '正在生成中'
   }
 
@@ -262,7 +263,7 @@ const generationStageText = computed(() => {
     case 'REVIEWING':
       return '全文审查中'
     case 'COMPLETED':
-      return task?.resultSynced === 0 ? '结果同步中' : '已完成'
+      return isTaskResultSyncing(task) ? '结果同步中' : '已完成'
     default:
       return 'AI处理中'
   }
@@ -278,7 +279,7 @@ const generationOverlayDetail = computed(() => {
   if (!progress) {
     if (task?.status === 'PENDING') return '任务排队中，等待AI服务消费'
     if (task?.status === 'PROCESSING') return 'AI正在处理任务，生成内容会分批填充到编辑器'
-    if (task?.status === 'COMPLETED' && task.resultSynced === 0) return 'AI已完成，正在同步到项目需求内容'
+    if (isTaskResultSyncing(task)) return 'AI已完成，正在同步到项目需求内容'
     return '正在获取任务状态'
   }
 
@@ -301,7 +302,7 @@ const generationOverlayDetail = computed(() => {
     case 'REVIEWING':
       return '全文审查修订中，审查结束前暂不可编辑'
     case 'COMPLETED':
-      return task?.resultSynced === 0
+      return isTaskResultSyncing(task)
         ? 'AI已完成，正在同步到项目需求内容'
         : '生成已完成'
     default:
