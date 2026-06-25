@@ -11,6 +11,15 @@ const SEVERITY_COLORS: Record<string, { bg: string; border: string }> = {
   LOW: { bg: '#bbdefb', border: '#2196f3' },
 }
 
+/**
+ * 规范化文本：移除所有空白字符（空格/换行/制表符/全角空格/不间断空格）。
+ * 与后端 TextNormalizeUtil 对齐，用于跨空白差异的文本匹配。
+ */
+function normalizeText(text: string): string {
+  // \s 已涵盖空格/换行/制表符/不间断空格( )/全角空格(　)等
+  return (text || '').replace(/\s/g, '')
+}
+
 export function useDetectionHighlight({ containerRef }: HighlightOptions) {
   const highlightedMarks: HTMLElement[] = []
   const pendingTimers: ReturnType<typeof setTimeout>[] = []
@@ -33,26 +42,75 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
   }
 
   /**
-   * 根据 elementIndex 定位 docx-preview 渲染的 DOM 元素。
-   * docx-preview DOM: container > (styles + wrapper) > section > article > (p, table, ...)
-   * 用结构选择器 section > article 替代 class 名选择器，解耦 className 配置。
-   * 多页文档有多个 section，需遍历所有 article > children 做偏移映射。
+   * 按 original 文本定位顶层段落。
+   *
+   * 不使用 elementIndex 索引 article.children：docx-preview 在 breakPages 下会拆分
+   * 含分页符 <w:br w:type="page"/> 的段落，使 DOM child 数量 > POI bodyElements 数量，
+   * 两个 index 空间不一致，直接用 elementIndex 取 child 会产生累积偏移。
+   * 改用规范化文本匹配，彻底绕开 index 偏移。
    */
-  function findTopLevelElementByIndex(elementIndex?: number): HTMLElement | null {
-    if (elementIndex == null || !containerRef.value) return null
+  function findParagraphByText(original: string): HTMLElement | null {
+    if (!containerRef.value || !original) return null
+    const normOrig = normalizeText(original)
+    if (!normOrig) return null
 
-    const articles = containerRef.value.querySelectorAll('section > article')
-    if (articles.length === 0) return null
-
-    let offset = 0
-    for (const article of articles) {
-      const children = article.children
-      if (elementIndex < offset + children.length) {
-        return children[elementIndex - offset] as HTMLElement
+    const paras = containerRef.value.querySelectorAll('section > article > p')
+    for (const para of Array.from(paras)) {
+      if (normalizeText(para.textContent || '').includes(normOrig)) {
+        return para as HTMLElement
       }
-      offset += children.length
     }
     return null
+  }
+
+  /**
+   * 按 tableIndex/rowIndex/cellIndex 定位表格单元格。
+   * docx-preview 把每个 <w:tbl> 渲染成 1 个 article child（不拆分），
+   * 与 POI bodyElements 的表格序号一致，可安全用序号索引。
+   */
+  function findTableCell(tableIndex: number, rowIndex: number, cellIndex: number): HTMLElement | null {
+    if (!containerRef.value) return null
+    const tables = containerRef.value.querySelectorAll('section > article > table')
+    const table = tables[tableIndex] as HTMLTableElement | undefined
+    if (!table) return null
+    const row = table.rows[rowIndex]
+    if (!row) return null
+    const cell = row.cells[cellIndex]
+    return (cell as HTMLElement) || null
+  }
+
+  /**
+   * 在容器内找包含 original 的段落（表格 cell 内可能有多段）。
+   * 找不到则返回容器本身，交给 highlightTextInElement 做跨 textNode 匹配。
+   */
+  function findSubElementByText(container: HTMLElement, original: string): HTMLElement {
+    const normOrig = normalizeText(original)
+    if (normOrig) {
+      const paras = container.querySelectorAll('p')
+      for (const para of Array.from(paras)) {
+        if (normalizeText(para.textContent || '').includes(normOrig)) {
+          return para as HTMLElement
+        }
+      }
+    }
+    return container
+  }
+
+  /**
+   * 根据 issue.locationRef 定位目标 DOM 元素：
+   * - paragraph：按 original 文本匹配顶层段落
+   * - table：按 tableIndex/rowIndex/cellIndex 定位 cell，再在 cell 内按文本匹配段落
+   */
+  function locateTargetElement(issue: DetectionIssueVO): HTMLElement | null {
+    const ref = issue.locationRef
+    if (!ref) return null
+
+    if (ref.type === 'table') {
+      const cell = findTableCell(ref.tableIndex ?? 0, ref.rowIndex ?? 0, ref.cellIndex ?? 0)
+      if (!cell) return null
+      return findSubElementByText(cell, issue.original)
+    }
+    return findParagraphByText(issue.original)
   }
 
   /**
@@ -71,20 +129,10 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
     for (const issue of issues) {
       if (issue.handleStatus !== 0 || !issue.original || !issue.locationRef) continue
 
-      const targetEl = findTopLevelElementByIndex(issue.locationRef.elementIndex)
+      const targetEl = locateTargetElement(issue)
       if (!targetEl) continue
 
-      if (issue.locationRef.type === 'paragraph') {
-        highlightTextInElement(targetEl, issue)
-      } else if (issue.locationRef.type === 'table') {
-        const allParas = targetEl.querySelectorAll('p')
-        for (const para of allParas) {
-          if ((para.textContent || '').includes(issue.original)) {
-            highlightTextInElement(para as HTMLElement, issue)
-            break
-          }
-        }
-      }
+      highlightTextInElement(targetEl, issue)
     }
   }
 
@@ -156,22 +204,14 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
     if (!containerRef.value || !issue.locationRef) return
 
     await nextTick()
-    const targetEl = findTopLevelElementByIndex(issue.locationRef.elementIndex)
+
+    // 先清除旧高亮，再定位并创建文本级 <mark> 高亮
+    clearHighlights()
+
+    const targetEl = locateTargetElement(issue)
     if (!targetEl) return
 
-    // 先清除旧高亮，再创建文本级 <mark> 高亮
-    clearHighlights()
-    if (issue.locationRef.type === 'paragraph') {
-      highlightTextInElement(targetEl, issue)
-    } else if (issue.locationRef.type === 'table') {
-      const allParas = targetEl.querySelectorAll('p')
-      for (const para of allParas) {
-        if ((para.textContent || '').includes(issue.original)) {
-          highlightTextInElement(para as HTMLElement, issue)
-          break
-        }
-      }
-    }
+    highlightTextInElement(targetEl, issue)
 
     // 滚动到目标位置：优先滚动预览容器，fallback 到 scrollIntoView
     const scrollContainer = getScrollContainer()
