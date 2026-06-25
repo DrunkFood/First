@@ -86,23 +86,25 @@ public class MarkdownToDocumentConverter {
     // ==================== 块级节点处理 ====================
 
     private void processBlockNode(Node node, Documents.DocumentBuilder builder) {
-        if (node instanceof Heading heading) {
-            builder.addParagraph(convertHeading(heading));
-        } else if (node instanceof Paragraph paragraph) {
-            builder.addParagraph(convertParagraph(paragraph));
-        } else if (node instanceof BulletList bulletList) {
-            builder.addNumbering(convertBulletList(bulletList));
-        } else if (node instanceof OrderedList orderedList) {
-            builder.addNumbering(convertOrderedList(orderedList));
-        } else if (node instanceof BlockQuote blockQuote) {
-            processBlockQuote(blockQuote, builder);
-        } else if (node instanceof FencedCodeBlock codeBlock) {
-            builder.addParagraph(convertFencedCodeBlock(codeBlock));
-        } else {
-            // 未识别的块级节点：尝试提取纯文本作为段落
-            String text = getNodeText(node);
-            if (StringUtils.hasText(text)) {
-                builder.addParagraph(Paragraphs.of(text).create());
+        switch (node) {
+            // 标题
+            case Heading heading -> builder.addParagraph(convertHeading(heading));
+            // 段落
+            case Paragraph paragraph -> builder.addParagraph(convertParagraph(paragraph));
+            // 无序列表
+            case BulletList bulletList -> builder.addNumbering(convertBulletList(bulletList));
+            // 有序列表
+            case OrderedList orderedList -> builder.addNumbering(convertOrderedList(orderedList));
+            // 引用
+            case BlockQuote blockQuote -> processBlockQuote(blockQuote, builder);
+            // 代码块
+            case FencedCodeBlock codeBlock -> builder.addParagraph(convertFencedCodeBlock(codeBlock));
+            // 其他块级节点：尝试提取纯文本作为段落
+            default -> {
+                String text = getNodeText(node);
+                if (StringUtils.hasText(text)) {
+                    builder.addParagraph(Paragraphs.of(text).create());
+                }
             }
         }
     }
@@ -180,36 +182,32 @@ public class MarkdownToDocumentConverter {
 
         for (Node child : node.getChildren()) {
             switch (child) {
+                // 文本节点
                 case Text textNode -> {
-                    // 文本节点
                     String content = textNode.getChars().toString();
                     parts.add(createTextData(content, inherit, inCode));
                 }
+                // **加粗**
                 case StrongEmphasis strong -> {
-                    // **加粗**
                     Style boldStyle = mergeStyle(inherit, true, null, inCode);
                     parts.addAll(collectInlineText(strong, boldStyle, inCode));
                 }
+                // *斜体*
                 case Emphasis em -> {
-                    // *斜体*
                     Style italicStyle = mergeStyle(inherit, null, true, inCode);
                     parts.addAll(collectInlineText(em, italicStyle, inCode));
                 }
+                // `行内代码`
                 case Code code -> {
-                    // `行内代码`
                     String content = getNodeText(code);
                     parts.add(createTextData(content, inherit, true));
                 }
-                case SoftLineBreak softLineBreak -> {
-                    // 软换行 → 空格
-                    parts.add(createTextData(" ", inherit, inCode));
-                }
-                case HardLineBreak hardLineBreak -> {
-                    // 硬换行 → 换行符（Word 段落内换行）
-                    parts.add(createTextData("\n", inherit, inCode));
-                }
+                // 软换行 → 空格
+                case SoftLineBreak ignored -> parts.add(createTextData(" ", inherit, inCode));
+                // 硬换行 → 换行符（Word 段落内换行）
+                case HardLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
+                // 其他行内节点（如链接等），递归提取文本
                 default -> {
-                    // 其他行内节点（如链接等），递归提取文本
                     String content = getNodeText(child);
                     if (StringUtils.hasText(content)) {
                         parts.add(createTextData(content, inherit, inCode));
@@ -370,7 +368,7 @@ public class MarkdownToDocumentConverter {
         // 去掉首行（围栏开始）和末行（围栏结束），保留中间内容
         StringBuilder sb = new StringBuilder();
         for (int i = 1; i < lines.length - 1; i++) {
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.append("\n");
             }
             sb.append(lines[i]);
