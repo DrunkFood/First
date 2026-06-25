@@ -34,9 +34,6 @@ ele-ai-tender-support-frontend/.vite/
 *.sln
 *.sw?
 
-# Qoder
-.qoder
-
 # Bare repository
 .bare/
 

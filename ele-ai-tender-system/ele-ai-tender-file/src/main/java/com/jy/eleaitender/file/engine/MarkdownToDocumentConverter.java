@@ -3,6 +3,7 @@ package com.jy.eleaitender.file.engine;
 import com.deepoove.poi.data.*;
 import com.deepoove.poi.data.style.Style;
 import com.vladsch.flexmark.ast.*;
+import com.vladsch.flexmark.ext.tables.*;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
@@ -27,6 +28,7 @@ import java.util.List;
  *   OrderedList     → NumberingRenderData (DECIMAL 格式)
  *   BlockQuote      → ParagraphRenderData (前缀 "> ")
  *   FencedCodeBlock → ParagraphRenderData (等宽字体)
+ *   TableBlock      → TableRenderData (表头加粗，单元格保留行内格式)
  * </pre>
  */
 @Slf4j
@@ -59,6 +61,8 @@ public class MarkdownToDocumentConverter {
 
     public MarkdownToDocumentConverter() {
         MutableDataSet options = new MutableDataSet();
+        // 启用表格扩展，使 flexmark 识别 Markdown 表格语法 (| A | B |)
+        options.set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
         this.parser = Parser.builder(options).build();
     }
 
@@ -95,10 +99,12 @@ public class MarkdownToDocumentConverter {
             case BulletList bulletList -> builder.addNumbering(convertBulletList(bulletList));
             // 有序列表
             case OrderedList orderedList -> builder.addNumbering(convertOrderedList(orderedList));
-            // 引用
-            case BlockQuote blockQuote -> processBlockQuote(blockQuote, builder);
             // 代码块
             case FencedCodeBlock codeBlock -> builder.addParagraph(convertFencedCodeBlock(codeBlock));
+            // 引用
+            case BlockQuote blockQuote -> processBlockQuote(blockQuote, builder);
+            // 表格
+            case TableBlock tableBlock -> convertTable(tableBlock, builder);
             // 其他块级节点：尝试提取纯文本作为段落
             default -> {
                 String text = getNodeText(node);
@@ -374,6 +380,61 @@ public class MarkdownToDocumentConverter {
             sb.append(lines[i]);
         }
         return sb.toString();
+    }
+
+    // ==================== 表格 ====================
+
+    /**
+     * 将 Markdown 表格转换为 poi-tl TableRenderData。
+     * <p>
+     * 按结构遍历 TableBlock → TableHead/TableBody → TableRow，仅取直接子行。
+     * 显式跳过 |---| 分隔行：flexmark 中 TableSeparator 是 TableBlock 的直接子节点，
+     * 其内部还嵌套了内容为 "---" 的 TableRow，需整个跳过避免被当成数据行。
+     * TableHead 内的行视为表头并加粗，单元格内行内格式（加粗/斜体/代码）通过 collectInlineText 保留。
+     */
+    private void convertTable(TableBlock tableBlock, Documents.DocumentBuilder builder) {
+        Tables.TableBuilder tableBuilder = Tables.of();
+        for (Node section : tableBlock.getChildren()) {
+            // 跳过分隔行节点（|---|）：flexmark 中 TableSeparator 是 TableBlock 的直接子节点，
+            // 其内部还嵌套了内容为 "---" 的 TableRow，必须整个跳过，否则会把分隔行渲染成数据行。
+            if (section instanceof TableSeparator) {
+                continue;
+            }
+            boolean headerSection = section instanceof TableHead;
+            for (Node rowNode : section.getChildren()) {
+                if (!(rowNode instanceof TableRow row)) {
+                    continue;
+                }
+                Rows.RowBuilder rowBuilder = Rows.of();
+                for (Node cellNode : row.getChildren()) {
+                    if (!(cellNode instanceof TableCell cell)) {
+                        continue;
+                    }
+                    rowBuilder.addCell(buildTableCell(cell));
+                }
+                if (headerSection) {
+                    rowBuilder.textBold();
+                }
+                tableBuilder.addRow(rowBuilder.create());
+            }
+        }
+        builder.addTable(tableBuilder.create());
+    }
+
+    /**
+     * 构建表格单元格：将单元格内行内文本片段组装为单段落，再包成 CellRenderData。
+     * 一个单元格内的多个片段（如 "加粗 普通"）合并到同一单元格，避免被错拆为多列。
+     */
+    private CellRenderData buildTableCell(TableCell cell) {
+        List<TextRenderData> parts = collectInlineText(cell, null, false);
+        if (parts.isEmpty()) {
+            parts.add(createTextData("", null, false));
+        }
+        Paragraphs.ParagraphBuilder paraBuilder = Paragraphs.of();
+        for (TextRenderData part : parts) {
+            paraBuilder.addText(part);
+        }
+        return Cells.of().addParagraph(paraBuilder.create()).create();
     }
 
     // ==================== 通用工具 ====================

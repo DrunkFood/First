@@ -1,8 +1,11 @@
 package com.jy.eleaitender.file.engine;
 
+import com.deepoove.poi.data.CellRenderData;
 import com.deepoove.poi.data.DocumentRenderData;
 import com.deepoove.poi.data.NumberingRenderData;
 import com.deepoove.poi.data.ParagraphRenderData;
+import com.deepoove.poi.data.RowRenderData;
+import com.deepoove.poi.data.TableRenderData;
 import com.deepoove.poi.data.TextRenderData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,6 +40,30 @@ class MarkdownToDocumentConverterTest {
                 .filter(r -> r instanceof NumberingRenderData)
                 .map(r -> (NumberingRenderData) r)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 从 DocumentRenderData 中提取所有表格
+     */
+    private List<TableRenderData> getTables(DocumentRenderData doc) {
+        return doc.getContents().stream()
+                .filter(r -> r instanceof TableRenderData)
+                .map(r -> (TableRenderData) r)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 从单元格中提取纯文本内容
+     */
+    private String getCellText(CellRenderData cell) {
+        if (cell.getParagraphs() == null) {
+            return "";
+        }
+        return cell.getParagraphs().stream()
+                .flatMap(p -> p.getContents() == null ? java.util.stream.Stream.empty() : p.getContents().stream())
+                .filter(r -> r instanceof TextRenderData)
+                .map(r -> ((TextRenderData) r).getText())
+                .collect(Collectors.joining());
     }
 
     /**
@@ -317,6 +344,103 @@ class MarkdownToDocumentConverterTest {
             ParagraphRenderData para = getParagraphs(result).get(0);
             String text = getParagraphText(para);
             assertTrue(text.contains("System.out.println"), "代码块应包含代码内容");
+        }
+    }
+
+    // ==================== 表格转换测试 ====================
+
+    @Nested
+    @DisplayName("表格转换测试")
+    class TableTest {
+
+        @Test
+        @DisplayName("Markdown表格转换为TableRenderData")
+        void tableConvertsToTableRenderData() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 工程名称 | 道路施工 |
+                    | 投资额 | 100万 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            List<TableRenderData> tables = getTables(result);
+            assertFalse(tables.isEmpty(), "表格应产生TableRenderData");
+        }
+
+        @Test
+        @DisplayName("表格行列数正确")
+        void tableRowAndColSize() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 工程名称 | 道路施工 |
+                    | 投资额 | 100万 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            // 表头1行 + 数据2行 = 3行
+            assertEquals(3, table.obtainRowSize(), "表格应有3行(含表头)");
+            assertEquals(2, table.obtainColSize(), "表格应有2列");
+        }
+
+        @Test
+        @DisplayName("表格单元格文本正确")
+        void tableCellText() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 工程名称 | 道路施工 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            List<RowRenderData> rows = table.getRows();
+            // 表头
+            assertEquals("项目", getCellText(rows.get(0).getCells().get(0)), "表头第1列应为'项目'");
+            assertEquals("内容", getCellText(rows.get(0).getCells().get(1)), "表头第2列应为'内容'");
+            // 数据行
+            assertEquals("工程名称", getCellText(rows.get(1).getCells().get(0)), "数据行第1列应为'工程名称'");
+            assertEquals("道路施工", getCellText(rows.get(1).getCells().get(1)), "数据行第2列应为'道路施工'");
+        }
+
+        @Test
+        @DisplayName("表格不再是纯文本带竖线")
+        void tableNotRenderedAsPlainText() {
+            String markdown = """
+                    | A | B |
+                    | --- | --- |
+                    | 1 | 2 |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            // 不应把表格降级为段落（旧 bug 的表现）
+            List<ParagraphRenderData> paragraphs = getParagraphs(result);
+            boolean anyParagraphContainsPipe = paragraphs.stream()
+                    .anyMatch(p -> getParagraphText(p).contains("|"));
+            assertFalse(anyParagraphContainsPipe, "表格不应以带'|'的纯文本段落形式出现");
+            assertFalse(getTables(result).isEmpty(), "应生成真正的表格结构");
+        }
+
+        @Test
+        @DisplayName("表格单元格内行内加粗格式保留")
+        void tableCellInlineBold() {
+            String markdown = """
+                    | 项目 | 内容 |
+                    | --- | --- |
+                    | 名称 | **重要** |
+                    """;
+            DocumentRenderData result = converter.convert(markdown);
+            TableRenderData table = getTables(result).get(0);
+            RowRenderData dataRow = table.getRows().get(1);
+            CellRenderData cell = dataRow.getCells().get(1);
+            // 单元格内应存在加粗样式的文本片段，且文本为"重要"
+            List<TextRenderData> texts = cell.getParagraphs().get(0).getContents().stream()
+                    .filter(r -> r instanceof TextRenderData)
+                    .map(r -> (TextRenderData) r)
+                    .collect(Collectors.toList());
+            boolean hasBold = texts.stream()
+                    .anyMatch(t -> "重要".equals(t.getText())
+                            && t.getStyle() != null
+                            && Boolean.TRUE.equals(t.getStyle().isBold()));
+            assertTrue(hasBold, "单元格内加粗文本应保留加粗样式");
         }
     }
 
