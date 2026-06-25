@@ -7,6 +7,7 @@ import com.jy.eleaitender.common.entity.ai.AiResponseLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.Usage;
@@ -190,10 +191,10 @@ public class AiCallRecorder {
         try {
             List<Map<String, String>> messages = new ArrayList<>();
             if (StringUtils.hasText(systemPrompt)) {
-                messages.add(Map.of("role", "system", "content", systemPrompt));
+                messages.add(Map.of("role", MessageType.SYSTEM.getValue(), "content", systemPrompt));
             }
             if (StringUtils.hasText(userPrompt)) {
-                messages.add(Map.of("role", "user", "content", userPrompt));
+                messages.add(Map.of("role", MessageType.USER.getValue(), "content", userPrompt));
             }
             return objectMapper.writeValueAsString(messages);
         } catch (Exception e) {
