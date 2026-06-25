@@ -54,8 +54,8 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
             "AND biz_type = #{bizType} AND status IN ('PENDING','PROCESSING') AND is_delete = 0 " +
             "LIMIT 1")
     AiTask selectActiveTask(@Param("taskType") String taskType,
-                             @Param("bizId") Long bizId,
-                             @Param("bizType") String bizType);
+                            @Param("bizId") Long bizId,
+                            @Param("bizType") String bizType);
 
     /**
      * 查询业务实体的最新任务（不限状态），用于页面加载时展示上次任务状态
@@ -92,4 +92,5 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
     @DataScope(skip = true)
     @Update("UPDATE ai_task SET result_synced = #{synced} WHERE id = #{id} AND is_delete = 0")
     int markSynced(@Param("id") Long id, @Param("synced") int synced);
+
 }
