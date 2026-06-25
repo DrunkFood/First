@@ -33,16 +33,26 @@ import java.util.List;
 @Component
 public class MarkdownToDocumentConverter {
 
-    /** 默认正文字号 */
+    /**
+     * 默认正文字号
+     */
     private static final double BODY_FONT_SIZE = 10.5;
-    /** 默认字体 */
+    /**
+     * 默认字体
+     */
     private static final String DEFAULT_FONT = "宋体";
-    /** 代码块字体 */
+    /**
+     * 代码块字体
+     */
     private static final String CODE_FONT = "Courier New";
-    /** 引用前缀 */
+    /**
+     * 引用前缀
+     */
     private static final String BLOCKQUOTE_PREFIX = "> ";
 
-    /** 各级标题字号映射 (h1=22pt, h2=18pt, h3=15pt, h4=13pt, h5=12pt, h6=11pt) */
+    /**
+     * 各级标题字号映射 (h1=22pt, h2=18pt, h3=15pt, h4=13pt, h5=12pt, h6=11pt)
+     */
     private static final double[] HEADING_FONT_SIZES = {22, 18, 15, 13, 12, 11};
 
     private final Parser parser;
@@ -76,23 +86,25 @@ public class MarkdownToDocumentConverter {
     // ==================== 块级节点处理 ====================
 
     private void processBlockNode(Node node, Documents.DocumentBuilder builder) {
-        if (node instanceof Heading heading) {
-            builder.addParagraph(convertHeading(heading));
-        } else if (node instanceof Paragraph paragraph) {
-            builder.addParagraph(convertParagraph(paragraph));
-        } else if (node instanceof BulletList bulletList) {
-            builder.addNumbering(convertBulletList(bulletList));
-        } else if (node instanceof OrderedList orderedList) {
-            builder.addNumbering(convertOrderedList(orderedList));
-        } else if (node instanceof BlockQuote blockQuote) {
-            processBlockQuote(blockQuote, builder);
-        } else if (node instanceof FencedCodeBlock codeBlock) {
-            builder.addParagraph(convertFencedCodeBlock(codeBlock));
-        } else {
-            // 未识别的块级节点：尝试提取纯文本作为段落
-            String text = getNodeText(node);
-            if (StringUtils.hasText(text)) {
-                builder.addParagraph(Paragraphs.of(text).create());
+        switch (node) {
+            // 标题
+            case Heading heading -> builder.addParagraph(convertHeading(heading));
+            // 段落
+            case Paragraph paragraph -> builder.addParagraph(convertParagraph(paragraph));
+            // 无序列表
+            case BulletList bulletList -> builder.addNumbering(convertBulletList(bulletList));
+            // 有序列表
+            case OrderedList orderedList -> builder.addNumbering(convertOrderedList(orderedList));
+            // 引用
+            case BlockQuote blockQuote -> processBlockQuote(blockQuote, builder);
+            // 代码块
+            case FencedCodeBlock codeBlock -> builder.addParagraph(convertFencedCodeBlock(codeBlock));
+            // 其他块级节点：尝试提取纯文本作为段落
+            default -> {
+                String text = getNodeText(node);
+                if (StringUtils.hasText(text)) {
+                    builder.addParagraph(Paragraphs.of(text).create());
+                }
             }
         }
     }
@@ -169,32 +181,37 @@ public class MarkdownToDocumentConverter {
         List<TextRenderData> parts = new ArrayList<>();
 
         for (Node child : node.getChildren()) {
-            if (child instanceof Text textNode) {
-                String content = textNode.getChars().toString();
-                parts.add(createTextData(content, inherit, inCode));
-            } else if (child instanceof StrongEmphasis strong) {
-                // **加粗**
-                Style boldStyle = mergeStyle(inherit, true, null, inCode);
-                parts.addAll(collectInlineText(strong, boldStyle, inCode));
-            } else if (child instanceof Emphasis em) {
-                // *斜体*
-                Style italicStyle = mergeStyle(inherit, null, true, inCode);
-                parts.addAll(collectInlineText(em, italicStyle, inCode));
-            } else if (child instanceof Code code) {
-                // `行内代码`
-                String content = getNodeText(code);
-                parts.add(createTextData(content, inherit, true));
-            } else if (child instanceof SoftLineBreak) {
-                // 软换行 → 空格
-                parts.add(createTextData(" ", inherit, inCode));
-            } else if (child instanceof HardLineBreak) {
-                // 硬换行 → 换行符（Word 段落内换行）
-                parts.add(createTextData("\n", inherit, inCode));
-            } else {
-                // 其他行内节点（如链接等），递归提取文本
-                String content = getNodeText(child);
-                if (StringUtils.hasText(content)) {
+            switch (child) {
+                // 文本节点
+                case Text textNode -> {
+                    String content = textNode.getChars().toString();
                     parts.add(createTextData(content, inherit, inCode));
+                }
+                // **加粗**
+                case StrongEmphasis strong -> {
+                    Style boldStyle = mergeStyle(inherit, true, null, inCode);
+                    parts.addAll(collectInlineText(strong, boldStyle, inCode));
+                }
+                // *斜体*
+                case Emphasis em -> {
+                    Style italicStyle = mergeStyle(inherit, null, true, inCode);
+                    parts.addAll(collectInlineText(em, italicStyle, inCode));
+                }
+                // `行内代码`
+                case Code code -> {
+                    String content = getNodeText(code);
+                    parts.add(createTextData(content, inherit, true));
+                }
+                // 软换行 → 空格
+                case SoftLineBreak ignored -> parts.add(createTextData(" ", inherit, inCode));
+                // 硬换行 → 换行符（Word 段落内换行）
+                case HardLineBreak ignored -> parts.add(createTextData("\n", inherit, inCode));
+                // 其他行内节点（如链接等），递归提取文本
+                default -> {
+                    String content = getNodeText(child);
+                    if (StringUtils.hasText(content)) {
+                        parts.add(createTextData(content, inherit, inCode));
+                    }
                 }
             }
         }
@@ -351,7 +368,7 @@ public class MarkdownToDocumentConverter {
         // 去掉首行（围栏开始）和末行（围栏结束），保留中间内容
         StringBuilder sb = new StringBuilder();
         for (int i = 1; i < lines.length - 1; i++) {
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.append("\n");
             }
             sb.append(lines[i]);
