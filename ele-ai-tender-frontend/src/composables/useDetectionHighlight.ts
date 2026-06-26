@@ -35,9 +35,13 @@ export function useDetectionHighlight({ containerRef, fileId }: HighlightOptions
   const segByElementIndex = new Map<number, TextSegmentVO>()
 
   // fileId 变化时拉取段落索引；失败则降级为纯文本匹配（不影响现有流程）
+  // 注意：watch 是异步的，scrollToAndHighlight 入口有 ensureSegmentsLoaded 兜底，
+  // 防止"文档已渲染但 segments 尚未返回"的窗口期降级到旧逻辑。
+  let segmentsLoaded = false
   if (fileId) {
     watch(fileId, async (fid) => {
       segByElementIndex.clear()
+      segmentsLoaded = false
       if (!fid) return
       try {
         const data = await fileApi.extractText(fid)
@@ -47,10 +51,33 @@ export function useDetectionHighlight({ containerRef, fileId }: HighlightOptions
             segByElementIndex.set(seg.elementIndex, seg)
           }
         }
+        segmentsLoaded = true
       } catch {
         /* 拉取失败时降级为纯文本匹配 */
       }
     }, { immediate: true })
+  }
+
+  /**
+   * 确保 segments 已加载完成（兜底竞态）。
+   * watch 异步拉取，若用户在"文档已渲染但 segments 未返回"时点击定位，
+   * 会因 segByElementIndex 为空而降级到旧逻辑（本次要修的偏差路径）。
+   * 这里主动等待：若 fileId 有效且未加载完成，同步触发一次拉取并等待。
+   */
+  async function ensureSegmentsLoaded(): Promise<void> {
+    const fid = fileId?.value
+    if (!fid || segmentsLoaded || segByElementIndex.size > 0) return
+    try {
+      const data = await fileApi.extractText(fid)
+      for (const seg of data?.segments ?? []) {
+        if (!segByElementIndex.has(seg.elementIndex)) {
+          segByElementIndex.set(seg.elementIndex, seg)
+        }
+      }
+      segmentsLoaded = true
+    } catch {
+      /* 降级为纯文本匹配 */
+    }
   }
 
   onBeforeUnmount(() => {
@@ -158,6 +185,8 @@ export function useDetectionHighlight({ containerRef, fileId }: HighlightOptions
       if (normalizeText(para.textContent || '') === normSeg) return para
     }
     // 2. 候选文本是 segment 子串（分页拆分的一截）
+    //    边界：若 original 在同一段内重复且该段跨分页符被拆成多截、多截都含 original，
+    //    会返回靠前那截——该场景极窄，当前不做更精细的相对位置选择（YAGNI）。
     for (const para of candidates) {
       const np = normalizeText(para.textContent || '')
       if (normSeg.includes(np)) return para
@@ -288,6 +317,9 @@ export function useDetectionHighlight({ containerRef, fileId }: HighlightOptions
     if (!containerRef.value || !issue.locationRef) return
 
     await nextTick()
+
+    // 兜底竞态：确保 segments 已加载，避免在 watch 异步拉取窗口期降级到旧逻辑
+    await ensureSegmentsLoaded()
 
     // 先清除旧高亮，再定位并创建文本级 <mark> 高亮
     clearHighlights()
