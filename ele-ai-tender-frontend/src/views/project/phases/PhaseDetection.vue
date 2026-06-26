@@ -147,7 +147,7 @@ const pendingLocateIssue = ref<DetectionIssueVO | null>(null)
 
 // DocxPreview 容器 ref（响应式包装）
 const docxContainerRef = computed(() => docxPreviewRef.value?.containerRef ?? null)
-const { scrollToAndHighlight } = useDetectionHighlight({ containerRef: docxContainerRef as any })
+const { scrollToAndHighlight } = useDetectionHighlight({ containerRef: docxContainerRef as any, fileId: generatedFileId })
 
 // 打开弹窗并定位到文档对应段落
 async function handleLocate(issue: DetectionIssueVO) {

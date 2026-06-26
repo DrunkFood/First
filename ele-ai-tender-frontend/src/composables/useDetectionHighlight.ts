@@ -1,8 +1,11 @@
-import { nextTick, onBeforeUnmount, type Ref } from 'vue'
+import { nextTick, onBeforeUnmount, watch, type Ref } from 'vue'
 import type { DetectionIssueVO } from '@/types/detection'
+import { fileApi, type TextSegmentVO } from '@/api/file'
 
 interface HighlightOptions {
   containerRef: Ref<HTMLElement | null>
+  /** 已生成文档 fileId：用于拉取 extract-text 段落索引，精确定位原文 */
+  fileId?: Ref<number | null>
 }
 
 const SEVERITY_COLORS: Record<string, { bg: string; border: string }> = {
@@ -20,9 +23,35 @@ function normalizeText(text: string): string {
   return (text || '').replace(/\s/g, '')
 }
 
-export function useDetectionHighlight({ containerRef }: HighlightOptions) {
+export function useDetectionHighlight({ containerRef, fileId }: HighlightOptions) {
   const highlightedMarks: HTMLElement[] = []
   const pendingTimers: ReturnType<typeof setTimeout>[] = []
+
+  /**
+   * extract-text 段落索引：elementIndex -> 该顶层元素（段落或表格）的首个 segment。
+   * 后端 locationRef.elementIndex 与此同空间（POI bodyElements 序号），
+   * 用 segment.text（整段文本）匹配 DOM 可消除"短 original 在全文重复时取首次出现"的偏差。
+   */
+  const segByElementIndex = new Map<number, TextSegmentVO>()
+
+  // fileId 变化时拉取段落索引；失败则降级为纯文本匹配（不影响现有流程）
+  if (fileId) {
+    watch(fileId, async (fid) => {
+      segByElementIndex.clear()
+      if (!fid) return
+      try {
+        const data = await fileApi.extractText(fid)
+        for (const seg of data?.segments ?? []) {
+          // 同一 elementIndex 的表格会有多个 cell segment，只留首个
+          if (!segByElementIndex.has(seg.elementIndex)) {
+            segByElementIndex.set(seg.elementIndex, seg)
+          }
+        }
+      } catch {
+        /* 拉取失败时降级为纯文本匹配 */
+      }
+    }, { immediate: true })
+  }
 
   onBeforeUnmount(() => {
     clearHighlights()
@@ -97,8 +126,53 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
   }
 
   /**
+   * 按 segment 整段文本定位顶层段落（精确定位）。
+   *
+   * 后端 locationRef.elementIndex 指向 POI bodyElements 的精确段落，segment.text 是该段完整文本。
+   * 用整段文本匹配 DOM 段落，比用短 original 子串匹配更唯一——可消除"original 在全文多处出现时
+   * 取首次出现导致定位到错误段落"的偏差。
+   *
+   * 匹配层级：
+   * 1. 整段规范化文本完全相等（非分页拆分段落）
+   * 2. 含 original 且其文本是 segment 文本子串（docx-preview breakPages 把含分页符段落拆成多个 <p>，
+   *    取含 original 的那一截）
+   * 3. 含 original 且 segment 文本是其子串（DOM 段落合并多段，罕见）
+   * 4. 以上都不中则返回 null，交由调用方降级为 findParagraphByText
+   */
+  function findParagraphBySegment(segText: string, original: string): HTMLElement | null {
+    if (!containerRef.value) return null
+    const normSeg = normalizeText(segText)
+    const normOrig = normalizeText(original)
+    const paras = containerRef.value.querySelectorAll('section > article > p')
+
+    // 先筛出含 original 的候选段落（无 original 文本时跳过该约束）
+    const candidates: HTMLElement[] = []
+    for (const para of Array.from(paras)) {
+      const np = normalizeText(para.textContent || '')
+      if (!normOrig || np.includes(normOrig)) candidates.push(para as HTMLElement)
+    }
+    if (candidates.length === 0 || !normSeg) return null
+
+    // 1. 整段相等
+    for (const para of candidates) {
+      if (normalizeText(para.textContent || '') === normSeg) return para
+    }
+    // 2. 候选文本是 segment 子串（分页拆分的一截）
+    for (const para of candidates) {
+      const np = normalizeText(para.textContent || '')
+      if (normSeg.includes(np)) return para
+    }
+    // 3. segment 是候选文本子串（DOM 合并多段）
+    for (const para of candidates) {
+      const np = normalizeText(para.textContent || '')
+      if (np.includes(normSeg)) return para
+    }
+    return null
+  }
+
+  /**
    * 根据 issue.locationRef 定位目标 DOM 元素：
-   * - paragraph：按 original 文本匹配顶层段落
+   * - paragraph：优先按 elementIndex 对应 segment 整段文本精确定位；降级为 original 文本匹配
    * - table：按 tableIndex/rowIndex/cellIndex 定位 cell，再在 cell 内按文本匹配段落
    */
   function locateTargetElement(issue: DetectionIssueVO): HTMLElement | null {
@@ -110,6 +184,16 @@ export function useDetectionHighlight({ containerRef }: HighlightOptions) {
       if (!cell) return null
       return findSubElementByText(cell, issue.original)
     }
+
+    // 段落：优先用 elementIndex 对应的 segment 整段文本精确匹配
+    if (ref.elementIndex != null) {
+      const seg = segByElementIndex.get(ref.elementIndex)
+      if (seg) {
+        const el = findParagraphBySegment(seg.text, issue.original)
+        if (el) return el
+      }
+    }
+    // 降级：短 original 文本匹配（首次出现）
     return findParagraphByText(issue.original)
   }
 
