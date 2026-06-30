@@ -1,6 +1,6 @@
 <template>
   <div class="policy-file-list">
-    <el-page-header content="政策文件管理" />
+    <el-page-header content="政策文件审查库" />
 
     <!-- 搜索筛选区 -->
     <el-form :inline="true" class="search-form" @submit.prevent="handleSearch">

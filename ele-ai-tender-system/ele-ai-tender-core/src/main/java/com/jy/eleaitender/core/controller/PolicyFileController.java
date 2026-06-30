@@ -25,7 +25,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/policy-files")
-@Tag(name = "政策文件管理")
+@Tag(name = "政策文件审查库")
 public class PolicyFileController {
 
     @Autowired

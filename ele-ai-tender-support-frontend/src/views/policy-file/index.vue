@@ -2,7 +2,7 @@
   <div class="page-shell policy-file-page">
     <div class="page-header-row">
       <div>
-        <div class="page-title">政策文件管理</div>
+        <div class="page-title">政策文件审查库</div>
         <div class="page-subtitle">管理法律法规、规章制度和政策文件</div>
       </div>
       <el-button type="primary" @click="handleCreate">

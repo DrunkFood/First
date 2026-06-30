@@ -530,7 +530,7 @@ INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `men
 -- ========== 一级菜单 ==========
 (0, '系统管理', 'system', 1, '/system', NULL, NULL, 1, 1, NOW(), NOW()),
 (0, '版本管理', 'version', 1, '/version', NULL, NULL, 2, 1, NOW(), NOW()),
-(0, '政策文件', 'policy-file', 1, '/policy-file', 'policy-file:view', NULL, 3, 1, NOW(), NOW()),
+(0, '政策文件审查库', 'policy-file', 1, '/policy-file', 'policy-file:view', NULL, 3, 1, NOW(), NOW()),
 (0, '消息中心', 'message', 1, '/message', NULL, NULL, 4, 1, NOW(), NOW()),
 (0, '统计分析', 'statistics', 1, '/statistics', NULL, NULL, 5, 1, NOW(), NOW()),
 (0, '模型路由', 'model-route', 1, '/model-route', 'model-route:view', NULL, 6, 1, NOW(), NOW()),

@@ -91,12 +91,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/project/ProjectWizard.vue'),
         meta: { title: '项目编制' },
       },
-      // 政策文件管理
+      // 政策文件审查库
       {
         path: 'policy-file',
         name: 'PolicyFileList',
         component: () => import('@/views/policy/PolicyFileList.vue'),
-        meta: { title: '政策文件管理' },
+        meta: { title: '政策文件审查库' },
       },
       // 消息中心
       {

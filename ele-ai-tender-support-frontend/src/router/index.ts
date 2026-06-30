@@ -103,7 +103,7 @@ const staticRoutes: RouteRecordRaw[] = [
         path: 'policy-file',
         name: 'PolicyFileManagement',
         component: () => import('@/views/policy-file/index.vue'),
-        meta: { title: '政策文件', icon: 'FolderOpened' },
+        meta: { title: '政策文件审查库', icon: 'FolderOpened' },
       },
       {
         path: 'message',

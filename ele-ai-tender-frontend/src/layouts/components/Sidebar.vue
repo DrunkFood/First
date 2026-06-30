@@ -14,7 +14,7 @@
       <span>招标文件管理</span>
     </el-menu-item>
     <el-menu-item index="/policy-file">
-      <span>政策文件管理</span>
+      <span>政策文件审查库</span>
     </el-menu-item>
     <el-menu-item index="/message">
       <span>消息中心</span>
