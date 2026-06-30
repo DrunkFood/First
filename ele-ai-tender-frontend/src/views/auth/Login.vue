@@ -31,73 +31,11 @@
       <section class="form-panel panel-card">
         <div class="form-head">
           <h2>欢迎登录</h2>
-          <p>请选择登录方式进入系统</p>
+          <p>请输入手机号和验证码进入系统</p>
         </div>
-
-        <!-- 登录方式切换 -->
-        <div class="login-tabs">
-          <button
-            :class="['tab-btn', { active: loginType === 'password' }]"
-            @click="loginType = 'password'"
-          >
-            账号密码登录
-          </button>
-          <button
-            :class="['tab-btn', { active: loginType === 'phone' }]"
-            @click="loginType = 'phone'"
-          >
-            手机验证码登录
-          </button>
-        </div>
-
-        <!-- 账号密码登录表单 -->
-        <el-form
-          v-if="loginType === 'password'"
-          ref="passwordFormRef"
-          :model="passwordForm"
-          :rules="passwordRules"
-          @keyup.enter="handlePasswordLogin"
-        >
-          <el-form-item prop="username">
-            <el-input
-              v-model="passwordForm.username"
-              placeholder="用户名"
-              :prefix-icon="User"
-              size="large"
-            />
-          </el-form-item>
-          <el-form-item prop="password">
-            <el-input
-              v-model="passwordForm.password"
-              type="password"
-              placeholder="密码"
-              :prefix-icon="Lock"
-              show-password
-              size="large"
-            />
-          </el-form-item>
-          <el-form-item>
-            <div class="remember-row">
-              <el-checkbox v-model="rememberUsername">记住密码</el-checkbox>
-              <el-link type="primary" :underline="false" @click="showResetDialog = true">忘记密码?</el-link>
-            </div>
-          </el-form-item>
-          <el-form-item>
-            <el-button
-              type="primary"
-              size="large"
-              class="submit-btn"
-              :loading="loading"
-              @click="handlePasswordLogin"
-            >
-              登录
-            </el-button>
-          </el-form-item>
-        </el-form>
 
         <!-- 手机验证码登录表单 -->
         <el-form
-          v-else
           ref="phoneFormRef"
           :model="phoneForm"
           :rules="phoneRules"
@@ -143,76 +81,24 @@
         </el-form>
       </section>
     </div>
-
-    <ResetPasswordDialog v-model="showResetDialog" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Lock, User, Iphone, Message } from '@element-plus/icons-vue'
+import { Iphone, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { authApi } from '@/api/auth'
-import ResetPasswordDialog from '@/components/common/ResetPasswordDialog.vue'
-
-const REMEMBERED_USERNAME_KEY = 'remembered_username'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const loginType = ref<'password' | 'phone'>('password')
 const loading = ref(false)
 const sendingCode = ref(false)
 const countdown = ref(0)
-const rememberUsername = ref(false)
-const showResetDialog = ref(false)
-
-// 账号密码登录
-const passwordFormRef = ref<FormInstance>()
-const passwordForm = reactive({
-  username: '',
-  password: '',
-})
-
-const passwordRules: FormRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度 3-20 位', trigger: 'blur' },
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度 6-20 位', trigger: 'blur' },
-  ],
-}
-
-const handlePasswordLogin = async () => {
-  if (!passwordFormRef.value) return
-  await passwordFormRef.value.validate(async (valid) => {
-    if (!valid) return
-
-    loading.value = true
-    try {
-      await userStore.login(passwordForm.username, passwordForm.password)
-
-      // 记住用户名逻辑：勾选则存储，未勾选则清除
-      if (rememberUsername.value) {
-        localStorage.setItem(REMEMBERED_USERNAME_KEY, passwordForm.username)
-      } else {
-        localStorage.removeItem(REMEMBERED_USERNAME_KEY)
-      }
-
-      ElMessage.success('登录成功')
-      router.push((route.query.redirect as string) || '/')
-    } catch (error) {
-      console.error('登录失败:', error)
-    } finally {
-      loading.value = false
-    }
-  })
-}
 
 // 手机验证码登录
 const phoneFormRef = ref<FormInstance>()
@@ -249,8 +135,8 @@ const handleSendCode = async () => {
 
     sendingCode.value = true
     try {
-      const code = await authApi.sendSmsCode({ phone: phoneForm.phone })
-      ElMessage.success(`验证码已发送：${code}（仅测试用）`)
+      await authApi.sendSmsCode({ phone: phoneForm.phone })
+      ElMessage.success('验证码已发送，请注意查收')
 
       // 开始倒计时
       countdown.value = 60
@@ -285,15 +171,6 @@ const handlePhoneLogin = async () => {
     }
   })
 }
-
-// 页面加载时检查是否有记住的用户名
-onMounted(() => {
-  const saved = localStorage.getItem(REMEMBERED_USERNAME_KEY)
-  if (saved) {
-    passwordForm.username = saved
-    rememberUsername.value = true
-  }
-})
 </script>
 
 <style scoped lang="scss">
@@ -408,39 +285,6 @@ onMounted(() => {
   margin: 8px 0 22px;
 }
 
-// 登录方式切换
-.login-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  background: var(--app-bg-tertiary);
-  padding: 4px;
-  border-radius: var(--app-radius-sm);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--app-text-tertiary);
-  transition: all 0.2s;
-
-  &:hover {
-    color: var(--app-brand-color);
-  }
-
-  &.active {
-    background: var(--app-bg-elevated);
-    color: var(--app-brand-color);
-    font-weight: 600;
-    box-shadow: 0 2px 4px var(--app-shadow-color);
-  }
-}
-
 // 验证码输入
 .code-input {
   display: flex;
@@ -453,13 +297,6 @@ onMounted(() => {
   :deep(.el-button) {
     min-width: 120px;
   }
-}
-
-.remember-row {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .submit-btn {

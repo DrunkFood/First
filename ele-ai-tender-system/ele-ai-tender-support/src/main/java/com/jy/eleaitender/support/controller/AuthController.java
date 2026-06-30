@@ -60,12 +60,12 @@ public class AuthController {
 
     @PostMapping("/send-sms-code")
     @Operation(summary = "发送手机验证码")
-    public Result<String> sendSmsCode(@Valid @RequestBody SendSmsCodeRequest request,
-                                      HttpServletRequest httpRequest) {
+    public Result<Void> sendSmsCode(@Valid @RequestBody SendSmsCodeRequest request,
+                                    HttpServletRequest httpRequest) {
         String ipAddress = httpRequest.getRemoteAddr();
         String scene = StringUtils.isNotBlank(request.getScene()) ? request.getScene() : "LOGIN";
-        String code = smsService.sendSmsCode(request.getPhone(), scene, ipAddress);
-        return Result.success(code); // 仅测试用，实际不返回验证码
+        smsService.sendSmsCode(request.getPhone(), scene, ipAddress);
+        return Result.success();
     }
 
     @PostMapping("/phone-login")

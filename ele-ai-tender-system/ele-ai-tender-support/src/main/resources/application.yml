@@ -54,6 +54,14 @@ internal:
     base-url: ${INTERNAL_FILE_SERVICE_URL:http://localhost:8081}
     jwt-secret: ${APP_JWT_SECRET:ele-ai-tender-jwt-secret-key-must-be-at-least-256-bits}
 
+# 短信网关配置。真实账号密码请通过环境变量或本地覆盖配置提供。
+msg:
+  username: ${MSG_USERNAME:}
+  pwd: ${MSG_PWD:}
+  extend: ${MSG_EXTEND:}
+  url: ${MSG_URL:http://hy.junlongtech.com:8086/getsms}
+  isformal: ${MSG_ISFORMAL:false}
+
 logging:
   level:
     com.jy.eleaitender: debug

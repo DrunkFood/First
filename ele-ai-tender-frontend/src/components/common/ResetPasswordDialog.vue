@@ -160,11 +160,11 @@ const handleSendCode = async () => {
 
     sendingCode.value = true
     try {
-      const code = await authApi.sendSmsCode({
+      await authApi.sendSmsCode({
         phone: verifyForm.phone,
         scene: 'RESET_PWD',
       })
-      ElMessage.success(`验证码已发送：${code}（仅测试用）`)
+      ElMessage.success('验证码已发送，请注意查收')
 
       countdown.value = 60
       const timer = setInterval(() => {

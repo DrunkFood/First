@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.entity.support.SupSmsCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.support.mapper.SmsCodeMapper;
+import com.jy.eleaitender.support.service.SmsGatewayClient;
 import com.jy.eleaitender.support.service.ISmsService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -29,9 +31,13 @@ public class SmsServiceImpl implements ISmsService {
     @Autowired
     private SmsCodeMapper smsCodeMapper;
 
+    @Autowired
+    private SmsGatewayClient smsGatewayClient;
+
     private static final String SMS_CODE_PREFIX = "ai:sms:code:";
     private static final int CODE_EXPIRE_MINUTES = 5;
     private static final int SEND_INTERVAL_SECONDS = 60;
+    private static final String DEFAULT_SCENE = "LOGIN";
 
     /** 验证码状态 */
     private static final String STATUS_UNUSED = "UNUSED";
@@ -39,7 +45,9 @@ public class SmsServiceImpl implements ISmsService {
     private static final String STATUS_EXPIRED = "EXPIRED";
 
     @Override
-    public String sendSmsCode(String phone, String scene, String ipAddress) {
+    public void sendSmsCode(String phone, String scene, String ipAddress) {
+        String normalizedScene = normalizeScene(scene);
+
         // 检查发送频率
         String rateLimitKey = SMS_CODE_PREFIX + "rate:" + phone;
         Boolean exists = redisTemplate.hasKey(rateLimitKey);
@@ -48,13 +56,16 @@ public class SmsServiceImpl implements ISmsService {
         }
 
         // 将之前未使用的验证码标记为过期
-        expirePreviousCodes(phone, scene);
+        expirePreviousCodes(phone, normalizedScene);
 
         // 生成6位验证码
         String code = String.format("%06d", new Random().nextInt(1000000));
 
+        // 真实发送成功后，再写入可校验验证码
+        smsGatewayClient.sendCode(phone, code, normalizedScene);
+
         // 存储验证码到Redis，5分钟过期
-        String codeKey = SMS_CODE_PREFIX + phone;
+        String codeKey = buildCodeKey(phone, normalizedScene);
         redisTemplate.opsForValue().set(codeKey, code, CODE_EXPIRE_MINUTES, TimeUnit.MINUTES);
 
         // 设置发送频率限制
@@ -64,31 +75,32 @@ public class SmsServiceImpl implements ISmsService {
         SupSmsCode smsCode = new SupSmsCode();
         smsCode.setPhone(phone);
         smsCode.setCode(code);
-        smsCode.setScene(scene);
+        smsCode.setScene(normalizedScene);
         smsCode.setStatus(STATUS_UNUSED);
         smsCode.setExpireTime(new Date(System.currentTimeMillis() + CODE_EXPIRE_MINUTES * 60 * 1000L));
         smsCode.setIpAddress(ipAddress);
         smsCode.setCreateTime(new Date());
         smsCodeMapper.insert(smsCode);
-
-        // TODO: 实际项目中应调用短信服务API发送验证码
-        log.info("【模拟短信发送】手机号: {}, 验证码: {}, 场景: {}", phone, code, scene);
-
-        return code;
     }
 
     @Override
     public boolean verifyCode(String phone, String code) {
-        String codeKey = SMS_CODE_PREFIX + phone;
+        return verifyCode(phone, code, DEFAULT_SCENE);
+    }
+
+    @Override
+    public boolean verifyCode(String phone, String code, String scene) {
+        String normalizedScene = normalizeScene(scene);
+        String codeKey = buildCodeKey(phone, normalizedScene);
         String storedCode = redisTemplate.opsForValue().get(codeKey);
 
         if (storedCode == null) {
-            log.warn("验证码已过期或不存在，手机号: {}", phone);
+            log.warn("验证码已过期或不存在，手机号: {}, 场景: {}", phone, normalizedScene);
             return false;
         }
 
         if (!storedCode.equals(code)) {
-            log.warn("验证码错误，手机号: {}, 输入: {}, 正确: {}", phone, code, storedCode);
+            log.warn("验证码错误，手机号: {}, 场景: {}", phone, normalizedScene);
             return false;
         }
 
@@ -96,9 +108,9 @@ public class SmsServiceImpl implements ISmsService {
         redisTemplate.delete(codeKey);
 
         // 标记数据库中对应的验证码为已使用
-        markCodeAsUsed(phone, code);
+        markCodeAsUsed(phone, code, normalizedScene);
 
-        log.info("验证码验证成功，手机号: {}", phone);
+        log.info("验证码验证成功，手机号: {}, 场景: {}", phone, normalizedScene);
         return true;
     }
 
@@ -114,7 +126,6 @@ public class SmsServiceImpl implements ISmsService {
         }
 
         List<SupSmsCode> unusedCodes = smsCodeMapper.selectList(wrapper);
-        Date now = new Date();
         for (SupSmsCode smsCode : unusedCodes) {
             smsCode.setStatus(STATUS_EXPIRED);
             smsCodeMapper.updateById(smsCode);
@@ -124,10 +135,11 @@ public class SmsServiceImpl implements ISmsService {
     /**
      * 标记验证码为已使用
      */
-    private void markCodeAsUsed(String phone, String code) {
+    private void markCodeAsUsed(String phone, String code, String scene) {
         LambdaQueryWrapper<SupSmsCode> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SupSmsCode::getPhone, phone)
                .eq(SupSmsCode::getCode, code)
+               .eq(SupSmsCode::getScene, scene)
                .eq(SupSmsCode::getStatus, STATUS_UNUSED)
                .orderByDesc(SupSmsCode::getCreateTime)
                .last("LIMIT 1");
@@ -138,5 +150,13 @@ public class SmsServiceImpl implements ISmsService {
             smsCode.setUsedTime(new Date());
             smsCodeMapper.updateById(smsCode);
         }
+    }
+
+    private String buildCodeKey(String phone, String scene) {
+        return SMS_CODE_PREFIX + scene + ":" + phone;
+    }
+
+    private String normalizeScene(String scene) {
+        return StringUtils.defaultIfBlank(scene, DEFAULT_SCENE);
     }
 }

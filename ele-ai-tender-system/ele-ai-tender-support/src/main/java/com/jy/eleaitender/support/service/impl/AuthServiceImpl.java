@@ -125,7 +125,7 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public UserLoginResponse phoneLogin(PhoneLoginRequest request) {
         // 验证短信验证码
-        boolean valid = smsService.verifyCode(request.getPhone(), request.getCode());
+        boolean valid = smsService.verifyCode(request.getPhone(), request.getCode(), "LOGIN");
         if (!valid) {
             throw new BusinessException("验证码错误或已过期");
         }
@@ -154,7 +154,7 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public void resetPasswordByPhone(ResetPasswordRequest request) {
         // 1. 验证短信验证码
-        boolean valid = smsService.verifyCode(request.getPhone(), request.getCode());
+        boolean valid = smsService.verifyCode(request.getPhone(), request.getCode(), "RESET_PWD");
         if (!valid) {
             throw new BusinessException("验证码错误或已过期");
         }
