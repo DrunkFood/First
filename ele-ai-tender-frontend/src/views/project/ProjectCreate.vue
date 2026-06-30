@@ -131,24 +131,13 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="评审方式" prop="reviewType">
-              <div class="review-type-wrapper">
-                <el-select
-                  v-model="form.reviewType"
-                  placeholder="请选择评审方式"
-                  style="flex: 1"
-                >
-                  <el-option label="人工评审" value="MANUAL" />
-                  <el-option label="智能评审" value="INTELLIGENT" />
-                </el-select>
-                <el-tag
-                  v-if="autoRecommended"
-                  type="success"
-                  size="small"
-                  class="auto-recommend-tag"
-                >
-                  自动推荐
-                </el-tag>
-              </div>
+              <el-select
+                v-model="form.reviewType"
+                placeholder="请选择评审方式"
+                style="width: 100%"
+              >
+                <el-option label="人工评审" value="MANUAL" />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -236,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { projectApi } from '@/api/project'
 import { requirementApi } from '@/api/requirement'
@@ -260,8 +249,6 @@ const activeTab = ref<'DIRECT' | 'REFERENCE'>('DIRECT')
 const requirementList = ref<RequirementInfo[]>([])
 const templateList = ref<TemplateInfo[]>([])
 const requirementPreviewContent = ref('')
-const autoRecommended = ref(false)
-const isDataLoading = ref(false)
 const qualificationRequirements = ref('')
 const projectDetail = ref<ProjectInfo | null>(null)
 
@@ -344,25 +331,9 @@ const rules = {
   requirementId: [{ required: true, message: '请选择业务需求', trigger: 'change' }],
 }
 
-/** 自动推荐评审类型 */
-function computeAutoReviewType() {
-  if (!form.budget || !form.projectType) {
-    autoRecommended.value = false
-    return
-  }
-  // 预算>=500万 或 工程/货物类 -> 人工评审
-  if (form.budget >= 500 || form.projectType === 'ENGINEERING' || form.projectType === 'GOODS') {
-    form.reviewType = 'MANUAL'
-  } else {
-    form.reviewType = 'INTELLIGENT'
-  }
-  autoRecommended.value = true
+function ensureManualReviewType() {
+  form.reviewType = 'MANUAL'
 }
-
-watch(() => [form.budget, form.projectType], () => {
-  if (isDataLoading.value) return
-  computeAutoReviewType()
-})
 
 async function loadRequirements() {
   try {
@@ -392,7 +363,6 @@ async function loadTemplates() {
 
 async function loadProjectDetail(id: number) {
   pageLoading.value = true
-  isDataLoading.value = true
   try {
     const data = await projectApi.getById(id)
     projectDetail.value = data
@@ -403,7 +373,7 @@ async function loadProjectDetail(id: number) {
       projectType: data.projectType || '',
       serviceSubType: data.serviceSubType,
       budget: toWanYuan(data.budget),
-      reviewType: data.reviewType,
+      reviewType: 'MANUAL',
       requirementContent: data.requirementContent,
       templateId: data.templateId,
       requirementId: data.requirementId,
@@ -413,13 +383,10 @@ async function loadProjectDetail(id: number) {
       contactPhone: data.contactPhone,
       projectDescription: data.projectDescription,
     })
-    // 根据当前值判断是否为自动推荐
-    autoRecommended.value = false
   } catch {
     ElMessage.error('加载项目详情失败')
   } finally {
     pageLoading.value = false
-    nextTick(() => { isDataLoading.value = false })
   }
 }
 
@@ -446,6 +413,7 @@ function handleRequirementChange(reqId: number | undefined) {
   form.budget = toWanYuan(req.budget)
   form.requirementContent = req.content || req.requirementDescription || ''
   requirementPreviewContent.value = req.content || req.requirementDescription || ''
+  ensureManualReviewType()
   if (req.requirementName && !form.projectName) {
     form.projectName = req.requirementName
   }
@@ -479,6 +447,7 @@ function applyQueryParams() {
     activeTab.value = 'REFERENCE'
     loadRequirements()
   }
+  ensureManualReviewType()
 }
 
 function handleViewDetail() {
@@ -504,6 +473,7 @@ async function handleCancelProject() {
 }
 
 async function handleSubmit() {
+  ensureManualReviewType()
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
 
@@ -590,17 +560,6 @@ onMounted(async () => {
   max-height: 200px;
   overflow-y: auto;
   white-space: pre-wrap;
-}
-
-.review-type-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.auto-recommend-tag {
-  white-space: nowrap;
 }
 
 .edit-actions {

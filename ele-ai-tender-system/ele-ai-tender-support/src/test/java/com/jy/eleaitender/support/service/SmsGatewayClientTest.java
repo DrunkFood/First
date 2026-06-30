@@ -15,6 +15,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,7 +46,9 @@ class SmsGatewayClientTest {
     void sendCodeDoesNotCallGatewayWhenFormalModeDisabled() {
         properties.setIsformal(false);
 
-        assertDoesNotThrow(() -> client.sendCode("13800138000", "123456", "LOGIN"));
+        boolean formalSent = assertDoesNotThrow(() -> client.sendCode("13800138000", "123456", "LOGIN"));
+
+        assertFalse(formalSent);
 
         verifyNoInteractions(restOperations);
     }
@@ -56,7 +59,9 @@ class SmsGatewayClientTest {
         when(restOperations.postForObject(eq(properties.getUrl()), org.mockito.ArgumentMatchers.any(), eq(String.class)))
                 .thenReturn("result=0&msg=success");
 
-        client.sendCode("13800138000", "123456", "LOGIN");
+        boolean formalSent = client.sendCode("13800138000", "123456", "LOGIN");
+
+        assertTrue(formalSent);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> entityCaptor =

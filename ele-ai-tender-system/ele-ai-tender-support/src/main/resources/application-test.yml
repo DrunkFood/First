@@ -32,7 +32,7 @@ msg:
   pwd: ${MSG_PWD:E2161E2F5439403711D3AD6A2F635C33}
   extend: ${MSG_EXTEND:1733}
   url: ${MSG_URL:http://hy.junlongtech.com:8086/getsms}
-  isformal: ${MSG_ISFORMAL:true}
+  isformal: ${MSG_ISFORMAL:false}
 logging:
   level:
     com.jy.eleaitender: info

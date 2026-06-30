@@ -11,8 +11,9 @@ public interface ISmsService {
      * @param phone 手机号
      * @param scene 使用场景: LOGIN/REGISTER/RESET_PWD/BIND_PHONE
      * @param ipAddress 发送方IP地址
+     * @return 非正式发送模式下返回验证码，正式发送模式下返回null
      */
-    void sendSmsCode(String phone, String scene, String ipAddress);
+    String sendSmsCode(String phone, String scene, String ipAddress);
 
     /**
      * 验证验证码

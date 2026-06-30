@@ -39,11 +39,11 @@ public class SmsGatewayClient {
         this.restOperations = restOperations;
     }
 
-    public void sendCode(String phone, String code, String scene) {
+    public boolean sendCode(String phone, String code, String scene) {
         String content = buildContent(code, scene);
         if (!Boolean.TRUE.equals(properties.getIsformal())) {
             log.info("短信非正式模式，跳过网关发送，phone={}, scene={}", phone, scene);
-            return;
+            return false;
         }
 
         validateFormalConfig();
@@ -77,6 +77,7 @@ public class SmsGatewayClient {
         }
 
         log.info("短信网关发送成功，phone={}, scene={}", phone, scene);
+        return true;
     }
 
     static Map<String, String> parseGatewayResponse(String response) {

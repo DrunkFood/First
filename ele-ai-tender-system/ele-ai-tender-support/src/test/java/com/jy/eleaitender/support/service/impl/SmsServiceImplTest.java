@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,18 +76,33 @@ class SmsServiceImplTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.hasKey("ai:sms:code:rate:" + PHONE)).thenReturn(false);
         when(smsCodeMapper.selectList(any())).thenReturn(Collections.emptyList());
+        when(smsGatewayClient.sendCode(eq(PHONE), anyString(), eq("RESET_PWD"))).thenReturn(true);
 
-        service.sendSmsCode(PHONE, "RESET_PWD", "127.0.0.1");
+        String code = service.sendSmsCode(PHONE, "RESET_PWD", "127.0.0.1");
 
         verify(smsGatewayClient).sendCode(eq(PHONE), anyString(), eq("RESET_PWD"));
         verify(valueOperations).set(eq("ai:sms:code:RESET_PWD:" + PHONE), anyString(), eq(5L), eq(TimeUnit.MINUTES));
         verify(valueOperations).set(eq("ai:sms:code:rate:" + PHONE), eq("1"), eq(60L), eq(TimeUnit.SECONDS));
+        assertNull(code);
 
         ArgumentCaptor<SupSmsCode> smsCodeCaptor = ArgumentCaptor.forClass(SupSmsCode.class);
         verify(smsCodeMapper).insert(smsCodeCaptor.capture());
         assertEquals(PHONE, smsCodeCaptor.getValue().getPhone());
         assertEquals("RESET_PWD", smsCodeCaptor.getValue().getScene());
         assertEquals("UNUSED", smsCodeCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void sendSmsCodeReturnsCodeWhenGatewaySkipsFormalSend() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(redisTemplate.hasKey("ai:sms:code:rate:" + PHONE)).thenReturn(false);
+        when(smsCodeMapper.selectList(any())).thenReturn(Collections.emptyList());
+        when(smsGatewayClient.sendCode(eq(PHONE), anyString(), eq("LOGIN"))).thenReturn(false);
+
+        String code = service.sendSmsCode(PHONE, "LOGIN", "127.0.0.1");
+
+        assertTrue(code.matches("\\d{6}"));
+        verify(valueOperations).set(eq("ai:sms:code:LOGIN:" + PHONE), eq(code), eq(5L), eq(TimeUnit.MINUTES));
     }
 
     @Test

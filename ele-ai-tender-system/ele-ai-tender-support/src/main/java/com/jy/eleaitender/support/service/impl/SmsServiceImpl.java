@@ -45,7 +45,7 @@ public class SmsServiceImpl implements ISmsService {
     private static final String STATUS_EXPIRED = "EXPIRED";
 
     @Override
-    public void sendSmsCode(String phone, String scene, String ipAddress) {
+    public String sendSmsCode(String phone, String scene, String ipAddress) {
         String normalizedScene = normalizeScene(scene);
 
         // 检查发送频率
@@ -62,7 +62,7 @@ public class SmsServiceImpl implements ISmsService {
         String code = String.format("%06d", new Random().nextInt(1000000));
 
         // 真实发送成功后，再写入可校验验证码
-        smsGatewayClient.sendCode(phone, code, normalizedScene);
+        boolean formalSent = smsGatewayClient.sendCode(phone, code, normalizedScene);
 
         // 存储验证码到Redis，5分钟过期
         String codeKey = buildCodeKey(phone, normalizedScene);
@@ -81,6 +81,8 @@ public class SmsServiceImpl implements ISmsService {
         smsCode.setIpAddress(ipAddress);
         smsCode.setCreateTime(new Date());
         smsCodeMapper.insert(smsCode);
+
+        return formalSent ? null : code;
     }
 
     @Override

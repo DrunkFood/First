@@ -34,7 +34,7 @@ export const authApi = {
   },
 
   // 发送手机验证码
-  sendSmsCode(params: SendSmsCodeRequest): Promise<void> {
+  sendSmsCode(params: SendSmsCodeRequest): Promise<string | null> {
     return request.post('/support-api/auth/send-sms-code', {
       phone: params.phone,
       scene: params.scene || 'LOGIN',
