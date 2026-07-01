@@ -15,8 +15,8 @@ class ReviewItemPromptTemplatesTest {
 
         assertThat(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_SCORE)
                 .contains("硬性计分规则")
-                .contains("非符合性评审类型的叶子节点score合计必须正好等于100分")
-                .contains("不要输出总分不等于100分的JSON");
+                .contains("AI生成评分项score合计目标")
+                .contains("不要输出总分不等于目标分的JSON");
     }
 
     @Test

@@ -111,4 +111,24 @@ class ReviewConfigTest {
         assertThat(config.isWeightMode()).isTrue();
         assertThat(config.getScoreModeOrDefault()).isEqualTo(ScoreMode.WEIGHT);
     }
+
+    @Test
+    void fromJson_shouldParseManualItems() {
+        String json = """
+                {"scoreMode":"SCORE","reviewTypes":[
+                  {"reviewType":"COMPLIANCE","enabled":true,"generateStandard":false,
+                   "manualItems":[{"itemName":"Manual Item","itemContent":"Manual Standard","score":10,
+                     "children":[{"itemName":"Manual Child","itemContent":"Child Standard","score":5}]}]}
+                ]}
+                """;
+
+        ReviewConfig config = ReviewConfig.fromJson(json);
+
+        ReviewTypeConfig typeConfig = config.getEnabledTypes().get(0);
+        assertThat(typeConfig.getManualItems()).hasSize(1);
+        assertThat(typeConfig.getManualItems().get(0).getItemName()).isEqualTo("Manual Item");
+        assertThat(typeConfig.getManualItems().get(0).getChildren()).hasSize(1);
+        assertThat(typeConfig.getManualItems().get(0).getChildren().get(0).getScore())
+                .isEqualByComparingTo("5");
+    }
 }

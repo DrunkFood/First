@@ -11,6 +11,8 @@ import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.ai.processor.recorder.AiCallRecorder;
 import com.jy.eleaitender.common.dto.ReviewConfig;
+import com.jy.eleaitender.common.dto.ReviewTypeConfig;
+import com.jy.eleaitender.common.dto.TemplateReviewItemConfig;
 import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
@@ -21,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -73,13 +77,23 @@ public class ReviewItemGenerator {
         ReviewItemGenerateParams params = resultParser.parseParams(task.getRequestParams(), ReviewItemGenerateParams.class);
 
         String enabledTypes;
+        BigDecimal aiScoreTotal = BigDecimal.valueOf(100);
         ReviewConfig config = null;
         if (StringUtils.hasText(params.getReviewConfig())) {
-            // 有配置：生成所有启用的类型（generateStandard=false的类型由同步处理器替换二级节点为占位）
+            // SCORE模式只让AI生成generateStandard=true的类型；WEIGHT模式保留所有启用类型以获取类型权重
             config = ReviewConfig.fromJson(params.getReviewConfig());
-            enabledTypes = config.getEnabledTypes().stream()
+            boolean weightMode = config.isWeightMode();
+            List<ReviewTypeConfig> aiTypes = getAiGeneratedTypes(config, weightMode);
+            enabledTypes = aiTypes.stream()
                     .map(t -> ReviewType.fromCode(t.getReviewType()).getLabel())
                     .collect(Collectors.joining("、"));
+            if (!weightMode) {
+                BigDecimal manualScore = sumManualScore(config);
+                aiScoreTotal = BigDecimal.valueOf(100).subtract(manualScore);
+                if (aiScoreTotal.compareTo(BigDecimal.ZERO) < 0) {
+                    aiScoreTotal = BigDecimal.ZERO;
+                }
+            }
 
             if (!StringUtils.hasText(enabledTypes)) {
                 log.info("无启用的评审类型，跳过AI调用: taskId={}", task.getId());
@@ -110,7 +124,8 @@ public class ReviewItemGenerator {
                         params.getBudget(),
                         params.getRequirementContent(),
                         params.getReviewMethod(),
-                        enabledTypes);
+                        enabledTypes,
+                        formatScore(aiScoreTotal));
 
         // 路由到合适的模型
         RoutedChatClient routedClient = modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE);
@@ -136,6 +151,52 @@ public class ReviewItemGenerator {
 
         log.info("评审项生成完成: taskId={}", task.getId());
         return jsonResult;
+    }
+
+    private List<ReviewTypeConfig> getAiGeneratedTypes(ReviewConfig config, boolean weightMode) {
+        if (weightMode) {
+            return config.getEnabledTypes();
+        }
+        return config.getEnabledTypes().stream()
+                .filter(ReviewTypeConfig::isGenerateStandard)
+                .toList();
+    }
+
+    private BigDecimal sumManualScore(ReviewConfig config) {
+        return config.getEnabledTypes().stream()
+                .filter(type -> !type.isGenerateStandard())
+                .filter(type -> isScoringType(type.getReviewType()))
+                .map(type -> sumManualLeafScores(type.getManualItems()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal sumManualLeafScores(List<TemplateReviewItemConfig> items) {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (TemplateReviewItemConfig item : items) {
+            if (item == null) {
+                continue;
+            }
+            List<TemplateReviewItemConfig> children = item.getChildren();
+            if (children != null && !children.isEmpty()) {
+                total = total.add(sumManualLeafScores(children));
+            } else if (item.getScore() != null) {
+                total = total.add(item.getScore());
+            }
+        }
+        return total;
+    }
+
+    private boolean isScoringType(String reviewType) {
+        return ReviewType.TECHNICAL.getCode().equals(reviewType)
+                || ReviewType.CREDIT.getCode().equals(reviewType)
+                || ReviewType.COMMERCIAL.getCode().equals(reviewType);
+    }
+
+    private String formatScore(BigDecimal score) {
+        return score.stripTrailingZeros().toPlainString();
     }
 
     private String repairReviewItemJson(RoutedChatClient routedClient, String aiOutput, AiTask task) {

@@ -4,7 +4,23 @@ export interface ReviewTypeConfig {
   enabled: boolean
   generateStandard: boolean
   distinguishSubjectivity?: boolean
+  manualItems?: ManualReviewItem[]
 }
+
+export interface ManualReviewItem {
+  id?: number
+  level?: number
+  itemName: string
+  itemContent?: string
+  sortOrder?: number
+  score?: number
+  weight?: number
+  subjectivity?: string
+  isRequired?: number
+  children?: ManualReviewItem[]
+}
+
+let manualReviewItemIdSeed = -1
 
 /** 评审项配置 */
 export interface ReviewConfig {
@@ -48,9 +64,28 @@ export function normalizeReviewConfig(config: ReviewConfig): ReviewConfig {
       distinguishSubjectivity: t.distinguishSubjectivity !== undefined
         ? t.distinguishSubjectivity
         : (t.reviewType === 'TECHNICAL' || t.reviewType === 'CREDIT'),
+      manualItems: normalizeManualReviewItems(t.manualItems || [], 2),
     })),
     scoreMode: config.scoreMode ?? 'SCORE',
   }
+}
+
+export function normalizeManualReviewItems(items: ManualReviewItem[], level = 2): ManualReviewItem[] {
+  return (items || []).map((item, index) => {
+    const children = normalizeManualReviewItems(item.children || [], level + 1)
+    return {
+      id: item.id ?? manualReviewItemIdSeed--,
+      level,
+      itemName: item.itemName || '',
+      itemContent: item.itemContent || '',
+      sortOrder: item.sortOrder ?? index,
+      score: children.length ? undefined : (item.score ?? 0),
+      weight: item.weight,
+      subjectivity: item.subjectivity || 'OBJECTIVE',
+      isRequired: item.isRequired ?? 1,
+      children,
+    }
+  })
 }
 
 // Word章节结构

@@ -235,6 +235,18 @@
               <el-switch v-model="row.generateStandard" size="small" :disabled="!row.enabled" />
             </template>
           </el-table-column>
+          <el-table-column label="手动评审项" width="130" align="center">
+            <template #default="{ row }">
+              <el-button
+                link
+                type="primary"
+                :disabled="!row.enabled || row.generateStandard"
+                @click="openManualReviewDialog(row)"
+              >
+                配置{{ countManualItems(row.manualItems || []) ? `(${countManualItems(row.manualItems || [])})` : '' }}
+              </el-button>
+            </template>
+          </el-table-column>
           <el-table-column label="区分客观主观" width="120" align="center">
             <template #default="{ row }">
               <el-switch v-model="row.distinguishSubjectivity" size="small" :disabled="!row.enabled" />
@@ -243,6 +255,7 @@
           <el-table-column label="说明">
             <template #default="{ row }">
               <span v-if="!row.enabled" style="color: #909399">该类型不参与评审</span>
+              <span v-else-if="!row.generateStandard && countManualItems(row.manualItems || [])" style="color: #67C23A">使用手动配置的评审项</span>
               <span v-else-if="!row.generateStandard" style="color: #E6A23C">item_name 将填充"详见评审文件"</span>
               <span v-else-if="!row.distinguishSubjectivity" style="color: #909399">AI 生成详细评审项内容（不区分主客观）</span>
               <span v-else style="color: #909399">AI 生成详细评审项内容（区分主客观）</span>
@@ -255,6 +268,75 @@
         <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
           确定
         </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="manualDialogVisible"
+      title="手动评审项配置"
+      width="1100px"
+      append-to-body
+      destroy-on-close
+    >
+      <div class="manual-review-dialog">
+        <div class="manual-review-toolbar">
+          <el-button type="primary" @click="handleAddManualItem">
+            <el-icon><Plus /></el-icon>
+            添加评审项
+          </el-button>
+        </div>
+        <el-table
+          :data="activeManualItems"
+          row-key="id"
+          :tree-props="{ children: 'children' }"
+          border
+          default-expand-all
+          class="manual-review-table"
+        >
+          <el-table-column label="评审项" min-width="180">
+            <template #default="{ row }">
+              <el-input v-model="row.itemName" type="textarea" :rows="2" placeholder="请输入评审项" />
+            </template>
+          </el-table-column>
+          <el-table-column label="评审标准" min-width="360">
+            <template #default="{ row }">
+              <el-input v-model="row.itemContent" type="textarea" :rows="2" placeholder="请输入评审标准" />
+            </template>
+          </el-table-column>
+          <el-table-column v-if="activeManualConfig?.distinguishSubjectivity" label="主观/客观" width="120" align="center">
+            <template #default="{ row }">
+              <el-select v-model="row.subjectivity" size="small">
+                <el-option value="OBJECTIVE" label="客观" />
+                <el-option value="SUBJECTIVE" label="主观" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column v-if="activeManualConfig?.reviewType !== 'COMPLIANCE'" label="分值" width="120" align="center">
+            <template #default="{ row }">
+              <el-input-number
+                v-model="row.score"
+                :min="0"
+                :max="100"
+                :precision="1"
+                size="small"
+                controls-position="right"
+                :disabled="hasManualChildren(row)"
+                class="manual-score-input"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" align="center">
+            <template #default="{ row }">
+              <el-button v-if="(row.level || 2) < 3" link type="primary" @click="handleAddManualChild(row)">
+                子项
+              </el-button>
+              <el-button link type="danger" @click="handleDeleteManualItem(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="handleManualDialogConfirm">确定</el-button>
       </template>
     </el-dialog>
 
@@ -278,8 +360,8 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Search, Refresh, Plus, Delete, View, Document, CircleCheck, Close, Download } from '@element-plus/icons-vue'
 import { templateApi, templateFileApi } from '@/api/template'
 import { fileApi } from '@/api/file'
-import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams, ReviewConfig } from '@/types/template'
-import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig, normalizeReviewConfig } from '@/types/template'
+import type { TemplateInfo, TemplateQueryParams, TemplateCreateParams, TemplateUpdateParams, ReviewConfig, ReviewTypeConfig, ManualReviewItem } from '@/types/template'
+import { REVIEW_TYPE_LABELS, buildDefaultReviewConfig, normalizeReviewConfig, normalizeManualReviewItems } from '@/types/template'
 import DocxPreview from '@/components/document/DocxPreview.vue'
 
 const loading = ref(false)
@@ -313,12 +395,200 @@ const formData = reactive<Omit<TemplateCreateParams, 'reviewConfig'> & { id?: nu
   description: '',
   reviewConfig: buildDefaultReviewConfig(),
 })
+const manualDialogVisible = ref(false)
+const activeManualConfig = ref<ReviewTypeConfig | null>(null)
+const activeManualItems = ref<ManualReviewItem[]>([])
+let manualItemIdSeed = -1
 
 const formRules = reactive<FormRules>({
   templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }],
   projectCategory: [{ required: true, message: '请选择模板类别', trigger: 'change' }],
   projectType: [{ required: true, message: '请选择项目类型', trigger: 'change' }],
 })
+
+const createManualItem = (level = 2, sortOrder = 0): ManualReviewItem => ({
+  id: manualItemIdSeed--,
+  level,
+  itemName: '',
+  itemContent: '',
+  sortOrder,
+  score: 0,
+  subjectivity: 'OBJECTIVE',
+  isRequired: 1,
+  children: [],
+})
+
+const countManualItems = (items: ManualReviewItem[]): number =>
+  items.reduce((count, item) => count + 1 + countManualItems(item.children || []), 0)
+
+const SCORING_REVIEW_TYPES = new Set(['TECHNICAL', 'CREDIT', 'COMMERCIAL'])
+
+const isScoringReviewType = (reviewType: string): boolean => SCORING_REVIEW_TYPES.has(reviewType)
+
+const hasManualChildren = (item: ManualReviewItem): boolean => !!item.children?.length
+
+const sumManualLeafScore = (items: ManualReviewItem[] = []): number =>
+  items.reduce((sum, item) => {
+    if (hasManualChildren(item)) {
+      return sum + sumManualLeafScore(item.children || [])
+    }
+    return sum + Number(item.score || 0)
+  }, 0)
+
+const isFullScore = (score: number): boolean => Math.abs(score - 100) < 0.001
+
+const openManualReviewDialog = (row: ReviewTypeConfig) => {
+  row.manualItems = normalizeManualReviewItems(row.manualItems || [], 2)
+  activeManualConfig.value = row
+  activeManualItems.value = row.manualItems
+  manualDialogVisible.value = true
+}
+
+const handleAddManualItem = () => {
+  activeManualItems.value.push(createManualItem(2, activeManualItems.value.length))
+}
+
+const handleAddManualChild = (row: ManualReviewItem) => {
+  const level = row.level || 2
+  if (level >= 3) {
+    ElMessage.warning('评审项最多支持3级')
+    return
+  }
+  if (!row.children) row.children = []
+  row.score = undefined
+  row.children.push(createManualItem(level + 1, row.children.length))
+}
+
+const removeManualItemById = (items: ManualReviewItem[], id?: number): boolean => {
+  const index = items.findIndex(item => item.id === id)
+  if (index >= 0) {
+    items.splice(index, 1)
+    return true
+  }
+  return items.some(item => removeManualItemById(item.children || [], id))
+}
+
+const handleDeleteManualItem = (row: ManualReviewItem) => {
+  removeManualItemById(activeManualItems.value, row.id)
+}
+
+const serializeManualItems = (items: ManualReviewItem[] = []): any[] =>
+  items.map((item, index) => {
+    const children = serializeManualItems(item.children || [])
+    return {
+      itemName: item.itemName,
+      itemContent: item.itemContent,
+      sortOrder: item.sortOrder ?? index,
+      score: children.length ? undefined : item.score,
+      weight: item.weight,
+      subjectivity: item.subjectivity,
+      isRequired: item.isRequired ?? 1,
+      children,
+    }
+  })
+
+const serializeReviewConfig = (config: ReviewConfig): ReviewConfig => ({
+  scoreMode: config.scoreMode,
+  reviewTypes: config.reviewTypes.map(typeConfig => ({
+    reviewType: typeConfig.reviewType,
+    enabled: typeConfig.enabled,
+    generateStandard: typeConfig.generateStandard,
+    distinguishSubjectivity: typeConfig.distinguishSubjectivity,
+    manualItems: serializeManualItems(typeConfig.manualItems || []),
+  })),
+})
+
+const hasBlankManualItemName = (items: ManualReviewItem[] = []): boolean =>
+  items.some(item => !(item.itemName || '').trim() || hasBlankManualItemName(item.children || []))
+
+const validateManualReviewItems = (): boolean => {
+  const invalidType = formData.reviewConfig.reviewTypes.find(typeConfig =>
+    typeConfig.enabled
+    && !typeConfig.generateStandard
+    && hasBlankManualItemName(typeConfig.manualItems || []),
+  )
+  if (!invalidType) {
+    return true
+  }
+  ElMessage.warning(`${REVIEW_TYPE_LABELS[invalidType.reviewType] || invalidType.reviewType}存在未填写的手动评审项名称`)
+  return false
+}
+
+const validateManualScoreRules = (): boolean => {
+  const manualScoringTypes = formData.reviewConfig.reviewTypes.filter(typeConfig =>
+    typeConfig.enabled
+    && !typeConfig.generateStandard
+    && isScoringReviewType(typeConfig.reviewType)
+    && countManualItems(typeConfig.manualItems || []) > 0,
+  )
+  if (!manualScoringTypes.length) {
+    return true
+  }
+
+  if ((formData.reviewConfig.scoreMode || 'SCORE') === 'WEIGHT') {
+    const invalidType = manualScoringTypes.find(typeConfig => !isFullScore(sumManualLeafScore(typeConfig.manualItems || [])))
+    if (invalidType) {
+      ElMessage.warning(`${REVIEW_TYPE_LABELS[invalidType.reviewType] || invalidType.reviewType}手动评审项叶子分合计必须为100分`)
+      return false
+    }
+    return true
+  }
+
+  const manualScore = manualScoringTypes
+    .map(typeConfig => sumManualLeafScore(typeConfig.manualItems || []))
+    .reduce((sum, score) => sum + score, 0)
+  if (manualScore > 100) {
+    ElMessage.warning(`手动评审项叶子分合计不能超过100分，当前为${manualScore}分`)
+    return false
+  }
+
+  const hasAiScoringTypes = formData.reviewConfig.reviewTypes.some(typeConfig =>
+    typeConfig.enabled
+    && typeConfig.generateStandard
+    && isScoringReviewType(typeConfig.reviewType),
+  )
+  if (!hasAiScoringTypes && !isFullScore(manualScore)) {
+    ElMessage.warning(`未启用AI生成评分类型时，手动评审项叶子分合计必须为100分，当前为${manualScore}分`)
+    return false
+  }
+  return true
+}
+
+const validateActiveManualScoreRules = (): boolean => {
+  const typeConfig = activeManualConfig.value
+  if (!typeConfig
+    || !typeConfig.enabled
+    || typeConfig.generateStandard
+    || !isScoringReviewType(typeConfig.reviewType)
+    || countManualItems(typeConfig.manualItems || []) === 0) {
+    return true
+  }
+
+  if ((formData.reviewConfig.scoreMode || 'SCORE') === 'WEIGHT') {
+    const leafScore = sumManualLeafScore(typeConfig.manualItems || [])
+    if (!isFullScore(leafScore)) {
+      ElMessage.warning(`${REVIEW_TYPE_LABELS[typeConfig.reviewType] || typeConfig.reviewType}手动评审项叶子分合计必须为100分`)
+      return false
+    }
+    return true
+  }
+
+  return validateManualScoreRules()
+}
+
+const validateManualReviewConfig = (): boolean => {
+  if (!validateManualReviewItems()) {
+    return false
+  }
+  return validateManualScoreRules()
+}
+
+const handleManualDialogConfirm = () => {
+  if (!validateActiveManualScoreRules()) {
+    return
+  }
+  manualDialogVisible.value = false
+}
 
 const handleFileChange = (uploadFile: any) => {
   uploadingFile.value = uploadFile.raw
@@ -498,6 +768,7 @@ const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
+    if (!validateManualReviewConfig()) return
 
     submitLoading.value = true
     try {
@@ -510,13 +781,13 @@ const handleSubmit = async () => {
       if (formData.id) {
         await templateApi.update({
           ...formData,
-          reviewConfig: JSON.stringify(formData.reviewConfig),
+          reviewConfig: JSON.stringify(serializeReviewConfig(formData.reviewConfig)),
         } as TemplateUpdateParams)
         ElMessage.success('更新成功')
       } else {
         await templateApi.create({
           ...formData,
-          reviewConfig: JSON.stringify(formData.reviewConfig),
+          reviewConfig: JSON.stringify(serializeReviewConfig(formData.reviewConfig)),
         })
         ElMessage.success('创建成功')
       }
@@ -544,6 +815,9 @@ const handleDialogClosed = () => {
   })
   fileList.value = []
   uploadingFile.value = null
+  manualDialogVisible.value = false
+  activeManualConfig.value = null
+  activeManualItems.value = []
 }
 
 onMounted(() => {
@@ -609,6 +883,23 @@ onMounted(() => {
   &__label {
     color: #606266;
     font-size: 14px;
+  }
+}
+
+.manual-review-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manual-review-toolbar {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.manual-review-table {
+  .manual-score-input {
+    width: 96px;
   }
 }
 </style>

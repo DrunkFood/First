@@ -95,7 +95,7 @@ public final class PromptBuilder {
     public static String buildReviewItemGenerateScore(String projectName, String projectType,
                                                       String projectCategory, String budget,
                                                       String requirementContent, String reviewMethod,
-                                                      String enabledTypes) {
+                                                      String enabledTypes, String aiScoreTotal) {
         return String.format(UserPromptTemplates.REVIEW_ITEM_GENERATE_USER_WITH_CONFIG_SCORE,
                 defaultStr(projectName),
                 defaultStr(ProjectType.fromCode(projectType).getLabel()),
@@ -103,7 +103,8 @@ public final class PromptBuilder {
                 defaultStr(budget),
                 defaultStr(requirementContent),
                 defaultStr(ReviewMethod.fromCode(reviewMethod).getLabel()),
-                defaultStr(enabledTypes, ReviewType.getLabels()));
+                defaultStr(enabledTypes, ReviewType.getLabels()),
+                defaultStr(aiScoreTotal, "100"));
     }
 
     /**

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.client.InternalFileServiceClient;
 import com.jy.eleaitender.common.dto.ReviewConfig;
 import com.jy.eleaitender.common.dto.ReviewTypeConfig;
+import com.jy.eleaitender.common.dto.TemplateReviewItemConfig;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbProject;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -212,7 +214,15 @@ public class AiTaskResultSyncHandler {
                     TbProjectReviewItem level1Item = items.stream()
                             .filter(item -> rt.equals(item.getReviewType()) && item.getLevel() != null && item.getLevel() == 1)
                             .findFirst().orElse(null);
-                    if (level1Item == null) continue;
+                    if (level1Item == null) {
+                        level1Item = new TbProjectReviewItem();
+                        level1Item.setProjectId(projectId);
+                        level1Item.setItemName(ReviewType.fromCode(rt).getLabel());
+                        level1Item.setLevel(1);
+                        level1Item.setReviewType(rt);
+                        level1Item.setSortOrder(items.size());
+                        items.add(level1Item);
+                    }
 
                     // 计算该类型所有二级以下节点的分值总和
                     BigDecimal childScore = items.stream()
@@ -225,17 +235,26 @@ public class AiTaskResultSyncHandler {
                             && item.getLevel() != null && item.getLevel() > 1);
 
                     // 添加占位二级节点
-                    TbProjectReviewItem placeholder = new TbProjectReviewItem();
-                    placeholder.setProjectId(projectId);
-                    placeholder.setItemName("详见评审文件");
-                    placeholder.setLevel(2);
-                    placeholder.setReviewType(rt);
-                    placeholder.setScore(childScore);
-                    placeholder.setIsRequired(0);
-                    placeholder.setSortOrder(items.size());
-                    items.add(placeholder);
-                    parentMap.put(placeholder, level1Item);
+                    if (typeConfig.getManualItems() != null && !typeConfig.getManualItems().isEmpty()) {
+                        int[] sortOrder = {items.size()};
+                        appendManualItems(projectId, rt, level1Item, typeConfig.getManualItems(), items, sortOrder, 2);
+                    } else {
+                        TbProjectReviewItem placeholder = new TbProjectReviewItem();
+                        placeholder.setProjectId(projectId);
+                        placeholder.setItemName("详见评审文件");
+                        placeholder.setLevel(2);
+                        placeholder.setReviewType(rt);
+                        placeholder.setScore(childScore);
+                        placeholder.setIsRequired(0);
+                        placeholder.setSortOrder(items.size());
+                        items.add(placeholder);
+                        parentMap.put(placeholder, level1Item);
+                    }
                 }
+            }
+
+            if (!config.isWeightMode()) {
+                normalizeAiGeneratedScoresForScoreMode(items, config);
             }
 
             // distinguishSubjectivity=false 的启用类型：清空 subjectivity 不落库
@@ -277,6 +296,140 @@ public class AiTaskResultSyncHandler {
 
         parentMap.clear();
         log.info("同步评审项成功: projectId={}, count={}", projectId, items.size());
+    }
+
+    private void appendManualItems(Long projectId, String reviewType, TbProjectReviewItem parentItem,
+                                   List<TemplateReviewItemConfig> manualItems,
+                                   List<TbProjectReviewItem> items, int[] sortOrder, int level) {
+        if (manualItems == null || manualItems.isEmpty() || level > 3) {
+            return;
+        }
+        for (TemplateReviewItemConfig manualItem : manualItems) {
+            if (manualItem == null) {
+                continue;
+            }
+            TbProjectReviewItem item = new TbProjectReviewItem();
+            item.setProjectId(projectId);
+            item.setItemName(manualItem.getItemName());
+            item.setItemContent(manualItem.getItemContent());
+            item.setLevel(level);
+            item.setSortOrder(manualItem.getSortOrder() != null ? manualItem.getSortOrder() : sortOrder[0]++);
+            item.setReviewType(reviewType);
+            item.setScore(manualItem.getScore());
+            item.setWeight(manualItem.getWeight());
+            item.setSubjectivity(manualItem.getSubjectivity());
+            item.setIsRequired(manualItem.getIsRequired() != null ? manualItem.getIsRequired() : 1);
+            items.add(item);
+            parentMap.put(item, parentItem);
+
+            appendManualItems(projectId, reviewType, item, manualItem.getChildren(), items, sortOrder, level + 1);
+        }
+    }
+
+    private void normalizeAiGeneratedScoresForScoreMode(List<TbProjectReviewItem> items, ReviewConfig config) {
+        BigDecimal targetScore = BigDecimal.valueOf(100).subtract(sumManualScore(config));
+        if (targetScore.compareTo(BigDecimal.ZERO) < 0) {
+            targetScore = BigDecimal.ZERO;
+        }
+
+        List<TbProjectReviewItem> aiLeaves = items.stream()
+                .filter(item -> item.getLevel() != null && item.getLevel() > 1)
+                .filter(item -> isScoringType(item.getReviewType()))
+                .filter(item -> !isManualScoringType(config, item.getReviewType()))
+                .filter(this::isLeafItem)
+                .toList();
+        if (aiLeaves.isEmpty()) {
+            return;
+        }
+
+        BigDecimal currentScore = aiLeaves.stream()
+                .map(item -> item.getScore() != null ? item.getScore() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (currentScore.compareTo(targetScore) == 0) {
+            return;
+        }
+        if (targetScore.compareTo(BigDecimal.ZERO) == 0) {
+            aiLeaves.forEach(item -> item.setScore(BigDecimal.ZERO));
+            return;
+        }
+        if (currentScore.compareTo(BigDecimal.ZERO) == 0) {
+            distributeScoreEvenly(aiLeaves, targetScore);
+            return;
+        }
+
+        BigDecimal allocated = BigDecimal.ZERO;
+        for (int i = 0; i < aiLeaves.size(); i++) {
+            TbProjectReviewItem item = aiLeaves.get(i);
+            BigDecimal score;
+            if (i == aiLeaves.size() - 1) {
+                score = targetScore.subtract(allocated);
+            } else {
+                BigDecimal sourceScore = item.getScore() != null ? item.getScore() : BigDecimal.ZERO;
+                score = sourceScore.multiply(targetScore).divide(currentScore, 1, RoundingMode.HALF_UP);
+                allocated = allocated.add(score);
+            }
+            item.setScore(score.stripTrailingZeros());
+        }
+    }
+
+    private void distributeScoreEvenly(List<TbProjectReviewItem> items, BigDecimal targetScore) {
+        BigDecimal allocated = BigDecimal.ZERO;
+        for (int i = 0; i < items.size(); i++) {
+            BigDecimal score;
+            if (i == items.size() - 1) {
+                score = targetScore.subtract(allocated);
+            } else {
+                score = targetScore.divide(BigDecimal.valueOf(items.size()), 1, RoundingMode.HALF_UP);
+                allocated = allocated.add(score);
+            }
+            items.get(i).setScore(score.stripTrailingZeros());
+        }
+    }
+
+    private boolean isLeafItem(TbProjectReviewItem item) {
+        return !parentMap.containsValue(item);
+    }
+
+    private boolean isManualScoringType(ReviewConfig config, String reviewType) {
+        return config.getEnabledTypes().stream()
+                .anyMatch(type -> reviewType.equals(type.getReviewType())
+                        && !type.isGenerateStandard()
+                        && isScoringType(reviewType)
+                        && type.getManualItems() != null
+                        && !type.getManualItems().isEmpty());
+    }
+
+    private BigDecimal sumManualScore(ReviewConfig config) {
+        return config.getEnabledTypes().stream()
+                .filter(type -> !type.isGenerateStandard())
+                .filter(type -> isScoringType(type.getReviewType()))
+                .map(type -> sumManualLeafScores(type.getManualItems()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal sumManualLeafScores(List<TemplateReviewItemConfig> items) {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (TemplateReviewItemConfig item : items) {
+            if (item == null) {
+                continue;
+            }
+            List<TemplateReviewItemConfig> children = item.getChildren();
+            if (children != null && !children.isEmpty()) {
+                total = total.add(sumManualLeafScores(children));
+            } else if (item.getScore() != null) {
+                total = total.add(item.getScore());
+            }
+        }
+        return total;
+    }
+
+    private boolean isScoringType(String reviewType) {
+        return ReviewType.TECHNICAL.getCode().equals(reviewType)
+                || ReviewType.CREDIT.getCode().equals(reviewType)
+                || ReviewType.COMMERCIAL.getCode().equals(reviewType);
     }
 
     List<TbProjectReviewItem> parseReviewItemsFromResult(String resultJson, Long projectId) {

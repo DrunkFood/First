@@ -35,7 +35,6 @@
         <el-col :span="12">
           <el-form-item label="评审方式" prop="reviewType">
             <el-radio-group v-model="form.reviewType">
-              <el-radio value="INTELLIGENT">智能评审</el-radio>
               <el-radio value="MANUAL">人工评审</el-radio>
             </el-radio-group>
           </el-form-item>
@@ -184,7 +183,7 @@ const form = ref({
   projectType: '',
   serviceSubType: '',
   budget: 0,
-  reviewType: 'INTELLIGENT',
+  reviewType: 'MANUAL',
   projectDescription: '',
   tenderUnit: '',
   contactPerson: '',
@@ -445,7 +444,7 @@ const loadProject = async () => {
     projectType: project.projectType || '',
     serviceSubType: project.serviceSubType || '',
     budget: toWanYuan(project.budget) ?? 0,
-    reviewType: project.reviewType ?? 'INTELLIGENT',
+    reviewType: 'MANUAL',
     projectDescription: project.projectDescription || '',
     tenderUnit: project.tenderUnit || '',
     contactPerson: project.contactPerson || '',

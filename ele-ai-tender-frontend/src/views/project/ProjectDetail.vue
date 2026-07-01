@@ -33,7 +33,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">评审类型</span>
-          <span class="meta-value">{{ project?.reviewType === 'MANUAL' ? '人工评审' : '智能评审' }}</span>
+          <span class="meta-value">人工评审</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">创建时间</span>
@@ -55,7 +55,7 @@
           <el-descriptions-item label="项目类别">{{ projectCategoryLabel }}</el-descriptions-item>
           <el-descriptions-item label="项目类型">{{ projectTypeLabel }}</el-descriptions-item>
           <el-descriptions-item label="预算金额">{{ formatBudgetWanYuan(project?.budget) }}</el-descriptions-item>
-          <el-descriptions-item label="评审类型">{{ project?.reviewType === 'MANUAL' ? '人工评审' : '智能评审' }}</el-descriptions-item>
+          <el-descriptions-item label="评审类型">人工评审</el-descriptions-item>
           <el-descriptions-item label="招标单位">{{ project?.tenderUnit || '-' }}</el-descriptions-item>
           <el-descriptions-item label="联系人">{{ project?.contactPerson || '-' }}</el-descriptions-item>
           <el-descriptions-item label="联系电话">{{ project?.contactPhone || '-' }}</el-descriptions-item>

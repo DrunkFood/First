@@ -59,6 +59,7 @@ class DetectionServiceImplTest {
 
         TbProjectReviewItem reviewItem = new TbProjectReviewItem();
         reviewItem.setLevel(2);
+        reviewItem.setReviewType("TECHNICAL");
         reviewItem.setItemName("Technical score");
         reviewItem.setItemContent("Review standard");
 

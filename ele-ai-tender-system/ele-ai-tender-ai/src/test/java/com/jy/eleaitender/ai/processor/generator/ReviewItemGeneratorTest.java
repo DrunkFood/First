@@ -11,10 +11,12 @@ import com.jy.eleaitender.common.dto.ReviewConfig;
 import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.ReviewType;
 import com.jy.eleaitender.common.enums.ScoreMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
@@ -231,9 +233,10 @@ class ReviewItemGeneratorTest {
                   ]
                 }
                 """;
-        when(modelRouter.route(AiTaskType.REVIEW_ITEM_GENERATE)).thenReturn(chatClient);
+        when(modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE))
+                .thenReturn(new RoutedChatClient(chatClient, "glm-test"));
         when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE_WEIGHT),
-                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull()))
+                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test")))
                 .thenReturn(weightAiOutput);
 
         JsonNode root = objectMapper.readTree(generator.generate(buildWeightTask()));
@@ -242,7 +245,24 @@ class ReviewItemGeneratorTest {
         assertThat(root.path("reviewItems").get(0).path("name").asText()).isEqualTo("技术评审");
         // 关键断言：权重模式必须以 WEIGHT system prompt 调用，且不能走 SCORE
         verify(aiCallRecorder).callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE_WEIGHT),
-                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull());
+                anyString(), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test"));
+    }
+
+    @Test
+    void generateShouldAskAiForRemainingScoreWhenScoreModeHasManualItems() throws Exception {
+        when(modelRouter.routeWithInfo(AiTaskType.REVIEW_ITEM_GENERATE))
+                .thenReturn(new RoutedChatClient(chatClient, "glm-test"));
+        ArgumentCaptor<String> userPromptCaptor = ArgumentCaptor.forClass(String.class);
+        when(aiCallRecorder.callAndRecord(eq(chatClient), eq(SystemPromptTemplates.REVIEW_ITEM_GENERATE_SCORE),
+                userPromptCaptor.capture(), eq("GENERATION"), eq(7001L), eq(9L), isNull(), eq("glm-test")))
+                .thenReturn("{\"reviewItems\":[]}");
+
+        generator.generate(buildManualScoreTask());
+
+        assertThat(userPromptCaptor.getValue())
+                .contains("AI生成评分项score合计目标")
+                .contains("70")
+                .contains(ReviewType.COMMERCIAL.getLabel());
     }
 
     private void mockAiOutput(String aiOutput) {
@@ -285,6 +305,32 @@ class ReviewItemGeneratorTest {
         params.setReviewMethod("INTELLIGENT");
         params.setRequirementContent("办公楼装修采购需求。");
         params.setReviewConfig(objectMapper.writeValueAsString(config));
+
+        AiTask task = new AiTask();
+        task.setId(7001L);
+        task.setCreateId(9L);
+        task.setTaskType(AiTaskType.REVIEW_ITEM_GENERATE.getCode());
+        task.setRequestParams(objectMapper.writeValueAsString(params));
+        return task;
+    }
+
+    private AiTask buildManualScoreTask() throws Exception {
+        String reviewConfig = """
+                {"scoreMode":"SCORE","reviewTypes":[
+                  {"reviewType":"TECHNICAL","enabled":true,"generateStandard":false,
+                   "manualItems":[{"itemName":"Manual Technical","score":30}]},
+                  {"reviewType":"COMMERCIAL","enabled":true,"generateStandard":true}
+                ]}
+                """;
+
+        ReviewItemGenerateParams params = new ReviewItemGenerateParams();
+        params.setProjectName("Office decoration");
+        params.setProjectType("ENGINEERING");
+        params.setProjectCategory("SMALL_TRADE");
+        params.setBudget("500000");
+        params.setReviewMethod("INTELLIGENT");
+        params.setRequirementContent("Requirement content");
+        params.setReviewConfig(reviewConfig);
 
         AiTask task = new AiTask();
         task.setId(7001L);
