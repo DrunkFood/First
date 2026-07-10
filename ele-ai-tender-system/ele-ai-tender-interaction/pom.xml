@@ -60,4 +60,22 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <!-- 分发构件至远程仓库 -->
+    <distributionManagement>
+        <!--正式版本-->
+        <repository>
+            <!-- maven settings.xml中<server>的id-->
+            <id>zbd-purchase-releases</id>
+            <name>zbd-purchase-releases</name>
+            <url>http://10.11.20.50:15051/repository/zbd-purchase-releases/</url>
+        </repository>
+        <!--快照-->
+        <snapshotRepository>
+            <id>zbd-purchase-snapshots</id>
+            <name>zbd-purchase-snapshots</name>
+            <url>http://10.11.20.50:15051/repository/zbd-purchase-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>
