@@ -41,6 +41,7 @@
     </dependencyManagement>
 
     <modules>
+        <module>ele-ai-tender-common-interaction</module>
         <module>ele-ai-tender-interaction-core</module>
         <module>ele-ai-tender-interaction-autoconfigure</module>
         <module>ele-ai-tender-interaction-spring-boot-starter</module>
