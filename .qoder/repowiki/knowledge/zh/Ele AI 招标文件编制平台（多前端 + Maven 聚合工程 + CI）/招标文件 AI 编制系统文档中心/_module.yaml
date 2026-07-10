@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: de7d39f4-dbbc-485b-98a9-78bd0eb21ef1
+title: 招标文件 AI 编制系统文档中心
+scope:
+    - docs/
+source_files: []
+depends_on: []
+related_to: []

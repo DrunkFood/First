@@ -1,6 +1,6 @@
 schema_version: 1
-module_path: d2c6fcc0-91ea-4e34-8cb3-c102aafcc795
-title: 招标文件 AI 编制平台（多前端+多后端聚合仓库）
+module_path: de7d39f4-dbbc-485b-98a9-78bd0eb21ef1/f3d835c5-df26-4c8b-92d6-9eb35ac50263
+title: 招标文件 AI 编制平台（根仓库）
 scope:
     - CLAUDE.md
     - .claudeignore

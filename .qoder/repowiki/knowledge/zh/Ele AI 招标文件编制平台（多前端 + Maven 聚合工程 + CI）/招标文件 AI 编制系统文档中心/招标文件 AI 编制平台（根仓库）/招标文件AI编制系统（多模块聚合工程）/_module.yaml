@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: de7d39f4-dbbc-485b-98a9-78bd0eb21ef1/f3d835c5-df26-4c8b-92d6-9eb35ac50263/4dfe47ab-4f4d-484d-b39b-d832bc01e203
+title: 招标文件AI编制系统（多模块聚合工程）
+scope:
+    - ele-ai-tender-system/
+source_files: []
+depends_on: []
+related_to: []

@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
 scope: []
 source_files: []
 depends_on: []
