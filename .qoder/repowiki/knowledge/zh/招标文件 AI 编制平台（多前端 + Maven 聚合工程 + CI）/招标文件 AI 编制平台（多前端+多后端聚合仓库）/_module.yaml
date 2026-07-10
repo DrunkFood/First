@@ -1,0 +1,19 @@
+schema_version: 1
+module_path: d2c6fcc0-91ea-4e34-8cb3-c102aafcc795
+title: 招标文件 AI 编制平台（多前端+多后端聚合仓库）
+scope:
+    - CLAUDE.md
+    - .claudeignore
+    - .qoderignore
+    - .gitignore
+    - AGENTS.md
+    - Jenkinsfile-ai.groovy
+    - Jenkinsfile-core-web.groovy
+    - Jenkinsfile-core.groovy
+    - Jenkinsfile-file.groovy
+    - Jenkinsfile-support-web.groovy
+    - Jenkinsfile-support.groovy
+    - README.md
+source_files: []
+depends_on: []
+related_to: []

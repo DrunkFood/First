@@ -1,0 +1,85 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: feature-interaction
+nodes_managed: true
+exported_at: "2026-07-10T05:27:45Z"
+modules:
+    "":
+        dir_name: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 0366bc84-0d28-4193-937a-9d1bcf3cc8af
+            - d2c6fcc0-91ea-4e34-8cb3-c102aafcc795
+        depends_on: []
+        related_to: []
+    0366bc84-0d28-4193-937a-9d1bcf3cc8af:
+        dir_name: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    d2c6fcc0-91ea-4e34-8cb3-c102aafcc795:
+        dir_name: 招标文件 AI 编制平台（多前端+多后端聚合仓库）
+        title: 招标文件 AI 编制平台（多前端+多后端聚合仓库）
+        scope:
+            - CLAUDE.md
+            - .claudeignore
+            - .qoderignore
+            - .gitignore
+            - AGENTS.md
+            - Jenkinsfile-ai.groovy
+            - Jenkinsfile-core-web.groovy
+            - Jenkinsfile-core.groovy
+            - Jenkinsfile-file.groovy
+            - Jenkinsfile-support-web.groovy
+            - Jenkinsfile-support.groovy
+            - README.md
+        source_files: []
+        children:
+            - d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/60c17639-eb06-475b-97bd-99a488192f8c
+            - d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/82463cbf-55d6-462b-98ef-5320691aa77a
+            - d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/b14bcd3c-6dd5-4ec5-aa70-bc26aba5de67
+            - d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/f142a9f4-49be-424a-ac5e-7c3e478dada1
+        depends_on: []
+        related_to: []
+    d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/60c17639-eb06-475b-97bd-99a488192f8c:
+        dir_name: 招标文件 AI 编制系统（多模块聚合）
+        title: 招标文件 AI 编制系统（多模块聚合）
+        scope:
+            - ele-ai-tender-system/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/82463cbf-55d6-462b-98ef-5320691aa77a:
+        dir_name: AI 投标支撑中心前端管理界面
+        title: AI 投标支撑中心前端管理界面
+        scope:
+            - ele-ai-tender-support-frontend/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/b14bcd3c-6dd5-4ec5-aa70-bc26aba5de67:
+        dir_name: AI 招标文件编制前端应用
+        title: AI 招标文件编制前端应用
+        scope:
+            - ele-ai-tender-frontend/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/f142a9f4-49be-424a-ac5e-7c3e478dada1:
+        dir_name: 项目文档与规范中心
+        title: 项目文档与规范中心
+        scope:
+            - docs/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

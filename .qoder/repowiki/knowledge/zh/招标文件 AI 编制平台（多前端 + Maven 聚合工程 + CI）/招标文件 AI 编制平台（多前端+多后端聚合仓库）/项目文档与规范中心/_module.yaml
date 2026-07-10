@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/f142a9f4-49be-424a-ac5e-7c3e478dada1
+title: 项目文档与规范中心
+scope:
+    - docs/
+source_files: []
+depends_on: []
+related_to: []

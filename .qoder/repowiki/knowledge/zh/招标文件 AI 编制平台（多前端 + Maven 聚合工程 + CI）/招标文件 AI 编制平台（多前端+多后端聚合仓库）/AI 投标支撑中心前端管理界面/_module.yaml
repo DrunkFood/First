@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: d2c6fcc0-91ea-4e34-8cb3-c102aafcc795/82463cbf-55d6-462b-98ef-5320691aa77a
+title: AI 投标支撑中心前端管理界面
+scope:
+    - ele-ai-tender-support-frontend/
+source_files: []
+depends_on: []
+related_to: []
