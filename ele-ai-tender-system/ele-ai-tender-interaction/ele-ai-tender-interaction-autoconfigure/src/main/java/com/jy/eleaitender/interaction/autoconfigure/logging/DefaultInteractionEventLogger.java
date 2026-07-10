@@ -12,19 +12,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefaultInteractionEventLogger implements InteractionEventLogger {
 
-    @Override
     /**
      * 记录电子标系统调业务系统的入站交互日志。
      */
+    @Override
     public void logInbound(String apiName, Object request, Object response, Throwable error) {
         InteractionLogContext context = InteractionLogContextExtractor.extract(apiName, request, response);
         log("IN", context, response, error);
     }
 
-    @Override
     /**
      * 记录业务系统调电子标系统的出站交互日志。
      */
+    @Override
     public void logOutbound(String apiName, Object request, Object response, Throwable error) {
         InteractionLogContext context = InteractionLogContextExtractor.extract(apiName, request, response);
         log("OUT", context, response, error);
@@ -94,7 +94,7 @@ public class DefaultInteractionEventLogger implements InteractionEventLogger {
             return true;
         }
         if (response instanceof Integer) {
-            return ((Integer) response).intValue() < 400;
+            return (Integer) response < 400;
         }
         if (response instanceof InteractionResult) {
             return ((InteractionResult<?>) response).isSuccess();

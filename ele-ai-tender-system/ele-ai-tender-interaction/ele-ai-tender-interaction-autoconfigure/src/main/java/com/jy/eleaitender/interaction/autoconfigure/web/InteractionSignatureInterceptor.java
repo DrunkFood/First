@@ -20,10 +20,10 @@ public class InteractionSignatureInterceptor implements HandlerInterceptor {
         this.properties = properties;
     }
 
-    @Override
     /**
      * 对业务系统暴露的交互接口统一做签名校验，避免每个 controller 重复处理请求头和验签逻辑。
      */
+    @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String appKey = request.getHeader(InteractionHeaderConstants.APP_KEY);
         String timestampText = request.getHeader(InteractionHeaderConstants.TIMESTAMP);
