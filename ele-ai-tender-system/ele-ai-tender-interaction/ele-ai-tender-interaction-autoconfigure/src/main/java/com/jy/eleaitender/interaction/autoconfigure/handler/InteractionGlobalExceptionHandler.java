@@ -2,12 +2,7 @@ package com.jy.eleaitender.interaction.autoconfigure.handler;
 
 import com.jy.eleaitender.common.interaction.dto.InteractionResult;
 import com.jy.eleaitender.common.interaction.exception.InteractionException;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionBidRecordSchemeController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionCaKeysInfoController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionIdentityController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionProjectInfoController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionTenderPackageCallbackController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionTenderPdfCallbackController;
+import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionAiTaskResultCallbackController;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
@@ -25,12 +20,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestControllerAdvice(basePackageClasses = {
-        InteractionIdentityController.class,
-        InteractionProjectInfoController.class,
-        InteractionBidRecordSchemeController.class,
-        InteractionCaKeysInfoController.class,
-        InteractionTenderPdfCallbackController.class,
-        InteractionTenderPackageCallbackController.class
+        InteractionAiTaskResultCallbackController.class
 })
 public class InteractionGlobalExceptionHandler {
 

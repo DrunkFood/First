@@ -56,3 +56,12 @@ logging:
   level:
     com.jy.eleaitender.core: debug
     org.springframework.web: info
+
+ele-ai-tender:
+  external:
+    ai-task:
+      enabled: true
+      callback-schedule-interval: 10000
+      callback-max-retry: 3
+      callback-connect-timeout: 5000
+      callback-read-timeout: 10000

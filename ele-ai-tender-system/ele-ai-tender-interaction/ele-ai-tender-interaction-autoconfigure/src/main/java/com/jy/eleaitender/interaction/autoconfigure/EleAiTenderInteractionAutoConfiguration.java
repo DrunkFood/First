@@ -1,34 +1,16 @@
 package com.jy.eleaitender.interaction.autoconfigure;
 
-import com.jy.eleaitender.common.interaction.spi.InteractionBidRecordSchemeService;
-import com.jy.eleaitender.common.interaction.spi.InteractionBidDecryptResultReceiveService;
-import com.jy.eleaitender.common.interaction.spi.InteractionBidDocumentResultReceiveService;
-import com.jy.eleaitender.common.interaction.spi.InteractionCaKeysInfoService;
+import com.jy.eleaitender.common.interaction.spi.InteractionAiTaskResultReceiveService;
 import com.jy.eleaitender.common.interaction.spi.InteractionEventLogger;
-import com.jy.eleaitender.common.interaction.spi.InteractionIdentityService;
-import com.jy.eleaitender.common.interaction.spi.InteractionProjectInfoService;
-import com.jy.eleaitender.common.interaction.spi.InteractionTenderPackageReceiveService;
-import com.jy.eleaitender.common.interaction.spi.InteractionTenderPdfReceiveService;
-import com.jy.eleaitender.interaction.autoconfigure.logging.DefaultInteractionEventLogger;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionBidRecordSchemeController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionBidDecryptResultCallbackController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionBidDocumentResultCallbackController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionCaKeysInfoController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionIdentityController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionProjectInfoController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionTenderPackageCallbackController;
-import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionTenderPdfCallbackController;
-import com.jy.eleaitender.interaction.core.client.BidDecryptClient;
-import com.jy.eleaitender.interaction.core.client.BidDocumentPushClient;
-import com.jy.eleaitender.interaction.core.client.EnvelopeClient;
+import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionAiTaskResultCallbackController;
 import com.jy.eleaitender.interaction.autoconfigure.handler.InteractionGlobalExceptionHandler;
+import com.jy.eleaitender.interaction.autoconfigure.logging.DefaultInteractionEventLogger;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionSignatureInterceptor;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionWebMvcConfigurer;
-import com.jy.eleaitender.interaction.core.client.EleAiTenderInteractionClient;
+import com.jy.eleaitender.interaction.core.client.AiTaskClient;
 import com.jy.eleaitender.interaction.core.client.ExternalAuthClient;
 import com.jy.eleaitender.interaction.core.client.ExternalUserInfoClient;
 import com.jy.eleaitender.interaction.core.client.FileClient;
-import com.jy.eleaitender.interaction.core.client.TenderDocumentEntryUrlBuilder;
 import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
 import com.jy.eleaitender.interaction.core.support.InteractionRestTemplateFactory;
@@ -68,6 +50,13 @@ public class EleAiTenderInteractionAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public AiTaskClient aiTaskClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
+                                     EleAiTenderInteractionProperties properties) {
+        return new AiTaskClient(interactionRestTemplate, properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public ExternalAuthClient externalAuthClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
                                                  EleAiTenderInteractionProperties properties,
                                                  InteractionRequestSigner interactionRequestSigner) {
@@ -85,58 +74,8 @@ public class EleAiTenderInteractionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public FileClient fileClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                 EleAiTenderInteractionProperties properties,
-                                 InteractionRequestSigner interactionRequestSigner) {
-        return new FileClient(interactionRestTemplate, properties, interactionRequestSigner);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public BidDocumentPushClient bidDocumentPushClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                               EleAiTenderInteractionProperties properties,
-                                               InteractionRequestSigner interactionRequestSigner) {
-        return new BidDocumentPushClient(interactionRestTemplate, properties, interactionRequestSigner);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public BidDecryptClient bidDecryptClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                             EleAiTenderInteractionProperties properties,
-                                             InteractionRequestSigner interactionRequestSigner) {
-        return new BidDecryptClient(interactionRestTemplate, properties, interactionRequestSigner);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public EnvelopeClient envelopeClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                         EleAiTenderInteractionProperties properties,
-                                         InteractionRequestSigner interactionRequestSigner) {
-        return new EnvelopeClient(interactionRestTemplate, properties, interactionRequestSigner);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder(EleAiTenderInteractionProperties properties) {
-        return new TenderDocumentEntryUrlBuilder(properties);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public EleAiTenderInteractionClient aiTenderInteractionClient(ExternalAuthClient externalAuthClient,
-                                                                  ExternalUserInfoClient externalUserInfoClient,
-                                                                  FileClient fileClient,
-                                                                  BidDocumentPushClient bidDocumentPushClient,
-                                                                  BidDecryptClient bidDecryptClient,
-                                                                  EnvelopeClient envelopeClient,
-                                                                  TenderDocumentEntryUrlBuilder tenderDocumentEntryUrlBuilder) {
-        return new EleAiTenderInteractionClient(
-                externalAuthClient,
-                externalUserInfoClient,
-                fileClient,
-                bidDocumentPushClient,
-                bidDecryptClient,
-                envelopeClient,
-                tenderDocumentEntryUrlBuilder);
+                                 EleAiTenderInteractionProperties properties) {
+        return new FileClient(interactionRestTemplate, properties);
     }
 
     @Bean
@@ -164,67 +103,10 @@ public class EleAiTenderInteractionAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(InteractionIdentityService.class)
+    @ConditionalOnBean(InteractionAiTaskResultReceiveService.class)
     @ConditionalOnMissingBean
-    public InteractionIdentityController interactionIdentityController(EleAiTenderInteractionClient interactionClient,
-                                                                       InteractionIdentityService identityService,
-                                                                       ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionIdentityController(interactionClient, identityService, eventLoggerProvider.getIfAvailable());
-    }
-
-    @Bean
-    @ConditionalOnBean(InteractionProjectInfoService.class)
-    @ConditionalOnMissingBean
-    public InteractionProjectInfoController interactionProjectInfoController(InteractionProjectInfoService projectInfoService,
-                                                                             ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionProjectInfoController(projectInfoService, eventLoggerProvider.getIfAvailable());
-    }
-
-    @Bean
-    @ConditionalOnBean(InteractionBidRecordSchemeService.class)
-    @ConditionalOnMissingBean
-    public InteractionBidRecordSchemeController interactionBidRecordSchemeController(InteractionBidRecordSchemeService bidRecordSchemeService,
-                                                                                     ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionBidRecordSchemeController(bidRecordSchemeService, eventLoggerProvider.getIfAvailable());
-    }
-
-    @Bean
-    @ConditionalOnBean(InteractionCaKeysInfoService.class)
-    @ConditionalOnMissingBean
-    public InteractionCaKeysInfoController interactionCaKeysInfoController(InteractionCaKeysInfoService caKeysService,
-                                                                               ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionCaKeysInfoController(caKeysService, eventLoggerProvider.getIfAvailable());
-    }
-
-    @Bean
-    @ConditionalOnBean(InteractionTenderPdfReceiveService.class)
-    @ConditionalOnMissingBean
-    public InteractionTenderPdfCallbackController interactionTenderPdfCallbackController(InteractionTenderPdfReceiveService tenderPdfReceiveService,
-                                                                                         ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionTenderPdfCallbackController(tenderPdfReceiveService, eventLoggerProvider.getIfAvailable());
-    }
-
-    @Bean
-    @ConditionalOnBean(InteractionTenderPackageReceiveService.class)
-    @ConditionalOnMissingBean
-    public InteractionTenderPackageCallbackController interactionTenderPackageCallbackController(InteractionTenderPackageReceiveService tenderPackageReceiveService,
-                                                                                                 ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionTenderPackageCallbackController(tenderPackageReceiveService, eventLoggerProvider.getIfAvailable());
-    }
-
-    @Bean
-    @ConditionalOnBean(InteractionBidDocumentResultReceiveService.class)
-    @ConditionalOnMissingBean
-    public InteractionBidDocumentResultCallbackController interactionBidDocumentResultCallbackController(InteractionBidDocumentResultReceiveService receiveService,
-                                                                                                  ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionBidDocumentResultCallbackController(receiveService, eventLoggerProvider.getIfAvailable());
-    }
-
-    @Bean
-    @ConditionalOnBean(InteractionBidDecryptResultReceiveService.class)
-    @ConditionalOnMissingBean
-    public InteractionBidDecryptResultCallbackController interactionBidDecryptResultCallbackController(InteractionBidDecryptResultReceiveService receiveService,
-                                                                                                        ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
-        return new InteractionBidDecryptResultCallbackController(receiveService, eventLoggerProvider.getIfAvailable());
+    public InteractionAiTaskResultCallbackController interactionAiTaskResultCallbackController(InteractionAiTaskResultReceiveService receiveService,
+                                                                                               ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
+        return new InteractionAiTaskResultCallbackController(receiveService, eventLoggerProvider.getIfAvailable());
     }
 }

@@ -10,7 +10,6 @@ import com.jy.eleaitender.common.interaction.util.InteractionResultExtractor;
 import com.jy.eleaitender.common.interaction.util.InteractionValidationUtils;
 import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.ContentDispositionUtil;
-import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
 import com.jy.eleaitender.interaction.core.support.InteractionTraceSupport;
 import com.jy.eleaitender.interaction.core.support.NamedByteArrayResource;
 import lombok.extern.slf4j.Slf4j;
@@ -30,26 +29,31 @@ import java.util.Collections;
 
 /**
  * 文件客户端 — 封装文件信息查询、下载和上传能力。
+ * <p>外部系统需先通过 {@link ExternalAuthClient#getExternalToken} 获取JWT令牌，
+ * 再将令牌传入本类各方法的 {@code authorization} 参数。</p>
  */
 @Slf4j
 public class FileClient {
 
     private final RestTemplate restTemplate;
     private final EleAiTenderInteractionProperties properties;
-    private final InteractionRequestSigner signer;
 
     public FileClient(RestTemplate restTemplate,
-                      EleAiTenderInteractionProperties properties,
-                      InteractionRequestSigner signer) {
+                      EleAiTenderInteractionProperties properties) {
         this.restTemplate = restTemplate;
         this.properties = properties;
-        this.signer = signer;
     }
 
-    public InteractionFileInfoResponse getFileInfo(Long fileId) {
+    /**
+     * 查询文件信息
+     *
+     * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
+     */
+    public InteractionFileInfoResponse getFileInfo(String authorization, Long fileId) {
         InteractionValidationUtils.validateFileId(fileId);
 
-        HttpHeaders headers = signer.sign(new HttpHeaders());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, authorization);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         ResponseEntity<InteractionResult<InteractionFileInfoResponse>> response = restTemplate.exchange(
@@ -68,10 +72,16 @@ public class FileClient {
         return data;
     }
 
-    public InteractionFileDownloadResponse downloadFile(Long fileId) {
+    /**
+     * 下载文件
+     *
+     * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
+     */
+    public InteractionFileDownloadResponse downloadFile(String authorization, Long fileId) {
         InteractionValidationUtils.validateFileId(fileId);
 
-        HttpHeaders headers = signer.sign(new HttpHeaders());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, authorization);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> response = restTemplate.exchange(
@@ -92,14 +102,16 @@ public class FileClient {
     /**
      * 通过 byte[] 上传文件。
      *
-     * @param content  文件内容
-     * @param fileName 文件名
-     * @param bizType  业务类型（由业务系统指定）
+     * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
+     * @param content        文件内容
+     * @param fileName       文件名
+     * @param bizType         业务类型（由业务系统指定）
      */
-    public InteractionFileUploadResponse uploadFile(byte[] content, String fileName, String bizType) {
+    public InteractionFileUploadResponse uploadFile(String authorization, byte[] content, String fileName, String bizType) {
         InteractionValidationUtils.validateFileUploadParams(content, fileName, bizType);
 
-        HttpHeaders headers = signer.sign(new HttpHeaders());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, authorization);
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -128,10 +140,11 @@ public class FileClient {
      * <p>注意：由于 interactionRestTemplate 配置了日志拦截器，
      * multipart body 仍会被完整序列化到内存，大文件上传需注意 JVM 堆配置。</p>
      *
-     * @param filePath 本地文件路径
-     * @param bizType  业务类型
+     * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
+     * @param filePath       本地文件路径
+     * @param bizType        业务类型
      */
-    public InteractionFileUploadResponse uploadFile(Path filePath, String bizType) {
+    public InteractionFileUploadResponse uploadFile(String authorization, Path filePath, String bizType) {
         if (filePath == null) {
             throw new InteractionException(InteractionResponseCode.PARAM_ERROR, "文件路径不能为空");
         }
@@ -142,7 +155,8 @@ public class FileClient {
             throw new InteractionException(InteractionResponseCode.PARAM_ERROR, "文件不存在或不可读: " + filePath);
         }
 
-        HttpHeaders headers = signer.sign(new HttpHeaders());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, authorization);
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -174,7 +188,7 @@ public class FileClient {
         InteractionFileDownloadResponse result = new InteractionFileDownloadResponse();
         result.setFileId(fileId);
         result.setContent(response.getBody());
-        result.setFileSize(Long.valueOf(response.getBody().length));
+        result.setFileSize((long) response.getBody().length);
         MediaType contentType = response.getHeaders().getContentType();
         if (contentType != null) {
             result.setContentType(contentType.toString());
