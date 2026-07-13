@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: 26ad022e-87aa-4d5c-ba0f-ae0ebfcec5ea/b043a6ed-8ed6-495c-809d-84ed05ea1514/6353eedb-b55d-42a5-94d6-61df67c4aead
+title: AI 招标文件编制前端应用
+scope:
+    - ele-ai-tender-frontend/
+source_files: []
+depends_on: []
+related_to: []

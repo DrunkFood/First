@@ -1,0 +1,19 @@
+schema_version: 1
+module_path: 26ad022e-87aa-4d5c-ba0f-ae0ebfcec5ea/b043a6ed-8ed6-495c-809d-84ed05ea1514
+title: 招标文件 AI 编制系统（根仓库）
+scope:
+    - CLAUDE.md
+    - .claudeignore
+    - .qoderignore
+    - .gitignore
+    - AGENTS.md
+    - Jenkinsfile-ai.groovy
+    - Jenkinsfile-core-web.groovy
+    - Jenkinsfile-core.groovy
+    - Jenkinsfile-file.groovy
+    - Jenkinsfile-support-web.groovy
+    - Jenkinsfile-support.groovy
+    - README.md
+source_files: []
+depends_on: []
+related_to: []
