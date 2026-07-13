@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
  * 默认交互事件日志实现。
  */
 @Slf4j
-public class DefaultInteractionEventLogger implements InteractionEventLogger {
+public class DefaultInteractionAiEventLogger implements InteractionEventLogger {
 
     /**
      * 记录电子标系统调业务系统的入站交互日志。

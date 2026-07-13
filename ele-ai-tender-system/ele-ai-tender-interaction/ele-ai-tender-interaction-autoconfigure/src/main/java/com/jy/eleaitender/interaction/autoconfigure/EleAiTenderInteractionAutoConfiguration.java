@@ -3,10 +3,10 @@ package com.jy.eleaitender.interaction.autoconfigure;
 import com.jy.eleaitender.common.interaction.spi.InteractionAiTaskResultReceiveService;
 import com.jy.eleaitender.common.interaction.spi.InteractionEventLogger;
 import com.jy.eleaitender.interaction.autoconfigure.controller.InteractionAiTaskResultCallbackController;
-import com.jy.eleaitender.interaction.autoconfigure.handler.InteractionGlobalExceptionHandler;
-import com.jy.eleaitender.interaction.autoconfigure.logging.DefaultInteractionEventLogger;
-import com.jy.eleaitender.interaction.autoconfigure.web.InteractionSignatureInterceptor;
-import com.jy.eleaitender.interaction.autoconfigure.web.InteractionWebMvcConfigurer;
+import com.jy.eleaitender.interaction.autoconfigure.handler.InteractionAiGlobalExceptionHandler;
+import com.jy.eleaitender.interaction.autoconfigure.logging.DefaultInteractionAiEventLogger;
+import com.jy.eleaitender.interaction.autoconfigure.web.InteractionAiSignatureInterceptor;
+import com.jy.eleaitender.interaction.autoconfigure.web.InteractionAiWebMvcConfigurer;
 import com.jy.eleaitender.interaction.core.client.AiTaskClient;
 import com.jy.eleaitender.interaction.core.client.ExternalAuthClient;
 import com.jy.eleaitender.interaction.core.client.ExternalUserInfoClient;
@@ -29,7 +29,7 @@ import org.springframework.web.client.RestTemplate;
  * 电子标交互自动配置
  */
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties({EleAiTenderInteractionProperties.class, InteractionControllerProperties.class})
+@EnableConfigurationProperties({EleAiTenderInteractionProperties.class, InteractionAiControllerProperties.class})
 @ConditionalOnProperty(prefix = "ele-ai-tender.interaction", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class EleAiTenderInteractionAutoConfiguration {
 
@@ -80,26 +80,26 @@ public class EleAiTenderInteractionAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public InteractionSignatureInterceptor interactionSignatureInterceptor(EleAiTenderInteractionProperties properties) {
-        return new InteractionSignatureInterceptor(properties);
+    public InteractionAiSignatureInterceptor interactionSignatureInterceptor(EleAiTenderInteractionProperties properties) {
+        return new InteractionAiSignatureInterceptor(properties);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public InteractionWebMvcConfigurer interactionWebMvcConfigurer(InteractionSignatureInterceptor signatureInterceptor) {
-        return new InteractionWebMvcConfigurer(signatureInterceptor);
+    public InteractionAiWebMvcConfigurer interactionWebMvcConfigurer(InteractionAiSignatureInterceptor signatureInterceptor) {
+        return new InteractionAiWebMvcConfigurer(signatureInterceptor);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public InteractionGlobalExceptionHandler interactionGlobalExceptionHandler() {
-        return new InteractionGlobalExceptionHandler();
+    public InteractionAiGlobalExceptionHandler interactionGlobalExceptionHandler() {
+        return new InteractionAiGlobalExceptionHandler();
     }
 
     @Bean
     @ConditionalOnMissingBean
     public InteractionEventLogger interactionEventLogger() {
-        return new DefaultInteractionEventLogger();
+        return new DefaultInteractionAiEventLogger();
     }
 
     @Bean

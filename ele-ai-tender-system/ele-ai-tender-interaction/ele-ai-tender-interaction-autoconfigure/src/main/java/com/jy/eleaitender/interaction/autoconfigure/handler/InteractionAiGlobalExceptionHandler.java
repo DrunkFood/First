@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice(basePackageClasses = {
         InteractionAiTaskResultCallbackController.class
 })
-public class InteractionGlobalExceptionHandler {
+public class InteractionAiGlobalExceptionHandler {
 
     @ExceptionHandler(InteractionException.class)
     @ResponseStatus(HttpStatus.OK)

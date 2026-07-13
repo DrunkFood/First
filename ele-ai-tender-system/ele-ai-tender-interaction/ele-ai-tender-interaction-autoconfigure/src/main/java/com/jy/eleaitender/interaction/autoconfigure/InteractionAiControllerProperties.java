@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Data
 @ConfigurationProperties(prefix = "ele-ai-tender.interaction.controller")
-public class InteractionControllerProperties {
+public class InteractionAiControllerProperties {
 
     private String basePath = InteractionApiPaths.BASE;
 }

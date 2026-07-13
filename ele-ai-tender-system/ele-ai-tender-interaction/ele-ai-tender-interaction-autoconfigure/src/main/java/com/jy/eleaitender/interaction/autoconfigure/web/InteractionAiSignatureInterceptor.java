@@ -12,11 +12,11 @@ import org.springframework.web.servlet.HandlerInterceptor;
 /**
  * 交互接口签名校验拦截器
  */
-public class InteractionSignatureInterceptor implements HandlerInterceptor {
+public class InteractionAiSignatureInterceptor implements HandlerInterceptor {
 
     private final EleAiTenderInteractionProperties properties;
 
-    public InteractionSignatureInterceptor(EleAiTenderInteractionProperties properties) {
+    public InteractionAiSignatureInterceptor(EleAiTenderInteractionProperties properties) {
         this.properties = properties;
     }
 

@@ -7,11 +7,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * 交互 MVC 配置
  */
-public class InteractionWebMvcConfigurer implements WebMvcConfigurer {
+public class InteractionAiWebMvcConfigurer implements WebMvcConfigurer {
 
-    private final InteractionSignatureInterceptor signatureInterceptor;
+    private final InteractionAiSignatureInterceptor signatureInterceptor;
 
-    public InteractionWebMvcConfigurer(InteractionSignatureInterceptor signatureInterceptor) {
+    public InteractionAiWebMvcConfigurer(InteractionAiSignatureInterceptor signatureInterceptor) {
         this.signatureInterceptor = signatureInterceptor;
     }
 
