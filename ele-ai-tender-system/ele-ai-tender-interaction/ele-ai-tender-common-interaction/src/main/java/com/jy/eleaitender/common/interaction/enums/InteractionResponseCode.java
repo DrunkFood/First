@@ -1,9 +1,12 @@
 package com.jy.eleaitender.common.interaction.enums;
 
+import lombok.Getter;
+
 /**
  * 交互层响应码。
  * <p>用于 {@code InteractionResult} 的统一响应状态。</p>
  */
+@Getter
 public enum InteractionResponseCode {
 
     /** 操作成功 */
@@ -24,13 +27,5 @@ public enum InteractionResponseCode {
     InteractionResponseCode(int code, String message) {
         this.code = code;
         this.message = message;
-    }
-
-    public int getCode() {
-        return code;
-    }
-
-    public String getMessage() {
-        return message;
     }
 }
