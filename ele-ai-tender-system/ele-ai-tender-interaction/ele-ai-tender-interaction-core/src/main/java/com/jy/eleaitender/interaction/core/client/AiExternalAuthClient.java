@@ -24,15 +24,15 @@ import java.util.Collections;
  * 外部认证客户端
  */
 @Slf4j
-public class ExternalAuthClient {
+public class AiExternalAuthClient {
 
     private final RestTemplate restTemplate;
     private final EleAiTenderInteractionProperties properties;
     private final InteractionRequestSigner signer;
 
-    public ExternalAuthClient(RestTemplate restTemplate,
-                              EleAiTenderInteractionProperties properties,
-                              InteractionRequestSigner signer) {
+    public AiExternalAuthClient(RestTemplate restTemplate,
+                                EleAiTenderInteractionProperties properties,
+                                InteractionRequestSigner signer) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.signer = signer;

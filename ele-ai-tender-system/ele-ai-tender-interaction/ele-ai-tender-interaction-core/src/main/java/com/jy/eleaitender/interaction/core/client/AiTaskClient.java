@@ -20,7 +20,7 @@ import java.util.Collections;
 
 /**
  * AI任务客户端 — 封装AI任务创建、查询和状态查询能力。
- * <p>外部系统需先通过 {@link ExternalAuthClient#getExternalToken} 获取JWT令牌，
+ * <p>外部系统需先通过 {@link AiExternalAuthClient#getExternalToken} 获取JWT令牌，
  * 再将令牌传入本类各方法的 {@code authorization} 参数。</p>
  */
 @Slf4j

@@ -29,17 +29,17 @@ import java.util.Collections;
 
 /**
  * 文件客户端 — 封装文件信息查询、下载和上传能力。
- * <p>外部系统需先通过 {@link ExternalAuthClient#getExternalToken} 获取JWT令牌，
+ * <p>外部系统需先通过 {@link AiExternalAuthClient#getExternalToken} 获取JWT令牌，
  * 再将令牌传入本类各方法的 {@code authorization} 参数。</p>
  */
 @Slf4j
-public class FileClient {
+public class AiFileClient {
 
     private final RestTemplate restTemplate;
     private final EleAiTenderInteractionProperties properties;
 
-    public FileClient(RestTemplate restTemplate,
-                      EleAiTenderInteractionProperties properties) {
+    public AiFileClient(RestTemplate restTemplate,
+                        EleAiTenderInteractionProperties properties) {
         this.restTemplate = restTemplate;
         this.properties = properties;
     }

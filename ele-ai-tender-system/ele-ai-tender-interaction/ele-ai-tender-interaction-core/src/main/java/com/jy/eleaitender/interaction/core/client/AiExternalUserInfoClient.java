@@ -22,15 +22,15 @@ import java.util.Collections;
  * 外部用户信息客户端
  */
 @Slf4j
-public class ExternalUserInfoClient {
+public class AiExternalUserInfoClient {
 
     private final RestTemplate restTemplate;
     private final EleAiTenderInteractionProperties properties;
     private final InteractionRequestSigner signer;
 
-    public ExternalUserInfoClient(RestTemplate restTemplate,
-                                  EleAiTenderInteractionProperties properties,
-                                  InteractionRequestSigner signer) {
+    public AiExternalUserInfoClient(RestTemplate restTemplate,
+                                    EleAiTenderInteractionProperties properties,
+                                    InteractionRequestSigner signer) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.signer = signer;

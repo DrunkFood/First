@@ -7,10 +7,10 @@ import com.jy.eleaitender.interaction.autoconfigure.handler.InteractionAiGlobalE
 import com.jy.eleaitender.interaction.autoconfigure.logging.DefaultInteractionAiEventLogger;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionAiSignatureInterceptor;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionAiWebMvcConfigurer;
+import com.jy.eleaitender.interaction.core.client.AiExternalAuthClient;
+import com.jy.eleaitender.interaction.core.client.AiExternalUserInfoClient;
+import com.jy.eleaitender.interaction.core.client.AiFileClient;
 import com.jy.eleaitender.interaction.core.client.AiTaskClient;
-import com.jy.eleaitender.interaction.core.client.ExternalAuthClient;
-import com.jy.eleaitender.interaction.core.client.ExternalUserInfoClient;
-import com.jy.eleaitender.interaction.core.client.FileClient;
 import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
 import com.jy.eleaitender.interaction.core.support.InteractionRestTemplateFactory;
@@ -55,25 +55,25 @@ public class EleAiTenderInteractionAutoConfiguration {
 
     @Bean(name = "aiExternalAuthClient")
     @ConditionalOnMissingBean
-    public ExternalAuthClient externalAuthClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
-                                                 @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
-                                                 EleAiTenderInteractionProperties properties) {
-        return new ExternalAuthClient(interactionRestTemplate, properties, interactionRequestSigner);
+    public AiExternalAuthClient aiExternalAuthClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
+                                                     @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
+                                                     EleAiTenderInteractionProperties properties) {
+        return new AiExternalAuthClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
 
     @Bean(name = "aiExternalUserInfoClient")
     @ConditionalOnMissingBean
-    public ExternalUserInfoClient externalUserInfoClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
-                                                         @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
-                                                         EleAiTenderInteractionProperties properties) {
-        return new ExternalUserInfoClient(interactionRestTemplate, properties, interactionRequestSigner);
+    public AiExternalUserInfoClient aiExternalUserInfoClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
+                                                             @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
+                                                             EleAiTenderInteractionProperties properties) {
+        return new AiExternalUserInfoClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
 
     @Bean(name = "aiFileClient")
     @ConditionalOnMissingBean
-    public FileClient fileClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
-                                 EleAiTenderInteractionProperties properties) {
-        return new FileClient(interactionRestTemplate, properties);
+    public AiFileClient aiFileClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
+                                     EleAiTenderInteractionProperties properties) {
+        return new AiFileClient(interactionRestTemplate, properties);
     }
 
     @Bean(name = "interactionAiSignatureInterceptor")
