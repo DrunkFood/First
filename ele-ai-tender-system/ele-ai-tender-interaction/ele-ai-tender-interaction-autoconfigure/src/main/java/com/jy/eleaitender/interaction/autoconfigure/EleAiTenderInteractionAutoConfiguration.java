@@ -33,80 +33,79 @@ import org.springframework.web.client.RestTemplate;
 @ConditionalOnProperty(prefix = "ele-ai-tender.interaction", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class EleAiTenderInteractionAutoConfiguration {
 
-    static final String INTERACTION_REST_TEMPLATE_BEAN_NAME = "interactionRestTemplate";
-
-    @Bean
+    @Bean(name = "interactionAiRequestSigner")
     @ConditionalOnMissingBean
-    public InteractionRequestSigner interactionRequestSigner(EleAiTenderInteractionProperties properties) {
+    public InteractionRequestSigner interactionAiRequestSigner(EleAiTenderInteractionProperties properties) {
         return new InteractionRequestSigner(properties);
     }
 
-    @Bean(INTERACTION_REST_TEMPLATE_BEAN_NAME)
-    @ConditionalOnMissingBean(name = INTERACTION_REST_TEMPLATE_BEAN_NAME)
+    @Bean(name = "interactionAiRestTemplate")
+    @ConditionalOnMissingBean
     public RestTemplate interactionRestTemplate(EleAiTenderInteractionProperties properties,
                                                 ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
         return InteractionRestTemplateFactory.create(properties, new OutboundLogInterceptor(eventLoggerProvider.getIfAvailable()));
     }
 
-    @Bean
+    @Bean(name = "aiTaskClient")
     @ConditionalOnMissingBean
-    public AiTaskClient aiTaskClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
+    public AiTaskClient aiTaskClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
                                      EleAiTenderInteractionProperties properties) {
         return new AiTaskClient(interactionRestTemplate, properties);
     }
 
-    @Bean
+    @Bean(name = "aiExternalAuthClient")
     @ConditionalOnMissingBean
-    public ExternalAuthClient externalAuthClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                                 EleAiTenderInteractionProperties properties,
-                                                 InteractionRequestSigner interactionRequestSigner) {
+    public ExternalAuthClient externalAuthClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
+                                                 @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
+                                                 EleAiTenderInteractionProperties properties) {
         return new ExternalAuthClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
 
-    @Bean
+    @Bean(name = "aiExternalUserInfoClient")
     @ConditionalOnMissingBean
-    public ExternalUserInfoClient externalUserInfoClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
-                                                         EleAiTenderInteractionProperties properties,
-                                                         InteractionRequestSigner interactionRequestSigner) {
+    public ExternalUserInfoClient externalUserInfoClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
+                                                         @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
+                                                         EleAiTenderInteractionProperties properties) {
         return new ExternalUserInfoClient(interactionRestTemplate, properties, interactionRequestSigner);
     }
 
-    @Bean
+    @Bean(name = "aiFileClient")
     @ConditionalOnMissingBean
-    public FileClient fileClient(@Qualifier(INTERACTION_REST_TEMPLATE_BEAN_NAME) RestTemplate interactionRestTemplate,
+    public FileClient fileClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
                                  EleAiTenderInteractionProperties properties) {
         return new FileClient(interactionRestTemplate, properties);
     }
 
-    @Bean
+    @Bean(name = "interactionAiSignatureInterceptor")
     @ConditionalOnMissingBean
-    public InteractionAiSignatureInterceptor interactionSignatureInterceptor(EleAiTenderInteractionProperties properties) {
+    public InteractionAiSignatureInterceptor interactionAiSignatureInterceptor(EleAiTenderInteractionProperties properties) {
         return new InteractionAiSignatureInterceptor(properties);
     }
 
-    @Bean
+    @Bean(name = "interactionAiWebMvcConfigurer")
     @ConditionalOnMissingBean
-    public InteractionAiWebMvcConfigurer interactionWebMvcConfigurer(InteractionAiSignatureInterceptor signatureInterceptor) {
+    public InteractionAiWebMvcConfigurer interactionAiWebMvcConfigurer(@Qualifier("interactionAiSignatureInterceptor") InteractionAiSignatureInterceptor signatureInterceptor) {
         return new InteractionAiWebMvcConfigurer(signatureInterceptor);
     }
 
-    @Bean
+    @Bean(name = "interactionAiGlobalExceptionHandler")
     @ConditionalOnMissingBean
-    public InteractionAiGlobalExceptionHandler interactionGlobalExceptionHandler() {
+    public InteractionAiGlobalExceptionHandler interactionAiGlobalExceptionHandler() {
         return new InteractionAiGlobalExceptionHandler();
     }
 
-    @Bean
+    @Bean(name = "interactionAiEventLogger")
     @ConditionalOnMissingBean
-    public InteractionEventLogger interactionEventLogger() {
+    public InteractionEventLogger interactionAiEventLogger() {
         return new DefaultInteractionAiEventLogger();
     }
 
-    @Bean
+    @Bean(name = "interactionAiTaskResultCallbackController")
     @ConditionalOnBean(InteractionAiTaskResultReceiveService.class)
     @ConditionalOnMissingBean
     public InteractionAiTaskResultCallbackController interactionAiTaskResultCallbackController(InteractionAiTaskResultReceiveService receiveService,
                                                                                                ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
         return new InteractionAiTaskResultCallbackController(receiveService, eventLoggerProvider.getIfAvailable());
     }
+
 }
