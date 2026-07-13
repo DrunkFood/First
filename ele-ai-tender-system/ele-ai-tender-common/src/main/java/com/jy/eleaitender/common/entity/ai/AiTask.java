@@ -28,7 +28,7 @@ public class AiTask extends BaseEntity {
     private Long projectId;
 
     @Schema(description = "关联业务ID")
-    private Long bizId;
+    private String bizId;
 
     @Schema(description = "业务类型: REQUIREMENT/PROJECT/DETECTION")
     private String bizType;

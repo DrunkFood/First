@@ -20,7 +20,7 @@ public class AiTaskCreateRequest implements Serializable {
     /**
      * 业务ID
      */
-    private Long bizId;
+    private String bizId;
 
     /**
      * 业务类型

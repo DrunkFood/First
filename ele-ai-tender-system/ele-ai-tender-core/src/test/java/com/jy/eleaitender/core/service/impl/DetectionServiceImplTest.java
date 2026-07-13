@@ -67,7 +67,7 @@ class DetectionServiceImplTest {
         when(reviewItemMapper.selectByProjectId(projectId)).thenReturn(List.of(reviewItem));
 
         AtomicLong taskId = new AtomicLong(1L);
-        when(aiTaskService.createTask(any(AiTaskType.class), anyLong(), any(), anyString(),
+        when(aiTaskService.createTask(any(AiTaskType.class), anyLong(), anyLong(), anyString(),
                 any(AiTaskParams.class), anyString())).thenAnswer(invocation -> {
             AiTask task = new AiTask();
             task.setId(taskId.getAndIncrement());
@@ -78,7 +78,7 @@ class DetectionServiceImplTest {
 
         ArgumentCaptor<AiTaskType> taskTypeCaptor = ArgumentCaptor.forClass(AiTaskType.class);
         ArgumentCaptor<AiTaskParams> paramsCaptor = ArgumentCaptor.forClass(AiTaskParams.class);
-        verify(aiTaskService, times(3)).createTask(taskTypeCaptor.capture(), anyLong(), any(), anyString(),
+        verify(aiTaskService, times(3)).createTask(taskTypeCaptor.capture(), anyLong(), anyLong(), anyString(),
                 paramsCaptor.capture(), anyString());
 
         assertThat(taskTypeCaptor.getAllValues())
@@ -108,7 +108,7 @@ class DetectionServiceImplTest {
         when(reviewItemMapper.selectByProjectId(projectId)).thenReturn(List.of());
 
         AtomicLong taskId = new AtomicLong(1L);
-        when(aiTaskService.createTask(any(AiTaskType.class), anyLong(), any(), anyString(),
+        when(aiTaskService.createTask(any(AiTaskType.class), anyLong(), anyLong(), anyString(),
                 any(AiTaskParams.class), anyString())).thenAnswer(invocation -> {
             AiTask task = new AiTask();
             task.setId(taskId.getAndIncrement());
@@ -122,7 +122,7 @@ class DetectionServiceImplTest {
 
         ArgumentCaptor<AiTaskType> taskTypeCaptor = ArgumentCaptor.forClass(AiTaskType.class);
         ArgumentCaptor<String> fileIdsCaptor = ArgumentCaptor.forClass(String.class);
-        verify(aiTaskService, times(4)).createTask(taskTypeCaptor.capture(), anyLong(), any(), anyString(),
+        verify(aiTaskService, times(4)).createTask(taskTypeCaptor.capture(), anyLong(), anyLong(), anyString(),
                 any(AiTaskParams.class), fileIdsCaptor.capture());
 
         assertThat(taskTypeCaptor.getAllValues()).contains(AiTaskType.DETECTION_POLICY_REVIEW);

@@ -17,6 +17,12 @@ public interface IAiTaskService {
                       AiTaskParams requestParams, String fileIds);
 
     /**
+     * 创建AI任务
+     */
+    AiTask createTask(AiTaskType type, Long projectId, String bizId, String bizType,
+                      AiTaskParams requestParams, String fileIds);
+
+    /**
      * 查询任务状态
      */
     AiTaskVO getTaskStatus(Long taskId);

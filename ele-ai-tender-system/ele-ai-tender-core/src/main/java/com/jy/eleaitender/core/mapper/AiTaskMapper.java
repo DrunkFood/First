@@ -54,7 +54,7 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
             "AND biz_type = #{bizType} AND status IN ('PENDING','PROCESSING') AND is_delete = 0 " +
             "LIMIT 1")
     AiTask selectActiveTask(@Param("taskType") String taskType,
-                            @Param("bizId") Long bizId,
+                            @Param("bizId") String bizId,
                             @Param("bizType") String bizType);
 
     /**
@@ -65,7 +65,7 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
             "AND biz_type = #{bizType} AND is_delete = 0 " +
             "ORDER BY create_time DESC LIMIT 1")
     AiTask selectLatestTask(@Param("taskType") String taskType,
-                            @Param("bizId") Long bizId,
+                            @Param("bizId") String bizId,
                             @Param("bizType") String bizType);
 
     /**

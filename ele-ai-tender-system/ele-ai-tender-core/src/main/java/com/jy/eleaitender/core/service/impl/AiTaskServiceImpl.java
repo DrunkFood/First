@@ -32,6 +32,13 @@ public class AiTaskServiceImpl implements IAiTaskService {
     @Transactional(rollbackFor = Exception.class)
     public AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
                              AiTaskParams requestParams, String fileIds) {
+        return createTask(type, projectId, String.valueOf(bizId), bizType, requestParams, fileIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AiTask createTask(AiTaskType type, Long projectId, String bizId, String bizType,
+                             AiTaskParams requestParams, String fileIds) {
         // 防重复提交：同一业务同一类型不能有活跃任务
         AiTask activeTask = aiTaskMapper.selectActiveTask(type.getCode(), bizId, bizType);
         if (activeTask != null) {
@@ -100,7 +107,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
 
     @Override
     public AiTaskVO getLatestTask(String taskType, Long bizId, String bizType) {
-        AiTask task = aiTaskMapper.selectLatestTask(taskType, bizId, bizType);
+        AiTask task = aiTaskMapper.selectLatestTask(taskType, String.valueOf(bizId), bizType);
         return task != null ? toVO(task) : null;
     }
 
@@ -114,7 +121,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
         vo.setId(task.getId());
         vo.setTaskType(task.getTaskType());
         vo.setProjectId(task.getProjectId());
-        vo.setBizId(task.getBizId());
+        vo.setBizId(Long.valueOf(task.getBizId()));
         vo.setBizType(task.getBizType());
         vo.setStatus(task.getStatus());
         vo.setResult(task.getResult());

@@ -109,6 +109,8 @@ public class AiTaskCallbackService {
         AiTaskResultCallbackRequest request = new AiTaskResultCallbackRequest();
         request.setTaskId(task.getId());
         request.setTaskType(task.getTaskType());
+        request.setBizId(task.getBizId());
+        request.setBizType(task.getBizType());
         request.setStatus(task.getStatus());
         request.setResult(task.getResult());
         request.setErrorMsg(task.getErrorMsg());

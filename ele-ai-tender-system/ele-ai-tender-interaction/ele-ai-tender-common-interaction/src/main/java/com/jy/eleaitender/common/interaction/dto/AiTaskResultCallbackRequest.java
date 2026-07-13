@@ -23,6 +23,16 @@ public class AiTaskResultCallbackRequest implements Serializable {
     private String taskType;
 
     /**
+     * 业务ID
+     */
+    private String bizId;
+
+    /**
+     * 业务类型
+     */
+    private String bizType;
+
+    /**
      * 任务状态(COMPLETED/FAILED/AI_UNAVAILABLE/SKIPPED)
      */
     private String status;
