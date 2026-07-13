@@ -264,8 +264,8 @@ public class ProjectServiceImpl implements IProjectService {
                 }
                 break;
         }
-        return aiTaskService.createTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
-                project.getId(), project.getId(), "REQUIREMENT", params, paramJoiner.toString());
+        return aiTaskService.createInternalTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
+                project.getId(), project.getId(), BizType.PROJECT.getCode(), params, paramJoiner.toString());
     }
 
     @Override

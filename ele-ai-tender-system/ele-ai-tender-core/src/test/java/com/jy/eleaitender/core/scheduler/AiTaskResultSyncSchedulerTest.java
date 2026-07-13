@@ -11,9 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AiTaskResultSyncSchedulerTest {
@@ -38,8 +37,8 @@ class AiTaskResultSyncSchedulerTest {
         scheduler.syncCompletedTasks();
 
         verify(syncHandler, never()).sync(any(AiTask.class));
-        verify(aiTaskMapper, never()).markSynced(100L, 1);
-        verify(aiTaskMapper, never()).markSynced(100L, 2);
+        verify(aiTaskMapper, never()).markSuccessSynced(100L);
+        verify(aiTaskMapper, never()).markFailedSynced(100L, anyString());
     }
 
     @Test
@@ -53,6 +52,6 @@ class AiTaskResultSyncSchedulerTest {
         scheduler.syncCompletedTasks();
 
         verify(syncHandler).sync(task);
-        verify(aiTaskMapper).markSynced(100L, 1);
+        verify(aiTaskMapper).markSuccessSynced(100L);
     }
 }

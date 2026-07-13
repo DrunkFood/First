@@ -4,6 +4,7 @@ import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * AI任务服务接口
@@ -13,14 +14,14 @@ public interface IAiTaskService {
     /**
      * 创建AI任务
      */
-    AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
-                      AiTaskParams requestParams, String fileIds);
+    AiTask createInternalTask(AiTaskType type, Long projectId, Long bizId, String bizType,
+                              AiTaskParams requestParams, String fileIds);
 
     /**
      * 创建AI任务
      */
-    AiTask createTask(AiTaskType type, Long projectId, String bizId, String bizType,
-                      AiTaskParams requestParams, String fileIds);
+    AiTask createExternalTask(AiTaskType type, Long systemId, Long projectId, String bizId, String bizType,
+                              AiTaskParams requestParams, String fileIds);
 
     /**
      * 查询任务状态

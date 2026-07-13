@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * 检测记录实体（Core模块视图）
@@ -46,8 +46,8 @@ public class TbDetectionRecord extends BaseEntity {
     private String policyFileIds;
 
     @Schema(description = "开始时间")
-    private LocalDateTime startedAt;
+    private Date startedAt;
 
     @Schema(description = "完成时间")
-    private LocalDateTime completedAt;
+    private Date completedAt;
 }

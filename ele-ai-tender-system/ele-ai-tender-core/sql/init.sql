@@ -243,29 +243,3 @@ CREATE TABLE IF NOT EXISTS `tb_detection_record` (
     INDEX `idx_detection_type` (`detection_type`),
     INDEX `idx_task_id` (`task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='检测记录表';
-
--- =============================================
--- 8. AI任务外部回调记录表
--- 实体: com.jy.eleaitender.core.entity.AiTaskExternalCallback
--- 说明: 外部系统创建AI任务时记录回调信息，任务终态时推送结果
--- =============================================
-CREATE TABLE IF NOT EXISTS `ai_task_external_callback` (
-    `id`                 BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    `task_id`            BIGINT       NOT NULL COMMENT 'AI任务ID',
-    `app_key`            VARCHAR(64)  NOT NULL COMMENT '外部系统appKey',
-    `callback_status`    VARCHAR(20)  DEFAULT 'PENDING' COMMENT '回调状态: PENDING/SUCCESS/FAILED',
-    `retry_count`        INT          DEFAULT 0 COMMENT '已重试次数',
-    `last_callback_time` DATETIME     DEFAULT NULL COMMENT '最后回调时间',
-    `error_msg`          VARCHAR(1000) DEFAULT NULL COMMENT '错误信息',
-    `create_time`        DATETIME     NOT NULL COMMENT '创建时间',
-    `create_id`          BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人ID',
-    `create_name`        VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '创建人名称',
-    `modify_time`        DATETIME     NOT NULL COMMENT '修改时间',
-    `modify_id`          BIGINT       NOT NULL DEFAULT 0 COMMENT '修改人ID',
-    `modify_name`        VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '修改人名称',
-    `ver`                INT          NOT NULL DEFAULT 1 COMMENT '乐观锁版本号',
-    `is_delete`          TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除',
-    PRIMARY KEY (`id`),
-    INDEX `idx_callback_status` (`callback_status`),
-    INDEX `idx_task_id` (`task_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI任务外部回调记录表';

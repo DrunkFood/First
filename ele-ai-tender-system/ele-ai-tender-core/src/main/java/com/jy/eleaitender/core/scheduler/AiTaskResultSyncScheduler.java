@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.scheduler;
 
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.enums.AiTaskSource;
 import com.jy.eleaitender.core.mapper.AiTaskMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class AiTaskResultSyncScheduler {
 
     @Autowired
     private AiTaskResultSyncHandler syncHandler;
+
+    @Autowired
+    private AiTaskResultCallbackHandler callbackService;
 
     /**
      * 每10秒扫描未同步的终态AI任务
@@ -48,12 +52,16 @@ public class AiTaskResultSyncScheduler {
                     log.debug("AI任务结果已被其他实例抢占，跳过同步: id={}, type={}", task.getId(), task.getTaskType());
                     continue;
                 }
-                syncHandler.sync(task);
-                aiTaskMapper.markSynced(task.getId(), 1);
+                if (task.getSystemId() == 0L) {
+                    syncHandler.sync(task);
+                } else {
+                    callbackService.callback(task);
+                }
+                aiTaskMapper.markSuccessSynced(task.getId());
             } catch (Exception e) {
                 log.error("同步AI任务结果失败: id={}, type={}", task.getId(), task.getTaskType(), e);
                 try {
-                    aiTaskMapper.markSynced(task.getId(), 2);
+                    aiTaskMapper.markFailedSynced(task.getId(), e.getMessage());
                 } catch (Exception ex) {
                     log.error("标记同步失败状态异常: id={}", task.getId(), ex);
                 }

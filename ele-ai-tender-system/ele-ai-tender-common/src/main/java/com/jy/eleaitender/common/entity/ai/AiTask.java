@@ -7,8 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,6 +23,9 @@ public class AiTask extends BaseEntity {
 
     @Schema(description = "任务类型")
     private String taskType;
+
+    @Schema(description = "任务来源")
+    private Long systemId;
 
     @Schema(description = "关联项目ID")
     private Long projectId;
@@ -55,16 +58,19 @@ public class AiTask extends BaseEntity {
     private Integer maxRetry;
 
     @Schema(description = "AI开始处理时间")
-    private LocalDateTime startedAt;
+    private Date startedAt;
 
     @Schema(description = "完成时间")
-    private LocalDateTime completedAt;
+    private Date completedAt;
 
     @Schema(description = "超时时间(分钟)")
     private Integer timeoutMinutes;
 
     @Schema(description = "结果是否已同步到业务表: 0-未同步 1-已同步 2-同步失败 3-同步中")
     private Integer resultSynced;
+
+    @Schema(description = "同步时间")
+    private Date syncedAt;
 
     public List<String> getFileIdList() {
         if (fileIds == null) {

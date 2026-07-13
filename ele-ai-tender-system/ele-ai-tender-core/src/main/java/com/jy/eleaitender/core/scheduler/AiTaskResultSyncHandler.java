@@ -25,11 +25,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jy.eleaitender.common.util.JsonUtil.*;
 
@@ -625,11 +621,11 @@ public class AiTaskResultSyncHandler {
             }
 
             record.setResult(enrichedResult);
-            record.setCompletedAt(LocalDateTime.now());
+            record.setCompletedAt(new Date());
         } else if (AiTaskStatus.FAILED.getCode().equals(task.getStatus())
                 || AiTaskStatus.AI_UNAVAILABLE.getCode().equals(task.getStatus())
                 || AiTaskStatus.SKIPPED.getCode().equals(task.getStatus())) {
-            record.setCompletedAt(LocalDateTime.now());
+            record.setCompletedAt(new Date());
         }
 
         detectionRecordMapper.updateById(record);

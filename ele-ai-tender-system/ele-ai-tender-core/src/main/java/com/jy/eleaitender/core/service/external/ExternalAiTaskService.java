@@ -5,14 +5,13 @@ import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
 import com.jy.eleaitender.common.enums.AiTaskType;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.enums.ResponseCode;
+import com.jy.eleaitender.common.exception.AiSyncedException;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.interaction.dto.AiTaskCreateRequest;
 import com.jy.eleaitender.common.interaction.dto.AiTaskCreateResponse;
 import com.jy.eleaitender.common.interaction.dto.AiTaskQueryResponse;
-import com.jy.eleaitender.common.entity.ai.AiTaskExternalCallback;
-import com.jy.eleaitender.core.mapper.AiTaskExternalCallbackMapper;
+import com.jy.eleaitender.core.dto.response.AiTaskVO;
 import com.jy.eleaitender.core.mapper.SysAccessSystemQueryMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -32,13 +30,8 @@ import java.util.Date;
 @Service
 public class ExternalAiTaskService {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     @Autowired
     private IAiTaskService aiTaskService;
-
-    @Autowired
-    private AiTaskExternalCallbackMapper callbackMapper;
 
     @Autowired
     private SysAccessSystemQueryMapper accessSystemQueryMapper;
@@ -76,26 +69,17 @@ public class ExternalAiTaskService {
             }
         }
 
-        // 3. 创建任务（外部任务无项目上下文，projectId传null）
-        AiTask task = aiTaskService.createTask(taskType, null, request.getBizId(), request.getBizType(),
+        // 4. 查询外部系统信息
+        SysAccessSystem system = accessSystemQueryMapper.selectByAppKey(appKey);
+        if (system == null || !StringUtils.hasText(system.getSystemUrl())) {
+            throw new AiSyncedException("外部系统不存在或未配置system_url");
+        }
+
+        // 5. 创建任务（外部任务无项目上下文，projectId传null）
+        AiTask task = aiTaskService.createExternalTask(taskType, system.getId(), null, request.getBizId(), request.getBizType(),
                 params, request.getFileIds());
 
-        // 4. 始终创建回调记录（用于数据隔离和回调追踪）
-        SysAccessSystem system = accessSystemQueryMapper.selectByAppKey(appKey);
-        AiTaskExternalCallback callback = new AiTaskExternalCallback();
-        callback.setTaskId(task.getId());
-        callback.setAppKey(appKey);
-        if (system != null && StringUtils.hasText(system.getSystemUrl())) {
-            callback.setCallbackStatus("PENDING");
-        } else {
-            callback.setCallbackStatus("SUCCESS"); // 无回调URL，标记已完成，仅用于数据隔离
-        }
-        callback.setRetryCount(0);
-        callbackMapper.insert(callback);
-        log.info("创建外部回调记录: taskId={}, appKey={}, callbackStatus={}",
-                task.getId(), appKey, callback.getCallbackStatus());
-
-        // 5. 构建响应
+        // 6. 构建响应
         AiTaskCreateResponse response = new AiTaskCreateResponse();
         response.setTaskId(task.getId());
         response.setTaskType(task.getTaskType());
@@ -108,8 +92,7 @@ public class ExternalAiTaskService {
      * 查询任务详情
      */
     public AiTaskQueryResponse getTask(String appKey, Long taskId) {
-        verifyOwnership(appKey, taskId);
-        com.jy.eleaitender.core.dto.response.AiTaskVO vo = aiTaskService.getTaskStatus(taskId);
+        AiTaskVO vo = aiTaskService.getTaskStatus(taskId);
         return toQueryResponse(vo);
     }
 
@@ -118,20 +101,6 @@ public class ExternalAiTaskService {
      */
     public AiTaskQueryResponse getTaskStatus(String appKey, Long taskId) {
         return getTask(appKey, taskId);
-    }
-
-    /**
-     * 校验数据隔离：确认任务属于指定外部系统
-     */
-    private void verifyOwnership(String appKey, Long taskId) {
-        long count = callbackMapper.selectCount(
-                new LambdaQueryWrapper<AiTaskExternalCallback>()
-                        .eq(AiTaskExternalCallback::getTaskId, taskId)
-                        .eq(AiTaskExternalCallback::getAppKey, appKey)
-        );
-        if (count == 0) {
-            throw new BusinessException(ResponseCode.FORBIDDEN, "无权查询此任务");
-        }
     }
 
     private AiTaskQueryResponse toQueryResponse(com.jy.eleaitender.core.dto.response.AiTaskVO vo) {
@@ -146,20 +115,16 @@ public class ExternalAiTaskService {
         response.setErrorMsg(vo.getErrorMsg());
         response.setRetryCount(vo.getRetryCount());
         response.setMaxRetry(vo.getMaxRetry());
-        response.setStartedAt(formatLocalDateTime(vo.getStartedAt()));
-        response.setCompletedAt(formatLocalDateTime(vo.getCompletedAt()));
+        response.setStartedAt(formatDate(vo.getStartedAt()));
+        response.setCompletedAt(formatDate(vo.getCompletedAt()));
         response.setCreateTime(formatDate(vo.getCreateTime()));
         return response;
-    }
-
-    private String formatLocalDateTime(LocalDateTime dateTime) {
-        return dateTime != null ? dateTime.format(DATE_FORMATTER) : null;
     }
 
     private String formatDate(Date date) {
         if (date == null) {
             return null;
         }
-        return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
     }
 }

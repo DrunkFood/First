@@ -3,6 +3,7 @@ package com.jy.eleaitender.core.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.enums.AiTaskSource;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -28,17 +29,22 @@ public class AiTaskServiceImpl implements IAiTaskService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
-    public AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
-                             AiTaskParams requestParams, String fileIds) {
-        return createTask(type, projectId, String.valueOf(bizId), bizType, requestParams, fileIds);
+    @Override
+    public AiTask createInternalTask(AiTaskType type, Long projectId, Long bizId, String bizType,
+                                     AiTaskParams requestParams, String fileIds) {
+        return createTask(type, 0L, projectId, String.valueOf(bizId), bizType, requestParams, fileIds);
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
-    public AiTask createTask(AiTaskType type, Long projectId, String bizId, String bizType,
-                             AiTaskParams requestParams, String fileIds) {
+    @Override
+    public AiTask createExternalTask(AiTaskType type, Long systemId, Long projectId, String bizId, String bizType,
+                                     AiTaskParams requestParams, String fileIds) {
+        return createTask(type, systemId, projectId, bizId, bizType, requestParams, fileIds);
+    }
+
+    private AiTask createTask(AiTaskType type, Long systemId, Long projectId, String bizId, String bizType,
+                              AiTaskParams requestParams, String fileIds) {
         // 防重复提交：同一业务同一类型不能有活跃任务
         AiTask activeTask = aiTaskMapper.selectActiveTask(type.getCode(), bizId, bizType);
         if (activeTask != null) {
@@ -47,6 +53,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
 
         AiTask task = new AiTask();
         task.setTaskType(type.getCode());
+        task.setSystemId(systemId);
         task.setProjectId(projectId);
         task.setBizId(bizId);
         task.setBizType(bizType);

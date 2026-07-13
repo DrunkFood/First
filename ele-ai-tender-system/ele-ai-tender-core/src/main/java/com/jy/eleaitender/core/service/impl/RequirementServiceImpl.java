@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -176,8 +175,8 @@ public class RequirementServiceImpl implements IRequirementService {
                 }
                 break;
         }
-        return aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE, null,
-                requirementId, "REQUIREMENT", taskParams, paramJoiner.toString());
+        return aiTaskService.createInternalTask(AiTaskType.REQUIREMENT_GENERATE, null,
+                requirementId, BizType.REQUIREMENT.getCode(), taskParams, paramJoiner.toString());
     }
 
     @Override
@@ -228,7 +227,7 @@ public class RequirementServiceImpl implements IRequirementService {
             record.setDetectionType(type.getCode());
             record.setContentSnapshot(contentSnapshot);
             record.setStatus(AiTaskStatus.PENDING.getCode());
-            record.setStartedAt(LocalDateTime.now());
+            record.setStartedAt(new Date());
             detectionRecordMapper.insert(record);
 
             // 构建AI任务参数
@@ -238,8 +237,8 @@ public class RequirementServiceImpl implements IRequirementService {
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
 
             // bizId=recordId, bizType=DETECTION，使syncDetection能找到record
-            AiTask task = aiTaskService.createTask(taskType, null,
-                    record.getId(), "DETECTION", taskParams, null);
+            AiTask task = aiTaskService.createInternalTask(taskType, null,
+                    record.getId(), BizType.DETECTION.getCode(), taskParams, null);
 
             record.setTaskId(task.getId());
             detectionRecordMapper.updateById(record);

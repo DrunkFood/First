@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -117,7 +116,7 @@ public class DetectionServiceImpl implements IDetectionService {
             record.setContentSnapshot(detectionContent);
             record.setStatus(AiTaskStatus.PENDING.getCode());
             record.setPolicyFileIds(policyFileIdStr);
-            record.setStartedAt(LocalDateTime.now());
+            record.setStartedAt(new Date());
             detectionRecordMapper.insert(record);
 
             // 构建AI任务参数
@@ -125,8 +124,8 @@ public class DetectionServiceImpl implements IDetectionService {
             params.setContent(detectionContent);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
-            AiTask task = aiTaskService.createTask(taskType, projectId,
-                    record.getId(), "DETECTION", params, policyFileIdStr);
+            AiTask task = aiTaskService.createInternalTask(taskType, projectId,
+                    record.getId(), BizType.DETECTION.getCode(), params, policyFileIdStr);
 
             record.setTaskId(task.getId());
             detectionRecordMapper.updateById(record);
@@ -442,7 +441,7 @@ public class DetectionServiceImpl implements IDetectionService {
             record.setResult(null);
             record.setContentFileId(null);
             record.setContentSnapshot(detectionContent);
-            record.setStartedAt(LocalDateTime.now());
+            record.setStartedAt(new Date());
             record.setCompletedAt(null);
             detectionRecordMapper.updateById(record);
 
@@ -450,8 +449,8 @@ public class DetectionServiceImpl implements IDetectionService {
             params.setContent(detectionContent);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
-            AiTask task = aiTaskService.createTask(taskType, projectId,
-                    record.getId(), "DETECTION", params, record.getPolicyFileIds());
+            AiTask task = aiTaskService.createInternalTask(taskType, projectId,
+                    record.getId(), BizType.DETECTION.getCode(), params, record.getPolicyFileIds());
             record.setTaskId(task.getId());
             detectionRecordMapper.updateById(record);
 
@@ -481,8 +480,8 @@ public class DetectionServiceImpl implements IDetectionService {
         record.setResult(EMPTY_PASS_RESULT);
         record.setContentFileId(null);
         record.setContentSnapshot(detectionContent);
-        record.setStartedAt(LocalDateTime.now());
-        record.setCompletedAt(LocalDateTime.now());
+        record.setStartedAt(new Date());
+        record.setCompletedAt(new Date());
         detectionRecordMapper.updateById(record);
     }
 
