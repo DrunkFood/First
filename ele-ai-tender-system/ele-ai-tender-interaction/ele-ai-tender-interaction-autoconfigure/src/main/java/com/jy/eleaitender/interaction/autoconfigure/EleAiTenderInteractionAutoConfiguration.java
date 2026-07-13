@@ -34,27 +34,27 @@ import org.springframework.web.client.RestTemplate;
 public class EleAiTenderInteractionAutoConfiguration {
 
     @Bean(name = "interactionAiRequestSigner")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "interactionAiRequestSigner")
     public InteractionRequestSigner interactionAiRequestSigner(EleAiTenderInteractionProperties properties) {
         return new InteractionRequestSigner(properties);
     }
 
     @Bean(name = "interactionAiRestTemplate")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "interactionAiRestTemplate")
     public RestTemplate interactionRestTemplate(EleAiTenderInteractionProperties properties,
                                                 ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
         return InteractionRestTemplateFactory.create(properties, new OutboundLogInterceptor(eventLoggerProvider.getIfAvailable()));
     }
 
     @Bean(name = "aiTaskClient")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "aiTaskClient")
     public AiTaskClient aiTaskClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
                                      EleAiTenderInteractionProperties properties) {
         return new AiTaskClient(interactionRestTemplate, properties);
     }
 
     @Bean(name = "aiExternalAuthClient")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "aiExternalAuthClient")
     public AiExternalAuthClient aiExternalAuthClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
                                                      @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
                                                      EleAiTenderInteractionProperties properties) {
@@ -62,7 +62,7 @@ public class EleAiTenderInteractionAutoConfiguration {
     }
 
     @Bean(name = "aiExternalUserInfoClient")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "aiExternalUserInfoClient")
     public AiExternalUserInfoClient aiExternalUserInfoClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
                                                              @Qualifier("interactionAiRequestSigner") InteractionRequestSigner interactionRequestSigner,
                                                              EleAiTenderInteractionProperties properties) {
@@ -70,39 +70,39 @@ public class EleAiTenderInteractionAutoConfiguration {
     }
 
     @Bean(name = "aiFileClient")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "aiFileClient")
     public AiFileClient aiFileClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
                                      EleAiTenderInteractionProperties properties) {
         return new AiFileClient(interactionRestTemplate, properties);
     }
 
     @Bean(name = "interactionAiSignatureInterceptor")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "interactionAiSignatureInterceptor")
     public InteractionAiSignatureInterceptor interactionAiSignatureInterceptor(EleAiTenderInteractionProperties properties) {
         return new InteractionAiSignatureInterceptor(properties);
     }
 
     @Bean(name = "interactionAiWebMvcConfigurer")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "interactionAiWebMvcConfigurer")
     public InteractionAiWebMvcConfigurer interactionAiWebMvcConfigurer(@Qualifier("interactionAiSignatureInterceptor") InteractionAiSignatureInterceptor signatureInterceptor) {
         return new InteractionAiWebMvcConfigurer(signatureInterceptor);
     }
 
     @Bean(name = "interactionAiGlobalExceptionHandler")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "interactionAiGlobalExceptionHandler")
     public InteractionAiGlobalExceptionHandler interactionAiGlobalExceptionHandler() {
         return new InteractionAiGlobalExceptionHandler();
     }
 
     @Bean(name = "interactionAiEventLogger")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "interactionAiEventLogger")
     public InteractionEventLogger interactionAiEventLogger() {
         return new DefaultInteractionAiEventLogger();
     }
 
     @Bean(name = "interactionAiTaskResultCallbackController")
     @ConditionalOnBean(InteractionAiTaskResultReceiveService.class)
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "interactionAiTaskResultCallbackController")
     public InteractionAiTaskResultCallbackController interactionAiTaskResultCallbackController(InteractionAiTaskResultReceiveService receiveService,
                                                                                                ObjectProvider<InteractionEventLogger> eventLoggerProvider) {
         return new InteractionAiTaskResultCallbackController(receiveService, eventLoggerProvider.getIfAvailable());
