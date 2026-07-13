@@ -9,14 +9,11 @@ import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProp
 import com.jy.eleaitender.interaction.core.support.InteractionTraceSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * AI任务客户端 — 封装AI任务创建、查询和状态查询能力。
@@ -39,6 +36,21 @@ public class AiTaskClient {
      * 创建AI任务
      *
      * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
+     * @param request       AI任务创建请求
+     * @param fileIds       文件ID列表
+     */
+    public AiTaskCreateResponse createTask(String authorization, AiTaskCreateRequest request, List<String> fileIds) {
+        if (fileIds != null && !fileIds.isEmpty()) {
+            request.setFileIds(String.join(",", fileIds));
+        }
+        return createTask(authorization, request);
+    }
+
+    /**
+     * 创建AI任务
+     *
+     * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
+     * @param request       AI任务创建请求
      */
     public AiTaskCreateResponse createTask(String authorization, AiTaskCreateRequest request) {
         HttpHeaders headers = new HttpHeaders();
