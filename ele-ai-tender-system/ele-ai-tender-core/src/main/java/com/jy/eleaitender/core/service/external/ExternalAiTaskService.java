@@ -93,15 +93,8 @@ public class ExternalAiTaskService {
      * 查询任务详情
      */
     public AiTaskQueryResponse getTask(Long taskId) {
-        AiTaskVO vo = aiTaskService.getTaskStatus(taskId);
+        AiTaskVO vo = aiTaskService.getTask(taskId);
         return toQueryResponse(vo);
-    }
-
-    /**
-     * 查询任务状态
-     */
-    public AiTaskQueryResponse getTaskStatus(Long taskId) {
-        return getTask(taskId);
     }
 
     private AiTaskQueryResponse toQueryResponse(com.jy.eleaitender.core.dto.response.AiTaskVO vo) {

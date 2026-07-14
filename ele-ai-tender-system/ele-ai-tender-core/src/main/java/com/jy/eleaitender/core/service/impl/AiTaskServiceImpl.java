@@ -76,7 +76,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
     }
 
     @Override
-    public AiTaskVO getTaskStatus(Long taskId) {
+    public AiTaskVO getTask(Long taskId) {
         AiTask task = aiTaskMapper.selectById(taskId);
         if (task == null) {
             throw new BusinessException(ResponseCode.TASK_NOT_FOUND);

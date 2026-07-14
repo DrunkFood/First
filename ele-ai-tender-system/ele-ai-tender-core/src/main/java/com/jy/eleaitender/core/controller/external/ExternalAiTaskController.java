@@ -41,14 +41,6 @@ public class ExternalAiTaskController {
         return Result.success(externalAiTaskService.getTask(taskId));
     }
 
-    @GetMapping("/{taskId}/status")
-    @RequireLogin
-    @Operation(summary = "查询AI任务状态")
-    public Result<AiTaskQueryResponse> getTaskStatus(@PathVariable Long taskId) {
-        validateTaskId(taskId);
-        return Result.success(externalAiTaskService.getTaskStatus(taskId));
-    }
-
     private void validateTaskId(Long taskId) {
         if (taskId == null || taskId <= 0) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "任务ID必须大于0");

@@ -567,7 +567,7 @@ public class DetectionServiceImpl implements IDetectionService {
         List<TbDetectionRecord> records = detectionRecordMapper.selectList(new QueryWrapper<TbDetectionRecord>().lambda()
                 .eq(TbDetectionRecord::getStatus, AiTaskStatus.PENDING.getCode()));
         for (TbDetectionRecord record : records) {
-            AiTaskVO task = aiTaskService.getTaskStatus(record.getTaskId());
+            AiTaskVO task = aiTaskService.getTask(record.getTaskId());
             record.setStatus(task.getStatus());
             detectionRecordMapper.updateById(record);
         }

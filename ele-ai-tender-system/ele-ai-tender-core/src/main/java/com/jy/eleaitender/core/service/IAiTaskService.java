@@ -4,7 +4,6 @@ import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * AI任务服务接口
@@ -26,7 +25,7 @@ public interface IAiTaskService {
     /**
      * 查询任务状态
      */
-    AiTaskVO getTaskStatus(Long taskId);
+    AiTaskVO getTask(Long taskId);
 
     /**
      * 用户跳过任务（降级为手动模式）
