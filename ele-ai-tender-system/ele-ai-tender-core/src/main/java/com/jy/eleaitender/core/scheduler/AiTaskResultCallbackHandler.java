@@ -79,6 +79,7 @@ public class AiTaskResultCallbackHandler {
             // 推送成功
             log.info("回调推送成功: taskId={}, url={}", task.getId(), callbackUrl);
         } catch (Exception e) {
+            log.error("回调推送失败: taskId={}, url={}, error={}", task.getId(), callbackUrl, e.getMessage(), e);
             throw new AiSyncedException("回调推送失败");
         }
     }
