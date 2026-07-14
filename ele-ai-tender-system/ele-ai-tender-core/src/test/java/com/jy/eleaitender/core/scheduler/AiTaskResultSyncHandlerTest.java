@@ -68,7 +68,7 @@ class AiTaskResultSyncHandlerTest {
         task.setId(200L);
         task.setTaskType("REVIEW_ITEM_GENERATE");
         task.setStatus("COMPLETED");
-        task.setBizId(100L);
+        task.setBizId("100");
         task.setResult(aiResult);
         task.setRequestParams("{\"reviewConfig\":" + objectMapper.valueToTree(reviewConfig) + "}");
 
@@ -126,7 +126,7 @@ class AiTaskResultSyncHandlerTest {
         task.setId(201L);
         task.setTaskType("REVIEW_ITEM_GENERATE");
         task.setStatus("COMPLETED");
-        task.setBizId(101L);
+        task.setBizId("101");
         task.setResult(aiResult);
         task.setRequestParams("{\"reviewConfig\":" + objectMapper.valueToTree(reviewConfig) + "}");
 

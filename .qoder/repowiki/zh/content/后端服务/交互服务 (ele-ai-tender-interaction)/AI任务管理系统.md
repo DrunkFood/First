@@ -16,13 +16,19 @@
 - [ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java](file://ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java)
 - [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java)
 - [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java)
+- [sql/20260713_bizId字段改为str.sql](file://sql/20260713_bizId字段改为str.sql)
 </cite>
 
 ## 更新摘要
 **变更内容**   
-- AiTaskClient新增支持文件ID列表的createTask方法，提供更直观的API用于创建带文件的AI任务
-- 开发者可以直接传递文件ID列表而无需手动字符串拼接，系统会自动将List<String>转换为逗号分隔的字符串格式
-- 完善了交互客户端架构的文档说明，包括外部认证、用户信息、文件操作等完整客户端体系
+- AiTaskVO响应对象新增systemId字段，增强任务来源追踪能力
+- 数据库表ai_task新增system_id字段，支持区分不同系统或集成来源的任务
+- 完善外部系统集成审计追踪，帮助识别任务发起源系统
+- 改进代码质量，提升格式化一致性和错误处理机制
 
 ## 目录
 1. [简介](#简介)
@@ -252,6 +258,77 @@ FE_SUP_PKG["支撑中心前端 package.json"] --> FE_SUP_DEPS["Vue3/TS/Vite/Elem
 
 [本节为概念性说明，不直接分析具体源码文件]
 
+### 任务来源追踪系统增强
+
+**已更新** 增强任务来源追踪能力，新增systemId字段以支持更好的审计追踪和系统来源区分
+
+#### 数据库结构变更
+- ai_task表新增system_id字段，类型为bigint，位于task_type字段之后
+- biz_id字段类型从bigint修改为varchar(64)，支持更灵活的业务ID格式
+- sup_access_system表的system_name和app_key字段长度调整为50字符
+
+#### AiTaskVO响应对象增强
+- 新增systemId字段，用于标识任务发起的系统ID
+- 该字段在后端转换过程中直接从AiTask实体映射到VO对象
+- 支持区分内部任务(systemId=0)和外部系统任务(systemId>0)
+
+#### 任务创建流程优化
+- createInternalTask方法：内部任务systemId固定为0L
+- createExternalTask方法：接收外部系统传入的systemId参数
+- ExternalAiTaskService自动从SecurityContextHolder获取当前系统ID并传递给任务创建逻辑
+
+#### 审计追踪能力
+- 支持追溯每个任务的原始发起系统
+- 便于问题排查和系统间协作监控
+- 为外部系统集成提供完整的审计日志支持
+
+```mermaid
+classDiagram
+class AiTask {
++Long id
++String taskType
++Long systemId
++Long projectId
++String bizId
++String bizType
++String status
++String result
++Date createTime
+}
+class AiTaskVO {
++Long id
++String taskType
++Long systemId
++Long projectId
++Number bizId
++String bizType
++String status
++String result
++Date createTime
+}
+class AiTaskServiceImpl {
++createInternalTask()
++createExternalTask()
++getTask()
++toVO()
+}
+AiTask --> AiTaskVO : "转换映射"
+AiTaskServiceImpl --> AiTask : "CRUD操作"
+AiTaskServiceImpl --> AiTaskVO : "VO转换"
+```
+
+图表来源
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java)
+
+**章节来源**
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java)
+- [sql/20260713_bizId字段改为str.sql](file://sql/20260713_bizId字段改为str.sql)
+
 ### 交互客户端架构更新
 
 **已更新** AiTaskClient新增支持文件ID列表的createTask方法，提供更直观的API用于创建带文件的AI任务
@@ -385,6 +462,10 @@ FILE --> DISK["本地磁盘"]
   - kill全部进程 → install common → 各模块clean compile → 按顺序启动（support/file可并行，core/ai可并行）
 - 前端构建
   - npm run build前检查依赖安装与环境变量，必要时切换mode（localdev/test）
+- 任务来源追踪问题
+  - 检查ai_task表的system_id字段是否正确填充
+  - 验证外部系统JWT令牌中是否包含正确的systemId信息
+  - 确认SecurityContextHolder能正确获取当前系统上下文
 
 章节来源
 - [CLAUDE.md](file://CLAUDE.md)
@@ -392,7 +473,7 @@ FILE --> DISK["本地磁盘"]
 ## 结论
 本系统以清晰的分层与模块化设计实现招标文件AI编制的端到端能力：支撑中心负责基础治理，文件服务专注文档与模板渲染，核心业务编排项目与需求生命周期并通过任务表与AI服务异步协作，AI服务承载对话、检测、匹配与模型路由。配合双前端与完善的依赖治理，系统在可维护性、扩展性与性能方面具备良好基础。
 
-**更新亮点**：交互客户端架构的完善使得外部系统集成更加便捷，特别是AiTaskClient新增的文件ID列表支持，大大简化了带文件AI任务的创建流程，开发者无需再进行繁琐的字符串拼接操作。
+**更新亮点**：任务来源追踪系统的增强使得外部系统集成更加便捷，特别是AiTaskVO新增的systemId字段，大大提升了系统的审计追踪能力和系统间协作的可观测性。开发者可以准确识别每个任务的发起源系统，为问题排查和系统监控提供了重要支撑。
 
 ## 附录
 - 环境变量覆盖：SPRING_DATASOURCE_PASSWORD、SPRING_REDIS_PASSWORD、APP_JWT_SECRET、DEEPSEEK_API_KEY、LOCAL_MODEL_KEY

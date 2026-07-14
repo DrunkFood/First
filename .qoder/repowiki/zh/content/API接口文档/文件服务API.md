@@ -6,8 +6,21 @@
 - [FileController.java](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java)
 - [IFileStorageService.java](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IFileStorageService.java)
 - [IWordDocumentService.java](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java)
+- [InternalFileServiceClient.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/client/InternalFileServiceClient.java)
+- [AiFileClient.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java)
+- [EleAiTenderInteractionProperties.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/properties/EleAiTenderInteractionProperties.java)
+- [InteractionValidationUtils.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java)
+- [InteractionFileInfoResponse.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/InteractionFileInfoResponse.java)
+- [FileInfo.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/file/FileInfo.java)
 - [ele-ai-tender-file.yml](file://docs/guides/ele-ai-tender-file.yml)
 </cite>
+
+## 更新摘要
+**变更内容**   
+- 新增基于SHA256的文件信息查询接口 `/api/file/info/sha256/{sha256}`
+- 增强客户端方法以支持字符串参数处理，确保系统内参数处理一致性
+- 添加SHA256参数验证和响应对象支持
+- 完善内部服务间调用的文件信息查询能力
 
 ## 目录
 1. [简介](#简介)
@@ -22,7 +35,9 @@
 10. [附录](#附录)
 
 ## 简介
-本文件为“文件服务模块”的API接口文档，覆盖上传、下载、信息获取、删除、文本提取、模板生成、文档修复等能力。同时给出分片上传、断点续传、进度跟踪的实现思路与参数配置建议；说明多格式文档（Word、PDF、Markdown）转换接口的使用方式与批量处理策略；并提供大文件传输优化、存储策略配置与安全访问控制的使用指南；最后补充文件格式验证、病毒扫描与存储配额管理的调用方法建议。
+本文件为"文件服务模块"的API接口文档，覆盖上传、下载、信息获取、删除、文本提取、模板生成、文档修复等能力。同时给出分片上传、断点续传、进度跟踪的实现思路与参数配置建议；说明多格式文档（Word、PDF、Markdown）转换接口的使用方式与批量处理策略；并提供大文件传输优化、存储策略配置与安全访问控制的使用指南；最后补充文件格式验证、病毒扫描与存储配额管理的调用方法建议。
+
+**更新** 新增基于SHA256的内容哈希查询能力，允许客户端通过文件内容指纹而非传统文件ID检索文件元数据，提升去重和秒传功能。
 
 ## 项目结构
 文件服务位于 ele-ai-tender-file 模块，对外暴露 /api/file 前缀的REST接口，由控制器统一接收请求并委派至存储服务与文档引擎服务。
@@ -36,12 +51,12 @@ StorageSvc --> FS["文件系统/对象存储"]
 DocSvc --> Engines["文档引擎(Word/Markdown/PDF)"]
 ```
 
-图示来源
+**图示来源**   
 - [FileController.java:40-176](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L40-L176)
 - [IFileStorageService.java:1-65](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IFileStorageService.java#L1-L65)
 - [IWordDocumentService.java:1-50](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java#L1-L50)
 
-章节来源
+**章节来源**   
 - [FILE_SERVICE_SPEC.md:1-153](file://docs/rules/FILE_SERVICE_SPEC.md#L1-L153)
 - [FileController.java:40-176](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L40-L176)
 
@@ -49,11 +64,15 @@ DocSvc --> Engines["文档引擎(Word/Markdown/PDF)"]
 - FileController：提供统一的HTTP入口，负责参数校验、权限注解、响应封装。
 - IFileStorageService：定义上传、查询、路径解析、删除、按SHA-256查询等能力。
 - IWordDocumentService：定义Word文档结构解析、模板生成、文本替换修复、文本+位置索引提取等能力。
+- InternalFileServiceClient：内部服务间调用的文件服务客户端，支持多种文件操作。
+- AiFileClient：外部交互层的文件客户端，支持基于SHA256的文件信息查询。
 
-章节来源
+**章节来源**   
 - [FileController.java:40-176](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L40-L176)
 - [IFileStorageService.java:1-65](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IFileStorageService.java#L1-L65)
 - [IWordDocumentService.java:1-50](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java#L1-L50)
+- [InternalFileServiceClient.java:25-362](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/client/InternalFileServiceClient.java#L25-362)
+- [AiFileClient.java:56-108](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java#L56-L108)
 
 ## 架构总览
 下图展示典型请求在控制器与服务层之间的交互流程。
@@ -76,7 +95,7 @@ Svc-->>Ctrl : "FileInfo/路径"
 Ctrl-->>C : "二进制流下载"
 ```
 
-图示来源
+**图示来源**   
 - [FileController.java:50-86](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L50-L86)
 - [IFileStorageService.java:21-47](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IFileStorageService.java#L21-L47)
 
@@ -88,7 +107,7 @@ Ctrl-->>C : "二进制流下载"
 - 统一响应：Result<T> 包装，包含 code/message/data。
 - 错误码：参考 ResponseCode 枚举（如 PARAM_ERROR、FILE_NOT_FOUND）。
 
-章节来源
+**章节来源**   
 - [FileController.java:40-176](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L40-L176)
 - [FILE_SERVICE_SPEC.md:129-137](file://docs/rules/FILE_SERVICE_SPEC.md#L129-L137)
 
@@ -108,7 +127,7 @@ Ctrl-->>C : "二进制流下载"
   - 白名单后缀：.doc/.docx/.pdf/.txt/.md/.jar/.war/.zip/.tar.gz
   - 支持按 SHA-256 秒传（通过 getBySha256 查询复用）
 
-章节来源
+**章节来源**   
 - [FileController.java:50-58](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L50-L58)
 - [IFileStorageService.java:21-31](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IFileStorageService.java#L21-L31)
 - [FILE_SERVICE_SPEC.md:110-121](file://docs/rules/FILE_SERVICE_SPEC.md#L110-L121)
@@ -124,12 +143,12 @@ Ctrl-->>C : "二进制流下载"
 - 成功响应：application/octet-stream 二进制流，Content-Disposition 带文件名
 - 失败响应：抛出文件不存在异常（对应 FILE_NOT_FOUND）
 
-章节来源
+**章节来源**   
 - [FileController.java:60-86](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L60-L86)
 
 ---
 
-### 获取文件信息
+### 获取文件信息（基于文件ID）
 - 方法：GET
 - 路径：/api/file/info/{fileId}
 - 路径参数
@@ -137,8 +156,25 @@ Ctrl-->>C : "二进制流下载"
 - 成功响应：Result<FileInfo>
 - 失败响应：Result.fail(ResponseCode.FILE_NOT_FOUND)
 
-章节来源
-- [FileController.java:88-98](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L88-L98)
+**章节来源**   
+- [FileController.java:86-95](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L86-L95)
+
+---
+
+### 获取文件信息（基于SHA256）
+- 方法：GET
+- 路径：/api/file/info/sha256/{sha256}
+- 路径参数
+  - sha256：文件SHA-256哈希值（String，必填）
+- 成功响应：Result<FileInfo>
+- 失败响应：Result.fail(ResponseCode.FILE_NOT_FOUND)
+- 用途：通过文件内容指纹查询文件元数据，支持秒传和去重功能
+
+**更新** 新增接口，允许客户端使用文件内容的SHA-256哈希值直接查询文件信息，无需先上传即可检查文件是否存在。
+
+**章节来源**   
+- [FileController.java:97-106](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L97-L106)
+- [IFileStorageService.java:57-63](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IFileStorageService.java#L57-L63)
 
 ---
 
@@ -152,8 +188,8 @@ Ctrl-->>C : "二进制流下载"
 - 成功响应：Result<Boolean>
 - 失败响应：未命中记录时不抛异常，直接执行删除逻辑（具体实现以服务为准）
 
-章节来源
-- [FileController.java:100-112](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L100-L112)
+**章节来源**   
+- [FileController.java:108-119](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L108-L119)
 
 ---
 
@@ -165,8 +201,8 @@ Ctrl-->>C : "二进制流下载"
 - 成功响应：Result<WordStructureVO>
 - 用途：用于模板占位符与结构解析（例如表格、循环、条件等）
 
-章节来源
-- [FileController.java:114-119](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L114-L119)
+**章节来源**   
+- [FileController.java:121-126](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L121-L126)
 - [IWordDocumentService.java:21-21](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java#L21-L21)
 
 ---
@@ -181,8 +217,8 @@ Ctrl-->>C : "二进制流下载"
 - 成功响应：Result<Long>（生成的文件ID）
 - 失败响应：Result.fail(ResponseCode.PARAM_ERROR)
 
-章节来源
-- [FileController.java:121-135](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L121-L135)
+**章节来源**   
+- [FileController.java:128-142](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L128-L142)
 - [IWordDocumentService.java:31-31](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java#L31-L31)
 
 ---
@@ -204,8 +240,8 @@ Ctrl-->>C : "二进制流下载"
 - 成功响应：Result<WordFixResultVO>
 - 失败响应：Result.fail(ResponseCode.PARAM_ERROR)
 
-章节来源
-- [FileController.java:137-164](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L137-L164)
+**章节来源**   
+- [FileController.java:144-175](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L144-L175)
 - [IWordDocumentService.java:40-40](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java#L40-L40)
 
 ---
@@ -218,8 +254,8 @@ Ctrl-->>C : "二进制流下载"
 - 成功响应：Result<Map<String,Object>>（包含 fullText 与 segments）
 - 失败响应：Result.fail(ResponseCode.PARAM_ERROR)
 
-章节来源
-- [FileController.java:166-175](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L166-L175)
+**章节来源**   
+- [FileController.java:177-186](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L177-L186)
 - [IWordDocumentService.java:48-48](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java#L48-L48)
 
 ---
@@ -230,15 +266,19 @@ Ctrl-->>C : "二进制流下载"
   - /api/file/upload
   - /api/file/download/{fileId}
   - /api/file/info/{fileId}
+  - /api/file/info/sha256/{sha256}
   - /api/file/delete/{fileId}
 
-章节来源
+**更新** 新增 `/api/file/info/sha256/{sha256}` 端点支持。
+
+**章节来源**   
 - [ele-ai-tender-file.yml:1-62](file://docs/guides/ele-ai-tender-file.yml#L1-L62)
 
 ## 依赖关系分析
 - 控制器依赖两个服务接口：文件存储服务与文档服务。
 - 文件存储服务提供上传、查询、路径解析、删除、按SHA-256查询等能力。
 - 文档服务提供Word结构解析、模板生成、文本替换修复、文本+位置索引提取。
+- 内部客户端支持字符串参数处理，确保跨系统调用的一致性。
 
 ```mermaid
 classDiagram
@@ -246,6 +286,7 @@ class FileController {
 +upload()
 +download()
 +info()
++sha256()
 +delete()
 +getFileStructure()
 +generateDocument()
@@ -266,16 +307,35 @@ class IWordDocumentService {
 +fixDocument()
 +extractText()
 }
+class InternalFileServiceClient {
++upload()
++download()
++info()
++getFileStructure()
++generateDocument()
++fixDocument()
++extractText()
+}
+class AiFileClient {
++getFileInfo()
++getFileInfoSha256()
++downloadFile()
++uploadFile()
+}
 FileController --> IFileStorageService : "依赖"
 FileController --> IWordDocumentService : "依赖"
+InternalFileServiceClient --> FileController : "内部调用"
+AiFileClient --> FileController : "外部调用"
 ```
 
-图示来源
-- [FileController.java:40-176](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L40-L176)
+**图示来源**   
+- [FileController.java:40-186](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L40-L186)
 - [IFileStorageService.java:1-65](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IFileStorageService.java#L1-L65)
 - [IWordDocumentService.java:1-50](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/service/IWordDocumentService.java#L1-L50)
+- [InternalFileServiceClient.java:25-362](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/client/InternalFileServiceClient.java#L25-362)
+- [AiFileClient.java:56-108](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java#L56-L108)
 
-章节来源
+**章节来源**   
 - [FILE_SERVICE_SPEC.md:129-137](file://docs/rules/FILE_SERVICE_SPEC.md#L129-L137)
 
 ## 性能与优化建议
@@ -320,6 +380,11 @@ FileController --> IWordDocumentService : "依赖"
   - 确认 file_info.file_path 对应的物理文件是否存在。
   - 检查 file.storage.base-path 配置是否正确。
 
+- SHA256查询失败
+  - 确认传入的SHA256哈希值格式正确（32位十六进制字符串）。
+  - 检查文件是否已上传并计算了正确的SHA256值。
+  - 验证客户端与服务端的SHA256计算算法一致（UTF-8字节序列）。
+
 - fileSha256 校验失败
   - 确认调用方与服务端计算方式一致（UTF-8字节序列，十六进制字符串）。
 
@@ -332,11 +397,13 @@ FileController --> IWordDocumentService : "依赖"
   - 检查 FixReplacement.locationRef 是否为空（为空走全文档替换会替换所有匹配项）。
   - 检查 elementIndex 对应的 IBodyElement 类型是否与 type 字段一致。
 
-章节来源
+**更新** 新增SHA256查询失败的排查指南。
+
+**章节来源**   
 - [FILE_SERVICE_SPEC.md:139-146](file://docs/rules/FILE_SERVICE_SPEC.md#L139-L146)
 
 ## 结论
-文件服务提供了完整的文件生命周期管理与文档处理能力，涵盖上传、下载、信息查询、删除、Word结构解析、模板生成、文本替换修复与文本+位置索引提取。结合分片上传、断点续传、进度跟踪与大文件优化策略，可满足高吞吐与高可用的生产场景。建议在现有接口基础上按需扩展分片与进度相关端点，并完善病毒扫描与配额管理策略。
+文件服务提供了完整的文件生命周期管理与文档处理能力，涵盖上传、下载、信息查询、删除、Word结构解析、模板生成、文本替换修复与文本+位置索引提取。**更新** 新增的基于SHA256的文件信息查询能力进一步增强了系统的去重和秒传功能，提升了用户体验和存储效率。结合分片上传、断点续传、进度跟踪与大文件优化策略，可满足高吞吐与高可用的生产场景。建议在现有接口基础上按需扩展分片与进度相关端点，并完善病毒扫描与配额管理策略。
 
 [本节为总结性内容，无需代码引用]
 
@@ -345,14 +412,17 @@ FileController --> IWordDocumentService : "依赖"
 ### 接口一览
 - POST /api/file/upload — 上传文件
 - GET /api/file/download/{fileId} — 下载文件
-- GET /api/file/info/{fileId} — 获取文件信息
+- GET /api/file/info/{fileId} — 获取文件信息（基于文件ID）
+- GET /api/file/info/sha256/{sha256} — 获取文件信息（基于SHA256）
 - DELETE /api/file/delete/{fileId} — 删除文件
 - GET /api/file/structure/{fileId} — 获取Word文档结构
 - POST /api/file/generate-doc — 基于模板生成文档
 - POST /api/file/fix-doc — 修复Word文档（替换文本）
 - POST /api/file/extract-text — 提取Word文档文本+位置索引
 
-章节来源
+**更新** 新增基于SHA256的文件信息查询接口。
+
+**章节来源**   
 - [FILE_SERVICE_SPEC.md:7-17](file://docs/rules/FILE_SERVICE_SPEC.md#L7-L17)
 - [ele-ai-tender-file.yml:1-62](file://docs/guides/ele-ai-tender-file.yml#L1-L62)
 
@@ -363,7 +433,7 @@ FileController --> IWordDocumentService : "依赖"
   - 将批量任务拆分为多个子任务，逐个调用 generate-doc/fix-doc/extract-text。
   - 使用异步队列与回调机制，避免长连接超时。
 
-章节来源
+**章节来源**   
 - [FILE_SERVICE_SPEC.md:18-31](file://docs/rules/FILE_SERVICE_SPEC.md#L18-L31)
 
 ### 文件格式验证、病毒扫描与配额管理（实现建议）
@@ -378,3 +448,32 @@ FileController --> IWordDocumentService : "依赖"
   - 提供配额查询接口与告警通知。
 
 [本节为通用指导，无需代码引用]
+
+### SHA256文件信息查询详解
+**新增** 基于SHA256的文件信息查询功能详细说明：
+
+#### 技术实现
+- **服务端接口**：`/api/file/info/sha256/{sha256}`
+- **客户端支持**：AiFileClient.getFileInfoSha256() 方法
+- **参数验证**：InteractionValidationUtils.validateFileSha256()
+- **响应对象**：InteractionFileInfoResponse 包含 fileId、fileName、fileSize、fileSha256、bizType
+
+#### 使用场景
+1. **秒传功能**：上传前先通过SHA256查询文件是否存在，避免重复上传
+2. **文件去重**：相同内容的文件只存储一次，节省存储空间
+3. **跨系统文件共享**：通过内容指纹在不同系统间识别相同文件
+
+#### 客户端调用示例
+```java
+// 内部服务调用
+FileInfo fileInfo = internalFileServiceClient.info(fileId);
+
+// 外部交互调用
+InteractionFileInfoResponse response = aiFileClient.getFileInfoSha256(authorization, sha256);
+```
+
+**章节来源**   
+- [FileController.java:97-106](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/controller/FileController.java#L97-L106)
+- [AiFileClient.java:80-101](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java#L80-L101)
+- [InteractionValidationUtils.java:39-41](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L39-L41)
+- [InteractionFileInfoResponse.java:10-20](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/InteractionFileInfoResponse.java#L10-L20)
