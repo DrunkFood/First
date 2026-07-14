@@ -3,40 +3,27 @@
 <cite>
 **本文引用的文件**
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql)
-- [ele-ai-tender-system/ele-ai-tender-core/sql/init.sql](file://ele-ai-tender-system/ele-ai-tender-core/sql/init.sql)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiResponseLog.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiResponseLog.java)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiKnowledgeDocument.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiKnowledgeDocument.java)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskType.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskType.java)
-- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/AiTaskParams.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/AiTaskParams.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IAiResponseLogService.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IAiResponseLogService.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiResponseLogMapper.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiResponseLogMapper.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IKnowledgeDocumentService.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IKnowledgeDocumentService.java)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/KnowledgeDocumentServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/KnowledgeDocumentServiceImpl.java)
-- [ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/IKnowledgeConfigService.java](file://ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/IKnowledgeConfigService.java)
-- [ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/impl/KnowledgeConfigServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/impl/KnowledgeConfigServiceImpl.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiKnowledgeDocumentMapper.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiKnowledgeDocumentMapper.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/request/AiTaskCreateRequest.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/request/AiTaskCreateRequest.java)
-- [ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java)
-- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTaskExternalCallback.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTaskExternalCallback.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskExternalCallbackMapper.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskExternalCallbackMapper.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiSyncedException.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiSyncedException.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java)
 </cite>
 
 ## 更新摘要
 **变更内容**
-- 移除了AI任务外部回调表(ai_task_external_callback)的数据库初始化脚本定义，但保留了相关的Java实体类、服务层和调度器实现
-- 更新了外部回调功能的相关说明，明确该表仍存在于Core模块的初始化脚本中
-- 修正了架构图和相关组件分析中的表结构引用
+- AiTask实体新增systemId字段用于区分内外任务来源
+- bizId字段类型从数值改为varchar(64)，支持更灵活的业务ID格式
+- 新增AiTaskSource枚举类，明确内部任务和外部任务的来源标识
+- 新增BizType枚举类，规范业务类型定义（REQUIREMENT/PROJECT/DOCUMENT/REVIEW_ITEM/DETECTION）
+- 新增AiSyncedException异常处理机制，统一AI同步异常处理
+- 数据库表结构相应调整，增加system_id字段和biz_id字段类型修改
 
 ## 目录
 1. [简介](#简介)
@@ -55,17 +42,16 @@
 - AI任务表（ai_task）
 - 响应日志表（ai_response_log）
 - 知识文档表（ai_knowledge_document）
-- 外部回调记录表（ai_task_external_callback）
 
 内容涵盖：
 - 任务状态流转、任务参数存储、结果记录格式
 - 向量知识库的数据结构设计、文档分片策略与相似度计算支持
 - Spring AI集成时的数据访问模式、异步任务持久化方案
 - 成本统计、错误重试机制与数据清理策略的实现指导
-- 外部系统数据隔离机制与安全验证
+- 内外任务区分机制与安全验证
 
 ## 项目结构
-AI相关数据定义集中在SQL初始化脚本与通用实体类中；任务调度与处理逻辑分布在Core与AI模块；知识库管理在AI与Support模块均有实现；外部系统集成通过专门的适配服务实现。
+AI相关数据定义集中在SQL初始化脚本与通用实体类中；任务调度与处理逻辑分布在Core与AI模块；知识库管理在AI与Support模块均有实现。
 
 ```mermaid
 graph TB
@@ -73,63 +59,53 @@ subgraph "数据库"
 A["ai_task"]
 B["ai_response_log"]
 C["ai_knowledge_document"]
-D["ai_task_external_callback"]
 end
 subgraph "Core模块"
 E["AiTaskController<br/>查询/跳过/最新任务"]
 F["IAiTaskService<br/>创建/轮询/超时标记"]
-G["AiKnowledgeDocumentMapper<br/>只读读取"]
-H["ExternalAiTaskService<br/>外部系统适配"]
-I["ExternalAiTaskController<br/>外部API入口"]
-J["AiTaskCallbackService<br/>回调推送服务"]
-K["AiTaskCallbackScheduler<br/>定时调度器"]
+G["AiTaskResultSyncScheduler<br/>结果同步调度器"]
+H["AiTaskResultSyncHandler<br/>结果同步处理器"]
+I["AiTaskMapper(Core)<br/>CAS更新/查询操作"]
 end
 subgraph "AI模块"
-L["AiTaskMapper<br/>PENDING拉取/CAS更新"]
-M["AiCallRecorder<br/>调用记录落库"]
-N["AiResponseLogServiceImpl<br/>记录响应日志"]
-O["KnowledgeController<br/>文档列表/详情"]
-P["KnowledgeDocumentServiceImpl<br/>CRUD"]
+J["AiTaskMapper(AI)<br/>PENDING拉取/CAS更新"]
+K["AiCallRecorder<br/>调用记录落库"]
+L["AiResponseLogServiceImpl<br/>记录响应日志"]
+M["KnowledgeController<br/>文档列表/详情"]
+N["KnowledgeDocumentServiceImpl<br/>CRUD"]
 end
 subgraph "Support模块"
-Q["IKnowledgeConfigService<br/>配置管理接口"]
-R["KnowledgeConfigServiceImpl<br/>配置CRUD"]
+O["IKnowledgeConfigService<br/>配置管理接口"]
+P["KnowledgeConfigServiceImpl<br/>配置CRUD"]
 end
 E --> F
-F --> L
-L --> A
+F --> I
+I --> A
+G --> H
+H --> A
+J --> A
+K --> L
+L --> B
 M --> N
-N --> B
+N --> C
 O --> P
 P --> C
-Q --> R
-R --> C
-G --> C
-I --> H
-H --> D
-H --> F
-J --> D
-J --> A
-K --> J
 ```
 
 **图表来源**
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java:1-51](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java#L1-L51)
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java:1-43](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java#L1-L43)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java:17-71](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L17-L71)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java:1-113](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java#L1-L113)
 - [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java:1-40](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java#L1-L40)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:1-166](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L1-L166)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java:1-59](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L1-L59)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:1-191](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L1-L191)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java:1-36](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java#L1-L36)
 
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:1-119](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L1-L119)
-- [ele-ai-tender-system/ele-ai-tender-core/sql/init.sql:1-272](file://ele-ai-tender-system/ele-ai-tender-core/sql/init.sql#L1-L272)
 
 ## 核心组件
 - AI任务表（ai_task）
   - 作用：承载AI任务的元信息、参数、状态、结果与重试控制
-  - 关键字段：task_type、project_id、biz_id、biz_type、request_params、file_ids、status、result、error_msg、retry_count、max_retry、started_at、completed_at、timeout_minutes
+  - 关键字段：task_type、system_id、project_id、biz_id、biz_type、request_params、file_ids、status、result、error_msg、retry_count、max_retry、started_at、completed_at、timeout_minutes、result_synced、synced_at
   - 索引：idx_status、idx_project、idx_biz、idx_task_type_status
 - 响应日志表（ai_response_log）
   - 作用：记录每次AI模型调用的请求/响应、token消耗、完成原因等
@@ -139,68 +115,50 @@ K --> J
   - 作用：知识库文档元信息与文本内容、向量集合与ID映射
   - 关键字段：doc_name、doc_category、file_id、file_type、content、vector_collection、vector_ids、status
   - 索引：idx_category、idx_status、idx_file_id
-- 外部回调记录表（ai_task_external_callback）
-  - 作用：记录外部系统任务回调状态，实现数据隔离和权限控制
-  - 关键字段：task_id、app_key、callback_status、retry_count、last_callback_time、error_msg
-  - 索引：idx_callback_status、idx_task_id
 
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:17-46](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L17-L46)
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:51-73](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L51-L73)
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:79-105](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L79-L105)
-- [ele-ai-tender-system/ele-ai-tender-core/sql/init.sql:251-272](file://ele-ai-tender-system/ele-ai-tender-core/sql/init.sql#L251-L272)
 
 ## 架构总览
-AI任务从Core侧创建并写入ai_task，AI侧通过定时或轮询拉取待处理任务，使用CAS更新为处理中，执行完成后写回结果与耗时；同时通过AiCallRecorder将每次模型调用写入ai_response_log用于成本与可观测性分析。知识库文档由AI或Support模块维护，关联外部向量库（如Milvus）的集合与向量ID。外部系统通过专用API创建任务，系统自动创建回调记录实现数据隔离，并通过定时调度器推送任务结果到外部系统。
+AI任务从Core侧创建并写入ai_task，AI侧通过定时或轮询拉取待处理任务，使用CAS更新为处理中，执行完成后写回结果与耗时；同时通过AiCallRecorder将每次模型调用写入ai_response_log用于成本与可观测性分析。知识库文档由AI或Support模块维护，关联外部向量库（如Milvus）的集合与向量ID。系统通过system_id字段区分内外任务来源，并通过AiTaskResultSyncScheduler定时调度结果同步到业务系统。
 
 ```mermaid
 sequenceDiagram
 participant Client as "前端/业务方"
-participant ExtClient as "外部系统"
 participant Core as "Core服务(AiTaskController)"
-participant ExtCtrl as "外部API(ExternalAiTaskController)"
-participant ExtSvc as "外部适配(ExternalAiTaskService)"
 participant Svc as "Core服务(IAiTaskService)"
 participant DB as "数据库(ai_task)"
-participant CallbackDB as "回调表(ai_task_external_callback)"
 participant AI as "AI服务(AiTaskMapper)"
 participant Rec as "AI服务(AiCallRecorder)"
 participant LogS as "AI服务(AiResponseLogServiceImpl)"
 participant LogDB as "数据库(ai_response_log)"
-participant CallbackSvc as "回调服务(AiTaskCallbackService)"
-participant Scheduler as "定时调度器(AiTaskCallbackScheduler)"
+participant SyncScheduler as "结果同步调度器(AiTaskResultSyncScheduler)"
+participant SyncHandler as "结果同步处理器(AiTaskResultSyncHandler)"
 Client->>Core : "创建任务/查询状态/跳过/最新任务"
 Core->>Svc : "createTask/getTaskStatus/skipTask/getLatestTask"
 Svc->>DB : "INSERT/UPDATE/SELECT ai_task"
 Note over Svc,DB : "Core负责写入PENDING任务与状态查询"
-ExtClient->>ExtCtrl : "外部系统创建任务(X-App-Key)"
-ExtCtrl->>ExtSvc : "createTask(appKey, request)"
-ExtSvc->>Svc : "createTask(taskType, null, bizId, bizType, params, fileIds)"
-ExtSvc->>CallbackDB : "插入回调记录(appKey, taskId)"
-Svc->>DB : "INSERT ai_task"
 AI->>DB : "selectPendingTasks(limit)"
 AI->>DB : "casUpdateStatus(id, PENDING, PROCESSING)"
 AI->>Rec : "record(..., role, taskId, conversationId, userId, modelName)"
 Rec->>LogS : "record(AiResponseLog)"
 LogS->>LogDB : "INSERT ai_response_log"
 AI->>DB : "更新COMPLETED/FAILED/AI_UNAVAILABLE/SKIPPED"
-Scheduler->>CallbackSvc : "定期触发回调处理"
-CallbackSvc->>CallbackDB : "查询PENDING回调记录"
-CallbackSvc->>DB : "查询任务状态"
-CallbackSvc->>ExtClient : "HTTP推送任务结果"
-CallbackSvc->>CallbackDB : "更新回调状态"
+SyncScheduler->>DB : "selectUnsyncedTasks(limit)"
+SyncScheduler->>DB : "markSyncing(id)"
+SyncScheduler->>SyncHandler : "sync(task)"
+SyncHandler->>业务表 : "同步结果到业务系统"
+SyncHandler->>DB : "markSuccessSynced/markFailedSynced"
 ```
 
 **图表来源**
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java:1-51](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java#L1-L51)
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java:1-43](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java#L1-L43)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java:1-59](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L1-L59)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:52-105](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L52-L105)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java:1-40](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java#L1-L40)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java:96-149](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java#L96-L149)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java:1-29](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java#L1-L29)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:58-72](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L58-L72)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java:24-34](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java#L24-L34)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java:33-71](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L71)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java:71-100](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L71-L100)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java:75-110](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java#L75-L110)
 
 ## 详细组件分析
 
@@ -208,6 +166,12 @@ CallbackSvc->>CallbackDB : "更新回调状态"
 - 任务类型与参数
   - AiTaskType定义了多种任务类型（需求生成、评审项生成、检测、文本优化等），每个类型附带默认超时时间与参数类约束（AiTaskParams）。
   - request_params字段以JSON形式存储具体任务参数，便于扩展不同任务类型的入参结构。
+- 任务来源区分
+  - systemId字段用于区分内外任务来源，配合AiTaskSource枚举（INTERNAL/EXTERNAL）实现任务来源标识
+  - 内部任务systemId为0，外部任务systemId为对应的外部系统标识
+- 业务ID灵活性
+  - bizId字段类型从数值改为varchar(64)，支持更灵活的业务ID格式，兼容外部系统的各种ID格式
+  - bizType字段使用BizType枚举（REQUIREMENT/PROJECT/DOCUMENT/REVIEW_ITEM/DETECTION）规范业务类型
 - 状态机与终态
   - AiTaskStatus定义了PENDING/PROCESSING/COMPLETED/FAILED/AI_UNAVAILABLE/SKIPPED六种状态，并提供isTerminal与isRetryable方法辅助流程控制。
   - 终态包括已完成、失败、不可用与已跳过；可重试状态为失败与不可用。
@@ -217,6 +181,9 @@ CallbackSvc->>CallbackDB : "更新回调状态"
   - result字段保存执行结果（JSON），error_msg记录错误信息，便于问题定位与重试策略。
 - 重试与超时
   - retry_count与max_retry控制重试次数；timeout_minutes配合定时任务标记超时为AI_UNAVAILABLE。
+- 结果同步机制
+  - result_synced字段跟踪结果同步状态（0-未同步 1-已同步 2-同步失败 3-同步中）
+  - syncedAt字段记录同步时间，配合AiTaskResultSyncScheduler实现异步结果同步
 
 ```mermaid
 stateDiagram-v2
@@ -228,53 +195,82 @@ PROCESSING --> AI_UNAVAILABLE : "AI不可用或超时"
 PROCESSING --> SKIPPED : "用户跳过"
 FAILED --> PENDING : "重试(<=max_retry)"
 AI_UNAVAILABLE --> PENDING : "重试(<=max_retry)"
-COMPLETED --> [*]
+COMPLETED --> 同步中 : "result_synced=3"
+同步中 --> 已同步 : "result_synced=1"
+同步中 --> 同步失败 : "result_synced=2"
+已同步 --> [*]
+同步失败 --> [*]
 SKIPPED --> [*]
 ```
 
 **图表来源**
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java:1-46](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java#L1-L46)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskType.java:1-52](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskType.java#L1-L52)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java:23-37](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java#L23-L37)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java:23-37](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java#L23-L37)
 
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:17-46](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L17-L46)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java:18-82](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L18-L82)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java:9-29](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java#L9-L29)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java:9-32](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java#L9-L32)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java:1-46](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java#L1-L46)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskType.java:1-52](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskType.java#L1-L52)
-- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/AiTaskParams.java:1-8](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/AiTaskParams.java#L1-L8)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java:1-43](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java#L1-L43)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java:1-51](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java#L1-L51)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java:1-40](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java#L1-L40)
 
-### 外部回调记录表（ai_task_external_callback）与数据隔离机制
-- 数据结构
-  - task_id：关联的AI任务ID
-  - app_key：外部系统的唯一标识密钥
-  - callback_status：回调状态（PENDING/PROCESSING/SUCCESS/FAILED）
-  - retry_count：重试次数计数
-  - last_callback_time：最后回调时间戳
-  - error_msg：错误信息记录
-- 数据隔离机制
-  - 所有外部系统创建的任务都会自动生成回调记录，建立app_key与taskId的绑定关系
-  - 查询任务时强制校验app_key与taskId的归属关系，防止跨系统访问
-  - 无回调URL的外部系统也会创建记录，仅用于数据隔离目的
-- 权限控制
-  - verifyOwnership方法确保只有拥有对应app_key的外部系统才能查询特定任务
-  - 未授权访问直接返回403禁止访问错误
-- 回调推送机制
-  - AiTaskCallbackService定时扫描PENDING状态的回调记录
-  - 检查关联任务是否达到终态，构建回调请求并签名验证
-  - 通过HTTP推送任务结果到外部系统配置的system_url
-  - 支持重试机制，达到最大重试次数后标记为FAILED
-
-**更新** 外部回调记录实现了完整的数据隔离机制和异步回调推送功能，确保多租户环境下的数据安全
+### 任务来源区分机制
+- 内外任务标识
+  - systemId字段区分任务来源：内部任务systemId=0，外部任务systemId=外部系统标识
+  - AiTaskSource枚举提供INTERNAL和EXTERNAL两种任务来源类型
+- 业务类型规范化
+  - BizType枚举规范业务类型：REQUIREMENT（需求）、PROJECT（项目）、DOCUMENT（文档）、REVIEW_ITEM（评审项）、DETECTION（检测）
+  - 替代原有的字符串类型bizType，提供更强的类型安全性
+- 业务ID灵活性
+  - bizId字段从数值类型改为varchar(64)，支持外部系统的各种ID格式
+  - 兼容UUID、字符串编码等多种业务ID格式
 
 章节来源
-- [ele-ai-tender-system/ele-ai-tender-core/sql/init.sql:251-272](file://ele-ai-tender-system/ele-ai-tender-core/sql/init.sql#L251-L272)
-- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTaskExternalCallback.java:14-37](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTaskExternalCallback.java#L14-L37)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskExternalCallbackMapper.java:1-31](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskExternalCallbackMapper.java#L1-L31)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:83-96](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L83-L96)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:74-140](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L74-L140)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java:27-37](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L27-L37)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java:11-18](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java#L11-L18)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java:11-21](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java#L11-L21)
+
+### 结果同步机制
+- 同步调度器
+  - AiTaskResultSyncScheduler每10秒扫描未同步的终态AI任务
+  - 使用markSyncing方法进行任务抢占，防止多实例重复同步
+- 同步处理器
+  - AiTaskResultSyncHandler根据任务类型分发不同的同步逻辑
+  - 内部任务（systemId=0）直接同步到业务表
+  - 外部任务（systemId≠0）通过回调机制通知外部系统
+- 同步状态跟踪
+  - result_synced字段跟踪同步状态：0-未同步 1-已同步 2-同步失败 3-同步中
+  - syncedAt字段记录同步时间戳
+- 异常处理
+  - AiSyncedException统一处理AI同步过程中的异常情况
+  - 支持自定义错误码和消息传递
+
+```mermaid
+flowchart TD
+Start(["定时扫描"]) --> Query["查询未同步任务<br/>result_synced=0"]
+Query --> Claim{"抢占成功?"}
+Claim --> |否| Skip["跳过该任务"]
+Claim --> |是| CheckSystemId{"检查systemId"}
+CheckSystemId --> |systemId=0| InternalSync["内部任务同步"]
+CheckSystemId --> |systemId≠0| ExternalCallback["外部系统回调"]
+InternalSync --> Success["标记同步成功<br/>result_synced=1"]
+ExternalCallback --> Success
+Success --> End(["完成"])
+Skip --> End
+```
+
+**图表来源**
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java:33-71](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L71)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java:71-100](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L71-L100)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java:83-110](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java#L83-L110)
+
+章节来源
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java:17-71](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L17-L71)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java:36-100](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L36-L100)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiSyncedException.java:10-31](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiSyncedException.java#L10-L31)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java:75-110](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java#L75-L110)
 
 ### 响应日志表（ai_response_log）设计与成本统计
 - 字段说明
@@ -325,10 +321,6 @@ AiCallRecorder --> AiResponseLogServiceImpl : "调用保存"
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:79-105](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L79-L105)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiResponseLog.java:1-49](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiResponseLog.java#L1-L49)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java:96-149](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java#L96-L149)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IAiResponseLogService.java:1-14](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IAiResponseLogService.java#L1-L14)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java:1-29](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java#L1-L29)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiResponseLogMapper.java:1-12](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiResponseLogMapper.java#L1-L12)
 
 ### 知识文档表（ai_knowledge_document）与向量库
 - 数据结构
@@ -356,38 +348,8 @@ SaveMeta --> End(["完成"])
 [此图为概念流程，不直接映射到具体源码文件]
 
 章节来源
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:51-73](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L51-73)
+- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:51-73](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L51-L73)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiKnowledgeDocument.java:1-30](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiKnowledgeDocument.java#L1-L30)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java:1-33](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java#L1-33)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IKnowledgeDocumentService.java:1-12](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/IKnowledgeDocumentService.java#L1-12)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/KnowledgeDocumentServiceImpl.java:27-60](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/KnowledgeDocumentServiceImpl.java#L27-L60)
-- [ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/IKnowledgeConfigService.java:1-12](file://ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/IKnowledgeConfigService.java#L1-12)
-- [ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/impl/KnowledgeConfigServiceImpl.java:28-62](file://ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/impl/KnowledgeConfigServiceImpl.java#L28-L62)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiKnowledgeDocumentMapper.java:1-12](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiKnowledgeDocumentMapper.java#L1-12)
-
-### API变更：bizId字段类型升级
-**重要变更**：AI任务创建请求中的bizId字段已从String类型升级为Long类型，这是一个破坏性变更。
-
-- 内部API变更
-  - AiTaskCreateRequest.bizId：String → Long
-  - 影响范围：Core模块内部API调用
-- 外部API变更  
-  - ExternalAiTaskController接收的AiTaskCreateRequest.bizId：String → Long
-  - 影响范围：所有外部系统调用
-- 数据库兼容性
-  - ai_task表的biz_id字段原本就是BIGINT类型，无需DDL变更
-  - 但需要确保所有调用方都传递Long类型的bizId值
-
-**破坏性影响**：
-- 外部系统必须更新客户端代码，将bizId参数从字符串转换为长整型
-- 前端调用也需要相应修改类型定义
-- 旧的字符串格式bizId将无法被接受
-
-章节来源
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/request/AiTaskCreateRequest.java:19-20](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/request/AiTaskCreateRequest.java#L19-L20)
-- [ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java:22-23](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java#L22-L23)
-- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java:30-31](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L30-L31)
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:20](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L20)
 
 ## 依赖关系分析
 - Core与AI解耦
@@ -396,10 +358,9 @@ SaveMeta --> End(["完成"])
   - AiCallRecorder统一封装AI调用记录，降低各处理器重复代码；AiResponseLogServiceImpl保证记录失败不影响主流程。
 - 知识库多模块协作
   - AI模块提供基础列表/详情；Support模块提供完整配置管理；Core模块只读访问。
-- 外部系统集成
-  - ExternalAiTaskService作为适配器层，处理外部DTO转换、数据隔离验证和回调记录管理。
-  - AiTaskCallbackService负责异步回调推送，支持重试和错误处理。
-  - AiTaskCallbackScheduler定时调度回调处理任务。
+- 结果同步机制
+  - AiTaskResultSyncScheduler定时扫描未同步任务，AiTaskResultSyncHandler处理具体的同步逻辑
+  - 支持内部任务直接同步和外部任务回调推送两种模式
 
 ```mermaid
 graph LR
@@ -411,29 +372,16 @@ LogSvc --> LogDB["ai_response_log"]
 AIKB["KnowledgeController/Service"] --> KBDB["ai_knowledge_document"]
 SupportKB["KnowledgeConfigService"] --> KBDB
 CoreKB["AiKnowledgeDocumentMapper(Core)"] --> KBDB
-ExtCtrl["ExternalAiTaskController"] --> ExtSvc["ExternalAiTaskService"]
-ExtSvc --> CallbackDB["ai_task_external_callback"]
-ExtSvc --> CoreSvc
-CallbackScheduler["AiTaskCallbackScheduler"] --> CallbackSvc["AiTaskCallbackService"]
-CallbackSvc --> CallbackDB
-CallbackSvc --> DB
+SyncScheduler["AiTaskResultSyncScheduler"] --> SyncHandler["AiTaskResultSyncHandler"]
+SyncHandler --> DB
+SyncScheduler --> DB
 ```
 
 **图表来源**
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java:1-51](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/AiTaskController.java#L1-L51)
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java:1-43](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java#L1-L43)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java:1-40](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java#L1-L40)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java:96-149](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java#L96-L149)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java:1-29](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java#L1-L29)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java:1-33](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java#L1-33)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/KnowledgeDocumentServiceImpl.java:27-60](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/KnowledgeDocumentServiceImpl.java#L27-L60)
-- [ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/IKnowledgeConfigService.java:1-12](file://ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/IKnowledgeConfigService.java#L1-12)
-- [ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/impl/KnowledgeConfigServiceImpl.java:28-62](file://ele-ai-tender-system/ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/service/impl/KnowledgeConfigServiceImpl.java#L28-L62)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiKnowledgeDocumentMapper.java:1-12](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiKnowledgeDocumentMapper.java#L1-12)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java:1-59](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L1-L59)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:1-166](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L1-L166)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:1-191](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L1-L191)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java:1-36](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java#L1-L36)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java:17-71](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L17-L71)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java:36-100](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L36-L100)
 
 ## 性能考虑
 - 任务拉取与CAS
@@ -442,14 +390,13 @@ CallbackSvc --> DB
   - ai_task：按status、project_id、biz_id+biz_type、task_type+status建立复合索引，提升轮询与查询效率。
   - ai_response_log：按task_id、conversation_id、role、create_time、model建索引，支撑多维统计与回放。
   - ai_knowledge_document：按category、status、file_id建索引，提高筛选与关联查询性能。
-  - ai_task_external_callback：按callback_status、task_id建索引，优化回调处理和权限验证。
 - 大字段与JSON
   - request_params/result/messages/content使用LONGTEXT，注意分页与导出时避免全量加载；必要时拆分或归档。
 - 异步与批处理
   - 向量入库与文本解析可异步化，减少主流程延迟；批量插入日志与任务结果以提升吞吐。
-- 外部系统性能
-  - 回调记录创建采用同步方式，避免阻塞任务创建主流程。
-  - 回调推送采用定时调度，支持批量处理和多实例并发控制。
+- 结果同步性能
+  - 使用markSyncing方法进行任务抢占，避免多实例重复处理
+  - 定时调度器采用固定延迟执行，平衡实时性与性能
 
 ## 故障排查指南
 - 任务卡住或无进展
@@ -461,30 +408,24 @@ CallbackSvc --> DB
   - AiResponseLogServiceImpl捕获异常仅记录日志，不会中断主流程；需检查应用日志输出路径与权限。
 - 知识库同步失败
   - 关注ai_knowledge_document.status为PROCESSING/FAILED的记录；检查向量库连接与集合权限。
-- 外部系统访问问题
-  - 检查ai_task_external_callback表中对应app_key的记录是否存在
-  - 确认X-App-Key请求头是否正确传递
-  - 验证verifyOwnership方法的权限校验逻辑
-- 回调推送失败
-  - 检查AiTaskCallbackScheduler是否正常运行
-  - 查看回调记录的retry_count和callback_status
-  - 确认外部系统配置的system_url可达且签名验证通过
+- 结果同步问题
+  - 检查result_synced字段状态，确认同步调度器是否正常运行
+  - 查看syncedAt字段，确认同步时间戳是否正确更新
+  - 检查AiTaskResultSyncScheduler日志，确认任务抢占和同步逻辑是否正常
 
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java:20-29](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java#L20-L29)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java:134-137](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java#L134-L137)
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:17-46](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L17-L46)
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:79-105](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L79-L105)
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:51-73](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L51-L73)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:126-135](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L126-L135)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:167-185](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L167-L185)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java:33-71](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L71)
 
 ## 结论
 本数据模型围绕"任务驱动+可观测+安全隔离"的设计思路构建：
 - ai_task作为任务队列与状态中枢，配合CAS与重试/超时机制保障可靠性
 - ai_response_log提供完整的调用轨迹与成本统计基础
 - ai_knowledge_document对接外部向量库，支撑相似检索与知识复用
-- ai_task_external_callback实现外部系统数据隔离与异步回调推送
+- 新增的systemId字段和AiTaskSource枚举实现了内外任务的清晰区分
+- 改进的bizId字段类型提供了更灵活的业务ID支持
+- AiTaskResultSyncScheduler实现了可靠的结果同步机制
+
 建议在后续迭代中完善：
 - 任务优先级与资源配额
 - 日志归档与冷热分层
@@ -505,24 +446,18 @@ CallbackSvc --> DB
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java:96-149](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/recorder/AiCallRecorder.java#L96-L149)
 - [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java:1-29](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/service/impl/AiResponseLogServiceImpl.java#L1-L29)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java:1-33](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/controller/KnowledgeController.java#L1-33)
 
 ### 异步任务处理的数据持久化方案
 - 任务生命周期
   - Core写入PENDING -> AI拉取并CAS为PROCESSING -> 执行 -> 更新COMPLETED/FAILED/AI_UNAVAILABLE/SKIPPED
 - 结果与日志分离
   - 任务结果写入ai_task.result；调用细节写入ai_response_log，便于独立分析与归档。
-- 外部系统任务流程
-  - 外部系统创建任务 -> 自动创建回调记录 -> 内部任务创建 -> 返回任务ID
-  - 定时调度器扫描终态任务 -> 构建回调请求 -> HTTP推送 -> 更新回调状态
+- 结果同步流程
+  - 定时调度器扫描终态任务 -> 抢占任务 -> 根据systemId选择同步方式 -> 更新同步状态
 
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java:1-43](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java#L1-L43)
-- [ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java:23-37](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/mapper/AiTaskMapper.java#L23-L37)
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:17-46](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L17-L46)
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:79-105](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L79-L105)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:83-96](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L83-L96)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:58-72](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L58-L72)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java:33-71](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L71)
 
 ### 性能监控指标收集
 - 任务级
@@ -531,9 +466,8 @@ CallbackSvc --> DB
   - 模型调用次数、tokens总量、平均耗时、失败原因分布
 - 知识库
   - 文档入库成功率、向量库写入耗时、集合大小与分片均衡度
-- 外部系统监控
-  - 外部任务创建成功率、回调记录创建耗时、权限验证失败率
-  - 回调推送成功率、重试次数分布、外部系统响应时间
+- 结果同步监控
+  - 同步任务数量、同步成功率、同步耗时、抢占冲突率
 
 ### AI调用成本统计
 - 依据ai_response_log.total_tokens聚合成本；可按model、role、task_id、conversation_id维度统计。
@@ -548,14 +482,13 @@ CallbackSvc --> DB
   - 任务状态为FAILED或AI_UNAVAILABLE且retry_count < max_retry
 - 策略建议
   - 指数退避、限流与熔断；区分可重试与不可重试错误；记录重试原因与间隔。
-- 外部回调重试
-  - 回调推送失败时递增retry_count，达到最大重试次数后标记为FAILED
-  - 支持手动重试和自动重试机制
+- 同步异常处理
+  - AiSyncedException统一处理同步过程中的异常情况
+  - 支持自定义错误码和消息传递
 
 章节来源
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java:35-44](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java#L35-L44)
-- [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:17-46](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L17-L46)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:167-185](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L167-L185)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiSyncedException.java:10-31](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiSyncedException.java#L10-L31)
 
 ### 数据清理策略
 - 响应日志
@@ -564,29 +497,17 @@ CallbackSvc --> DB
   - 终态任务超过阈值后归档；保留必要审计字段（状态、耗时、错误摘要）。
 - 知识库
   - 归档或删除失效文档；清理向量库中孤立向量ID，保持集合整洁。
-- 外部回调记录
-  - 定期清理已完成的外部回调记录；保留最近30天的活跃记录用于审计。
 
-### 外部系统数据隔离实现
-- 数据隔离机制
-  - 每个外部系统通过唯一的app_key标识，创建任务时自动生成回调记录
-  - 所有查询操作都必须携带X-App-Key请求头进行身份验证
-  - verifyOwnership方法确保任务与外部系统的归属关系
-- 安全验证流程
-  - 请求到达ExternalAiTaskController -> 提取appKey -> 调用verifyOwnership -> 验证通过才允许访问
-  - 未授权的访问直接返回403禁止访问错误
-- 回调记录用途
-  - 有回调URL的系统：记录回调状态，支持异步回调通知
-  - 无回调URL的系统：仅用于数据隔离，标记为SUCCESS状态
-- 回调推送机制
-  - AiTaskCallbackScheduler定时扫描PENDING状态的回调记录
-  - 检查关联任务是否达到终态，构建回调请求并签名验证
-  - 通过HTTP推送任务结果到外部系统配置的system_url
-  - 支持重试机制，达到最大重试次数后标记为FAILED
+### 内外任务区分实现
+- 任务来源标识
+  - systemId字段区分任务来源：内部任务systemId=0，外部任务systemId=外部系统标识
+  - AiTaskSource枚举提供INTERNAL和EXTERNAL两种任务来源类型
+- 业务类型规范化
+  - BizType枚举规范业务类型：REQUIREMENT（需求）、PROJECT（项目）、DOCUMENT（文档）、REVIEW_ITEM（评审项）、DETECTION（检测）
+- 业务ID灵活性
+  - bizId字段从数值类型改为varchar(64)，支持外部系统的各种ID格式
 
 章节来源
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:83-96](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L83-L96)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java:126-135](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L126-L135)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java:29-35](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L29-L35)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java:74-140](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/AiTaskCallbackService.java#L74-L140)
-- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java:24-34](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskCallbackScheduler.java#L24-L34)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java:27-37](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L27-L37)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java:11-18](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java#L11-L18)
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java:11-21](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java#L11-L21)

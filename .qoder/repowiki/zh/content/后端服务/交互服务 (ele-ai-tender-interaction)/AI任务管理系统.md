@@ -10,7 +10,19 @@
 - [ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/AiApplication.java](file://ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/AiApplication.java)
 - [ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/SupportApplication.java](file://ele-ai-tender-support/src/main/java/com/jy/eleaitender/support/SupportApplication.java)
 - [ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/FileApplication.java](file://ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/FileApplication.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiTaskClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiTaskClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalAuthClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalAuthClient.java)
+- [ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/EleAiTenderInteractionAutoConfiguration.java](file://ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/EleAiTenderInteractionAutoConfiguration.java)
+- [ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java](file://ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java)
 </cite>
+
+## 更新摘要
+**变更内容**   
+- AiTaskClient新增支持文件ID列表的createTask方法，提供更直观的API用于创建带文件的AI任务
+- 开发者可以直接传递文件ID列表而无需手动字符串拼接，系统会自动将List<String>转换为逗号分隔的字符串格式
+- 完善了交互客户端架构的文档说明，包括外部认证、用户信息、文件操作等完整客户端体系
 
 ## 目录
 1. [简介](#简介)
@@ -25,7 +37,7 @@
 10. [附录](#附录)
 
 ## 简介
-本系统为“招标文件AI编制工具”，支持独立部署与嵌入第三方平台，提供项目管理、需求编制、智能检测、文档生成、知识库与模型路由等能力。后端采用Spring Boot 3.2.2 + MyBatis-Plus 3.5.5 + MySQL 8.4.0；AI侧集成Spring AI 1.1.0、Milvus向量库、Apache Tika、poi-tl、flexmark-java等；前端包含两个Vue 3应用：支撑中心管理后台与AI编制业务前端。
+本系统为"招标文件AI编制工具"，支持独立部署与嵌入第三方平台，提供项目管理、需求编制、智能检测、文档生成、知识库与模型路由等能力。后端采用Spring Boot 3.2.2 + MyBatis-Plus 3.5.5 + MySQL 8.4.0；AI侧集成Spring AI 1.1.0、Milvus向量库、Apache Tika、poi-tl、flexmark-java等；前端包含两个Vue 3应用：支撑中心管理后台与AI编制业务前端。
 
 ## 项目结构
 仓库采用前后端分离与多模块后端架构：
@@ -240,6 +252,85 @@ FE_SUP_PKG["支撑中心前端 package.json"] --> FE_SUP_DEPS["Vue3/TS/Vite/Elem
 
 [本节为概念性说明，不直接分析具体源码文件]
 
+### 交互客户端架构更新
+
+**已更新** AiTaskClient新增支持文件ID列表的createTask方法，提供更直观的API用于创建带文件的AI任务
+
+#### 外部认证客户端
+- **AiExternalAuthClient**：专门用于AI系统的认证客户端，提供获取外部token的能力
+- 通过`/external/token`接口为业务系统用户换取可跳转使用的外部token
+- 集成了请求签名验证机制，确保API调用的安全性
+
+#### AI任务客户端
+- **AiTaskClient**：封装AI任务的创建、查询和状态查询能力
+- **新增功能**：支持文件ID列表的直接传入，无需手动字符串拼接
+  - `createTask(authorization, request, fileIds)`：接受List<String>类型的文件ID列表，自动转换为逗号分隔的字符串格式
+  - `createTask(authorization, request)`：传统方法，需要手动设置request中的fileIds字段
+- 外部系统需先通过`AiExternalAuthClient.getExternalToken`获取JWT令牌
+- 再将令牌传入本类各方法的`authorization`参数进行认证
+
+#### 外部用户信息客户端
+- **AiExternalUserInfoClient**：获取当前外部用户信息的客户端
+- 通过`/external/userinfo`接口透传Authorization头获取用户信息
+
+#### 文件客户端
+- **AiFileClient**：封装文件信息查询、下载和上传能力
+- 支持多种文件操作：getFileInfo、downloadFile、uploadFile（byte[]和Path两种方式）
+- 同样需要JWT令牌进行认证
+
+#### 自动配置注册
+- 通过`EleAiTenderInteractionAutoConfiguration`自动注册各类客户端Bean
+- 支持条件化配置，可根据需要启用或禁用特定功能
+
+```mermaid
+classDiagram
+class EleAiTenderInteractionAutoConfiguration {
++aiExternalAuthClient()
++aiTaskClient()
++aiExternalUserInfoClient()
++aiFileClient()
+}
+class AiExternalAuthClient {
++getExternalToken(request)
+}
+class AiTaskClient {
++createTask(authorization, request, fileIds)
++createTask(authorization, request)
++getTask(authorization, taskId)
++getTaskStatus(authorization, taskId)
+}
+class AiExternalUserInfoClient {
++getCurrentExternalUser(authorization)
+}
+class AiFileClient {
++getFileInfo(authorization, fileId)
++downloadFile(authorization, fileId)
++uploadFile(authorization, content, fileName, bizType)
++uploadFile(authorization, filePath, bizType)
+}
+EleAiTenderInteractionAutoConfiguration --> AiExternalAuthClient
+EleAiTenderInteractionAutoConfiguration --> AiTaskClient
+EleAiTenderInteractionAutoConfiguration --> AiExternalUserInfoClient
+EleAiTenderInteractionAutoConfiguration --> AiFileClient
+AiTaskClient --> AiExternalAuthClient : "使用JWT令牌"
+AiFileClient --> AiExternalAuthClient : "使用JWT令牌"
+AiExternalUserInfoClient --> AiExternalAuthClient : "使用JWT令牌"
+```
+
+图表来源
+- [ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/EleAiTenderInteractionAutoConfiguration.java](file://ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/EleAiTenderInteractionAutoConfiguration.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalAuthClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalAuthClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiTaskClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiTaskClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java)
+
+**章节来源**
+- [ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/EleAiTenderInteractionAutoConfiguration.java](file://ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/EleAiTenderInteractionAutoConfiguration.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalAuthClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalAuthClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiTaskClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiTaskClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiExternalUserInfoClient.java)
+- [ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java](file://ele-ai-tender-interaction-core/src/main/java/com/jy/eleaitender/interaction/core/client/AiFileClient.java)
+
 ## 依赖关系分析
 - 服务间调用关系
   - core → support：用户认证、权限校验
@@ -300,6 +391,8 @@ FILE --> DISK["本地磁盘"]
 
 ## 结论
 本系统以清晰的分层与模块化设计实现招标文件AI编制的端到端能力：支撑中心负责基础治理，文件服务专注文档与模板渲染，核心业务编排项目与需求生命周期并通过任务表与AI服务异步协作，AI服务承载对话、检测、匹配与模型路由。配合双前端与完善的依赖治理，系统在可维护性、扩展性与性能方面具备良好基础。
+
+**更新亮点**：交互客户端架构的完善使得外部系统集成更加便捷，特别是AiTaskClient新增的文件ID列表支持，大大简化了带文件AI任务的创建流程，开发者无需再进行繁琐的字符串拼接操作。
 
 ## 附录
 - 环境变量覆盖：SPRING_DATASOURCE_PASSWORD、SPRING_REDIS_PASSWORD、APP_JWT_SECRET、DEEPSEEK_API_KEY、LOCAL_MODEL_KEY
