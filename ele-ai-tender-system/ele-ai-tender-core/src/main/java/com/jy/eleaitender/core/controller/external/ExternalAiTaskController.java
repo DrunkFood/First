@@ -6,6 +6,7 @@ import com.jy.eleaitender.common.interaction.dto.AiTaskCreateRequest;
 import com.jy.eleaitender.common.interaction.dto.AiTaskCreateResponse;
 import com.jy.eleaitender.common.interaction.dto.AiTaskQueryResponse;
 import com.jy.eleaitender.common.response.Result;
+import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.service.external.ExternalAiTaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,12 +27,14 @@ public class ExternalAiTaskController {
     private ExternalAiTaskService externalAiTaskService;
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequireLogin
     @Operation(summary = "创建AI任务")
     public Result<AiTaskCreateResponse> createTask(@RequestBody AiTaskCreateRequest request) {
         return Result.success(externalAiTaskService.createTask(request));
     }
 
     @GetMapping("/{taskId}")
+    @RequireLogin
     @Operation(summary = "查询AI任务详情")
     public Result<AiTaskQueryResponse> getTask(@PathVariable Long taskId) {
         validateTaskId(taskId);
@@ -39,6 +42,7 @@ public class ExternalAiTaskController {
     }
 
     @GetMapping("/{taskId}/status")
+    @RequireLogin
     @Operation(summary = "查询AI任务状态")
     public Result<AiTaskQueryResponse> getTaskStatus(@PathVariable Long taskId) {
         validateTaskId(taskId);
