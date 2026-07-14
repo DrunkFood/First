@@ -1,5 +1,8 @@
 package com.jy.eleaitender.core.scheduler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
 import com.jy.eleaitender.common.exception.AiSyncedException;
@@ -9,12 +12,11 @@ import com.jy.eleaitender.core.mapper.SysAccessSystemQueryMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.SimpleDateFormat;
@@ -37,6 +39,9 @@ public class AiTaskResultCallbackHandler {
     @Autowired
     @Qualifier("callbackRestTemplate")
     private RestTemplate callbackRestTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     /**
      * 处理待回调记录
@@ -73,14 +78,34 @@ public class AiTaskResultCallbackHandler {
             headers.set("X-Timestamp", String.valueOf(timestamp));
             headers.set("X-Signature", signature);
 
-            HttpEntity<AiTaskResultCallbackRequest> entity = new HttpEntity<>(request, headers);
-            callbackRestTemplate.postForEntity(callbackUrl, entity, String.class);
+            // 发送POST请求
+            post(callbackUrl, headers, request);
 
             // 推送成功
             log.info("回调推送成功: taskId={}, url={}", task.getId(), callbackUrl);
         } catch (Exception e) {
             log.error("回调推送失败: taskId={}, url={}, error={}", task.getId(), callbackUrl, e.getMessage(), e);
             throw new AiSyncedException("回调推送失败");
+        }
+    }
+
+    private void post(String url, HttpHeaders headers, Object body) throws JsonProcessingException {
+        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
+        ResponseEntity<String> responseEntity = callbackRestTemplate.postForEntity(url, entity, String.class);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            throw new RestClientException("回调推送失败");
+        }
+        JsonNode jsonNode = objectMapper.readTree(responseEntity.getBody());
+        int code = jsonNode.get("code").asInt();
+        if (code != 200) {
+            String msg = "";
+            if (jsonNode.get("msg") != null) {
+                msg = jsonNode.get("msg").asText();
+            }
+            if (jsonNode.get("message") != null) {
+                msg = jsonNode.get("message").asText();
+            }
+            throw new RestClientException(msg);
         }
     }
 
