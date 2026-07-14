@@ -36,6 +36,10 @@ public final class InteractionValidationUtils {
         }
     }
 
+    public static void validateFileSha256(String sha256) {
+        requireText(sha256, "文件SHA256不能为空");
+    }
+
     public static void validateFileUploadParams(byte[] content, String fileName, String bizType) {
         if (content == null || content.length == 0) {
             throw new InteractionException(InteractionResponseCode.PARAM_ERROR, "文件内容不能为空");

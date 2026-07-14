@@ -57,7 +57,35 @@ public class AiFileClient {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         ResponseEntity<InteractionResult<InteractionFileInfoResponse>> response = restTemplate.exchange(
-                resolveFileUrl(properties.getFileInfoPath(), fileId),
+                resolveFileUrl(properties.getFileInfoPath(), String.valueOf(fileId)),
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<InteractionResult<InteractionFileInfoResponse>>() {
+                });
+        InteractionFileInfoResponse data = InteractionResultExtractor.extractData(response.getBody(), "获取文件信息失败");
+        log.info("INTERACTION LOCAL traceId={} api=file/info success=true fileId={} fileName={} fileSize={} bizType={}",
+                InteractionTraceSupport.getTraceId(),
+                data.getFileId(),
+                data.getFileName(),
+                data.getFileSize(),
+                data.getBizType());
+        return data;
+    }
+
+    /**
+     * 查询文件信息
+     *
+     * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
+     */
+    public InteractionFileInfoResponse getFileInfoSha256(String authorization, String sha256) {
+        InteractionValidationUtils.validateFileSha256(sha256);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, authorization);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<InteractionResult<InteractionFileInfoResponse>> response = restTemplate.exchange(
+                resolveFileUrl(properties.getFileInfoPathSha256(), sha256),
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<InteractionResult<InteractionFileInfoResponse>>() {
@@ -85,7 +113,7 @@ public class AiFileClient {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> response = restTemplate.exchange(
-                resolveFileUrl(properties.getFileDownloadPath(), fileId),
+                resolveFileUrl(properties.getFileDownloadPath(), String.valueOf(fileId)),
                 HttpMethod.GET,
                 entity,
                 byte[].class);
@@ -197,7 +225,7 @@ public class AiFileClient {
         return result;
     }
 
-    private String resolveFileUrl(String pathTemplate, Long fileId) {
-        return properties.resolveFileBaseUrl() + pathTemplate.replace("{fileId}", String.valueOf(fileId));
+    private String resolveFileUrl(String pathTemplate, String param) {
+        return properties.resolveFileBaseUrl() + pathTemplate.replace("{fileId}", param);
     }
 }

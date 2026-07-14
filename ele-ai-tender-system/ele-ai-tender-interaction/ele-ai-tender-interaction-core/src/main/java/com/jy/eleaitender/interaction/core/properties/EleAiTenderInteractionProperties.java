@@ -22,6 +22,7 @@ public class EleAiTenderInteractionProperties {
 
     private String fileBaseUrl;
     private String fileInfoPath = "/api/file/info/{fileId}";
+    private String fileInfoPathSha256 = "/api/file/info/sha256/{fileId}";
     private String fileDownloadPath = "/api/file/download/{fileId}";
     private String fileUploadPath = "/api/file/upload";
 
