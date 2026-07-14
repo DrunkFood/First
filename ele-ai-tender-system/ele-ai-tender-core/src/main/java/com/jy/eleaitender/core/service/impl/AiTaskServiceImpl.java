@@ -127,6 +127,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
         AiTaskVO vo = new AiTaskVO();
         vo.setId(task.getId());
         vo.setTaskType(task.getTaskType());
+        vo.setSystemId(task.getSystemId());
         vo.setProjectId(task.getProjectId());
         vo.setBizId(Long.valueOf(task.getBizId()));
         vo.setBizType(task.getBizType());

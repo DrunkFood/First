@@ -21,6 +21,9 @@ public class AiTaskVO {
     @Schema(description = "任务类型名称")
     private String taskTypeName;
 
+    @Schema(description = "任务来源")
+    private Long systemId;
+
     @Schema(description = "关联项目ID")
     private Long projectId;
 
