@@ -150,7 +150,7 @@ public final class HttpAccessLogSupport {
             accessLog.setAppKey(firstNonBlank(accessLog.getAppKey(), stringValue(claims.get("appKey"))));
             if ("EXTERNAL".equalsIgnoreCase(tokenType)) {
                 accessLog.setUserId(stringValue(claims.get("userId")));
-                accessLog.setUserName(stringValue(claims.get("userName")));
+                accessLog.setUserName(stringValue(claims.get("username")));
                 accessLog.setEnterpriseId(stringValue(claims.get("enterpriseId")));
                 accessLog.setEnterpriseName(stringValue(claims.get("enterpriseName")));
                 return;

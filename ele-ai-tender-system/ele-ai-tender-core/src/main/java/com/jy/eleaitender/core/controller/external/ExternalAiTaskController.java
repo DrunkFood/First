@@ -8,7 +8,6 @@ import com.jy.eleaitender.common.interaction.dto.AiTaskQueryResponse;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.core.service.external.ExternalAiTaskService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -28,26 +27,22 @@ public class ExternalAiTaskController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "创建AI任务")
-    public Result<AiTaskCreateResponse> createTask(
-            @Parameter(description = "应用Key", required = true) @RequestHeader("X-App-Key") String appKey,
-            @RequestBody AiTaskCreateRequest request) {
-        return Result.success(externalAiTaskService.createTask(appKey, request));
+    public Result<AiTaskCreateResponse> createTask(@RequestBody AiTaskCreateRequest request) {
+        return Result.success(externalAiTaskService.createTask(request));
     }
 
     @GetMapping("/{taskId}")
     @Operation(summary = "查询AI任务详情")
-    public Result<AiTaskQueryResponse> getTask(@Parameter(description = "应用Key", required = true) @RequestHeader("X-App-Key") String appKey,
-                                               @PathVariable Long taskId) {
+    public Result<AiTaskQueryResponse> getTask(@PathVariable Long taskId) {
         validateTaskId(taskId);
-        return Result.success(externalAiTaskService.getTask(appKey, taskId));
+        return Result.success(externalAiTaskService.getTask(taskId));
     }
 
     @GetMapping("/{taskId}/status")
     @Operation(summary = "查询AI任务状态")
-    public Result<AiTaskQueryResponse> getTaskStatus(@Parameter(description = "应用Key", required = true) @RequestHeader("X-App-Key") String appKey,
-                                                     @PathVariable Long taskId) {
+    public Result<AiTaskQueryResponse> getTaskStatus(@PathVariable Long taskId) {
         validateTaskId(taskId);
-        return Result.success(externalAiTaskService.getTaskStatus(appKey, taskId));
+        return Result.success(externalAiTaskService.getTaskStatus(taskId));
     }
 
     private void validateTaskId(Long taskId) {

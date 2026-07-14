@@ -7,7 +7,6 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.util.PasswordUtil;
 import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.common.entity.support.SysUserRole;
-import com.jy.eleaitender.common.util.RsaKeyUtil;
 import com.jy.eleaitender.support.mapper.SysUserMapper;
 import com.jy.eleaitender.support.mapper.SysUserRoleMapper;
 import com.jy.eleaitender.support.service.IUserService;
@@ -56,6 +55,15 @@ public class UserServiceImpl implements IUserService {
     @Override
     public SysUser getUserById(Long id) {
         SysUser user = userMapper.selectById(id);
+        if (user != null) {
+            enrichUserRoles(List.of(user));
+        }
+        return user;
+    }
+
+    @Override
+    public SysUser getUserByUsername(String username) {
+        SysUser user = userMapper.selectByUsername(username);
         if (user != null) {
             enrichUserRoles(List.of(user));
         }

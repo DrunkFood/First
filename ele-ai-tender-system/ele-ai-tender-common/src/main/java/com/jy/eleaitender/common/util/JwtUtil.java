@@ -2,7 +2,10 @@ package com.jy.eleaitender.common.util;
 
 import com.jy.eleaitender.common.constant.CommonConstant;
 import com.jy.eleaitender.common.exception.AuthException;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,8 +22,6 @@ import java.util.UUID;
  */
 @Slf4j
 public class JwtUtil {
-
-    private JwtUtil() {}
 
     /**
      * 默认密钥（实际使用时应从配置文件读取，至少32字节）
@@ -107,10 +108,17 @@ public class JwtUtil {
     }
 
     /**
+     * 生成服务间调用Token（使用默认密钥）
+     */
+    public static String generateServiceToken(String serviceName, long expirationMillis) {
+        return generateServiceToken(serviceName, runtimeSecret, expirationMillis);
+    }
+
+    /**
      * 生成服务间调用Token（SERVICE类型，不依赖Redis校验）
      *
-     * @param serviceName 服务名称
-     * @param secret      密钥
+     * @param serviceName      服务名称
+     * @param secret           密钥
      * @param expirationMillis 过期时间（毫秒）
      * @return Token字符串
      */
@@ -120,13 +128,6 @@ public class JwtUtil {
         claims.put("serviceName", serviceName);
         claims.put("username", serviceName);
         return createToken(claims, secret, expirationMillis, null);
-    }
-
-    /**
-     * 生成服务间调用Token（使用默认密钥）
-     */
-    public static String generateServiceToken(String serviceName, long expirationMillis) {
-        return generateServiceToken(serviceName, runtimeSecret, expirationMillis);
     }
 
     /**
@@ -141,51 +142,62 @@ public class JwtUtil {
      * @param secret         密钥
      * @return Token字符串
      */
-    public static String generateExternalToken(String appKey, String userId, String userName,
-                                                String enterpriseId, String enterpriseName,
-                                                String enterpriseCode,
-                                                String secret) {
-        return generateExternalToken(appKey, userId, userName, enterpriseId, enterpriseName, enterpriseCode, secret, runtimeExternalExpiration);
+    public static String generateExternalToken(Long systemId,
+                                               String appKey, Long userId, String userName,
+                                               String externalUserId, String externalUserName,
+                                               String enterpriseId, String enterpriseName,
+                                               String enterpriseCode,
+                                               String secret) {
+        return generateExternalToken(systemId, appKey, userId, userName, externalUserId, externalUserName, enterpriseId, enterpriseName, enterpriseCode, secret, runtimeExternalExpiration);
+    }
+
+    /**
+     * 生成外部系统用户Token（使用默认密钥 + 自定义过期时间）
+     */
+    public static String generateExternalToken(Long systemId,
+                                               String appKey, Long userId, String userName,
+                                               String externalUserId, String externalUserName,
+                                               String enterpriseId, String enterpriseName,
+                                               String enterpriseCode,
+                                               long expirationMillis) {
+        return generateExternalToken(systemId, appKey, userId, userName, externalUserId, externalUserName, enterpriseId, enterpriseName, enterpriseCode, runtimeSecret, expirationMillis);
+    }
+
+    /**
+     * 生成外部系统用户Token（使用默认密钥）
+     */
+    public static String generateExternalToken(Long systemId,
+                                               String appKey, Long userId, String userName,
+                                               String externalUserId, String externalUserName,
+                                               String enterpriseId, String enterpriseName,
+                                               String enterpriseCode) {
+        return generateExternalToken(systemId, appKey, userId, userName, externalUserId, externalUserName, enterpriseId, enterpriseName, enterpriseCode, runtimeSecret);
     }
 
     /**
      * 生成外部系统用户Token（自定义过期时间）
      */
-    public static String generateExternalToken(String appKey, String userId, String userName,
-                                               String enterpriseId, String enterpriseName,
-                                               String enterpriseCode,
+    public static String generateExternalToken(Long systemId,
+                                               String appKey,
+                                               Long userId, String userName,
+                                               String externalUserId, String externalUserName,
+                                               String enterpriseId, String enterpriseName, String enterpriseCode,
                                                String secret,
                                                long expirationMillis) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", CommonConstant.TOKEN_TYPE_EXTERNAL);
+        claims.put("systemId", systemId);
         claims.put("appKey", appKey);
         claims.put("userId", userId);
-        claims.put("userName", userName);
+        claims.put("username", userName);
+        claims.put("externalUserId", externalUserId);
+        claims.put("externalUserName", externalUserName);
         claims.put("enterpriseId", enterpriseId);
         claims.put("enterpriseName", enterpriseName);
         claims.put("enterpriseCode", enterpriseCode);
         String sessionJti = UUID.randomUUID().toString();
 
         return createToken(claims, secret, expirationMillis, sessionJti);
-    }
-
-    /**
-     * 生成外部系统用户Token（使用默认密钥 + 自定义过期时间）
-     */
-    public static String generateExternalToken(String appKey, String userId, String userName,
-                                               String enterpriseId, String enterpriseName,
-                                               String enterpriseCode,
-                                               long expirationMillis) {
-        return generateExternalToken(appKey, userId, userName, enterpriseId, enterpriseName, enterpriseCode, runtimeSecret, expirationMillis);
-    }
-
-    /**
-     * 生成外部系统用户Token（使用默认密钥）
-     */
-    public static String generateExternalToken(String appKey, String userId, String userName,
-                                                String enterpriseId, String enterpriseName,
-                                                String enterpriseCode) {
-        return generateExternalToken(appKey, userId, userName, enterpriseId, enterpriseName, enterpriseCode, runtimeSecret);
     }
 
     /**

@@ -11,6 +11,7 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.interaction.dto.AiTaskCreateRequest;
 import com.jy.eleaitender.common.interaction.dto.AiTaskCreateResponse;
 import com.jy.eleaitender.common.interaction.dto.AiTaskQueryResponse;
+import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
 import com.jy.eleaitender.core.mapper.SysAccessSystemQueryMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
@@ -42,7 +43,7 @@ public class ExternalAiTaskService {
     /**
      * 创建AI任务
      */
-    public AiTaskCreateResponse createTask(String appKey, AiTaskCreateRequest request) {
+    public AiTaskCreateResponse createTask(AiTaskCreateRequest request) {
         // 0. 参数校验
         if (request == null) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "请求体不能为空");
@@ -70,7 +71,7 @@ public class ExternalAiTaskService {
         }
 
         // 4. 查询外部系统信息
-        SysAccessSystem system = accessSystemQueryMapper.selectByAppKey(appKey);
+        SysAccessSystem system = accessSystemQueryMapper.selectById(SecurityContextHolder.getSystemId());
         if (system == null || !StringUtils.hasText(system.getSystemUrl())) {
             throw new AiSyncedException("外部系统不存在或未配置system_url");
         }
@@ -91,7 +92,7 @@ public class ExternalAiTaskService {
     /**
      * 查询任务详情
      */
-    public AiTaskQueryResponse getTask(String appKey, Long taskId) {
+    public AiTaskQueryResponse getTask(Long taskId) {
         AiTaskVO vo = aiTaskService.getTaskStatus(taskId);
         return toQueryResponse(vo);
     }
@@ -99,8 +100,8 @@ public class ExternalAiTaskService {
     /**
      * 查询任务状态
      */
-    public AiTaskQueryResponse getTaskStatus(String appKey, Long taskId) {
-        return getTask(appKey, taskId);
+    public AiTaskQueryResponse getTaskStatus(Long taskId) {
+        return getTask(taskId);
     }
 
     private AiTaskQueryResponse toQueryResponse(com.jy.eleaitender.core.dto.response.AiTaskVO vo) {

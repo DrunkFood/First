@@ -11,7 +11,9 @@ public interface IUserService {
     Page<SysUser> getUserPage(Integer pageNum, Integer pageSize, String username, String realName, Integer status);
     
     SysUser getUserById(Long id);
-    
+
+    SysUser getUserByUsername(String username);
+
     SysUser createUser(SysUser user);
     
     void updateUser(SysUser user);

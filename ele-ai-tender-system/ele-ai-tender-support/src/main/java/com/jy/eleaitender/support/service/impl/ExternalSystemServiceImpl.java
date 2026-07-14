@@ -2,23 +2,21 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jy.eleaitender.common.constant.FileConstants;
-import com.jy.eleaitender.common.constant.RedisKeyConstant;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
+import com.jy.eleaitender.common.entity.support.SysUser;
+import com.jy.eleaitender.common.enums.ResponseCode;
+import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.common.util.PasswordUtil;
 import com.jy.eleaitender.support.mapper.SysAccessSystemMapper;
+import com.jy.eleaitender.support.service.IAuthService;
 import com.jy.eleaitender.support.service.IExternalSystemService;
+import com.jy.eleaitender.support.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -32,7 +30,10 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
     private SysAccessSystemMapper accessSystemMapper;
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private IUserService userService;
+
+    @Autowired
+    private IAuthService authService;
 
     @Override
     public Page<SysAccessSystem> getSystemPage(Integer pageNum, Integer pageSize, String systemName, String appKey, Integer status) {
@@ -68,6 +69,10 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
         system.setAppSecret(generateAppSecret());
         system.setStatus(1);
         accessSystemMapper.insert(system);
+        // 注册系统用户
+        String password = PasswordUtil.generateRandomPassword();
+        authService.registerSysUser(system.getAppKey(), password, system.getSystemName(), null);
+
         return system;
     }
 
@@ -83,17 +88,34 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteSystem(Long id) {
+        SysAccessSystem system = accessSystemMapper.selectById(id);
+        if (system == null) {
+            throw new BusinessException(ResponseCode.PARAM_ERROR, "接入系统不存在");
+        }
         accessSystemMapper.deleteById(id);
+        // 清理关联的系统用户
+        SysUser sysUser = userService.getUserByUsername(system.getAppKey());
+        if (sysUser != null) {
+            userService.deleteUser(sysUser.getId());
+        }
     }
 
     @Override
     public String regenerateSecret(Long id) {
-        String newSecret = generateAppSecret();
-        SysAccessSystem system = new SysAccessSystem();
-        system.setId(id);
-        system.setAppSecret(newSecret);
+        // 先查询系统信息获取appKey
+        SysAccessSystem system = accessSystemMapper.selectById(id);
+        if (system == null) {
+            throw new BusinessException(ResponseCode.PARAM_ERROR, "接入系统不存在");
+        }
+        // 更新密钥
+        system.setAppSecret(generateAppSecret());
         accessSystemMapper.updateById(system);
-        return newSecret;
+        // 更新外部系统用户密码
+        SysUser sysUser = userService.getUserByUsername(system.getAppKey());
+        if (sysUser != null) {
+            userService.resetPassword(sysUser.getId(), system.getAppSecret());
+        }
+        return system.getAppSecret();
     }
 
     @Override

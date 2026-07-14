@@ -4,6 +4,7 @@ import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
 import com.jy.eleaitender.common.dto.request.ResetPasswordRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
+import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueCommand;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueResult;
 import com.jy.eleaitender.support.model.external.ExternalUserInfoView;
@@ -35,6 +36,17 @@ public interface IAuthService {
      * @param request 重置密码请求
      */
     void resetPasswordByPhone(ResetPasswordRequest request);
+
+    /**
+     * 注册系统用户
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @param realName 真实姓名
+     * @param phone    手机号
+     * @return 用户信息
+     */
+    SysUser registerSysUser(String username, String password, String realName, String phone);
 
     /**
      * 用户登出

@@ -15,6 +15,11 @@ public class SecurityContextHolder {
         return CONTEXT.get();
     }
 
+    public static Long getSystemId() {
+        LoginUser user = getLoginUser();
+        return user != null ? user.getSystemId() : null;
+    }
+
     public static Long getUserId() {
         LoginUser user = getLoginUser();
         return user != null ? user.getUserId() : null;
