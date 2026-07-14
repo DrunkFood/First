@@ -64,8 +64,7 @@ public class ExternalAuthController {
             // 获取Token
             ExternalTokenIssueResult result = authService.getExternalToken(appKey, command);
             ExternalTokenResponse response = new ExternalTokenResponse(result.getToken(), result.getExpireIn());
-            log.info("外部系统获取Token成功: appKey={}, userId={}, enterpriseId={}",
-                    appKey, command.getUserId(), command.getEnterpriseId());
+            log.info("外部系统获取Token成功: appKey={}, userId={}, enterpriseId={}", appKey, command.getUserId(), command.getEnterpriseId());
             return Result.success(response);
         } catch (RuntimeException e) {
             log.warn("外部系统获取Token失败: appKey={}, request={}, reason={}", appKey, request, e.getMessage(), e);

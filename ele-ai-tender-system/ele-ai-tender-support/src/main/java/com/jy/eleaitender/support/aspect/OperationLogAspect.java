@@ -42,7 +42,7 @@ public class OperationLogAspect {
 
         // 在主线程中提取上下文信息
         Long userId = SecurityContextHolder.getUserId();
-        String userName = SecurityContextHolder.getRealName();
+        String userName = SecurityContextHolder.getUsername();
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         OperationLog annotation = method.getAnnotation(OperationLog.class);

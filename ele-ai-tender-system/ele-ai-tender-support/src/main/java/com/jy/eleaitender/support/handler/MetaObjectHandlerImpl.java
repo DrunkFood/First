@@ -18,7 +18,7 @@ public class MetaObjectHandlerImpl implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         Date now = new Date();
         Long userId = SecurityContextHolder.getUserId();
-        String realName = SecurityContextHolder.getRealName();
+        String realName = SecurityContextHolder.getUsername();
 
         this.strictInsertFill(metaObject, "createTime", Date.class, now);
         this.strictInsertFill(metaObject, "modifyTime", Date.class, now);
@@ -34,7 +34,7 @@ public class MetaObjectHandlerImpl implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         Long userId = SecurityContextHolder.getUserId();
-        String realName = SecurityContextHolder.getRealName();
+        String realName = SecurityContextHolder.getUsername();
 
         this.strictUpdateFill(metaObject, "modifyTime", Date.class, new Date());
         this.strictUpdateFill(metaObject, "modifyId", Long.class, userId != null ? userId : 0L);
