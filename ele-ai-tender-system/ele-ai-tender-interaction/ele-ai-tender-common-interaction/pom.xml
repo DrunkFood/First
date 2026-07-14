@@ -16,10 +16,6 @@
     <name>Ele AI Tender Common Interaction</name>
     <description>Shared interaction contracts for Ele AI Tender System</description>
 
-    <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -33,16 +29,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <release>${maven.compiler.release}</release>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

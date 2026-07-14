@@ -53,8 +53,18 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.5.1</version>
                     <configuration>
-                        <release>${interaction.java.version}</release>
+                        <source>${interaction.java.version}</source>
+                        <target>${interaction.java.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
             </plugins>
@@ -104,7 +114,7 @@
                 </executions>
                 <configuration>
                     <!-- 指定Java源版本，确保Javadoc兼容性 -->
-                    <source>${java.version}</source>
+                    <source>${interaction.java.version}</source>
                     <!-- 避免在某些情况下出现警告导致构建失败 -->
                     <doclint>none</doclint>
                 </configuration>
