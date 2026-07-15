@@ -142,9 +142,9 @@ CREATE TABLE `sup_role_menu` (
 DROP TABLE IF EXISTS `sup_access_system`;
 CREATE TABLE `sup_access_system` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '系统ID',
-    `system_name` VARCHAR(100) NOT NULL COMMENT '系统名称',
+    `system_name` VARCHAR(50) NOT NULL COMMENT '系统名称',
     `system_url` VARCHAR(255) DEFAULT NULL COMMENT '系统URL',
-    `app_key` VARCHAR(64) NOT NULL COMMENT '应用Key',
+    `app_key` VARCHAR(50) NOT NULL COMMENT '应用Key',
     `app_secret` VARCHAR(128) NOT NULL COMMENT '应用密钥',
     `expire_time` DATETIME DEFAULT NULL COMMENT '有效期截止时间',
     `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态: 0-禁用, 1-启用',

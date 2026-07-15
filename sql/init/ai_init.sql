@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS `ai_task` (
                                          `id`              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '任务ID',
                                          `task_type`       VARCHAR(50)  NOT NULL COMMENT '任务类型: REQUIREMENT_GENERATE/REVIEW_ITEM_GENERATE/DETECTION_SENSITIVE_WORD/DETECTION_TYPO/DETECTION_POLICY_REVIEW/DETECTION_FORMAT_CHECK/TEXT_OPTIMIZE',
                                          `project_id`      BIGINT       DEFAULT NULL COMMENT '关联项目ID',
+                                         `system_id`       BIGINT       DEFAULT NULL COMMENT '调用系统ID',
                                          `biz_id`          VARCHAR(64)  DEFAULT NULL COMMENT '关联业务ID(需求ID/项目ID/检测记录ID/外部系统ID)',
                                          `biz_type`        VARCHAR(30)  DEFAULT NULL COMMENT '业务类型: REQUIREMENT/PROJECT/DETECTION',
                                          `request_params`  TEXT         DEFAULT NULL COMMENT '请求参数(JSON)',

@@ -12,6 +12,7 @@
 
 - `GET /api/file/download/{fileId}`
 - `GET /api/file/info/{fileId}`
+- `GET /api/file/info/sha256/{sha256}` — 按 SHA-256 摘要查询文件信息
 - `DELETE /api/file/delete/{fileId}`
 - `POST /api/file/extract-text`
 

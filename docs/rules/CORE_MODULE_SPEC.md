@@ -18,6 +18,7 @@ AI能力由 ai 模块通过 `ai_task` 表异步解耦提供，core 模块负责"
 | PUT | `/api/v1/projects/{id}` | 更新项目 |
 | DELETE | `/api/v1/projects` | 批量删除项目 |
 | GET | `/api/v1/projects/{id}/phase` | 获取项目当前阶段信息 |
+| GET | `/api/v1/projects/check-name` | 检查项目名称是否重复 |
 | PUT | `/api/v1/projects/{id}/phase` | 推进项目阶段（RequestBody: targetPhase + context） |
 | PUT | `/api/v1/projects/{id}/status` | 变更项目状态 |
 | POST | `/api/v1/projects/{id}/requirement-generate` | 提交AI生成需求 |
@@ -32,6 +33,7 @@ AI能力由 ai 模块通过 `ai_task` 表异步解耦提供，core 模块负责"
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/v1/requirements` | 分页查询需求列表 |
+| GET | `/api/v1/requirements/check-name` | 检查需求名称是否重复 |
 | GET | `/api/v1/requirements/{id}` | 获取需求详情 |
 | POST | `/api/v1/requirements` | 创建需求 |
 | PUT | `/api/v1/requirements/{id}` | 更新需求 |
@@ -60,6 +62,7 @@ AI能力由 ai 模块通过 `ai_task` 表异步解耦提供，core 模块负责"
 | POST | `/api/v1/review-items/{projectId}/generate` | 提交AI生成评审项 |
 | POST | `/api/v1/review-items/batch` | 批量创建评审项 |
 | PUT | `/api/v1/review-items/batch` | 批量更新评审项 |
+| PUT | `/api/v1/review-items/{projectId}/replace` | 替换项目评审项（全量替换） |
 
 ### 2.4 智能检测 (`/api/v1/detection`)
 
@@ -135,6 +138,15 @@ AI能力由 ai 模块通过 `ai_task` 表异步解耦提供，core 模块负责"
 | PUT | `/api/v1/policy-files/{id}/status` | 启用/禁用 |
 | GET | `/api/v1/policy-files/all` | 获取全部可用政策文件（系统级+用户级合并） |
 | GET | `/api/v1/policy-files/knowledge-policy` | 获取知识库中所有政策类文档 |
+
+### 2.12 外部AI任务 (`/api/external/ai-tasks`)
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/external/ai-tasks` | 创建AI任务（需 @RequireLogin，供外部系统通过 JWT 直接调用） |
+| GET | `/api/external/ai-tasks/{taskId}` | 查询AI任务详情（需 @RequireLogin） |
+
+> 详见 [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) 第 9 节。
 
 ## 3. 当前关键表
 
@@ -317,6 +329,7 @@ AiUsageScenario 枚举定义模型使用场景：
 - `GENERATION`: 内容生成
 - `OPTIMIZATION`: 文本优化
 - `DETECTION`: 智能检测
+- `CHAT`: AI对话
 
 ### 6.3 模型路由
 
