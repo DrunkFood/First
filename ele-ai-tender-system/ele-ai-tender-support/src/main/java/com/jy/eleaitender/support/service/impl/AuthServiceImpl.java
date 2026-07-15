@@ -333,20 +333,19 @@ public class AuthServiceImpl implements IAuthService {
         if (system == null) {
             throw new BusinessException(ResponseCode.APP_KEY_NOT_FOUND);
         }
-        // 查询接入系统用户
-        SysUser sysUser = userMapper.selectByUsername(appKey);
-        if (sysUser == null) {
-            throw new BusinessException(ResponseCode.APP_KEY_NOT_FOUND);
-        }
-
         // 检查系统状态
         if (system.getStatus() != 1) {
             throw new BusinessException(ResponseCode.SYSTEM_DISABLED);
         }
-
         // 检查有效期
         if (system.getExpireTime() != null && system.getExpireTime().before(new Date())) {
             throw new BusinessException(ResponseCode.SYSTEM_EXPIRED);
+        }
+
+        // 查询接入系统用户
+        SysUser sysUser = userMapper.selectByUsername(appKey);
+        if (sysUser == null) {
+            throw new BusinessException(ResponseCode.APP_KEY_NOT_FOUND);
         }
 
         // 解析有效期
