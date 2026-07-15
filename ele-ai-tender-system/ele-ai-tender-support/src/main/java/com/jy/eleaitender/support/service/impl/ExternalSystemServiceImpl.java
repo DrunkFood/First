@@ -3,14 +3,10 @@ package com.jy.eleaitender.support.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
-import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.util.PasswordUtil;
 import com.jy.eleaitender.support.mapper.SysAccessSystemMapper;
-import com.jy.eleaitender.support.service.IAuthService;
 import com.jy.eleaitender.support.service.IExternalSystemService;
-import com.jy.eleaitender.support.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,12 +24,6 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
 
     @Autowired
     private SysAccessSystemMapper accessSystemMapper;
-
-    @Autowired
-    private IUserService userService;
-
-    @Autowired
-    private IAuthService authService;
 
     @Override
     public Page<SysAccessSystem> getSystemPage(Integer pageNum, Integer pageSize, String systemName, String appKey, Integer status) {
@@ -69,9 +59,6 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
         system.setAppSecret(generateAppSecret());
         system.setStatus(1);
         accessSystemMapper.insert(system);
-        // 注册系统用户
-        String password = PasswordUtil.generateRandomPassword();
-        authService.registerSysUser(system.getAppKey(), password, system.getSystemName(), null);
 
         return system;
     }
@@ -93,11 +80,6 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "接入系统不存在");
         }
         accessSystemMapper.deleteById(id);
-        // 清理关联的系统用户
-        SysUser sysUser = userService.getUserByUsername(system.getAppKey());
-        if (sysUser != null) {
-            userService.deleteUser(sysUser.getId());
-        }
     }
 
     @Override
@@ -110,11 +92,6 @@ public class ExternalSystemServiceImpl implements IExternalSystemService {
         // 更新密钥
         system.setAppSecret(generateAppSecret());
         accessSystemMapper.updateById(system);
-        // 更新外部系统用户密码
-        SysUser sysUser = userService.getUserByUsername(system.getAppKey());
-        if (sysUser != null) {
-            userService.resetPassword(sysUser.getId(), system.getAppSecret());
-        }
         return system.getAppSecret();
     }
 

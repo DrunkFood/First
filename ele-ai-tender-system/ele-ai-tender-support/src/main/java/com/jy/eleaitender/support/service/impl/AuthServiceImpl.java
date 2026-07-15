@@ -343,9 +343,10 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         // 查询接入系统用户
-        SysUser sysUser = userMapper.selectByUsername(appKey);
+        SysUser sysUser = userMapper.selectByUsername(command.getEnterpriseCode());
         if (sysUser == null) {
-            throw new BusinessException(ResponseCode.APP_KEY_NOT_FOUND);
+            String password = PasswordUtil.generateRandomPassword();
+            sysUser = this.registerSysUser(command.getEnterpriseCode(), password, command.getEnterpriseName(), null);
         }
 
         // 解析有效期
