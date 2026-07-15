@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * AI任务客户端 — 封装AI任务创建、查询和状态查询能力。
@@ -39,9 +40,13 @@ public class AiTaskClient {
      * @param request       AI任务创建请求
      * @param fileIds       文件ID列表
      */
-    public AiTaskCreateResponse createTask(String authorization, AiTaskCreateRequest request, List<String> fileIds) {
+    public AiTaskCreateResponse createTask(String authorization, AiTaskCreateRequest request, List<Long> fileIds) {
         if (fileIds != null && !fileIds.isEmpty()) {
-            request.setFileIds(String.join(",", fileIds));
+            StringJoiner stringJoiner = new StringJoiner(",");
+            for (Long fileId : fileIds) {
+                stringJoiner.add(String.valueOf(fileId));
+            }
+            request.setFileIds(stringJoiner.toString());
         }
         return createTask(authorization, request);
     }
