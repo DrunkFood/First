@@ -1,0 +1,220 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: feature-interaction
+nodes_managed: true
+exported_at: "2026-07-15T07:20:34Z"
+modules:
+    "":
+        dir_name: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 0f023c90-f612-43e8-a53c-ef0324a58a2f
+            - 1487f6eb-e2ba-420e-992c-9e54ba1a4fef
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01
+        depends_on: []
+        related_to: []
+    0f023c90-f612-43e8-a53c-ef0324a58a2f:
+        dir_name: 招标文件AI编制平台（全仓库编排层）
+        title: 招标文件AI编制平台（全仓库编排层）
+        scope: []
+        source_files: []
+        children:
+            - 0f023c90-f612-43e8-a53c-ef0324a58a2f/91e0c815-413c-479b-858e-b6a30ec77b2c
+        depends_on: []
+        related_to:
+            - path: 1487f6eb-e2ba-420e-992c-9e54ba1a4fef
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01
+    0f023c90-f612-43e8-a53c-ef0324a58a2f/91e0c815-413c-479b-858e-b6a30ec77b2c:
+        dir_name: 招标文件AI编制平台全生命周期文档库
+        title: 招标文件AI编制平台全生命周期文档库
+        scope:
+            - docs/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01:
+        dir_name: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/0d5672f6-3690-472b-a802-d550b0ec0518
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/5069bfec-b1e0-4f5d-98c4-1ee8b7083e5c
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9
+        depends_on: []
+        related_to:
+            - path: 0f023c90-f612-43e8-a53c-ef0324a58a2f
+            - path: 1487f6eb-e2ba-420e-992c-9e54ba1a4fef
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/0d5672f6-3690-472b-a802-d550b0ec0518:
+        dir_name: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）_2
+        title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/0d5672f6-3690-472b-a802-d550b0ec0518/b6fe3180-ac51-4c3e-bdf2-882340cfd913
+        depends_on: []
+        related_to: []
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/0d5672f6-3690-472b-a802-d550b0ec0518/b6fe3180-ac51-4c3e-bdf2-882340cfd913:
+        dir_name: 招标文件 AI 编制系统前端（Vue3 SPA）
+        title: 招标文件 AI 编制系统前端（Vue3 SPA）
+        scope:
+            - ele-ai-tender-support-frontend/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/1c356772-f21d-402a-8a99-270258226e47
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/4f79aac8-c7b1-434c-b407-b76861be3ce8
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11:
+        dir_name: 招标文件 AI 编制工具根仓库
+        title: 招标文件 AI 编制工具根仓库
+        scope:
+            - CLAUDE.md
+            - .claudeignore
+            - .qoderignore
+            - .gitignore
+            - AGENTS.md
+            - Jenkinsfile-ai.groovy
+            - Jenkinsfile-core-web.groovy
+            - Jenkinsfile-core.groovy
+            - Jenkinsfile-file.groovy
+            - Jenkinsfile-support-web.groovy
+            - Jenkinsfile-support.groovy
+            - README.md
+        source_files: []
+        children:
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/1c356772-f21d-402a-8a99-270258226e47
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/4f79aac8-c7b1-434c-b407-b76861be3ce8
+        depends_on: []
+        related_to: []
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/1c356772-f21d-402a-8a99-270258226e47:
+        dir_name: 招标文件 AI 编制系统（多模块聚合工程）
+        title: 招标文件 AI 编制系统（多模块聚合工程）
+        scope:
+            - ele-ai-tender-system/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/0d5672f6-3690-472b-a802-d550b0ec0518/b6fe3180-ac51-4c3e-bdf2-882340cfd913
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/4f79aac8-c7b1-434c-b407-b76861be3ce8
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/4f79aac8-c7b1-434c-b407-b76861be3ce8:
+        dir_name: AI 招标文件编制前端应用
+        title: AI 招标文件编制前端应用
+        scope:
+            - ele-ai-tender-frontend/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/0d5672f6-3690-472b-a802-d550b0ec0518/b6fe3180-ac51-4c3e-bdf2-882340cfd913
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11/1c356772-f21d-402a-8a99-270258226e47
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/5069bfec-b1e0-4f5d-98c4-1ee8b7083e5c:
+        dir_name: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）_2
+        title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/5069bfec-b1e0-4f5d-98c4-1ee8b7083e5c/9f13f361-93a2-4564-b685-90ff29ef79d7
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/5069bfec-b1e0-4f5d-98c4-1ee8b7083e5c/9f13f361-93a2-4564-b685-90ff29ef79d7:
+        dir_name: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3:
+        dir_name: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3/40c34f07-822a-4ac6-8c38-8af4fa65aa45
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3/dca9f31a-e86c-4c84-9978-9d6b6b7ee734
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/5069bfec-b1e0-4f5d-98c4-1ee8b7083e5c
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3/40c34f07-822a-4ac6-8c38-8af4fa65aa45:
+        dir_name: Ele AI 招标文件编制系统根仓库
+        title: Ele AI 招标文件编制系统根仓库
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3/dca9f31a-e86c-4c84-9978-9d6b6b7ee734
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3/dca9f31a-e86c-4c84-9978-9d6b6b7ee734:
+        dir_name: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3/40c34f07-822a-4ac6-8c38-8af4fa65aa45
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9:
+        dir_name: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9/096589fa-7791-469a-8590-a3f823cb8d3b
+            - 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9/36e1c3bd-24fc-4120-b9b1-a090691c3844
+        depends_on: []
+        related_to: []
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9/36e1c3bd-24fc-4120-b9b1-a090691c3844:
+        dir_name: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9/096589fa-7791-469a-8590-a3f823cb8d3b
+    4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9/096589fa-7791-469a-8590-a3f823cb8d3b:
+        dir_name: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        title: Ele AI 招标文件编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/ca1a0e20-9402-479f-8eaf-cf10e3c7f4e9/36e1c3bd-24fc-4120-b9b1-a090691c3844
+    1487f6eb-e2ba-420e-992c-9e54ba1a4fef:
+        dir_name: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 1487f6eb-e2ba-420e-992c-9e54ba1a4fef/a4e15844-8aa7-4365-a2d9-f60dfa94daed
+        depends_on: []
+        related_to:
+            - path: 0f023c90-f612-43e8-a53c-ef0324a58a2f
+            - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01
+    1487f6eb-e2ba-420e-992c-9e54ba1a4fef/a4e15844-8aa7-4365-a2d9-f60dfa94daed:
+        dir_name: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+        scope: []
+        source_files: []
+        children:
+            - 1487f6eb-e2ba-420e-992c-9e54ba1a4fef/a4e15844-8aa7-4365-a2d9-f60dfa94daed/716f72c2-0b2c-4154-92b4-9b3ce8df9197
+        depends_on: []
+        related_to: []
+    1487f6eb-e2ba-420e-992c-9e54ba1a4fef/a4e15844-8aa7-4365-a2d9-f60dfa94daed/716f72c2-0b2c-4154-92b4-9b3ce8df9197:
+        dir_name: Ele AI 招标文件编制平台（根仓库）
+        title: Ele AI 招标文件编制平台（根仓库）
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

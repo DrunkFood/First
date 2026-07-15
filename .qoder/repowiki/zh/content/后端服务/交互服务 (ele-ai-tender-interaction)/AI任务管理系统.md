@@ -25,10 +25,10 @@
 
 ## 更新摘要
 **变更内容**   
-- AiTaskVO响应对象新增systemId字段，增强任务来源追踪能力
-- 数据库表ai_task新增system_id字段，支持区分不同系统或集成来源的任务
-- 完善外部系统集成审计追踪，帮助识别任务发起源系统
-- 改进代码质量，提升格式化一致性和错误处理机制
+- 修复了AiTaskClient中的fileIds参数类型错误，将List<String>改为List<Long>以匹配数据库ID类型
+- 改进了字符串拼接方法，优化了文件ID列表的处理逻辑
+- 移除了冗余的任务状态查询功能，简化了API接口设计
+- 增强了类型安全性，避免潜在的运行时类型转换异常
 
 ## 目录
 1. [简介](#简介)
@@ -331,7 +331,7 @@ AiTaskServiceImpl --> AiTaskVO : "VO转换"
 
 ### 交互客户端架构更新
 
-**已更新** AiTaskClient新增支持文件ID列表的createTask方法，提供更直观的API用于创建带文件的AI任务
+**已更新** 修复了AiTaskClient中的类型安全问题，优化了文件ID处理逻辑
 
 #### 外部认证客户端
 - **AiExternalAuthClient**：专门用于AI系统的认证客户端，提供获取外部token的能力
@@ -339,9 +339,9 @@ AiTaskServiceImpl --> AiTaskVO : "VO转换"
 - 集成了请求签名验证机制，确保API调用的安全性
 
 #### AI任务客户端
-- **AiTaskClient**：封装AI任务的创建、查询和状态查询能力
-- **新增功能**：支持文件ID列表的直接传入，无需手动字符串拼接
-  - `createTask(authorization, request, fileIds)`：接受List<String>类型的文件ID列表，自动转换为逗号分隔的字符串格式
+- **AiTaskClient**：封装AI任务的创建、查询能力
+- **类型安全修复**：文件ID参数类型已从List<String>修正为List<Long>，确保与数据库ID类型一致
+  - `createTask(authorization, request, fileIds)`：接受List<Long>类型的文件ID列表，自动转换为逗号分隔的字符串格式
   - `createTask(authorization, request)`：传统方法，需要手动设置request中的fileIds字段
 - 外部系统需先通过`AiExternalAuthClient.getExternalToken`获取JWT令牌
 - 再将令牌传入本类各方法的`authorization`参数进行认证
@@ -371,10 +371,9 @@ class AiExternalAuthClient {
 +getExternalToken(request)
 }
 class AiTaskClient {
-+createTask(authorization, request, fileIds)
++createTask(authorization, request, fileIds : List<Long>)
 +createTask(authorization, request)
 +getTask(authorization, taskId)
-+getTaskStatus(authorization, taskId)
 }
 class AiExternalUserInfoClient {
 +getCurrentExternalUser(authorization)
@@ -466,6 +465,10 @@ FILE --> DISK["本地磁盘"]
   - 检查ai_task表的system_id字段是否正确填充
   - 验证外部系统JWT令牌中是否包含正确的systemId信息
   - 确认SecurityContextHolder能正确获取当前系统上下文
+- 文件ID类型问题
+  - 确保传递的文件ID为Long类型而非String类型
+  - 检查数据库中的文件ID字段类型是否为bigint
+  - 验证前端传递的参数类型是否与后端接口定义一致
 
 章节来源
 - [CLAUDE.md](file://CLAUDE.md)
@@ -473,7 +476,7 @@ FILE --> DISK["本地磁盘"]
 ## 结论
 本系统以清晰的分层与模块化设计实现招标文件AI编制的端到端能力：支撑中心负责基础治理，文件服务专注文档与模板渲染，核心业务编排项目与需求生命周期并通过任务表与AI服务异步协作，AI服务承载对话、检测、匹配与模型路由。配合双前端与完善的依赖治理，系统在可维护性、扩展性与性能方面具备良好基础。
 
-**更新亮点**：任务来源追踪系统的增强使得外部系统集成更加便捷，特别是AiTaskVO新增的systemId字段，大大提升了系统的审计追踪能力和系统间协作的可观测性。开发者可以准确识别每个任务的发起源系统，为问题排查和系统监控提供了重要支撑。
+**更新亮点**：本次更新主要修复了AiTaskClient中的类型安全问题，将fileIds参数类型从List<String>修正为List<Long>，确保了与数据库ID类型的一致性。同时移除了冗余的任务状态查询功能，简化了API接口设计。这些改进提升了系统的类型安全性和代码质量，避免了潜在的运行时类型转换异常。
 
 ## 附录
 - 环境变量覆盖：SPRING_DATASOURCE_PASSWORD、SPRING_REDIS_PASSWORD、APP_JWT_SECRET、DEEPSEEK_API_KEY、LOCAL_MODEL_KEY

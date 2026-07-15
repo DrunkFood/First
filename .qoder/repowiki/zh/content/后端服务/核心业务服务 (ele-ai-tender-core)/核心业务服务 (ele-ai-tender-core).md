@@ -21,10 +21,10 @@
 
 ## 更新摘要
 **变更内容**   
-- 更新了依赖管理章节，移除了显式版本声明，改为使用父POM的dependencyManagement统一管理
-- 新增了集中式版本管理的架构优势分析
-- 完善了模块间依赖关系图，体现统一的版本控制策略
-- 增强了构建和部署相关的故障排查指南
+- 更新了服务层架构章节，详细说明MyBatis-Plus IService统一扩展和ServiceImpl继承的重构成果
+- 新增了服务接口标准化设计模式分析
+- 完善了代码一致性和可维护性提升的技术说明
+- 增强了服务层重构对现有架构的影响评估
 
 ## 目录
 1. [简介](#简介)
@@ -44,13 +44,14 @@
 - 文档集成引擎与模板引擎协作流程（数据组装、Word 生成）
 - 服务间通信、事务管理与异步任务处理的关键实现
 - **优化**：采用集中式依赖版本管理，提升可维护性和构建稳定性
+- **新增**：服务层架构重构，统一扩展MyBatis-Plus IService，实现类继承ServiceImpl，显著提升代码一致性和可维护性
 - 性能优化策略与常见问题的排障方法
 
 ## 项目结构
 核心模块采用分层与领域划分相结合的组织方式：
 - 启动与装配：Spring Boot 启动类、Mapper 扫描、调度开关
 - 控制器层：对外暴露 /api/v1 接口，包含外部API接口
-- 服务层：业务编排、状态机协调、AI 任务编排、外部系统集成
+- 服务层：业务编排、状态机协调、AI 任务编排、外部系统集成，**已统一采用MyBatis-Plus标准架构**
 - 状态机：阶段流程控制器 + 项目状态机 + 各阶段触发器
 - 引擎层：文档数据组装器、模板渲染（与 file 模块协作）
 - 版本控制：项目版本快照服务
@@ -61,12 +62,12 @@ subgraph "核心服务"
 APP["CoreApplication<br/>启动与装配"]
 CTRL["ProjectController<br/>项目接口"]
 EXT_CTRL["ExternalAiTaskController<br/>外部API接口"]
-SVC["ProjectServiceImpl<br/>业务编排"]
-EXT_SVC["ExternalAiTaskService<br/>外部任务适配"]
+SVC["ProjectServiceImpl<br/>业务编排(ServiceImpl)"]
+EXT_SVC["ExternalAiTaskService<br/>外部任务适配(ServiceImpl)"]
 FSM["PhaseFlowController<br/>阶段流程控制器"]
 SM["ProjectStateMachine<br/>状态机"]
 ASSEMBLER["DocumentDataAssembler<br/>文档数据组装"]
-VER_SVC["IProjectVersionService / ProjectVersionServiceImpl<br/>版本快照"]
+VER_SVC["IProjectVersionService / ProjectVersionServiceImpl<br/>版本快照(ServiceImpl)"]
 end
 subgraph "外部协作"
 AI["AI 模块(AiTask)<br/>异步生成"]
@@ -74,6 +75,7 @@ FILE["File 模块(WordTemplateEngine)<br/>模板渲染"]
 DB["数据库(tb_*)"]
 COMMON["ele-ai-tender-common<br/>统一版本管理"]
 INTERACTION["ele-ai-tender-common-interaction<br/>统一版本管理"]
+MP["MyBatis-Plus<br/>IService/ServiceImpl"]
 end
 APP --> CTRL
 APP --> EXT_CTRL
@@ -88,6 +90,9 @@ EXT_SVC --> COMMON
 EXT_SVC --> INTERACTION
 ASSEMBLER --> FILE
 SVC --> DB
+VER_SVC --> MP
+SVC --> MP
+EXT_SVC --> MP
 ```
 
 **图表来源**
@@ -100,13 +105,13 @@ SVC --> DB
 - [PHASE_FLOW_SPEC.md:58-70](file://docs/rules/PHASE_FLOW_SPEC.md#L58-L70)
 
 ## 核心组件
-- 项目服务：负责项目创建、更新、删除、分页查询、阶段推进、状态变更、需求生成任务提交等
-- 外部AI任务服务：提供外部系统集成的AI任务管理能力，支持签名认证和数据隔离
+- 项目服务：负责项目创建、更新、删除、分页查询、阶段推进、状态变更、需求生成任务提交等，**已重构为继承ServiceImpl的标准架构**
+- 外部AI任务服务：提供外部系统集成的AI任务管理能力，支持签名认证和数据隔离，**采用统一的IService接口规范**
 - 阶段流程控制器：注册并执行阶段触发器，校验阶段转换规则，联动项目状态
 - 项目状态机：定义合法的状态转换集合，提供转换与合法性检查
 - 文档数据组装器：聚合项目基础信息、需求内容、评审项，输出结构化 FillData 供模板渲染
 - Word 模板引擎：基于 poi-tl 的模板填充，支持 Markdown 渲染与修订标记清理
-- 版本快照服务：按项目维度创建版本快照，记录关键内容变化
+- 版本快照服务：按项目维度创建版本快照，记录关键内容变化，**遵循MyBatis-Plus标准服务架构**
 
 **章节来源**
 - [ProjectServiceImpl.java:1-340](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/ProjectServiceImpl.java#L1-L340)
@@ -119,7 +124,7 @@ SVC --> DB
 - [ProjectVersionServiceImpl.java:38-65](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/ProjectVersionServiceImpl.java#L38-L65)
 
 ## 架构总览
-核心服务通过控制器接收请求，交由服务层进行业务编排；阶段推进由状态机与触发器协同完成；文档生成由数据组装器与模板引擎协作；AI 任务以异步方式解耦到 AI 模块；版本快照在关键节点持久化。**新增的外部API接口支持第三方系统集成，提供严格的数据隔离和权限控制**。
+核心服务通过控制器接收请求，交由服务层进行业务编排；阶段推进由状态机与触发器协同完成；文档生成由数据组装器与模板引擎协作；AI 任务以异步方式解耦到 AI 模块；版本快照在关键节点持久化。**新增的外部API接口支持第三方系统集成，提供严格的数据隔离和权限控制**。服务层已全面采用MyBatis-Plus标准架构，提升了代码的一致性和可维护性。
 
 ```mermaid
 sequenceDiagram
@@ -127,14 +132,15 @@ participant Client as "客户端"
 participant ExtClient as "外部系统"
 participant Controller as "ProjectController"
 participant ExtController as "ExternalAiTaskController"
-participant Service as "ProjectServiceImpl"
-participant ExtService as "ExternalAiTaskService"
+participant Service as "ProjectServiceImpl(ServiceImpl)"
+participant ExtService as "ExternalAiTaskService(ServiceImpl)"
 participant PhaseCtrl as "PhaseFlowController"
 participant StateMachine as "ProjectStateMachine"
 participant AI as "AI 模块(AiTask)"
-participant VerSvc as "ProjectVersionServiceImpl"
+participant VerSvc as "ProjectVersionServiceImpl(ServiceImpl)"
 participant Assembler as "DocumentDataAssembler"
 participant FileEng as "WordTemplateEngine"
+participant MP as "MyBatis-Plus IService"
 Client->>Controller : "PUT /projects/{id}/phase"
 Controller->>Service : "advancePhase(id, targetPhase, context)"
 Service->>PhaseCtrl : "advancePhase(project, target, context)"
@@ -156,6 +162,7 @@ ExtController->>ExtService : "createTask(appKey, request)"
 ExtService->>ExtService : "验证appKey/参数校验"
 ExtService->>AI : "创建内部AI任务"
 ExtService->>ExtService : "创建回调记录(数据隔离)"
+Note over Service,MP : "所有服务实现继承ServiceImpl，使用IService接口"
 ```
 
 **图表来源**
@@ -169,6 +176,67 @@ ExtService->>ExtService : "创建回调记录(数据隔离)"
 - [WordTemplateEngine.java:42-63](file://ele-ai-tender-system/ele-ai-tender-file/src/main/java/com/jy/eleaitender/file/engine/WordTemplateEngine.java#L42-L63)
 
 ## 详细组件分析
+
+### 服务层架构重构 - MyBatis-Plus标准化
+**新增** 服务层已完成全面的架构重构，所有服务接口统一扩展MyBatis-Plus IService，实现类继承ServiceImpl，显著提升了代码一致性和可维护性：
+
+#### 统一接口规范
+- 所有服务接口继承 `com.baomidou.mybatisplus.extension.service.IService<T>`
+- 所有服务实现类继承 `com.baomidou.mybatisplus.extension.service.impl.ServiceImpl<M, T>`
+- 自动获得CRUD操作、分页查询、批量操作等通用能力
+- 减少样板代码，提高开发效率
+
+#### 架构优势
+- **代码一致性**：所有服务遵循相同的架构模式，便于团队协作
+- **功能增强**：利用MyBatis-Plus提供的丰富功能，如条件构造器、Lambda表达式
+- **维护性提升**：标准化的接口设计降低学习成本和维护难度
+- **扩展性增强**：便于添加自定义方法和拦截器
+
+```mermaid
+classDiagram
+class IService~T~ {
+<<interface>>
++getById(id) T
++list() T[]
++save(entity) boolean
++updateById(entity) boolean
++removeById(id) boolean
+}
+class ServiceImpl~M,T~ {
+<<abstract class>>
+protected M baseMapper
++getById(id) T
++list() T[]
++save(entity) boolean
++updateById(entity) boolean
++removeById(id) boolean
+}
+class IProjectVersionService {
+<<interface>>
++getByProjectId(projectId) TbProjectVersion[]
++createVersion(projectId, changeDescription) TbProjectVersion
+}
+class ProjectVersionServiceImpl {
++getByProjectId(projectId) TbProjectVersion[]
++createVersion(projectId, changeDescription) TbProjectVersion
+}
+IProjectVersionService --|> IService~TbProjectVersion~
+ProjectVersionServiceImpl --|> ServiceImpl~TbProjectVersionMapper, TbProjectVersion~
+```
+
+**图表来源**
+- [IProjectVersionService.java:1-22](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IProjectVersionService.java#L1-L22)
+- [ProjectVersionServiceImpl.java:38-65](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/ProjectVersionServiceImpl.java#L38-L65)
+
+#### 重构影响评估
+- **向后兼容**：现有调用方无需修改，接口行为保持一致
+- **性能优化**：利用MyBatis-Plus的缓存和连接池优化
+- **测试友好**：标准化的接口便于Mock和单元测试
+- **监控增强**：便于集成统一的日志记录和性能监控
+
+**章节来源**
+- [IProjectVersionService.java:1-22](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IProjectVersionService.java#L1-L22)
+- [ProjectVersionServiceImpl.java:38-65](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/ProjectVersionServiceImpl.java#L38-L65)
 
 ### 项目状态机与阶段流程
 - 状态机定义合法的状态转换集合，禁止非法跳转
@@ -216,11 +284,12 @@ PhaseFlowController --> ProjectStateMachine : "联动状态"
 - 严格的数据隔离，确保外部系统只能访问自己的任务
 - 完整的任务生命周期管理，包括创建、查询、状态跟踪
 - 自动化的回调记录和重试机制
+- **采用统一的IService接口规范，提升代码一致性**
 
 ```mermaid
 flowchart TD
 A["外部系统调用"] --> B["ExternalAiTaskController"]
-B --> C["ExternalAiTaskService"]
+B --> C["ExternalAiTaskService(ServiceImpl)"]
 C --> D["验证AppKey和权限"]
 D --> E["参数校验和类型转换"]
 E --> F["创建内部AI任务"]
@@ -246,7 +315,7 @@ H --> I["外部系统获取结果"]
 sequenceDiagram
 participant C as "客户端"
 participant Ctrl as "ProjectController"
-participant Svc as "ProjectServiceImpl"
+participant Svc as "ProjectServiceImpl(ServiceImpl)"
 participant Flow as "PhaseFlowController"
 participant SM as "ProjectStateMachine"
 C->>Ctrl : "PUT /projects/{id}/phase"
@@ -287,6 +356,7 @@ SaveVer --> End(["结束"])
 ### 项目版本控制
 - 版本快照服务根据项目 ID 获取历史版本
 - 创建版本时序列化关键内容快照（如生成的文件ID、状态），递增版本号并持久化
+- **采用MyBatis-Plus IService接口，提供标准的CRUD操作**
 
 ```mermaid
 classDiagram
@@ -339,19 +409,23 @@ G --> H["结束"]
 - 模板引擎位于 file 模块，core 模块通过数据组装器与其协作
 - **优化**：采用集中式依赖版本管理，所有内部模块依赖都通过父POM的dependencyManagement统一管理
 - **优化**：common 和 common-interaction 模块作为核心依赖，提供统一的DTO、枚举和工具类
+- **新增**：所有服务层统一依赖MyBatis-Plus框架，提供标准化的数据访问能力
 
 ```mermaid
 graph LR
-PCtrl["ProjectController"] --> PSvc["ProjectServiceImpl"]
-EXT_CTRL["ExternalAiTaskController"] --> EXT_SVC["ExternalAiTaskService"]
+PCtrl["ProjectController"] --> PSvc["ProjectServiceImpl(ServiceImpl)"]
+EXT_CTRL["ExternalAiTaskController"] --> EXT_SVC["ExternalAiTaskService(ServiceImpl)"]
 PSvc --> PFlow["PhaseFlowController"]
 PSvc --> PState["ProjectStateMachine"]
 PSvc --> AI["AiTask 服务"]
-PSvc --> Ver["ProjectVersionServiceImpl"]
+PSvc --> Ver["ProjectVersionServiceImpl(ServiceImpl)"]
 PSvc --> Asm["DocumentDataAssembler"]
 EXT_SVC --> COMMON["ele-ai-tender-common<br/>集中版本管理"]
 EXT_SVC --> INTERACTION["ele-ai-tender-common-interaction<br/>集中版本管理"]
 Asm --> WTE["WordTemplateEngine(file)"]
+PSvc --> MP["MyBatis-Plus IService/ServiceImpl"]
+EXT_SVC --> MP
+Ver --> MP
 ```
 
 **图表来源**
@@ -397,6 +471,7 @@ Asm --> WTE["WordTemplateEngine(file)"]
 - 版本快照仅在关键节点创建，避免频繁写入
 - 建议对大文档渲染与 AI 任务执行采用异步与限流策略（参考 AI 模块线程池配置）
 - **优化**：外部API调用增加缓存和限流保护，防止恶意请求影响系统性能
+- **新增**：MyBatis-Plus连接池优化，合理使用缓存和批量操作提升性能
 
 ## 故障排查指南
 - 项目状态异常：检查 tb_project.status 与状态机转换规则，确认是否允许该转换
@@ -409,18 +484,21 @@ Asm --> WTE["WordTemplateEngine(file)"]
 - **优化**：依赖版本冲突：检查Maven依赖树，确认没有版本不一致的依赖引入
 - **优化**：构建失败：验证本地Maven仓库中的依赖版本是否与pom.xml声明一致
 - **新增**：集中式版本管理问题：检查父POM的dependencyManagement配置是否正确
+- **新增**：MyBatis-Plus相关问题：检查IService接口实现是否正确，确认Mapper注入是否正常
+- **新增**：服务层重构问题：验证ServiceImpl继承关系，检查泛型类型是否正确
 
 **章节来源**
 - [CORE_MODULE_SPEC.md:342-350](file://docs/rules/CORE_MODULE_SPEC.md#L342-L350)
 
 ## 结论
-核心业务服务通过清晰的分层与状态机模式，实现了项目生命周期的强一致流转与可扩展的阶段触发机制。文档集成与模板渲染在 core 与 file 模块之间解耦协作，结合版本快照保障可追溯性。配合 AI 任务的异步编排与完善的排障指引，系统具备高可用与易维护的特性。**优化的集中式依赖版本管理进一步提升了系统的可维护性和构建稳定性**。
+核心业务服务通过清晰的分层与状态机模式，实现了项目生命周期的强一致流转与可扩展的阶段触发机制。文档集成与模板渲染在 core 与 file 模块之间解耦协作，结合版本快照保障可追溯性。配合 AI 任务的异步编排与完善的排障指引，系统具备高可用与易维护的特性。**优化的集中式依赖版本管理进一步提升了系统的可维护性和构建稳定性**。**最新的服务层架构重构采用MyBatis-Plus标准模式，显著提升了代码一致性和可维护性，为后续功能扩展奠定了坚实基础**。
 
 ## 附录
 - 接口清单与表结构详见核心模块规范文档
 - 阶段流程控制器与触发器职责详见阶段流程规范
 - **优化**：集中式依赖版本管理策略详见父POM配置文件
 - **新增**：外部API集成规范详见interaction模块文档
+- **新增**：MyBatis-Plus服务层架构规范详见相关技术文档
 
 **章节来源**
 - [CORE_MODULE_SPEC.md:1-358](file://docs/rules/CORE_MODULE_SPEC.md#L1-L358)
