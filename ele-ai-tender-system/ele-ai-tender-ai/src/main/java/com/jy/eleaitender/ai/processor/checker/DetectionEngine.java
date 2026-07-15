@@ -82,6 +82,7 @@ public class DetectionEngine {
             log.info("未选择政策文件，跳过政策文件审查AI调用: taskId={}", task.getId());
             BaseDetector.DetectionResult skipped = new BaseDetector.DetectionResult();
             skipped.setScore(100);
+            skipped.setError("未选择政策文件，跳过政策文件审查AI调用");
             return toJson(skipped);
         }
 
