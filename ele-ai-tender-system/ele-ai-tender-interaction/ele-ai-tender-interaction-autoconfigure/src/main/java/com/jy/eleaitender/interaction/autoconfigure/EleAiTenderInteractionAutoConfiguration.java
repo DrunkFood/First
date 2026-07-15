@@ -7,10 +7,7 @@ import com.jy.eleaitender.interaction.autoconfigure.handler.InteractionAiGlobalE
 import com.jy.eleaitender.interaction.autoconfigure.logging.DefaultInteractionAiEventLogger;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionAiSignatureInterceptor;
 import com.jy.eleaitender.interaction.autoconfigure.web.InteractionAiWebMvcConfigurer;
-import com.jy.eleaitender.interaction.core.client.AiExternalAuthClient;
-import com.jy.eleaitender.interaction.core.client.AiExternalUserInfoClient;
-import com.jy.eleaitender.interaction.core.client.AiFileClient;
-import com.jy.eleaitender.interaction.core.client.AiTaskClient;
+import com.jy.eleaitender.interaction.core.client.*;
 import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import com.jy.eleaitender.interaction.core.support.InteractionRequestSigner;
 import com.jy.eleaitender.interaction.core.support.InteractionRestTemplateFactory;
@@ -51,6 +48,13 @@ public class EleAiTenderInteractionAutoConfiguration {
     public AiTaskClient aiTaskClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
                                      EleAiTenderInteractionProperties properties) {
         return new AiTaskClient(interactionRestTemplate, properties);
+    }
+
+    @Bean(name = "aiPolicyFileClient")
+    @ConditionalOnMissingBean(name = "aiPolicyFileClient")
+    public AiPolicyFileClient aiPolicyFileClient(@Qualifier("interactionAiRestTemplate") RestTemplate interactionRestTemplate,
+                                                 EleAiTenderInteractionProperties properties) {
+        return new AiPolicyFileClient(interactionRestTemplate, properties);
     }
 
     @Bean(name = "aiExternalAuthClient")
