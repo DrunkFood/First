@@ -14,6 +14,7 @@
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java)
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java)
 - [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/AiTaskMapper.java)
+- [sql/20260713_bizId字段改为str.sql](file://sql/20260713_bizId字段改为str.sql)
 </cite>
 
 ## 更新摘要
@@ -122,7 +123,7 @@ P --> C
 - [ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql:79-105](file://ele-ai-tender-system/ele-ai-tender-ai/sql/init.sql#L79-L105)
 
 ## 架构总览
-AI任务从Core侧创建并写入ai_task，AI侧通过定时或轮询拉取待处理任务，使用CAS更新为处理中，执行完成后写回结果与耗时；同时通过AiCallRecorder将每次模型调用写入ai_response_log用于成本与可观测性分析。知识库文档由AI或Support模块维护，关联外部向量库（如Milvus）的集合与向量ID。系统通过system_id字段区分内外任务来源，并通过AiTaskResultSyncScheduler定时调度结果同步到业务系统。
+AI任务从Core侧创建并写入ai_task，AI侧通过定时或轮询拉取待处理任务，使用CAS更新为处理中，执行完成后写回结果与耗时；同时通过AiCallRecorder将每次模型调用写入ai_response_log用于成本与可观测性分析。知识库文档由AI或Support模块维护，关联外部向量库（如Milvus）的集合与向量ID。系统通过systemId字段区分内外任务来源，并通过AiTaskResultSyncScheduler定时调度结果同步到业务系统。
 
 ```mermaid
 sequenceDiagram
@@ -511,3 +512,4 @@ SyncScheduler --> DB
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java:27-37](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L27-L37)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java:11-18](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java#L11-L18)
 - [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java:11-21](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/BizType.java#L11-L21)
+- [sql/20260713_bizId字段改为str.sql:1-12](file://sql/20260713_bizId字段改为str.sql#L1-L12)

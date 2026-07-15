@@ -15,30 +15,39 @@
 - [TextOptimizeParams.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/TextOptimizeParams.java)
 - [DocumentIntegrationParams.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/DocumentIntegrationParams.java)
 - [AiTaskType.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskType.java)
+- [DetectionResult.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src\main\java\com\jy\eleaitender\common\interaction\dto\param\DetectionResult.java)
+- [DetectionIssueVO.java](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\dto\response\DetectionIssueVO.java)
+- [DetectionReportVO.java](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\dto\response\DetectionReportVO.java)
+- [DetectionProgressVO.java](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\dto\response\DetectionProgressVO.java)
+- [DetectionServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\service\impl\DetectionServiceImpl.java)
+- [DetectionController.java](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\controller\DetectionController.java)
+- [DetectionResultParser.java](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\util\DetectionResultParser.java)
 </cite>
 
 ## 更新摘要
 **所做更改**   
-- 新增了AI任务参数系统章节，详细介绍类型安全的参数定义框架
-- 更新了核心组件章节，补充AI任务参数相关的SPI和客户端能力
-- 增强了架构总览图表，体现AI任务参数处理流程
-- 添加了详细的参数类型说明和使用示例
+- 新增了检测结果数据结构章节，详细介绍 DetectionResult 和 DetectionIssue 标准化数据模型
+- 更新了AI任务参数系统章节，补充检测结果处理相关的参数和响应结构
+- 增强了检测服务章节，详细说明智能检测系统的完整实现
+- 添加了检测结果解析和处理流程的详细分析
+- 更新了前端类型定义与后端结构的对应关系
 
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
 4. [AI任务参数系统](#ai任务参数系统)
-5. [架构总览](#架构总览)
-6. [详细组件分析](#详细组件分析)
-7. [依赖分析](#依赖分析)
-8. [性能考虑](#性能考虑)
-9. [故障排查指南](#故障排查指南)
-10. [结论](#结论)
-11. [附录](#附录)
+5. [检测结果数据结构](#检测结果数据结构)
+6. [架构总览](#架构总览)
+7. [详细组件分析](#详细组件分析)
+8. [依赖分析](#依赖分析)
+9. [性能考虑](#性能考虑)
+10. [故障排查指南](#故障排查指南)
+11. [结论](#结论)
+12. [附录](#附录)
 
 ## 简介
-本技术文档聚焦于"交互服务"模块，围绕外部系统集成能力展开，包括 SPI 插件架构、第三方平台对接、回调机制、投标解密与标书推送、CA 证书管理等业务接口实现；同时覆盖签名验证、请求拦截、日志记录等安全机制，以及自动配置、客户端封装、错误处理等框架特性。特别地，本次更新引入了增强的AI任务参数系统，提供类型安全的参数定义框架，支持检测任务、需求生成、评审项生成、文本优化等多种AI任务场景的参数配置。文末提供外部系统集成指南、协议规范与调试方法，帮助快速接入与排障。
+本技术文档聚焦于"交互服务"模块，围绕外部系统集成能力展开，包括 SPI 插件架构、第三方平台对接、回调机制、投标解密与标书推送、CA 证书管理等业务接口实现；同时覆盖签名验证、请求拦截、日志记录等安全机制，以及自动配置、客户端封装、错误处理等框架特性。特别地，本次更新引入了增强的AI任务参数系统和标准化的检测结果数据结构，提供类型安全的参数定义框架和统一的检测结果表示模型，支持检测任务、需求生成、评审项生成、文本优化等多种AI任务场景的参数配置。文末提供外部系统集成指南、协议规范与调试方法，帮助快速接入与排障。
 
 ## 项目结构
 交互相关代码采用分层与模块化设计，现已完成模块结构重组：
@@ -92,6 +101,10 @@ end
   - 类型安全的参数定义框架，支持编译期类型约束
   - 多种AI任务场景的参数配置：检测任务、需求生成、评审项生成、文本优化、文档集成
   - 统一的参数接口标记，确保类型安全和可维护性
+- **检测结果数据结构**
+  - 标准化的检测结果表示模型，包含 DetectionResult 和 DetectionIssue
+  - 支持记录ID、检测分数、问题列表等核心字段
+  - 支持严重程度分类、检测类型标识、政策引用和规则违反信息
 - **配置项**
   - 统一前缀 ele-ai-tender.interaction，包含 api-base-url、page-base-url、app-key、app-secret、token-path、user-info-path、file-*、crypto-base-url、bid-document-push-path、bid-decrypt-submit-path、bid-decrypt-status-path 等关键项。
 - **模型约束**
@@ -209,12 +222,102 @@ AiTask task = aiTaskService.createTask(AiTaskType.REQUIREMENT_GENERATE, projectI
 - [TextOptimizeParams.java:1-16](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/TextOptimizeParams.java#L1-L16)
 - [DocumentIntegrationParams.java:1-20](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/DocumentIntegrationParams.java#L1-L20)
 
+## 检测结果数据结构
+
+### 标准化检测结果模型
+交互服务新增了标准化的检测结果数据结构，用于统一表示AI检测系统的输出结果。该结构提供了完整的问题描述、严重程度分类和处理建议。
+
+**核心数据结构**
+- **DetectionResult**：检测结果根对象，包含记录ID、检测分数和问题列表
+- **DetectionIssue**：检测问题详情，包含位置信息、原文内容、修改建议和严重程度
+
+```mermaid
+classDiagram
+class DetectionResult {
++Long recordId
++Integer score
++DetectionIssue[] issues
+}
+class DetectionIssue {
++String position
++String original
++String targeted
++String suggestion
++String reason
++String severity
++String detectionType
++String policyReference
++String ruleViolated
+}
+DetectionResult "1" --> "0..*" DetectionIssue
+```
+
+**图表来源**
+- [DetectionResult.java:12-25](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src\main\java\com\jy\eleaitender\common\interaction\dto\param\DetectionResult.java#L12-L25)
+- [DetectionResult.java:31-68](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src\main\java\com\jy\eleaitender\common\interaction\dto\param\DetectionResult.java#L31-L68)
+
+### 检测结果字段说明
+**DetectionResult 字段**
+- `recordId`: 检测记录唯一标识符
+- `score`: 检测评分，默认值为100分，满分表示无问题
+- `issues`: 检测问题列表，包含具体的问题详情
+
+**DetectionIssue 字段**
+- `position`: 问题在文档中的位置描述
+- `original`: 原始文本内容
+- `targeted`: 修改后的内容，可直接替换原文
+- `suggestion`: 修改建议说明
+- `reason`: 问题原因说明
+- `severity`: 严重程度，支持 HIGH/MEDIUM/LOW 三级
+- `detectionType`: 检测类型标识
+- `policyReference`: 相关政策引用（政策审查专用）
+- `ruleViolated`: 违反的格式规则（格式检测专用）
+
+### 检测结果处理流程
+检测结果的处理涉及多个组件的协作，从AI引擎输出到最终报告生成的完整流程：
+
+```mermaid
+sequenceDiagram
+participant AI as "AI检测引擎"
+participant Parser as "DetectionResultParser"
+participant Service as "DetectionServiceImpl"
+participant DB as "数据库"
+participant Frontend as "前端界面"
+AI->>Parser : "返回JSON检测结果"
+Parser->>Parser : "解析issues数组"
+Parser->>DB : "存储检测记录"
+Service->>Service : "构建检测报告"
+Service->>Frontend : "返回DetectionReportVO"
+Frontend->>Frontend : "展示问题和修复建议"
+```
+
+**图表来源**
+- [DetectionResultParser.java:38-89](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\util\DetectionResultParser.java#L38-L89)
+- [DetectionServiceImpl.java:204-229](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\service\impl\DetectionServiceImpl.java#L204-L229)
+
+### 检测结果API接口
+系统提供了完整的检测结果管理API，包括进度查询、报告获取和建议处理等功能：
+
+**主要API端点**
+- `POST /api/v1/detection/submit/{projectId}`: 提交检测任务
+- `GET /api/v1/detection/progress/{projectId}`: 获取检测进度
+- `GET /api/v1/detection/report/{projectId}`: 获取检测报告
+- `POST /api/v1/detection/{recordId}/accept`: 接受检测建议
+- `POST /api/v1/detection/{recordId}/reject`: 拒绝检测建议
+- `POST /api/v1/detection/accept-all/{projectId}`: 批量接受所有建议
+
+**章节来源**
+- [DetectionController.java:27-89](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\controller\DetectionController.java#L27-L89)
+- [DetectionResultParser.java:1-445](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\util\DetectionResultParser.java#L1-L445)
+- [DetectionServiceImpl.java:204-393](file://ele-ai-tender-system/ele-ai-tender-core\src\main\java\com\jy\eleaitender\core\service\impl\DetectionServiceImpl.java#L204-L393)
+
 ## 架构总览
 交互服务通过"入站控制器 + SPI 分发 + 出站客户端"的模式，将外部平台与内部业务解耦：
 - **入站**：固定路径的 REST 接口负责参数校验、签名验证、鉴权与日志记录，随后路由到对应 SPI 实现。
 - **出站**：统一的 HTTP 客户端封装，负责认证、加签、重试、超时、错误码映射与响应提取。
 - **回调**：针对招标文件、投标文件结果、解密结果等场景，提供标准回调入口与处理流程。
 - **AI任务处理**：通过类型安全的参数系统，支持多种AI任务的创建、执行和结果处理。
+- **检测结果处理**：标准化的检测结果数据结构，支持问题的可视化展示和交互式处理。
 
 ```mermaid
 sequenceDiagram
@@ -224,6 +327,7 @@ participant SPI as "SPI实现(业务方)"
 participant Client as "出站客户端"
 participant Biz as "内部业务系统"
 participant AI as "AI任务系统"
+participant Result as "检测结果处理"
 Ext->>API : "调用固定接口(如身份/项目/回调)"
 API->>API : "签名验证/鉴权/日志"
 API->>SPI : "分派到对应SPI"
@@ -232,6 +336,10 @@ Note over SPI,AI : "AI任务处理流程"
 SPI->>AI : "创建AI任务(带类型安全参数)"
 AI->>AI : "参数验证/任务调度"
 AI-->>SPI : "返回任务ID"
+Note over SPI,Result : "检测结果处理流程"
+SPI->>Result : "标准化检测结果"
+Result->>Result : "解析issues/计算分数"
+Result-->>SPI : "返回结构化结果"
 SPI-->>Biz : "返回标准化响应"
 Biz-->>SPI : "返回结果"
 SPI-->>API : "组装统一响应"
@@ -421,6 +529,10 @@ Auto --> MVC["spring-webmvc"]
 - **AI任务性能优化**
   - 根据任务类型设置合理的超时时间，避免长时间占用资源。
   - 对AI任务进行优先级排序和资源隔离，确保关键任务优先执行。
+- **检测结果处理优化**
+  - 使用高效的JSON解析算法处理大量检测结果数据。
+  - 对检测问题进行索引和缓存，提升查询性能。
+  - 支持增量更新检测结果，避免重复解析。
 
 ## 故障排查指南
 - **常见问题定位**
@@ -428,15 +540,18 @@ Auto --> MVC["spring-webmvc"]
   - 回调未达：检查网络连通性、防火墙策略、回调地址与端口。
   - 解密卡住：核对解密任务 ID、状态轮询间隔、重试次数与上限。
   - AI任务参数错误：检查参数类字段是否与任务类型匹配，验证必填字段是否完整。
+  - 检测结果解析失败：检查JSON格式是否正确，验证issues数组结构是否符合规范。
 - **日志与断点**
   - 开启访问日志与错误堆栈输出；在 SPI 实现与客户端关键分支打点。
   - 针对AI任务，记录参数序列化前后的JSON数据，便于调试参数传递问题。
+  - 对于检测结果，记录解析过程中的异常信息和中间状态。
 - **最小复现**
   - 使用固定路径与最小参数集构造请求，逐步缩小问题范围。
   - 对于AI任务，使用最简单的参数组合进行测试，逐步增加复杂度。
+  - 对于检测结果，使用标准的JSON格式进行测试，验证解析逻辑的正确性。
 
 ## 结论
-交互服务通过清晰的协议契约、SPI 扩展点与统一的出站客户端，实现了与外部平台的松耦合集成。配合签名验证、请求拦截与完善的日志体系，能够保障高可用与安全合规。新增的类型安全AI任务参数系统进一步提升了系统的可维护性和安全性，通过编译期类型约束和运行时验证，有效减少了参数传递过程中的错误。模块结构重组后，新的Maven层级关系更加清晰，有利于独立开发和部署。建议在实际落地时严格遵循协议规范与最佳实践，完善监控与容错，提升整体稳定性与可观测性。
+交互服务通过清晰的协议契约、SPI 扩展点与统一的出站客户端，实现了与外部平台的松耦合集成。配合签名验证、请求拦截与完善的日志体系，能够保障高可用与安全合规。新增的类型安全AI任务参数系统和标准化的检测结果数据结构进一步提升了系统的可维护性和安全性，通过编译期类型约束和运行时验证，有效减少了参数传递过程中的错误。模块结构重组后，新的Maven层级关系更加清晰，有利于独立开发和部署。建议在实际落地时严格遵循协议规范与最佳实践，完善监控与容错，提升整体稳定性与可观测性。
 
 ## 附录
 
@@ -446,10 +561,12 @@ Auto --> MVC["spring-webmvc"]
   - 实现 SPI 接口，注册为 Spring Bean。
   - 在业务系统中调用出站客户端完成第三方平台对接。
   - 使用类型安全的参数系统创建和管理AI任务。
+  - 集成标准化的检测结果处理流程。
 - **注意事项**
   - 协议 DTO 仅在 common-interaction 中维护，跨层不做透传。
   - 所有出站请求需遵循统一认证与签名策略。
   - AI任务参数必须实现对应的参数类，确保类型安全。
+  - 检测结果数据结构需符合标准化规范，确保前后端一致性。
 
 **章节来源**
 - [INTERACTION_INTEGRATION_SPEC.md:57-83](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L57-L83)
@@ -465,18 +582,26 @@ Auto --> MVC["spring-webmvc"]
   - 所有参数类必须实现 AiTaskParams 接口
   - 每个任务类型都有对应的参数类定义
   - 参数字段必须添加必要的注释说明
+- **检测结果数据结构规范**
+  - DetectionResult 必须包含 recordId、score 和 issues 字段
+  - DetectionIssue 必须包含位置信息、原文内容和修改建议
+  - 严重程度必须使用 HIGH/MEDIUM/LOW 标准值
 
 **章节来源**
 - [INTERACTION_INTEGRATION_SPEC.md:19-76](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L19-L76)
 - [AiTaskParams.java:1-9](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/dto/ai/AiTaskParams.java#L1-L9)
+- [DetectionResult.java:1-69](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src\main\java\com\jy\eleaitender\common\interaction\dto\param\DetectionResult.java#L1-L69)
 
 ### 调试方法
 - **本地联调**
   - 使用 Mock 外部平台，优先验证签名与鉴权流程。
   - 针对AI任务，使用单元测试验证参数序列化和反序列化。
+  - 对于检测结果，使用标准JSON数据进行解析测试。
 - **抓包与日志**
   - 抓取 HTTP 报文，核对签名字段与顺序；对照访问日志定位差异。
   - 启用AI任务参数的详细日志，记录参数创建、验证、执行的完整过程。
+  - 记录检测结果解析的完整流程，包括JSON解析、字段映射和错误处理。
 - **灰度与回滚**
   - 小流量灰度新实现，观察错误率与延迟，必要时快速回滚。
   - 对于AI任务，监控不同任务类型的执行时间和成功率。
+  - 对于检测结果，监控解析成功率和数据处理性能。

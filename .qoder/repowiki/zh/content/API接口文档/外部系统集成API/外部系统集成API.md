@@ -13,12 +13,16 @@
 - [InteractionHeaderConstants.java](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/constant/InteractionHeaderConstants.java)
 - [AiTaskServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java)
 - [AiTaskResultCallbackHandler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java)
+- [AiTaskResultSyncScheduler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java)
 - [SysAccessSystemQueryMapper.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/SysAccessSystemQueryMapper.java)
 - [AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
 - [AiTaskCreateRequest.java](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java)
 - [AiTaskCreateResponse.java](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateResponse.java)
 - [AiTaskQueryResponse.java](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskQueryResponse.java)
 - [AiTaskResultCallbackRequest.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskResultCallbackRequest.java)
+- [InteractionValidationUtils.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java)
+- [InteractionAiTaskResultReceiveService.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/spi/InteractionAiTaskResultReceiveService.java)
+- [InteractionAiTaskResultCallbackController.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java)
 - [ResponseCode.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/ResponseCode.java)
 - [pom.xml（interaction-core）](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/pom.xml)
 - [pom.xml（common-interaction）](file://ele-ai-tender-system/ele-ai-tender-common-interaction/pom.xml)
@@ -29,10 +33,11 @@
 
 ## 更新摘要
 **变更内容**
-- **架构重构**：采用systemId-based方式替代原有的AiTaskExternalCallback系统，简化了外部任务创建流程
-- **数据模型优化**：AiTask实体新增systemId字段，直接关联外部系统ID，移除独立的回调记录表
-- **回调机制简化**：通过AiTaskResultCallbackHandler统一处理任务结果回调，基于systemId查找外部系统配置
-- **认证流程优化**：保持X-App-Key认证机制，但数据隔离逻辑从独立表查询改为基于systemId的直接关联
+- **回调机制增强**：AiTaskResultCallbackHandler实现了增强的响应验证逻辑，支持更严格的HTTP状态码和JSON响应体验证
+- **参数校验优化**：InteractionValidationUtils增强了AI任务结果回调的参数验证，确保请求数据的完整性
+- **SPI接口完善**：InteractionAiTaskResultReceiveService提供了标准化的AI任务结果接收接口
+- **控制器改进**：InteractionAiTaskResultCallbackController集成了事件日志记录和异常处理机制
+- **调度器优化**：AiTaskResultSyncScheduler改进了任务同步逻辑，支持systemId-based的回调分发
 
 ## 目录
 1. [简介](#简介)
@@ -57,7 +62,7 @@
 - 标准数据交换格式、错误码规范与重试机制
 - 系统集成配置、监控日志与故障排查方法
 
-该集成体系由协议库与Starter组成，提供统一前缀的固定路径、出站客户端能力以及可插拔的业务SPI实现。**现已采用systemId-based架构重构外部AI任务接口，通过AiTask实体的systemId字段直接关联外部系统，简化了数据模型和回调流程。**
+该集成体系由协议库与Starter组成，提供统一前缀的固定路径、出站客户端能力以及可插拔的业务SPI实现。**现已采用systemId-based架构重构外部AI任务接口，通过AiTask实体的systemId字段直接关联外部系统，简化了数据模型和回调流程。同时增强了回调处理器的响应验证逻辑和参数校验机制。**
 
 ## 项目结构
 交互集成相关代码分布在以下模块：
@@ -81,7 +86,10 @@ EATS["ExternalAiTaskService<br/>外部AI任务服务"]
 ESIG["ExternalSignatureInterceptor<br/>外部API签名拦截器"]
 ECONF["ExternalApiWebConfig<br/>外部API配置"]
 AICB["AiTaskResultCallbackHandler<br/>任务回调处理器"]
+AICS["AiTaskResultSyncScheduler<br/>任务同步调度器"]
 AITASK["AiTask实体<br/>包含systemId字段"]
+IVU["InteractionValidationUtils<br/>参数验证工具"]
+IARC["InteractionAiTaskResultCallbackController<br/>回调接收控制器"]
 end
 CI --> IC
 IC --> AC
@@ -91,6 +99,9 @@ ECONF --> ESIG
 ESIG --> EATC
 EATS --> AITASK
 AICB --> AITASK
+AICS --> AICB
+IVU --> IARC
+IARC --> AITASK
 ```
 
 **图表来源**
@@ -99,6 +110,10 @@ AICB --> AITASK
 - [pom.xml（common-interaction）:19-21](file://ele-ai-tender-system/ele-ai-tender-common-interaction/pom.xml#L19-L21)
 - [ExternalApiWebConfig.java:28-31](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/ExternalApiWebConfig.java#L28-L31)
 - [AiTask.java:27-28](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L27-L28)
+- [AiTaskResultCallbackHandler.java:30-32](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L30-L32)
+- [AiTaskResultSyncScheduler.java:17-19](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L17-L19)
+- [InteractionValidationUtils.java:11-14](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L11-L14)
+- [InteractionAiTaskResultCallbackController.java:17-18](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L17-L18)
 
 章节来源
 - [INTERACTION_INTEGRATION_SPEC.md:1-13](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L1-L13)
@@ -112,6 +127,8 @@ AICB --> AITASK
   - 传统HMAC-SHA256签名校验（/api/eleAiTender/interaction）
   - **X-App-Key认证机制（/api/external/ai-tasks）**
 - **systemId-based数据隔离**：通过AiTask实体的systemId字段直接关联外部系统，无需独立的回调记录表
+- **增强的回调处理机制**：支持严格的HTTP状态码验证、JSON响应体解析和错误消息提取
+- **完善的参数验证**：基于InteractionValidationUtils的统一参数校验框架
 - SPI扩展点：业务系统需实现若干服务接口以完成具体业务逻辑
 - 配置项：统一前缀 ele-ai-tender.interaction，涵盖基础URL、认证、文件、加解密与投标相关路径
 
@@ -119,9 +136,10 @@ AICB --> AITASK
 - [INTERACTION_INTEGRATION_SPEC.md:19-76](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L19-L76)
 - [InteractionApiPaths.java:1-13](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/constant/InteractionApiPaths.java#L1-L13)
 - [ExternalAiTaskController.java:22](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L22)
+- [InteractionValidationUtils.java:16-21](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L16-L21)
 
 ## 架构总览
-交互集成采用"协议单源 + Starter自动装配 + 业务SPI实现"的分层设计。调用方通过Starter启用后，自动注册拦截器进行签名校验，随后路由到控制器并委托给业务SPI处理；出站侧通过core提供的客户端访问第三方系统。**重构后的外部AI任务接口采用systemId-based架构，通过AiTask实体的systemId字段直接关联外部系统，简化了数据模型和回调流程。**
+交互集成采用"协议单源 + Starter自动装配 + 业务SPI实现"的分层设计。调用方通过Starter启用后，自动注册拦截器进行签名校验，随后路由到控制器并委托给业务SPI处理；出站侧通过core提供的客户端访问第三方系统。**重构后的外部AI任务接口采用systemId-based架构，通过AiTask实体的systemId字段直接关联外部系统，简化了数据模型和回调流程。同时增强了回调处理器的响应验证逻辑和参数校验机制。**
 
 ```mermaid
 sequenceDiagram
@@ -133,6 +151,10 @@ participant Service as "ExternalAiTaskService"
 participant Mapper as "SysAccessSystemQueryMapper"
 participant TaskSvc as "AiTaskServiceImpl"
 participant DB as "数据库"
+participant Scheduler as "AiTaskResultSyncScheduler"
+participant CallbackHandler as "AiTaskResultCallbackHandler"
+participant Validation as "InteractionValidationUtils"
+participant ResultCtrl as "InteractionAiTaskResultCallbackController"
 Ext->>Web : "HTTP 请求(携带X-App-Key/X-Timestamp/X-Signature)"
 Web->>Intc : "进入外部API拦截器"
 Intc->>Intc : "验证X-App-Key有效性"
@@ -150,6 +172,15 @@ DB-->>TaskSvc : "返回任务ID"
 TaskSvc-->>Service : "返回任务对象"
 Service-->>Ctrl : "返回响应"
 Ctrl-->>Ext : "响应结果"
+Note over Scheduler,CallbackHandler : 定时任务扫描未同步任务
+Scheduler->>CallbackHandler : "触发回调处理"
+CallbackHandler->>Validation : "参数验证"
+Validation-->>CallbackHandler : "验证通过"
+CallbackHandler->>Ext : "发送回调请求"
+Ext->>ResultCtrl : "接收回调数据"
+ResultCtrl->>Validation : "执行参数校验"
+Validation-->>ResultCtrl : "校验完成"
+ResultCtrl-->>Ext : "返回处理结果"
 ```
 
 **图表来源**
@@ -158,6 +189,10 @@ Ctrl-->>Ext : "响应结果"
 - [ExternalAiTaskService.java:72-80](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L72-L80)
 - [AiTaskServiceImpl.java:40-44](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java#L40-L44)
 - [SysAccessSystemQueryMapper.java:18-19](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/mapper/SysAccessSystemQueryMapper.java#L18-L19)
+- [AiTaskResultSyncScheduler.java:33-70](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L70)
+- [AiTaskResultCallbackHandler.java:49-90](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L49-L90)
+- [InteractionValidationUtils.java:16-21](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L16-L21)
+- [InteractionAiTaskResultCallbackController.java:35-51](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L35-L51)
 
 ## 详细组件分析
 
@@ -176,16 +211,19 @@ Ctrl-->>Ext : "响应结果"
   - **POST /api/external/ai-tasks（已重构）**
   - **GET /api/external/ai-tasks/{taskId}（已重构）**
   - **GET /api/external/ai-tasks/{taskId}/status（已重构）**
+  - **POST /api/eleAiTender/interaction/callbacks/ai-task-result（增强版）**
 
 说明：
 - 以上路径在规范中明确定义，作为对外接入的统一边界
 - 协议DTO与常量位于common-interaction模块，保持单源维护
 - **外部AI任务接口采用独立的路径前缀，便于权限管理和安全控制**
+- **AI任务结果回调接口增强了参数验证和错误处理机制**
 
 章节来源
 - [INTERACTION_INTEGRATION_SPEC.md:19-33](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L19-L33)
 - [InteractionApiPaths.java:1-13](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/constant/InteractionApiPaths.java#L1-L13)
 - [ExternalAiTaskController.java:22](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L22)
+- [InteractionAiTaskResultCallbackController.java:32-34](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L32-L34)
 
 ### 安全与签名校验
 
@@ -284,45 +322,89 @@ public AiTaskCreateResponse createTask(String appKey, AiTaskCreateRequest reques
 - [AiTaskCreateRequest.java:11-39](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskCreateRequest.java#L11-L39)
 - [AiTaskQueryResponse.java:11-79](file://ele-ai-tender-system/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskQueryResponse.java#L11-L79)
 
-### AI任务回调机制（重构后）
+### AI任务回调机制（增强版）
 
 #### 统一的回调处理器
-**重构后的回调机制**通过AiTaskResultCallbackHandler统一处理：
+**增强版的回调机制**通过AiTaskResultCallbackHandler统一处理，实现了更严格的响应验证逻辑：
 
 ```mermaid
 sequenceDiagram
-participant Scheduler as "定时调度器"
+participant Scheduler as "AiTaskResultSyncScheduler"
 participant Handler as "AiTaskResultCallbackHandler"
-participant Mapper as "SysAccessSystemQueryMapper"
-participant RestTemplate as "RestTemplate"
+participant RestTemplate as "callbackRestTemplate"
+participant ObjectMapper as "JSON解析器"
 participant External as "外部系统"
+participant Validation as "InteractionValidationUtils"
+participant Controller as "InteractionAiTaskResultCallbackController"
 Scheduler->>Handler : "触发任务回调"
-Handler->>Mapper : "根据task.getSystemId()查询系统信息"
-Mapper->>Mapper : "selectById(systemId)"
-Mapper-->>Handler : "返回SysAccessSystem"
 Handler->>Handler : "构建AiTaskResultCallbackRequest"
 Handler->>RestTemplate : "发送HTTP回调请求"
 RestTemplate->>External : "POST /api/eleAiTender/interaction/callbacks/ai-task-result"
-External-->>RestTemplate : "返回响应"
-RestTemplate-->>Handler : "回调成功"
+External->>Controller : "接收回调请求"
+Controller->>Validation : "执行参数验证"
+Validation-->>Controller : "验证通过"
+Controller->>Controller : "记录事件日志"
+Controller-->>External : "返回成功响应"
+External-->>RestTemplate : "返回HTTP响应"
+RestTemplate->>ObjectMapper : "解析JSON响应体"
+ObjectMapper->>Handler : "提取code和message字段"
+Handler->>Handler : "验证响应状态码"
+Handler-->>Scheduler : "回调处理完成"
 ```
 
 **图表来源**
-- [AiTaskResultCallbackHandler.java:44-84](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L44-L84)
-- [AiTaskResultCallbackHandler.java:46-47](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L46-L47)
+- [AiTaskResultSyncScheduler.java:33-70](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L70)
+- [AiTaskResultCallbackHandler.java:49-90](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L49-L90)
+- [AiTaskResultCallbackHandler.java:92-110](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L92-L110)
+- [InteractionValidationUtils.java:16-21](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L16-L21)
+- [InteractionAiTaskResultCallbackController.java:35-51](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L35-L51)
+
+#### 增强的响应验证逻辑
+**回调处理器实现了多层级的响应验证机制**：
+
+1. **HTTP状态码验证**：检查响应状态码是否为200 OK
+2. **JSON响应体解析**：使用ObjectMapper解析响应体为JsonNode
+3. **业务状态码验证**：提取code字段并验证是否为200
+4. **错误消息提取**：支持msg和message字段的灵活提取
+5. **异常处理**：将验证失败转换为RestClientException
 
 #### 回调请求数据结构
 - **AiTaskResultCallbackRequest**：包含任务ID、任务类型、业务ID、业务类型、任务状态、执行结果、错误信息、完成时间等字段
 - **回调路径**：/api/eleAiTender/interaction/callbacks/ai-task-result
 - **认证方式**：使用外部系统的appKey和appSecret生成签名
+- **参数验证**：通过InteractionValidationUtils.validateReceiveAiTaskResult进行严格验证
+
+#### 参数验证增强
+**InteractionValidationUtils提供了统一的参数验证框架**：
+
+```java
+// 验证AI任务结果回调请求
+public static void validateReceiveAiTaskResult(AiTaskResultCallbackRequest request) {
+    requireNotNull(request, "请求体不能为空");
+    requireNotNull(request.getTaskId(), "任务ID不能为空");
+    requireText(request.getTaskType(), "任务类型不能为空");
+    requireText(request.getStatus(), "任务状态不能为空");
+}
+```
+
+**验证规则**：
+- 请求体不能为空
+- 任务ID必须存在
+- 任务类型必须为非空文本
+- 任务状态必须为非空文本
 
 章节来源
-- [AiTaskResultCallbackHandler.java:30-98](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L30-L98)
+- [AiTaskResultCallbackHandler.java:30-123](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L30-L123)
 - [AiTaskResultCallbackRequest.java:10-55](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskResultCallbackRequest.java#L10-L55)
+- [InteractionValidationUtils.java:16-21](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L16-L21)
+- [InteractionAiTaskResultCallbackController.java:35-51](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L35-L51)
 
 ### SPI插件架构与扩展点
 - 定位：业务系统必须实现的SPI用于承载具体业务逻辑
-- 必须实现的SPI列表：
+- **AI任务结果接收SPI**：
+  - InteractionAiTaskResultReceiveService：接收AI任务终态结果回调
+  - receive(AiTaskResultCallbackRequest request)：处理回调请求的核心方法
+- 其他必须实现的SPI列表：
   - InteractionIdentityService
   - InteractionProjectInfoService
   - InteractionBidRecordSchemeService
@@ -340,6 +422,7 @@ RestTemplate-->>Handler : "回调成功"
 章节来源
 - [INTERACTION_INTEGRATION_SPEC.md:34-43](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L34-L43)
 - [INTERACTION_INTEGRATION_SPEC.md:78-83](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L78-L83)
+- [InteractionAiTaskResultReceiveService.java:9-12](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/spi/InteractionAiTaskResultReceiveService.java#L9-L12)
 
 ### 出站客户端能力
 - 能力清单：
@@ -358,7 +441,7 @@ RestTemplate-->>Handler : "回调成功"
 - 业务系统可通过注入相应客户端发起对第三方系统的调用
 
 章节来源
-- [INTERACTION_INTEGRATION_SPEC.md:45-55](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L45-L55)
+- [INTERACTION_INTEGRATION_SPEC.md:45-55](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L45-55)
 - [pom.xml（interaction-core）:19-37](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/pom.xml#L19-L37)
 
 ### 配置项与环境
@@ -388,11 +471,13 @@ RestTemplate-->>Handler : "回调成功"
   - 交互接口使用统一的交互结果包装
   - 签名/参数错误通过交互异常返回，包含明确的错误码
   - **重构后错误码保持不变，继续使用ResponseCode枚举**
+  - **回调接口支持灵活的错误消息格式（msg或message字段）**
 
 章节来源
 - [INTERACTION_INTEGRATION_SPEC.md:78-83](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L78-L83)
-- [CLAUDE.md:119-131](file://CLAUDE.md#L119-131)
+- [CLAUDE.md:119-131](file://CLAUDE.md#L119-L131)
 - [ResponseCode.java:15](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/ResponseCode.java#L15)
+- [AiTaskResultCallbackHandler.java:98-110](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L98-L110)
 
 ### 重试机制与幂等性
 - 重试策略：
@@ -405,6 +490,9 @@ RestTemplate-->>Handler : "回调成功"
   - 每个外部系统的任务数据通过systemId完全隔离
   - 通过AiTask实体的systemId字段维护任务与外部系统的关联关系
   - 移除了独立的回调记录表，简化了数据模型
+- **增强的错误处理**：
+  - 回调失败时抛出AiSyncedException，便于上层捕获和处理
+  - 支持详细的错误日志记录，包含任务ID、回调URL和异常信息
 
 [本节为通用指导，不直接分析具体文件]
 
@@ -414,6 +502,7 @@ RestTemplate-->>Handler : "回调成功"
 - autoconfigure 依赖 core 与 common-interaction
 - starter 聚合各子模块，便于业务系统一键引入
 - **重构后的外部AI任务模块依赖core模块，通过systemId实现数据隔离**
+- **回调处理器依赖ObjectMapper进行JSON解析和验证**
 
 ```mermaid
 graph LR
@@ -425,6 +514,9 @@ ExternalAI --> Common
 ExternalAI --> Core
 ExternalAI --> SysAccess["SysAccessSystem<br/>系统访问配置"]
 ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
+ExternalAI --> ObjectMapper["ObjectMapper<br/>JSON解析器"]
+ExternalAI --> Validation["InteractionValidationUtils<br/>参数验证工具"]
+ExternalAI --> CallbackHandler["AiTaskResultCallbackHandler<br/>回调处理器"]
 ```
 
 **图表来源**
@@ -432,6 +524,8 @@ ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
 - [pom.xml（interaction聚合）:43-47](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L43-L47)
 - [ExternalAiTaskController.java:9](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L9)
 - [AiTask.java:27-28](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L27-L28)
+- [AiTaskResultCallbackHandler.java:43-44](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L43-L44)
+- [InteractionValidationUtils.java:11-14](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L11-L14)
 
 章节来源
 - [pom.xml（interaction-core）:19-37](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/pom.xml#L19-L37)
@@ -447,6 +541,10 @@ ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
   - **直接关联查询**：通过AiTask.systemId直接关联外部系统，无需额外的所有权验证查询
   - **索引优化建议**：为ai_task表的system_id字段建立索引，提升按系统查询的性能
   - **回调处理优化**：AiTaskResultCallbackHandler通过systemId直接查询系统配置，减少中间表关联
+- **增强的性能特性**：
+  - **JSON解析优化**：使用Jackson的JsonNode进行轻量级响应体解析
+  - **异常快速失败**：HTTP状态码验证优先于JSON解析，减少不必要的处理开销
+  - **内存效率**：避免在回调处理过程中创建大量临时对象
 
 [本节为通用指导，不直接分析具体文件]
 
@@ -463,6 +561,11 @@ ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
   - **任务创建失败**：检查sys_access_system表中system_url配置是否正确
   - **任务查询无权限**：确认请求的appKey与任务创建时的systemId匹配
   - **回调推送失败**：检查外部系统的callback路径配置和签名验证
+- **回调处理相关问题**：
+  - **参数验证失败**：检查AiTaskResultCallbackRequest中的必填字段（taskId、taskType、status）
+  - **响应解析异常**：确认外部系统返回的JSON格式正确，包含code字段
+  - **HTTP状态码错误**：检查外部系统是否正确返回200状态码
+  - **事件日志缺失**：确认InteractionEventLogger是否正确配置
 - 回调未触发：
   - 检查回调路径配置是否正确
   - 查看业务SPI实现是否注册成功
@@ -476,11 +579,13 @@ ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
 - [InteractionSignatureInterceptor.java:29-55](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/web/InteractionSignatureInterceptor.java#L29-L55)
 - [ExternalSignatureInterceptor.java:29-72](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/ExternalSignatureInterceptor.java#L29-L72)
 - [ExternalAiTaskService.java:72-80](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java#L72-L80)
-- [AiTaskResultCallbackHandler.java:44-84](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L44-L84)
+- [AiTaskResultCallbackHandler.java:86-89](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L86-L89)
+- [InteractionValidationUtils.java:16-21](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L16-L21)
+- [InteractionAiTaskResultCallbackController.java:46-50](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L46-L50)
 - [CLAUDE.md:144-151](file://CLAUDE.md#L144-L151)
 
 ## 结论
-外部系统集成模块通过统一的协议与Starter，提供了标准化的对外接口、安全的签名校验、可扩展的SPI架构以及完善的出站客户端能力。**经过systemId-based架构重构的外部AI任务接口进一步简化了数据模型和回调流程，通过AiTask实体的systemId字段直接关联外部系统，提升了系统性能和可维护性。**遵循本规范可实现与第三方系统在CA证书管理、标书解密、投标文件推送、AI任务管理等场景的稳定对接，并具备良好的可观测性与可维护性。
+外部系统集成模块通过统一的协议与Starter，提供了标准化的对外接口、安全的签名校验、可扩展的SPI架构以及完善的出站客户端能力。**经过systemId-based架构重构的外部AI任务接口进一步简化了数据模型和回调流程，通过AiTask实体的systemId字段直接关联外部系统，提升了系统性能和可维护性。同时，增强的回调处理器实现了更严格的响应验证逻辑和参数校验机制，确保了数据传输的可靠性和安全性。**遵循本规范可实现与第三方系统在CA证书管理、标书解密、投标文件推送、AI任务管理等场景的稳定对接，并具备良好的可观测性与可维护性。
 
 ## 附录
 
@@ -499,10 +604,12 @@ ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
   - **POST /api/external/ai-tasks（已重构）**
   - **GET /api/external/ai-tasks/{taskId}（已重构）**
   - **GET /api/external/ai-tasks/{taskId}/status（已重构）**
+  - **POST /api/eleAiTender/interaction/callbacks/ai-task-result（增强版）**
 
 章节来源
 - [INTERACTION_INTEGRATION_SPEC.md:19-33](file://docs/rules/INTERACTION_INTEGRATION_SPEC.md#L19-L33)
 - [ExternalAiTaskController.java:22](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/controller/external/ExternalAiTaskController.java#L22)
+- [InteractionAiTaskResultCallbackController.java:32-34](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L32-L34)
 
 ### 配置项速查
 - 统一配置前缀：ele-ai-tender.interaction
@@ -539,6 +646,26 @@ ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
 - [AiTask.java:27-28](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L27-L28)
 - [ResponseCode.java:15](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/ResponseCode.java#L15)
 
+### 回调接口增强特性
+- **增强的响应验证**：
+  - HTTP状态码验证（必须为200 OK）
+  - JSON响应体解析和验证
+  - 业务状态码检查（code字段必须为200）
+  - 灵活的错误消息提取（支持msg和message字段）
+- **严格的参数验证**：
+  - 请求体非空验证
+  - 必填字段验证（taskId、taskType、status）
+  - 文本字段非空验证
+- **完善的异常处理**：
+  - 回调失败抛出AiSyncedException
+  - 详细的错误日志记录
+  - 支持异常堆栈跟踪
+
+章节来源
+- [AiTaskResultCallbackHandler.java:92-110](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L92-L110)
+- [InteractionValidationUtils.java:16-21](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L16-L21)
+- [InteractionAiTaskResultCallbackController.java:35-51](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure/src/main/java/com/jy/eleaitender/interaction/autoconfigure/controller/InteractionAiTaskResultCallbackController.java#L35-L51)
+
 ### 重构前后对比
 - **数据模型变化**：
   - 重构前：AiTask + AiTaskExternalCallback两张表
@@ -550,8 +677,13 @@ ExternalAI --> AiTask["AiTask实体<br/>包含systemId"]
   - 减少了数据库表关联查询
   - 简化了数据隔离逻辑
   - 提升了系统整体性能
+- **可靠性增强**：
+  - 增加了严格的响应验证逻辑
+  - 完善了参数验证机制
+  - 提升了异常处理能力
 
 章节来源
 - [AiTaskServiceImpl.java:40-44](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java#L40-L44)
-- [AiTaskResultCallbackHandler.java:44-84](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L44-L84)
+- [AiTaskResultCallbackHandler.java:49-90](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L49-L90)
 - [AiTask.java:27-28](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L27-L28)
+- [InteractionValidationUtils.java:16-21](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/util/InteractionValidationUtils.java#L16-L21)

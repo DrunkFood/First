@@ -10,10 +10,13 @@
 - [AiTaskResultSyncScheduler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java)
 - [AiTaskResultSyncHandler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java)
 - [AiTaskResultCallbackHandler.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java)
+- [CallbackRestTemplateConfig.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java)
+- [SysAccessSystem.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/support/SysAccessSystem.java)
+- [SignatureUtil.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/util/SignatureUtil.java)
+- [AiTaskResultCallbackRequest.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskResultCallbackRequest.java)
 - [AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
 - [AiTaskStatus.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java)
 - [AiTaskSource.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java)
-- [AiTaskResultCallbackRequest.java](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskResultCallbackRequest.java)
 - [AiUnavailableException.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiUnavailableException.java)
 - [AiErrorContentException.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiErrorContentException.java)
 - [AiSyncedException.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/exception/AiSyncedException.java)
@@ -23,10 +26,11 @@
 
 ## 更新摘要
 **变更内容**   
-- 新增基于systemId的智能同步策略：内部任务(systemId=0)使用本地同步，外部任务(systemId≠0)触发回调推送
-- 新增AiTaskResultCallbackHandler回调处理器，实现外部系统结果推送机制
-- AiTask实体新增systemId字段，支持任务来源标识
-- 增强结果同步系统的可扩展性和跨系统集成能力
+- 增强回调推送处理器AiTaskResultCallbackHandler的HTTP状态码验证机制，支持更严格的响应处理
+- 改进JSON响应解析逻辑，增加对多种错误消息字段的兼容性处理
+- 完善异常处理机制，提供更详细的错误信息和日志记录
+- 新增独立的回调专用RestTemplate配置，支持连接超时和读取超时可配置化
+- 增强外部系统集成安全性，完善签名验证和时间戳有效期检查
 
 ## 目录
 1. [简介](#简介)
@@ -62,25 +66,31 @@ D["IAiTaskService / AiTaskServiceImpl<br/>任务创建/查询/跳过/超时标�
 E["AiTaskResultSyncScheduler<br/>扫描未同步终态任务"]
 F["AiTaskResultSyncHandler<br/>按类型同步结果到业务表"]
 G["AiTaskResultCallbackHandler<br/>外部任务回调推送"]
+H["CallbackRestTemplateConfig<br/>回调专用HTTP客户端配置"]
 end
 subgraph "公共层"
-H["AiTask 实体(含systemId)"]
-I["AiTaskStatus 枚举"]
-J["AiTaskSource 枚举"]
-K["AiUnavailableException / AiErrorContentException / AiSyncedException"]
-L["AiTaskResultCallbackRequest DTO"]
+I["AiTask 实体(含systemId)"]
+J["AiTaskStatus 枚举"]
+K["AiTaskSource 枚举"]
+L["AiUnavailableException / AiErrorContentException / AiSyncedException"]
+M["AiTaskResultCallbackRequest DTO"]
+N["SysAccessSystem 接入系统配置"]
+O["SignatureUtil 签名工具类"]
 end
 A --> B
 A --> C
-A --> H
 A --> I
-A --> K
-D --> H
+A --> J
+A --> L
 D --> I
+D --> J
 E --> F
 E --> G
-F --> H
-G --> L
+F --> I
+G --> M
+G --> N
+G --> O
+G --> H
 ```
 
 **图表来源**
@@ -90,10 +100,10 @@ G --> L
 - [IAiTaskService.java:1-43](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java#L1-L43)
 - [AiTaskResultSyncScheduler.java:1-72](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L1-L72)
 - [AiTaskResultSyncHandler.java:1-790](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L1-L790)
-- [AiTaskResultCallbackHandler.java:1-98](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L98)
-- [AiTask.java:1-83](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L1-L83)
-- [AiTaskStatus.java:1-46](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java#L1-L46)
-- [AiTaskSource.java:1-29](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskSource.java#L1-L29)
+- [AiTaskResultCallbackHandler.java:1-124](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L124)
+- [CallbackRestTemplateConfig.java:1-29](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L1-L29)
+- [SysAccessSystem.java:1-47](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/support/SysAccessSystem.java#L1-L47)
+- [SignatureUtil.java:1-116](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/util/SignatureUtil.java#L1-L116)
 - [AiTaskResultCallbackRequest.java:1-55](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskResultCallbackRequest.java#L1-L55)
 
 章节来源
@@ -105,7 +115,7 @@ G --> L
 - 并发控制：全局+用户级双维度并发限制，基于信号量实现"排队等待"，避免PROCESSING→PENDING弹跳。
 - 任务服务：提供任务创建（防重）、状态查询、跳过、超时标记、最新任务查询、活跃任务检查等。
 - **智能结果同步**：基于systemId区分任务来源，内部任务使用本地同步，外部任务触发回调推送。
-- **回调推送机制**：为外部系统提供安全可靠的HTTP回调推送，支持签名验证和错误处理。
+- **增强的回调推送机制**：为外部系统提供安全可靠的HTTP回调推送，支持严格的HTTP状态码验证、JSON响应解析、完善的异常处理和可配置的超时控制。
 - 实体与状态：统一的AiTask实体与AiTaskStatus枚举，明确终态与可重试语义，新增systemId标识任务来源。
 
 **章节来源**
@@ -115,7 +125,8 @@ G --> L
 - [IAiTaskService.java:1-43](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/IAiTaskService.java#L1-L43)
 - [AiTaskResultSyncScheduler.java:1-72](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L1-L72)
 - [AiTaskResultSyncHandler.java:1-790](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L1-L790)
-- [AiTaskResultCallbackHandler.java:1-98](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L98)
+- [AiTaskResultCallbackHandler.java:1-124](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L124)
+- [CallbackRestTemplateConfig.java:1-29](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L1-L29)
 - [AiTask.java:1-83](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L1-L83)
 - [AiTaskStatus.java:1-46](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java#L1-L46)
 
@@ -134,6 +145,7 @@ participant Exec as "各处理器(需求/评审/检测/集成)"
 participant SyncSch as "AiTaskResultSyncScheduler"
 participant LocalSync as "AiTaskResultSyncHandler"
 participant Callback as "AiTaskResultCallbackHandler"
+participant CallbackRT as "CallbackRestTemplate"
 participant Biz as "业务表(需求/评审/检测/项目)"
 participant External as "外部系统"
 Note over Proc,DB : 每5秒轮询PENDING任务
@@ -153,8 +165,11 @@ LocalSync->>Biz : 按类型写入业务数据
 LocalSync-->>SyncSch : 成功/失败
 else systemId ≠ 0 (外部任务)
 SyncSch->>Callback : callback(task)
-Callback->>External : HTTP回调推送
-External-->>Callback : 响应结果
+Callback->>CallbackRT : HTTP POST请求
+CallbackRT->>External : 发送回调数据
+External-->>CallbackRT : 返回响应
+CallbackRT-->>Callback : 响应结果
+Callback->>Callback : 验证HTTP状态码和JSON响应
 Callback-->>SyncSch : 成功/失败
 end
 SyncSch->>DB : 标记result_synced=1/2
@@ -166,6 +181,7 @@ SyncSch->>DB : 标记result_synced=1/2
 - [AiTaskResultSyncScheduler.java:33-70](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L70)
 - [AiTaskResultSyncHandler.java:72-104](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L72-L104)
 - [AiTaskResultCallbackHandler.java:44-84](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L44-L84)
+- [CallbackRestTemplateConfig.java:21-27](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L21-L27)
 
 ## 详细组件分析
 
@@ -352,15 +368,16 @@ end
 - [AiTaskResultSyncScheduler.java:1-72](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L1-L72)
 - [AiTaskResultSyncHandler.java:1-790](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L1-L790)
 
-### 回调推送处理器 AiTaskResultCallbackHandler
+### 增强的回调推送处理器 AiTaskResultCallbackHandler
 
-**新增** 专门处理外部任务结果回调推送的组件
+**增强** 专门处理外部任务结果回调推送的组件，实现了增强的HTTP状态码验证、JSON响应解析和异常处理机制
 
-- 外部系统集成：通过systemId查询外部系统配置，构建安全的HTTP回调请求。
-- 签名验证：使用AppKey和AppSecret生成签名，确保回调请求的完整性和真实性。
-- 请求构建：组装任务ID、类型、业务ID、状态、结果、错误信息等回调数据。
-- 错误处理：对回调失败进行异常包装，便于上层统一处理和重试。
-- 标准化格式：使用统一的AiTaskResultCallbackRequest DTO，确保数据结构一致性。
+- **增强的HTTP状态码验证**：严格验证HTTP响应状态码，只有200 OK才视为成功，其他状态码立即抛出异常。
+- **改进的JSON响应解析**：使用Jackson ObjectMapper解析响应体，支持灵活的JSON结构处理，兼容多种错误消息字段格式。
+- **完善的异常处理机制**：对所有可能的异常进行分类处理，提供详细的错误信息记录和上下文信息。
+- **独立HTTP客户端配置**：使用专用的callbackRestTemplate，支持可配置的连接超时和读取超时，避免影响主业务流程。
+- **安全签名验证**：基于HMAC-SHA256算法生成签名，结合时间戳验证确保请求完整性和时效性。
+- **标准化回调格式**：使用统一的AiTaskResultCallbackRequest DTO，确保数据结构一致性和向后兼容性。
 
 ```mermaid
 classDiagram
@@ -368,14 +385,24 @@ class AiTaskResultCallbackHandler {
 +callback(AiTask task) void
 -buildCallbackUrl(String systemUrl) String
 -formatDate(Date date) String
+-post(String url, HttpHeaders headers, Object body) void
 -accessSystemQueryMapper : SysAccessSystemQueryMapper
 -callbackRestTemplate : RestTemplate
+-objectMapper : ObjectMapper
+-signatureUtil : SignatureUtil
+}
+class CallbackRestTemplateConfig {
++callbackRestTemplate() RestTemplate
+-connectTimeout : long
+-readTimeout : long
 }
 class SysAccessSystem {
 +id : Long
 +systemUrl : String
 +appKey : String
 +appSecret : String
++expireTime : Date
++status : Integer
 }
 class AiTaskResultCallbackRequest {
 +taskId : Long
@@ -387,16 +414,27 @@ class AiTaskResultCallbackRequest {
 +errorMsg : String
 +completedAt : String
 }
+class SignatureUtil {
++generateSignature(appKey, timestamp, appSecret) String
++verifySignature(appKey, timestamp, appSecret, signature) boolean
++isTimestampValid(timestamp) boolean
+}
 AiTaskResultCallbackHandler --> SysAccessSystem : "查询配置"
 AiTaskResultCallbackHandler --> AiTaskResultCallbackRequest : "构建请求"
+AiTaskResultCallbackHandler --> CallbackRestTemplateConfig : "使用专用HTTP客户端"
+AiTaskResultCallbackHandler --> SignatureUtil : "生成签名"
 ```
 
 **图表来源**
-- [AiTaskResultCallbackHandler.java:28-97](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L28-L97)
+- [AiTaskResultCallbackHandler.java:28-123](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L28-L123)
+- [CallbackRestTemplateConfig.java:13-28](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L13-L28)
+- [SysAccessSystem.java:20-46](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/support/SysAccessSystem.java#L20-L46)
 - [AiTaskResultCallbackRequest.java:10-54](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/src/main/java/com/jy/eleaitender/common/interaction/dto/AiTaskResultCallbackRequest.java#L10-L54)
+- [SignatureUtil.java:31-72](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/util/SignatureUtil.java#L31-L72)
 
 章节来源
-- [AiTaskResultCallbackHandler.java:1-98](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L98)
+- [AiTaskResultCallbackHandler.java:1-124](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L124)
+- [CallbackRestTemplateConfig.java:1-29](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L1-L29)
 
 ### 任务实体与状态机
 
@@ -435,11 +473,12 @@ SKIPPED --> [*]
 - 组件耦合：
   - AiTaskProcessor依赖线程池与并发管理器，解耦了具体处理器实现。
   - 结果同步调度与处理器独立于执行阶段，降低执行期复杂度。
-  - **新增回调处理器**：AiTaskResultCallbackHandler独立处理外部系统集成，与本地同步处理器并行工作。
+  - **增强的回调处理器**：AiTaskResultCallbackHandler独立处理外部系统集成，与本地同步处理器并行工作，具有更强的健壮性和可配置性。
 - 外部依赖：
   - 数据库：任务表、业务表、系统参数表、外部系统配置表。
   - Redis：应用配置中启用，可用于扩展限流/缓存（当前代码未直接使用）。
-  - **HTTP客户端**：回调推送使用RestTemplate进行HTTP通信。
+  - **HTTP客户端**：回调推送使用专用的callbackRestTemplate进行HTTP通信，支持超时配置。
+  - **签名工具**：使用SignatureUtil进行HMAC-SHA256签名生成和验证。
 - 潜在循环依赖：未发现直接循环引用；线程池与并发控制通过属性注入与懒加载规避。
 
 ```mermaid
@@ -453,6 +492,9 @@ SyncSch --> Callback["AiTaskResultCallbackHandler"]
 SyncH --> Entity
 Callback --> Entity
 Callback --> Request["AiTaskResultCallbackRequest"]
+Callback --> Config["CallbackRestTemplateConfig"]
+Callback --> Signature["SignatureUtil"]
+Callback --> System["SysAccessSystem"]
 Service["AiTaskServiceImpl"] --> Entity
 Service --> Status
 ```
@@ -463,7 +505,10 @@ Service --> Status
 - [UserConcurrencyManager.java:1-131](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/threadpool/UserConcurrencyManager.java#L1-L131)
 - [AiTaskResultSyncScheduler.java:1-72](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L1-L72)
 - [AiTaskResultSyncHandler.java:1-790](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L1-L790)
-- [AiTaskResultCallbackHandler.java:1-98](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L98)
+- [AiTaskResultCallbackHandler.java:1-124](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L1-L124)
+- [CallbackRestTemplateConfig.java:1-29](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L1-L29)
+- [SignatureUtil.java:1-116](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/util/SignatureUtil.java#L1-L116)
+- [SysAccessSystem.java:1-47](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/support/SysAccessSystem.java#L1-L47)
 - [AiTaskServiceImpl.java:1-148](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java#L1-L148)
 - [AiTask.java:1-83](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java#L1-L83)
 - [AiTaskStatus.java:1-46](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/enums/AiTaskStatus.java#L1-L46)
@@ -480,16 +525,19 @@ Service --> Status
   - 任务级超时优先于全局配置，避免长尾任务阻塞。
 - 资源隔离：
   - 用户级并发信号量实现软隔离；未来可扩展为按租户/项目维度的隔离。
-- **回调性能**：
-  - 外部系统回调使用独立的RestTemplate实例，避免影响主业务流程。
+- **增强的回调性能**：
+  - 外部系统回调使用独立的callbackRestTemplate实例，支持可配置的连接超时和读取超时。
   - 回调失败不影响主流程，通过重试机制保证最终一致性。
+  - 签名计算使用高效的HMAC-SHA256算法，性能开销可控。
 - 监控指标：
   - 线程池活跃数、池大小、队列长度；任务成功率、失败率、平均耗时、超时率。
-  - **新增回调指标**：回调成功率、失败率、平均响应时间、外部系统可用性。
+  - **新增回调指标**：回调成功率、失败率、平均响应时间、外部系统可用性、签名验证成功率。
 
 **章节来源**
 - [DynamicThreadPoolManager.java:1-190](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/threadpool/DynamicThreadPoolManager.java#L1-L190)
 - [UserConcurrencyManager.java:1-131](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/threadpool/UserConcurrencyManager.java#L1-L131)
+- [CallbackRestTemplateConfig.java:15-19](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L15-L19)
+- [SignatureUtil.java:17-19](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/util/SignatureUtil.java#L17-L19)
 - [application.yml:1-72](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/resources/application.yml#L1-L72)
 
 ## 故障诊断与排错指南
@@ -501,40 +549,49 @@ Service --> Status
     - 内部任务：检查AiTaskResultSyncHandler的执行日志和业务表写入权限。
     - 外部任务：检查AiTaskResultCallbackHandler的回调推送日志和外部系统可达性。
     - 查看result_synced标志位，排查同步处理器异常与业务表写入权限。
-  - **回调推送问题**：
+  - **增强的回调推送问题**：
     - 检查外部系统配置是否正确（system_url、app_key、app_secret）。
     - 验证网络连通性和防火墙规则。
-    - 检查签名生成和验证逻辑。
+    - 检查签名生成和验证逻辑，确认时间戳是否在有效期内。
+    - 查看HTTP状态码验证日志，确认响应格式是否符合预期。
+    - 检查JSON响应解析日志，确认code字段值和错误消息格式。
+    - 验证callbackRestTemplate的超时配置是否合理。
 - 关键日志与断点
   - 调度器日志：轮询批次、并发许可、CAS结果、提交执行、完成/失败。
   - 线程池日志：参数变更、重建过程、关闭过程。
   - **同步日志**：未同步任务发现、同步成功/失败、业务状态联动。
-  - **回调日志**：外部系统配置查询、回调请求构建、签名生成、HTTP推送、响应处理。
+  - **增强的回调日志**：外部系统配置查询、回调请求构建、签名生成、HTTP状态码验证、JSON响应解析、异常详细信息。
 - 恢复策略
   - 重启清理：服务启动/关闭时清理残留PROCESSING任务，避免僵尸任务。
   - 重试与跳过：对可重试状态支持重试；用户可主动跳过任务以推进流程。
   - 幂等与去重：创建任务前检查活跃任务，避免重复提交。
   - **回调重试**：外部系统回调失败时，可通过重新扫描未同步任务进行重试。
+  - **超时调整**：根据外部系统响应情况调整callback-connect-timeout和callback-read-timeout配置。
 
 **章节来源**
 - [AiTaskProcessor.java:103-167](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/processor/AiTaskProcessor.java#L103-L167)
 - [DynamicThreadPoolManager.java:46-82](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/java/com/jy/eleaitender/ai/threadpool/DynamicThreadPoolManager.java#L46-L82)
 - [AiTaskResultSyncScheduler.java:33-70](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncScheduler.java#L33-L70)
 - [AiTaskResultSyncHandler.java:72-104](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultSyncHandler.java#L72-L104)
-- [AiTaskResultCallbackHandler.java:44-84](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L44-L84)
+- [AiTaskResultCallbackHandler.java:86-89](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L86-L89)
+- [AiTaskResultCallbackHandler.java:95-109](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/scheduler/AiTaskResultCallbackHandler.java#L95-L109)
+- [CallbackRestTemplateConfig.java:15-19](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L15-L19)
 - [AiTaskServiceImpl.java:73-99](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java#L73-L99)
 
 ## 结论
-本系统通过"调度-执行-智能同步"三段式架构实现了AI任务的稳定、可控、可观测的生命周期管理。借助动态线程池与用户级并发控制，系统在保障吞吐的同时有效抑制热点与雪崩风险；**基于systemId的智能结果同步机制**确保了内部任务和外部任务的差异化处理，提升了系统的可扩展性和跨系统集成能力；结果同步与状态机联动确保了业务一致性与用户体验。后续可在重试策略精细化、指标采集完善、资源隔离增强等方面持续演进。
+本系统通过"调度-执行-智能同步"三段式架构实现了AI任务的稳定、可控、可观测的生命周期管理。借助动态线程池与用户级并发控制，系统在保障吞吐的同时有效抑制热点与雪崩风险；**基于systemId的智能结果同步机制**确保了内部任务和外部任务的差异化处理，提升了系统的可扩展性和跨系统集成能力；**增强的回调推送处理器**通过严格的HTTP状态码验证、改进的JSON响应解析和完善异常处理机制，显著提高了外部集成的可靠性和健壮性；结果同步与状态机联动确保了业务一致性与用户体验。后续可在重试策略精细化、指标采集完善、资源隔离增强等方面持续演进。
 
 ## 附录
 - 配置参考
   - 应用端口、数据源、Redis、AI模型基础URL、JWT、内部文件服务地址、日志级别等。
+  - **回调超时配置**：ele-ai-tender.external.ai-task.callback-connect-timeout和ele-ai-tender.external.ai-task.callback-read-timeout。
 - 相关规范
   - 项目状态流转、编制阶段流转、AI任务进度与终态规则等。
 - **外部系统集成规范**
   - 回调接口规范、签名算法、错误码定义、重试策略等。
+  - **增强的安全要求**：严格的HTTP状态码验证、JSON响应格式规范、时间戳有效期检查。
 
 **章节来源**
 - [application.yml:1-72](file://ele-ai-tender-system/ele-ai-tender-ai/src/main/resources/application.yml#L1-L72)
+- [CallbackRestTemplateConfig.java:15-19](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/config/CallbackRestTemplateConfig.java#L15-L19)
 - [CORE_MODULE_SPEC.md:155-195](file://docs/rules/CORE_MODULE_SPEC.md#L155-L195)

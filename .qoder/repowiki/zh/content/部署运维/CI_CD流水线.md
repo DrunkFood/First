@@ -10,16 +10,19 @@
 - [Jenkinsfile-support-web.groovy](file://Jenkinsfile-support-web.groovy)
 - [pom.xml](file://ele-ai-tender-system/pom.xml)
 - [interaction pom.xml](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml)
+- [common-interaction pom.xml](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-common-interaction/pom.xml)
+- [interaction-core pom.xml](file://ele-ai-tender-system/ele-ai-tender-interaction/ele-ai-tender-interaction-core/pom.xml)
 - [package.json（主前端）](file://ele-ai-tender-frontend/package.json)
 - [package.json（支撑前端）](file://ele-ai-tender-support-frontend/package.json)
 </cite>
 
 ## 更新摘要
 **变更内容**   
-- 新增Maven分发管理配置，支持通过专用端点http://10.11.20.50:15051/进行发布和快照仓库部署
-- 在interaction模块中配置了独立的distributionManagement，支持正式版本和快照版本的分别部署
-- 增强了CI/CD流水线的构件管理能力，为后续集成远程仓库部署奠定基础
-- 保持了现有构建流程的稳定性，新增的分发配置不影响当前部署策略
+- **新增**：交互服务模块采用独立的Java版本属性管理，支持JDK8兼容性
+- **新增**：interaction模块配置了专用的Spring Boot 2.7.18版本，与主项目的Spring Boot 3.2.2分离
+- **新增**：模块特定的编译配置差异，包括maven-compiler-plugin的独立配置
+- **增强**：Maven分发管理配置，支持通过专用端点进行构件发布和快照部署
+- **优化**：CI/CD流水线需要关注不同模块的Java版本兼容性和构建环境差异
 
 ## 目录
 1. [简介](#简介)
@@ -35,11 +38,12 @@
 
 ## 简介
 本文件为"招标文件AI编制系统"的CI/CD流水线配置文档，聚焦于基于Jenkins的自动化构建、部署与健康检查流程。经过重大重组后，当前仓库提供了简化的Jenkins流水线脚本，分别覆盖后端Java服务与前端静态资源：
-- 后端服务：core、file、ai、support四个Spring Boot模块，采用统一的聚合工程构建
-- 前端应用：主前端ele-ai-tender-frontend与支撑前端ele-ai-tender-support-frontend，使用Vite构建
+- **后端服务**：core、file、ai、support四个Spring Boot模块，采用统一的聚合工程构建
+- **交互模块**：独立的JDK8兼容模块，包含common-interaction、interaction-core等子模块
+- **前端应用**：主前端ele-ai-tender-frontend与支撑前端ele-ai-tender-support-frontend，使用Vite构建
 - **新增**：Maven分发管理配置，支持通过专用端点进行构件发布和快照部署
 
-流水线采用Maven多模块构建、SSH远程发布、进程管理与健康检查的组合方式，实现从代码到运行的端到端自动化。
+流水线采用Maven多模块构建、SSH远程发布、进程管理与健康检查的组合方式，实现从代码到运行的端到端自动化。**特别注意**：交互模块与其他业务模块存在Java版本差异，需要在构建环境中进行特殊处理。
 
 ## 项目结构
 仓库根目录包含若干Jenkinsfile脚本，每个脚本对应一个可独立构建与部署的应用或模块；后端统一在ele-ai-tender-system聚合工程下管理，前端各自维护独立的Node/Vite工程。
@@ -47,21 +51,27 @@
 ```mermaid
 graph TB
 subgraph "Jenkins 流水线"
-JCore["Jenkinsfile-core.groovy"]
-JFile["Jenkinsfile-file.groovy"]
-JAI["Jenkinsfile-ai.groovy"]
-JSupport["Jenkinsfile-support.groovy"]
+JCore["Jenkinsfile-core.groovy<br/>JDK21"]
+JFile["Jenkinsfile-file.groovy<br/>JDK21"]
+JAI["Jenkinsfile-ai.groovy<br/>JDK21"]
+JSupport["Jenkinsfile-support.groovy<br/>JDK21"]
 JWeb["Jenkinsfile-core-web.groovy"]
 JSWeb["Jenkinsfile-support-web.groovy"]
 end
-subgraph "后端聚合工程"
-POM["ele-ai-tender-system/pom.xml<br/>统一版本管理"]
+subgraph "后端聚合工程 (JDK21)"
+POM["ele-ai-tender-system/pom.xml<br/>Spring Boot 3.2.2"]
 Common["ele-ai-tender-common<br/>公共模块"]
 Core["ele-ai-tender-core<br/>核心业务"]
 File["ele-ai-tender-file<br/>文件服务"]
 AI["ele-ai-tender-ai<br/>AI服务"]
 Support["ele-ai-tender-support<br/>支撑服务"]
-Interaction["ele-ai-tender-interaction<br/>交互模块<br/>含分发管理配置"]
+end
+subgraph "交互模块 (JDK8兼容)"
+Interaction["ele-ai-tender-interaction<br/>Spring Boot 2.7.18"]
+CommonInt["ele-ai-tender-common-interaction<br/>JDK8契约"]
+CoreInt["ele-ai-tender-interaction-core<br/>JDK8客户端"]
+AutoConf["ele-ai-tender-interaction-autoconfigure<br/>自动配置"]
+Starter["ele-ai-tender-interaction-spring-boot-starter<br/>启动器"]
 end
 subgraph "前端工程"
 FE1["ele-ai-tender-frontend<br/>Vue3 + Vite"]
@@ -82,6 +92,10 @@ POM --> File
 POM --> AI
 POM --> Support
 POM --> Interaction
+Interaction --> CommonInt
+Interaction --> CoreInt
+Interaction --> AutoConf
+Interaction --> Starter
 Interaction --> Repo
 ```
 
@@ -93,15 +107,22 @@ Interaction --> Repo
 - [Jenkinsfile-core-web.groovy:1-104](file://Jenkinsfile-core-web.groovy#L1-L104)
 - [Jenkinsfile-support-web.groovy:1-104](file://Jenkinsfile-support-web.groovy#L1-L104)
 - [pom.xml:15-23](file://ele-ai-tender-system/pom.xml#L15-L23)
-- [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
+- [interaction pom.xml:43-48](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L43-L48)
 
 ## 核心组件
 - **后端服务流水线（core/file/ai/support）**
   - 工具链：JDK21、Maven
+  - Spring Boot版本：3.2.2
   - 构建命令：在聚合工程下按模块构建并跳过测试（`mvn clean package -pl ${APP_NAME} -am -DskipTests`）
   - 产物：*-exec.jar
   - 部署：通过SSH将JAR传输至目标服务器，调用本地批处理脚本完成进程重启与备份
   - 验证：HTTP健康检查（actuator/health），带重试机制
+- **交互模块（独立构建）**
+  - 工具链：JDK8、Maven
+  - Spring Boot版本：2.7.18（JDK8兼容）
+  - 特性：提供外部系统交互契约和客户端支持
+  - 构建：独立的Maven编译配置，确保JDK8兼容性
+  - 分发：支持向远程Maven仓库发布构件
 - **前端流水线（core-web/support-web）**
   - 工具链：NodeJS 22.21.1
   - 构建：npm ci + npm install + npm run build（Vue3 + Vite）
@@ -119,17 +140,19 @@ Interaction --> Repo
 - [Jenkinsfile-support.groovy:1-132](file://Jenkinsfile-support.groovy#L1-L132)
 - [Jenkinsfile-core-web.groovy:1-104](file://Jenkinsfile-core-web.groovy#L1-L104)
 - [Jenkinsfile-support-web.groovy:1-104](file://Jenkinsfile-support-web.groovy#L1-L104)
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
 - [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
 
 ## 架构总览
-下图展示了各流水线与目标环境的交互关系，包括构建、传输、进程管理与健康检查，以及新增的Maven构件分发能力。
+下图展示了各流水线与目标环境的交互关系，包括构建、传输、进程管理与健康检查，以及新增的Maven构件分发能力和模块特定的Java版本管理。
 
 ```mermaid
 graph TB
 subgraph "Jenkins 节点"
-A["后端流水线<br/>core/file/ai/support"]
+A["后端流水线<br/>core/file/ai/support<br/>JDK21 + Spring Boot 3.2.2"]
 B["前端流水线<br/>core-web/support-web"]
-C["Maven构建<br/>含分发管理"]
+C["交互模块构建<br/>JDK8 + Spring Boot 2.7.18"]
+D["Maven构建<br/>含分发管理"]
 end
 subgraph "目标服务器"
 S1["后端运行目录<br/>ele-ai-tender-{module}"]
@@ -147,8 +170,9 @@ A --> |执行| P
 A --> |HTTP GET| H
 B --> |SSH 传输 ZIP| S2
 B --> |执行| P
-C --> |mvn deploy| R1
-C --> |mvn deploy| R2
+C --> |mvn compile<br/>JDK8兼容| D
+D --> |mvn deploy| R1
+D --> |mvn deploy| R2
 ```
 
 **图表来源**
@@ -158,12 +182,13 @@ C --> |mvn deploy| R2
 - [Jenkinsfile-support.groovy:72-96](file://Jenkinsfile-support.groovy#L72-L96)
 - [Jenkinsfile-core-web.groovy:78-101](file://Jenkinsfile-core-web.groovy#L78-L101)
 - [Jenkinsfile-support-web.groovy:78-101](file://Jenkinsfile-support-web.groovy#L78-L101)
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
 - [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
 
 ## 详细组件分析
 
 ### 后端服务流水线（以 core 为例）
-该流水线负责后端服务的构建、部署与健康检查，其他后端服务（file、ai、support）结构一致，仅环境变量不同。
+该流水线负责后端服务的构建、部署与健康检查，其他后端服务（file、ai、support）结构一致，仅环境变量不同。所有后端服务均使用JDK21和Spring Boot 3.2.2。
 
 ```mermaid
 sequenceDiagram
@@ -174,7 +199,7 @@ participant R as "目标服务器"
 participant P as "进程管理脚本"
 participant HC as "健康检查"
 J->>M : 构建模块跳过测试<br/>mvn clean package -pl core -am -DskipTests
-M-->>J : 产出 *-exec.jar
+M-->>J : 产出 *-exec.jar (Spring Boot 3.2.2)
 J->>SSH : 上传 JAR 到临时目录
 SSH->>R : 写入 jenkins-transfer-temp
 J->>P : 执行 process-jdk21.bat含参数：端口、路径、备份目录、JAR名、JVM选项
@@ -193,6 +218,42 @@ HC-->>J : 200 OK 或失败
 - [Jenkinsfile-file.groovy:1-132](file://Jenkinsfile-file.groovy#L1-L132)
 - [Jenkinsfile-ai.groovy:1-132](file://Jenkinsfile-ai.groovy#L1-L132)
 - [Jenkinsfile-support.groovy:1-132](file://Jenkinsfile-support.groovy#L1-L132)
+
+### 交互模块独立构建配置（新增）
+**更新** 交互模块采用独立的Java版本属性管理，支持JDK8兼容性，与主项目的JDK21环境形成对比。
+
+- **Java版本配置**
+  - 交互模块：`<interaction.java.version>8</interaction.java.version>`
+  - 主项目：`<java.version>21</java.version>`
+- **Spring Boot版本隔离**
+  - 交互模块：`<interaction.spring-boot.version>2.7.18</interaction.spring-boot.version>`
+  - 主项目：`<spring-boot.version>3.2.2</spring-boot.version>`
+- **模块特定编译配置**
+  - maven-compiler-plugin版本：3.5.1（vs 主项目的3.8.1）
+  - 独立的annotationProcessorPaths配置
+  - 专门的Javadoc插件配置，禁用doclint避免警告
+
+```mermaid
+flowchart TD
+Start(["交互模块构建开始"]) --> CheckVersion{"检查Java版本"}
+CheckVersion --> JDK8["使用JDK8编译<br/>interaction.java.version=8"]
+CheckVersion --> SpringBoot27["使用Spring Boot 2.7.18<br/>interaction.spring-boot.version=2.7.18"]
+JDK8 --> Compile["maven-compiler-plugin 3.5.1<br/>source/target=8"]
+SpringBoot27 --> DependencyManagement["dependencyManagement导入<br/>spring-boot-dependencies 2.7.18"]
+Compile --> Build["构建交互模块"]
+DependencyManagement --> Build
+Build --> End(["构建完成"])
+```
+
+**图表来源**
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
+- [interaction pom.xml:25-41](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L25-L41)
+- [interaction pom.xml:74-91](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L74-L91)
+
+**章节来源**
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
+- [interaction pom.xml:25-41](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L25-L41)
+- [interaction pom.xml:74-91](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L74-L91)
 
 ### Maven分发管理配置（新增）
 **更新** 新增了Maven分发管理配置，支持通过专用端点进行构件发布。
@@ -218,10 +279,10 @@ Release --> End
 ```
 
 **图表来源**
-- [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
+- [interaction pom.xml:127-141](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L127-L141)
 
 **章节来源**
-- [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
+- [interaction pom.xml:127-141](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L127-L141)
 
 ### 前端流水线（以 core-web 为例）
 该流水线负责Vue前端的依赖安装、构建、打包与部署。
@@ -238,7 +299,7 @@ Exec --> End(["结束"])
 
 **图表来源**
 - [Jenkinsfile-core-web.groovy:38-77](file://Jenkinsfile-core-web.groovy#L38-77)
-- [Jenkinsfile-core-web.groovy:78-101](file://Jenkinsfile-core-web.groovy#L78-101)
+- [Jenkinsfile-core-web.groovy:78-101](file://Jenkinsfile-core-web.groovy#L78-L101)
 
 **章节来源**
 - [Jenkinsfile-core-web.groovy:1-104](file://Jenkinsfile-core-web.groovy#L1-L104)
@@ -248,15 +309,19 @@ Exec --> End(["结束"])
 
 ### Maven 多模块构建与插件
 - **聚合工程定义了模块列表与统一的依赖版本管理**
-  - 包含7个核心模块：common、common-interaction、interaction、support、file、core、ai
+  - 包含7个核心模块：common、interaction、support、file、core、ai
   - 统一管理Spring Boot 3.2.2、MyBatis Plus 3.5.5等关键依赖版本
+  - **注意**：interaction模块作为独立子模块，有自己的版本管理
 - **构建阶段使用maven-surefire-plugin进行单元测试（默认启用）**
   - 当前流水线在构建时显式跳过测试，便于快速迭代
   - 如需质量门禁，可在流水线中移除跳过测试的参数
 - **插件管理**
   - spring-boot-maven-plugin：用于打包可执行的JAR文件
-  - maven-compiler-plugin：配置JDK 21编译环境
+  - maven-compiler-plugin：配置JDK 21编译环境（主项目）
   - maven-surefire-plugin：单元测试执行
+- **模块特定的编译配置**
+  - interaction模块：JDK8 + Spring Boot 2.7.18 + maven-compiler-plugin 3.5.1
+  - 主项目：JDK21 + Spring Boot 3.2.2 + maven-compiler-plugin 3.8.1
 - **新增分发管理**
   - interaction模块配置了独立的distributionManagement
   - 支持正式版本和快照版本的分别部署
@@ -266,6 +331,8 @@ Exec --> End(["结束"])
 - [pom.xml:251-256](file://ele-ai-tender-system/pom.xml#L251-L256)
 - [pom.xml:225-258](file://ele-ai-tender-system/pom.xml#L225-L258)
 - [Jenkinsfile-core.groovy:52-55](file://Jenkinsfile-core.groovy#L52-L55)
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
+- [interaction pom.xml:74-91](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L74-L91)
 - [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
 
 ### 部署与进程管理
@@ -280,15 +347,16 @@ Exec --> End(["结束"])
 - **Maven构件分发（新增）**
   - 支持通过mvn deploy命令发布构件到远程仓库
   - 自动根据版本号选择对应的仓库（releases或snapshots）
+  - 特别适用于interaction模块的JDK8兼容构件发布
 
 **章节来源**
-- [Jenkinsfile-core.groovy:72-96](file://Jenkinsfile-core.groovy#L72-L96)
-- [Jenkinsfile-file.groovy:72-96](file://Jenkinsfile-file.groovy#L72-L96)
-- [Jenkinsfile-ai.groovy:72-96](file://Jenkinsfile-ai.groovy#L72-L96)
-- [Jenkinsfile-support.groovy:72-96](file://Jenkinsfile-support.groovy#L72-L96)
+- [Jenkinsfile-core.groovy:72-96](file://Jenkinsfile-core.groovy#L72-96)
+- [Jenkinsfile-file.groovy:72-96](file://Jenkinsfile-file.groovy#L72-96)
+- [Jenkinsfile-ai.groovy:72-96](file://Jenkinsfile-ai.groovy#L72-96)
+- [Jenkinsfile-support.groovy:72-96](file://Jenkinsfile-support.groovy#L72-96)
 - [Jenkinsfile-core-web.groovy:78-101](file://Jenkinsfile-core-web.groovy#L78-L101)
 - [Jenkinsfile-support-web.groovy:78-101](file://Jenkinsfile-support-web.groovy#L78-L101)
-- [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
+- [interaction pom.xml:127-141](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L127-L141)
 
 ### 健康检查与重试
 - **后端服务健康检查**
@@ -300,15 +368,16 @@ Exec --> End(["结束"])
   - 支持自动回滚机制
 
 **章节来源**
-- [Jenkinsfile-core.groovy:97-129](file://Jenkinsfile-core.groovy#L97-L129)
-- [Jenkinsfile-file.groovy:97-129](file://Jenkinsfile-file.groovy#L97-L129)
-- [Jenkinsfile-ai.groovy:97-129](file://Jenkinsfile-ai.groovy#L97-L129)
-- [Jenkinsfile-support.groovy:97-129](file://Jenkinsfile-support.groovy#L97-L129)
+- [Jenkinsfile-core.groovy:97-129](file://Jenkinsfile-core.groovy#L97-129)
+- [Jenkinsfile-file.groovy:97-129](file://Jenkinsfile-file.groovy#L97-129)
+- [Jenkinsfile-ai.groovy:97-129](file://Jenkinsfile-ai.groovy#L97-129)
+- [Jenkinsfile-support.groovy:97-129](file://Jenkinsfile-support.groovy#L97-129)
 
 ## 依赖关系分析
 - **后端模块依赖由聚合工程的dependencyManagement统一管理**
   - 确保所有模块使用一致的Spring Boot、MyBatis Plus等依赖版本
-  - 内部模块间依赖关系清晰：common → interaction → business modules
+  - 内部模块间依赖关系清晰：common → business modules
+  - **注意**：interaction模块有独立的dependencyManagement，使用Spring Boot 2.7.18
 - **流水线通过-maven和-jdk工具声明**
   - 保证构建环境稳定（JDK21、Maven）
   - 前端使用NodeJS 22.21.1版本
@@ -321,12 +390,14 @@ Exec --> End(["结束"])
 
 ```mermaid
 graph LR
-POM["聚合 pom.xml<br/>统一版本管理"] --> Common["ele-ai-tender-common<br/>公共模块"]
-POM --> Interaction["ele-ai-tender-interaction<br/>交互模块<br/>含分发管理"]
+POM["聚合 pom.xml<br/>Spring Boot 3.2.2"] --> Common["ele-ai-tender-common<br/>公共模块"]
+POM --> Interaction["ele-ai-tender-interaction<br/>Spring Boot 2.7.18<br/>JDK8兼容"]
 POM --> Support["ele-ai-tender-support<br/>支撑服务"]
 POM --> File["ele-ai-tender-file<br/>文件服务"]
 POM --> Core["ele-ai-tender-core<br/>核心业务"]
 POM --> AI["ele-ai-tender-ai<br/>AI服务"]
+Interaction --> CommonInt["ele-ai-tender-common-interaction<br/>JDK8契约"]
+Interaction --> CoreInt["ele-ai-tender-interaction-core<br/>JDK8客户端"]
 Interaction --> RemoteRepo["Maven远程仓库<br/>http://10.11.20.50:15051/"]
 FE1["前端 package.json<br/>Vue3 + Vite"] --> WebBuild["Vite 构建"]
 FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
@@ -334,13 +405,15 @@ FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
 
 **图表来源**
 - [pom.xml:15-23](file://ele-ai-tender-system/pom.xml#L15-L23)
-- [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
+- [interaction pom.xml:43-48](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L43-L48)
+- [interaction pom.xml:127-141](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L127-L141)
 - [package.json（主前端）:1-49](file://ele-ai-tender-frontend/package.json#L1-L49)
 - [package.json（支撑前端）:1-35](file://ele-ai-tender-support-frontend/package.json#L1-L35)
 
 **章节来源**
-- [pom.xml:1-260](file://ele-ai-tender-system/pom.xml#L1-L260)
-- [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
+- [pom.xml:1-259](file://ele-ai-tender-system/pom.xml#L1-L259)
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
+- [interaction pom.xml:127-141](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L127-L141)
 - [package.json（主前端）:1-49](file://ele-ai-tender-frontend/package.json#L1-L49)
 - [package.json（支撑前端）:1-35](file://ele-ai-tender-support-frontend/package.json#L1-L35)
 
@@ -352,6 +425,7 @@ FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
 - **内存参数优化**：后端服务通过JVM参数控制堆大小，按模块负载调整（Support: 512M, File: 768M, Core: 1G, AI: 2G）
 - **构建缓存**：使用npm ci确保依赖安装的一致性和速度
 - **网络稳定性**：新增的Maven分发配置需要稳定的网络连接，建议在网络层做好容错处理
+- **Java版本兼容性**：交互模块的JDK8编译配置确保了向后兼容性，但需要注意与JDK21环境的隔离
 
 **章节来源**
 - [Jenkinsfile-core.groovy:21-25](file://Jenkinsfile-core.groovy#L21-L25)
@@ -360,6 +434,7 @@ FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
 - [Jenkinsfile-support.groovy:21-25](file://Jenkinsfile-support.groovy#L21-L25)
 - [Jenkinsfile-core-web.groovy:13-17](file://Jenkinsfile-core-web.groovy#L13-L17)
 - [Jenkinsfile-support-web.groovy:13-17](file://Jenkinsfile-support-web.groovy#L13-L17)
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
 
 ## 故障排查指南
 - **构建失败**
@@ -367,6 +442,7 @@ FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
   - 确认聚合工程模块名称与流水线变量一致
   - 查看构建日志中的错误输出
   - 验证网络依赖下载是否正常
+  - **特别注意**：交互模块需要使用JDK8环境，主项目使用JDK21
 - **部署失败**
   - 校验SSH凭据与目标服务器可达性
   - 确认目标服务器上存在所需的批处理脚本与目录权限
@@ -387,19 +463,26 @@ FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
   - 验证远程仓库地址http://10.11.20.50:15051/的可达性
   - 确认仓库ID（zbd-purchase-releases/snapshots）配置正确
   - 检查网络防火墙规则是否允许访问远程仓库
+  - **特别注意**：交互模块的分发需要JDK8兼容的构建环境
+- **Java版本冲突（新增）**
+  - 确认交互模块的JDK8编译配置未被主项目的JDK21配置覆盖
+  - 检查maven-compiler-plugin的版本兼容性
+  - 验证Spring Boot版本与Java版本的匹配关系
 
 **章节来源**
-- [Jenkinsfile-core.groovy:46-71](file://Jenkinsfile-core.groovy#L46-L71)
-- [Jenkinsfile-core.groovy:72-96](file://Jenkinsfile-core.groovy#L72-L96)
-- [Jenkinsfile-core.groovy:97-129](file://Jenkinsfile-core.groovy#L97-L129)
-- [Jenkinsfile-core-web.groovy:38-77](file://Jenkinsfile-core-web.groovy#L38-L77)
+- [Jenkinsfile-core.groovy:46-71](file://Jenkinsfile-core.groovy#L46-71)
+- [Jenkinsfile-core.groovy:72-96](file://Jenkinsfile-core.groovy#L72-96)
+- [Jenkinsfile-core.groovy:97-129](file://Jenkinsfile-core.groovy#L97-129)
+- [Jenkinsfile-core-web.groovy:38-77](file://Jenkinsfile-core-web.groovy#L38-77)
 - [Jenkinsfile-core-web.groovy:78-101](file://Jenkinsfile-core-web.groovy#L78-L101)
-- [interaction pom.xml:64-79](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L64-L79)
+- [interaction pom.xml:19-23](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L19-L23)
+- [interaction pom.xml:127-141](file://ele-ai-tender-system/ele-ai-tender-interaction/pom.xml#L127-L141)
 
 ## 结论
 经过重大重组后，当前CI/CD流水线实现了更加简洁高效的自动化构建与部署。新的架构具有以下特点：
 - **简化构建流程**：专注于核心模块的独立构建，减少不必要的复杂性
 - **统一配置管理**：通过聚合工程统一管理依赖版本和构建配置
+- **模块化版本隔离**：interaction模块采用独立的JDK8和Spring Boot 2.7.18配置，确保向后兼容性
 - **增强稳定性**：完善的健康检查和重试机制，提高部署成功率
 - **优化性能**：合理的内存配置和超时设置，提升构建效率
 - **新增构件管理**：通过Maven分发管理配置，支持正式的构件发布和快照版本管理
@@ -410,6 +493,7 @@ FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
 - 完善蓝绿/金丝雀发布与一键回滚策略
 - 建立监控告警与故障自愈机制
 - 集成Maven远程仓库的认证和安全配置
+- **特别关注**：交互模块的JDK8兼容性测试和跨版本依赖管理
 
 ## 附录
 
@@ -437,3 +521,7 @@ FE2["支撑前端 package.json<br/>Vue3 + Vite"] --> WebBuild
   - 配置Maven settings.xml中的server认证信息
   - 实现自动版本管理和构件清理策略
   - 集成仓库安全扫描和合规检查
+- **多Java版本支持（新增）**
+  - 为交互模块配置独立的JDK8构建环境
+  - 实现主项目JDK21与交互模块JDK8的并行构建
+  - 建立跨版本依赖兼容性测试机制
