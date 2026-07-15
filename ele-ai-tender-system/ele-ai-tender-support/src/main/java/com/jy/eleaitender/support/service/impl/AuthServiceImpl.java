@@ -348,6 +348,9 @@ public class AuthServiceImpl implements IAuthService {
             String password = PasswordUtil.generateRandomPassword();
             sysUser = this.registerSysUser(command.getEnterpriseCode(), password, command.getEnterpriseName(), null);
         }
+        // 更新最后登录时间
+        sysUser.setLastLoginTime(new Date());
+        userMapper.updateById(sysUser);
 
         // 解析有效期
         long tokenExpireSeconds = resolveExternalTokenExpireSeconds();
