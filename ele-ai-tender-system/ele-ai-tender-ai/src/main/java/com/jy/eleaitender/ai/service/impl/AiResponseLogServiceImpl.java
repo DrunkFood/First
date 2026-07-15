@@ -1,5 +1,6 @@
 package com.jy.eleaitender.ai.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.ai.mapper.AiResponseLogMapper;
 import com.jy.eleaitender.ai.service.IAiResponseLogService;
 import com.jy.eleaitender.common.entity.ai.AiResponseLog;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-public class AiResponseLogServiceImpl implements IAiResponseLogService {
+public class AiResponseLogServiceImpl extends ServiceImpl<AiResponseLogMapper, AiResponseLog> implements IAiResponseLogService {
 
     @Autowired
     private AiResponseLogMapper aiResponseLogMapper;

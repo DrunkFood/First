@@ -3,19 +3,14 @@ package com.jy.eleaitender.core.statemachine.trigger;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbRequirement;
-import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.core.mapper.TbProjectMapper;
 import com.jy.eleaitender.core.mapper.TbRequirementMapper;
-import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
-import com.jy.eleaitender.core.service.IRequirementService;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**

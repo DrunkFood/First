@@ -2,11 +2,12 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jy.eleaitender.common.entity.support.SysUser;
+import com.jy.eleaitender.common.entity.support.SysUserRole;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.util.PasswordUtil;
-import com.jy.eleaitender.common.entity.support.SysUser;
-import com.jy.eleaitender.common.entity.support.SysUserRole;
 import com.jy.eleaitender.support.mapper.SysUserMapper;
 import com.jy.eleaitender.support.mapper.SysUserRoleMapper;
 import com.jy.eleaitender.support.service.IUserService;
@@ -21,7 +22,7 @@ import java.util.List;
  * 用户服务实现
  */
 @Service
-public class UserServiceImpl implements IUserService {
+public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements IUserService {
 
     @Autowired
     private SysUserMapper userMapper;

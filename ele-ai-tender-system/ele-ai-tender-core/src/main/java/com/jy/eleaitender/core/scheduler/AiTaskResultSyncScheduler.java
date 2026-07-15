@@ -1,7 +1,6 @@
 package com.jy.eleaitender.core.scheduler;
 
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.enums.AiTaskSource;
 import com.jy.eleaitender.core.mapper.AiTaskMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,8 +1,8 @@
 package com.jy.eleaitender.common.interaction.util;
 
-import java.nio.charset.StandardCharsets;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 交互层签名工具。

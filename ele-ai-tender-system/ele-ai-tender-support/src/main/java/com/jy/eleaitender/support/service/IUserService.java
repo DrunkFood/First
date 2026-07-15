@@ -1,12 +1,13 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SysUser;
 
 /**
  * 用户服务接口
  */
-public interface IUserService {
+public interface IUserService extends IService<SysUser> {
     
     Page<SysUser> getUserPage(Integer pageNum, Integer pageSize, String username, String realName, Integer status);
     

@@ -1,11 +1,11 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectVersion;
-import com.jy.eleaitender.common.enums.ProjectStatus;
 import com.jy.eleaitender.core.mapper.TbProjectVersionMapper;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-public class ProjectVersionServiceImpl implements IProjectVersionService {
+public class ProjectVersionServiceImpl extends ServiceImpl<TbProjectVersionMapper, TbProjectVersion> implements IProjectVersionService {
 
     @Autowired
     private TbProjectVersionMapper projectVersionMapper;

@@ -2,9 +2,9 @@ package com.jy.eleaitender.interaction.core.support;
 
 import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;

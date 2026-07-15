@@ -5,9 +5,10 @@ import com.jy.eleaitender.common.interaction.enums.InteractionResponseCode;
 import com.jy.eleaitender.common.interaction.exception.InteractionException;
 import com.jy.eleaitender.common.interaction.util.InteractionSignatureUtil;
 import com.jy.eleaitender.interaction.core.properties.EleAiTenderInteractionProperties;
+import org.springframework.web.servlet.HandlerInterceptor;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
  * 交互接口签名校验拦截器

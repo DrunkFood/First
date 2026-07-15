@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.ai.DetectionParams;
 import com.jy.eleaitender.common.dto.ai.RequirementGenerateParams;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class RequirementServiceImpl implements IRequirementService {
+public class RequirementServiceImpl extends ServiceImpl<TbRequirementMapper, TbRequirement> implements IRequirementService {
 
     @Autowired
     private TbRequirementMapper requirementMapper;

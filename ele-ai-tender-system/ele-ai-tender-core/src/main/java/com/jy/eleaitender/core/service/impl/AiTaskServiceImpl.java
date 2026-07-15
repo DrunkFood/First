@@ -1,9 +1,9 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.common.enums.AiTaskSource;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-public class AiTaskServiceImpl implements IAiTaskService {
+public class AiTaskServiceImpl extends ServiceImpl<AiTaskMapper, AiTask> implements IAiTaskService {
 
     @Autowired
     private AiTaskMapper aiTaskMapper;

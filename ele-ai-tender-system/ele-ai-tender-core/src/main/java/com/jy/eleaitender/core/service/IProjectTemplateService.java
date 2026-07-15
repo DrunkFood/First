@@ -1,11 +1,12 @@
 package com.jy.eleaitender.core.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 
 /**
  * 项目模板服务接口
  */
-public interface IProjectTemplateService {
+public interface IProjectTemplateService extends IService<TbProjectTemplate> {
 
     /**
      * 项目引用模板 — 从sup_template快照到tb_project_template

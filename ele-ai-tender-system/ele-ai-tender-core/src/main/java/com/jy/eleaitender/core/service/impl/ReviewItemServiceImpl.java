@@ -1,13 +1,14 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
-import com.jy.eleaitender.common.enums.BizType;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.BizType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
@@ -28,7 +29,7 @@ import java.util.*;
  */
 @Slf4j
 @Service
-public class ReviewItemServiceImpl implements IReviewItemService {
+public class ReviewItemServiceImpl extends ServiceImpl<TbProjectReviewItemMapper, TbProjectReviewItem> implements IReviewItemService {
 
     @Autowired
     private TbProjectReviewItemMapper reviewItemMapper;

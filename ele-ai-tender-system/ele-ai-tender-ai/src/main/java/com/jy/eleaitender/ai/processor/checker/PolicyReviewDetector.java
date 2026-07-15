@@ -2,11 +2,8 @@ package com.jy.eleaitender.ai.processor.checker;
 
 import com.jy.eleaitender.ai.processor.prompt.PromptBuilder;
 import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
-import com.jy.eleaitender.ai.processor.prompt.UserPromptTemplates;
 import com.jy.eleaitender.common.enums.DetectionType;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 /**
  * 政策审查检测器

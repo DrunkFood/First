@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.AiTaskType;
@@ -8,7 +9,7 @@ import com.jy.eleaitender.core.dto.response.AiTaskVO;
 /**
  * AI任务服务接口
  */
-public interface IAiTaskService {
+public interface IAiTaskService extends IService<AiTask> {
 
     /**
      * 创建AI任务

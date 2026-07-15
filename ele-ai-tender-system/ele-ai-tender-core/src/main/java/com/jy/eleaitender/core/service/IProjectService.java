@@ -1,9 +1,10 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.ai.AiTask;
-import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
 
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,7 @@ import java.util.Map;
 /**
  * 项目服务接口
  */
-public interface IProjectService {
+public interface IProjectService extends IService<TbProject> {
 
     /**
      * 分页查询项目列表

@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SysOperationLog;
 import com.jy.eleaitender.support.mapper.SysOperationLogMapper;
 import com.jy.eleaitender.support.service.IOperationLogService;
@@ -13,7 +14,7 @@ import org.springframework.util.StringUtils;
  * 操作日志服务实现
  */
 @Service
-public class OperationLogServiceImpl implements IOperationLogService {
+public class OperationLogServiceImpl extends ServiceImpl<SysOperationLogMapper, SysOperationLog> implements IOperationLogService {
 
     @Autowired
     private SysOperationLogMapper operationLogMapper;

@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.constant.RedisKeyConstant;
 import com.jy.eleaitender.common.entity.support.SysParameter;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  * 使用 Redis 缓存加速读取
  */
 @Service
-public class SysParameterServiceImpl implements ISysParameterService {
+public class SysParameterServiceImpl extends ServiceImpl<SysParameterMapper, SysParameter> implements ISysParameterService {
 
     private static final long CACHE_EXPIRE_HOURS = 24;
 

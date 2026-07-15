@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 
@@ -9,7 +10,7 @@ import java.util.Map;
 /**
  * 评审项服务接口
  */
-public interface IReviewItemService {
+public interface IReviewItemService extends IService<TbProjectReviewItem> {
 
     /**
      * 根据项目ID获取评审项树

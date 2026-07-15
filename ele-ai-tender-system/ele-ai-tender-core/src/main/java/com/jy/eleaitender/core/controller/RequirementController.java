@@ -3,9 +3,9 @@ package com.jy.eleaitender.core.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
+import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
-import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.core.dto.response.MatchFileVO;
 import com.jy.eleaitender.core.service.IRequirementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,11 +18,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 业务需求控制器

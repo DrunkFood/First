@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.constant.CommonConstant;
 import com.jy.eleaitender.common.entity.support.SysAccessLog;
 import com.jy.eleaitender.common.mapper.SysAccessLogMapper;
@@ -16,7 +17,7 @@ import java.util.Date;
  * 访问日志服务实现
  */
 @Service
-public class AccessLogServiceImpl implements IAccessLogService {
+public class AccessLogServiceImpl extends ServiceImpl<SysAccessLogMapper, SysAccessLog> implements IAccessLogService {
 
     @Autowired
     private SysAccessLogMapper accessLogMapper;

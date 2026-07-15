@@ -1,5 +1,6 @@
 package com.jy.eleaitender.support.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SysMenu;
 
 import java.util.List;
@@ -7,7 +8,7 @@ import java.util.List;
 /**
  * 菜单服务接口
  */
-public interface IMenuService {
+public interface IMenuService extends IService<SysMenu> {
 
     /**
      * 获取当前用户的菜单树

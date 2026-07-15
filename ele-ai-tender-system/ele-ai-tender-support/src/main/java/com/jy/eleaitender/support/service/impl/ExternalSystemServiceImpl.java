@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
@@ -20,7 +21,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-public class ExternalSystemServiceImpl implements IExternalSystemService {
+public class ExternalSystemServiceImpl extends ServiceImpl<SysAccessSystemMapper, SysAccessSystem> implements IExternalSystemService {
 
     @Autowired
     private SysAccessSystemMapper accessSystemMapper;

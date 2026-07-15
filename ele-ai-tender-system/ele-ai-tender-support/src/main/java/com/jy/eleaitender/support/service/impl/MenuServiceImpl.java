@@ -1,9 +1,10 @@
 package com.jy.eleaitender.support.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SysMenu;
-import com.jy.eleaitender.support.mapper.SysMenuMapper;
 import com.jy.eleaitender.common.security.LoginUser;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
+import com.jy.eleaitender.support.mapper.SysMenuMapper;
 import com.jy.eleaitender.support.service.IMenuService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class MenuServiceImpl implements IMenuService {
+public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> implements IMenuService {
 
     @Autowired
     private SysMenuMapper menuMapper;

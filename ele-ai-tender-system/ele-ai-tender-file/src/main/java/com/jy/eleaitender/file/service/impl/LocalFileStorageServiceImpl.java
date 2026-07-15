@@ -3,12 +3,13 @@ package com.jy.eleaitender.file.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jy.eleaitender.common.dto.response.FileUploadResponse;
+import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.FileException;
 import com.jy.eleaitender.file.config.AllowedTypesResolver;
 import com.jy.eleaitender.file.config.FileStorageConfig;
-import com.jy.eleaitender.common.dto.response.FileUploadResponse;
-import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.file.mapper.FileInfoMapper;
 import com.jy.eleaitender.file.service.IFileStorageService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +19,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 /**
  * 本地文件存储服务实现
  */
 @Slf4j
 @Service
-public class LocalFileStorageServiceImpl implements IFileStorageService {
+public class LocalFileStorageServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo> implements IFileStorageService {
 
     @Autowired
     private FileStorageConfig fileStorageConfig;
@@ -83,7 +84,7 @@ public class LocalFileStorageServiceImpl implements IFileStorageService {
             fileInfo.setBizType(bizType);
             fileInfoMapper.insert(fileInfo);
 
-            log.info("文件上传成功, fileId: {}, fileName: {}, path: {}", 
+            log.info("文件上传成功, fileId: {}, fileName: {}, path: {}",
                     fileInfo.getId(), originalFilename, relativePath);
 
             return new FileUploadResponse(fileInfo.getId(), originalFilename, fileSize, fileSha256, extractFileType(originalFilename));

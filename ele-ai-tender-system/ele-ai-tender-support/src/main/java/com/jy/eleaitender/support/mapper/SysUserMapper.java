@@ -1,8 +1,8 @@
 package com.jy.eleaitender.support.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.common.entity.support.SysRole;
+import com.jy.eleaitender.common.entity.support.SysUser;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

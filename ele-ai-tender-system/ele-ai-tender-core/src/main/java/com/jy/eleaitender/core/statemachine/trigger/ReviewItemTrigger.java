@@ -2,10 +2,9 @@ package com.jy.eleaitender.core.statemachine.trigger;
 
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
-import com.jy.eleaitender.common.entity.core.TbRequirement;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
-import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
+import com.jy.eleaitender.core.mapper.TbRequirementMapper;
 import com.jy.eleaitender.core.service.IReviewItemService;
 import com.jy.eleaitender.core.statemachine.PhaseTrigger;
 import lombok.extern.slf4j.Slf4j;

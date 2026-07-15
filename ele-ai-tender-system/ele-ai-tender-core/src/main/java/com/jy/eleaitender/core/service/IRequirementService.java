@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbDetectionRecord;
 import com.jy.eleaitender.common.entity.core.TbRequirement;
@@ -12,7 +13,7 @@ import java.util.Map;
 /**
  * 业务需求服务接口
  */
-public interface IRequirementService {
+public interface IRequirementService extends IService<TbRequirement> {
 
     /**
      * 分页查询需求列表

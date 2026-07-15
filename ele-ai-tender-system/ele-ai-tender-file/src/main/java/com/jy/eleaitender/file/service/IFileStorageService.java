@@ -1,5 +1,6 @@
 package com.jy.eleaitender.file.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.entity.file.FileInfo;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,7 +10,7 @@ import java.io.InputStream;
 /**
  * 文件存储服务接口
  */
-public interface IFileStorageService {
+public interface IFileStorageService extends IService<FileInfo> {
 
     /**
      * 上传文件
