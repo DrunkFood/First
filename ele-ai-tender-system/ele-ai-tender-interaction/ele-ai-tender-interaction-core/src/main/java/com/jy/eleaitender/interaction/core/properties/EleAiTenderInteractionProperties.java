@@ -29,7 +29,6 @@ public class EleAiTenderInteractionProperties {
     private String coreBaseUrl;
     private String aiTaskCreatePath = "/api/external/ai-tasks";
     private String aiTaskQueryPath = "/api/external/ai-tasks/{taskId}";
-    private String aiTaskStatusPath = "/api/external/ai-tasks/{taskId}/status";
 
     private Duration connectTimeout = Duration.ofSeconds(5);
     private Duration readTimeout = Duration.ofSeconds(20);

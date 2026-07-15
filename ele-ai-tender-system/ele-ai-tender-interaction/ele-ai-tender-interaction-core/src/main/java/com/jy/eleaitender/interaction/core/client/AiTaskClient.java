@@ -97,29 +97,4 @@ public class AiTaskClient {
                 data.getStatus());
         return data;
     }
-
-    /**
-     * 查询AI任务状态
-     *
-     * @param authorization Bearer JWT令牌（通过ExternalAuthClient获取）
-     */
-    public AiTaskQueryResponse getTaskStatus(String authorization, Long taskId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.AUTHORIZATION, authorization);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-        String url = properties.getCoreBaseUrl() + properties.getAiTaskStatusPath().replace("{taskId}", String.valueOf(taskId));
-        ResponseEntity<InteractionResult<AiTaskQueryResponse>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                entity,
-                new ParameterizedTypeReference<InteractionResult<AiTaskQueryResponse>>() {
-                });
-        AiTaskQueryResponse data = InteractionResultExtractor.extractData(response.getBody(), "查询AI任务状态失败");
-        log.info("INTERACTION LOCAL traceId={} api=ai-task/status success=true taskId={} status={}",
-                InteractionTraceSupport.getTraceId(),
-                data.getTaskId(),
-                data.getStatus());
-        return data;
-    }
 }
