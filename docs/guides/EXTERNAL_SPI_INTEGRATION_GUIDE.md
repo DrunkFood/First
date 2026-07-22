@@ -447,3 +447,36 @@ graph LR
 | 出站超时 | 调整 `connect-timeout` / `read-timeout`；确认网络连通性 |
 | 任务一直 PENDING | 平台 AI 服务可能未运行，等待超时后自动标记 AI_UNAVAILABLE |
 | 签名失败（3004） | 确认时间戳为毫秒级（13位）；确认 appKey/appSecret 与平台分配一致 |
+| Jenkins 报 `Could not find artifact ele-ai-tender-system:pom` | 根 POM 未发布到 Nexus，执行附录F步骤1 |
+
+---
+
+## 附录F: Starter 发布流程
+
+发布 interaction starter 到 Nexus 私有仓库时，**必须按以下顺序执行**：
+
+### 步骤1: 发布根 POM（首次 或 根 POM 属性变更时）
+
+```bash
+cd ele-ai-tender-system
+mvn deploy -N -DaltSnapshotDeploymentRepository=zbd-purchase-snapshots::http://10.11.20.50:15051/repository/zbd-purchase-snapshots/
+```
+
+> `-N`（non-recursive）只发布根 POM 文件本身，不触发其他子模块构建。
+
+### 步骤2: 发布 interaction 全部子模块
+
+```bash
+cd ele-ai-tender-system/ele-ai-tender-interaction
+mvn clean install deploy -DskipTests
+```
+
+### 注意事项
+
+| 要点 | 说明 |
+|------|------|
+| 顺序不可颠倒 | 根 POM 必须先于子模块发布，否则外部项目无法解析 parent POM 链 |
+| 根 POM 何时需重新发布 | `lombok.version`、`spring-boot.version` 等被 interaction 继承的属性变更时 |
+| 构建 JDK | 必须使用 JDK 8（当前环境 `JAVA_HOME=C:\Program Files\Java\jdk1.8.0_211`） |
+| 验证字节码 | `javap -verbose Xxx.class` 确认 `major version: 52`（Java 8） |
+| 仓库地址 | `http://10.11.20.50:15051/repository/zbd-purchase-snapshots/`（快照） |

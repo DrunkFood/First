@@ -53,11 +53,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.5.1</version>
+                    <version>3.8.1</version>
                     <configuration>
                         <source>${interaction.java.version}</source>
                         <target>${interaction.java.version}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <parameters>false</parameters>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>
@@ -75,11 +76,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.8.1</version>
                 <configuration>
                     <source>${interaction.java.version}</source>
                     <target>${interaction.java.version}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
+                    <parameters>false</parameters>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -91,7 +93,9 @@
             </plugin>
             <!-- 配置maven-source-plugin以生成并附加源码jar包 -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -104,7 +108,9 @@
             </plugin>
             <!-- 配置maven-javadoc-plugin以生成并附加文档jar包 -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
