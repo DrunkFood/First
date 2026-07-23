@@ -471,10 +471,10 @@ CREATE TABLE IF NOT EXISTS `sup_template` (
 -- =====================================================
 
 -- -----------------------------------------------
--- 1. 管理员用户 (密码: 123456, BCrypt加密)
+-- 1. 管理员用户 (密码: c123456!, BCrypt加密)
 -- -----------------------------------------------
 INSERT INTO `sup_user` (`username`, `password`, `real_name`, `phone`, `status`, `create_time`, `modify_time`)
-VALUES ('admin', '$2a$10$305PBEMiyk/uFtrUC.ywKO731rAgH0dxt3ynt9bTCQs.lqYJkXKZC', '系统管理员', '13900139000', 1, NOW(), NOW());
+VALUES ('admin', '$2a$10$5nVTxMe6ZPdNQ41zgrybhuPIEKpoO1eOs9Bdu1H13JSA5YiTGbAwu', '系统管理员', '13900139000', 1, NOW(), NOW());
 
 -- -----------------------------------------------
 -- 2. 管理员角色 + 业务用户角色
@@ -490,17 +490,6 @@ VALUES ('BID_USER', '业务用户', 'AI招标文件编制业务用户，仅可�
 -- -----------------------------------------------
 INSERT INTO `sup_user_role` (`user_id`, `role_id`, `create_time`, `modify_time`)
 VALUES (1, 1, NOW(), NOW());
-
--- -----------------------------------------------
--- 4. 测试业务用户 (密码: 123456, BCrypt加密)
--- -----------------------------------------------
-INSERT INTO `sup_user` (`username`, `password`, `real_name`, `phone`, `email`, `status`, `create_time`, `create_id`, `create_name`, `modify_time`, `modify_id`, `modify_name`)
-VALUES ('testuser', '$2a$10$305PBEMiyk/uFtrUC.ywKO731rAgH0dxt3ynt9bTCQs.lqYJkXKZC', '测试用户', '13800138000', 'testuser@example.com', 1, NOW(), 1, 'admin', NOW(), 1, 'admin');
-
-INSERT INTO `sup_user_role` (`user_id`, `role_id`, `create_time`, `create_id`, `create_name`, `modify_time`, `modify_id`, `modify_name`)
-SELECT u.id, r.id, NOW(), 1, 'admin', NOW(), 1, 'admin'
-FROM `sup_user` u, `sup_role` r
-WHERE u.username = 'testuser' AND r.role_code = 'BID_USER';
 
 -- -----------------------------------------------
 -- 5. 系统参数初始数据
