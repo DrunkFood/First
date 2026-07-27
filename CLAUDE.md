@@ -6,13 +6,13 @@
 
 招标文件AI编制工具平台，独立部署的AI招标文件编制系统，支持嵌入第三方平台和一体机模式。
 
-**技术基线**: JDK 21 · Spring Boot 3.2.2 · MyBatis-Plus 3.5.5 · MySQL 8.4.0
+**技术基线**: JDK 21 · Spring Boot 3.2.2 · MyBatis-Plus 3.5.5 · MySQL 8.4.0 · JJWT 0.12.5 · Hutool 5.8.25
 
 **AI技术栈**: Spring AI 1.1.0 · Milvus 2.3.3 · Apache Tika 2.9.0 · poi-tl 1.12.2 · flexmark-java 0.64.0
 
 **前端**: 双前端项目架构
 - `ele-ai-tender-support-frontend/` — 支撑中心管理后台 (端口 3060) — Vue 3 + TypeScript + Vite + Element Plus + Pinia
-- `ele-ai-tender-frontend/` — AI编制业务前端 (端口 5173) — Vue 3 + TypeScript + Vite + Element Plus + Pinia + md-editor-v3 + docx-preview + diff2html
+- `ele-ai-tender-frontend/` — AI编制业务前端 (端口 5173) — Vue 3 + TypeScript + Vite + Element Plus + Pinia + TipTap(WysiwygEditor) + md-editor-v3 + docx-preview + diff2html
 
 **后端**: `ele-ai-tender-system/` — Maven 多模块，6个顶级模块（interaction 含4个子模块）
 
@@ -67,6 +67,10 @@
 **需求生成模式**: 三步式 Agent 编排（大纲生成→分章并行生成→审查修订，拼接为纯代码步骤），通过 `ai_task.result` 渐进式推送进度（`contentStage`），全文硬约束 5000 字内。详见 [AI_MODULE_SPEC.md](docs/rules/AI_MODULE_SPEC.md)
 
 **评审类型**: COMPLIANCE(符合性审查) / TECHNICAL(技术标评审) / CREDIT(资信标评审) / COMMERCIAL(商务评审)
+
+**计分模式**: SCORE(分值模式，叶子分值合计=100) / WEIGHT(权重模式，每类型满分100，类型间权重%合计=100%)，详见 [CORE_MODULE_SPEC.md](docs/rules/CORE_MODULE_SPEC.md) 4.6
+
+**客观/主观**: OBJECTIVE(客观) / SUBJECTIVE(主观)，由 `ReviewTypeConfig.distinguishSubjectivity` 控制是否区分（null 回退到 TECHNICAL/CREDIT=true）
 
 ## 启动命令
 

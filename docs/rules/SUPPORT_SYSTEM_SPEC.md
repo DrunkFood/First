@@ -226,7 +226,7 @@
 - 权限接口统一使用 `@RequirePermission`
 - 访问/操作日志查询后端接口统一归属本模块
 - **模板按 `project_category` + `project_type` 双维度配置**：`TemplateConfigServiceImpl.getPage()` 支持按两维度精确筛选；`setDefault()` 按同维度清除其他默认模板。5 份交易文件模板（小额交易货物/服务、政府采购货物/服务、综合交易）通过后台手动创建（init.sql 无种子数据），按对应类别+类型配置。
-- **模板 `review_config`**：JSON 配置启用的评审类型及是否生成评审标准（`reviewTypes[]{reviewType,enabled,generateStandard}`），驱动评审项按项目类别差异化生成（政府采购无符合性/资信标、技术用权重；综合交易无符合性、商务 AI 生成）。详见 [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) 4.6。
+- **模板 `review_config`**：JSON 配置启用的评审类型及计分模式（`reviewTypes[]{reviewType,enabled,generateStandard,distinguishSubjectivity,manualItems}` + `scoreMode`(SCORE/WEIGHT)），驱动评审项按项目类别差异化生成（政府采购无符合性/资信标、技术用权重；综合交易无符合性、商务 AI 生成）。详见 [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) 4.6。
 - **模型配置种子数据**：`sup_model_config` init.sql 预置 DeepSeek 模型（GENERATION/OPTIMIZATION/DETECTION 三场景），运行时由 ai 模块 `ModelRouter` 路由。
 
 JWT 约束、字符集约束与通用安全规范见 [PROJECT_SPEC_FINAL.md](PROJECT_SPEC_FINAL.md)。

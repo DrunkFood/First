@@ -159,7 +159,7 @@ AI能力由 ai 模块通过 `ai_task` 表异步解耦提供，core 模块负责"
 | `tb_requirement` | 业务需求表：requirement_name / project_category / project_type / service_sub_type / budget / requirement_description / match_mode / matched_file_id / matched_similarity / uploaded_file_id / content / auto_save_content / status / progress（**无 projectId**，需求与项目通过 `tb_project.requirement_id` 单向关联） |
 | `tb_project_template` | 项目模板快照表：project_id / template_id / template_name / project_category / project_type / file_id / content / structure_definition(JSON) / version_no |
 | `tb_detection_record` | 检测记录表：requirement_id / project_id / detection_type / content_snapshot / result(JSON) / status / task_id / policy_file_ids / started_at / completed_at |
-| `tb_project_review_item` | 评审项表：project_id / parent_id / level / item_name / item_content / sort_order / review_type / score / max_score / weight / subjectivity / is_required |
+| `tb_project_review_item` | 评审项表：project_id / parent_id / level / item_name / item_content / sort_order / review_type / score / max_score / weight / subjectivity(OBJECTIVE/SUBJECTIVE) / is_required |
 | `tb_policy_file` | 用户政策文件表：file_name / file_category / applicable_category（多选，逗号分隔 `SMALL_TRADE,GOVERNMENT_PROCUREMENT`，VARCHAR(100)）/ file_id / file_size / file_type / description / user_id / status |
 
 所有表继承 `BaseEntity` 基础字段（`create_time`、`modify_time`、`ver`、`is_delete` 等）。
@@ -238,22 +238,30 @@ PENDING → PROCESSING → COMPLETED → (result_synced: 0→1/2)
 ```json
 {
   "reviewTypes": [
-    {"reviewType": "COMPLIANCE", "enabled": true, "generateStandard": true},
-    {"reviewType": "TECHNICAL", "enabled": true, "generateStandard": false},
-    {"reviewType": "CREDIT", "enabled": false, "generateStandard": true},
-    {"reviewType": "COMMERCIAL", "enabled": true, "generateStandard": false}
-  ]
+    {"reviewType": "COMPLIANCE", "enabled": true, "generateStandard": true, "distinguishSubjectivity": false},
+    {"reviewType": "TECHNICAL", "enabled": true, "generateStandard": false, "distinguishSubjectivity": true, "manualItems": [{"itemName":"...","score":60,...}]},
+    {"reviewType": "CREDIT", "enabled": false, "generateStandard": true, "distinguishSubjectivity": true},
+    {"reviewType": "COMMERCIAL", "enabled": true, "generateStandard": false, "distinguishSubjectivity": false}
+  ],
+  "scoreMode": "SCORE"
 }
 ```
 
 | 字段 | 作用 |
 |------|------|
 | `enabled` | 控制该评审类型是否启用 |
-| `generateStandard` | false时，AI不生成该类型的评审项，插入占位一级节点 |
+| `generateStandard` | false时，AI不生成该类型的评审项，优先使用 `manualItems`；无手动项则插入占位一级节点（`itemName='详见评审文件'`） |
+| `distinguishSubjectivity` | 是否区分客观/主观（`Boolean` 包装类型：null=老数据未设置，回退到 TECHNICAL/CREDIT=true 旧硬编码逻辑） |
+| `manualItems` | 模板级手动评审项树（`generateStandard=false` 时使用），`TemplateReviewItemConfig` 递归结构 |
+| `scoreMode` | 计分模式：`SCORE`（分值模式，默认）或 `WEIGHT`（权重模式） |
 
-**向后兼容**：`review_config` 为 null 时全链路回退到"全部启用"默认行为。
+**计分模式**：
+- **SCORE（分值模式）**：所有非符合性叶子评审项分值合计 = 100 分
+- **WEIGHT（权重模式）**：每个评分类型满分 100 分，类型间权重%合计 = 100%；权重存在一级根节点的 `weight` 字段
 
-**DTO**：`ReviewConfig`（fromJson/isEnabled/isGenerateStandard/getEnabledTypes/defaultConfig）、`ReviewTypeConfig`
+**向后兼容**：`review_config` 为 null 时全链路回退到"全部启用 + SCORE 模式"默认行为；`distinguishSubjectivity` 为 null 时回退到 TECHNICAL/CREDIT=true。
+
+**DTO**：`ReviewConfig`（fromJson/isEnabled/isGenerateStandard/isDistinguishSubjectivity/isWeightMode/getScoreModeOrDefault/getEnabledTypes/defaultConfig）、`ReviewTypeConfig`（of/有 manualItems 字段）、`ScoreMode`（SCORE/WEIGHT，fromString 容错回退 SCORE）、`TemplateReviewItemConfig`（itemName/itemContent/sortOrder/score/weight/subjectivity/isRequired/children）
 
 ### 4.7 AI流式响应
 
