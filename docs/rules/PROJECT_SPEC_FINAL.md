@@ -19,12 +19,11 @@
 | `ele-ai-tender-support-frontend` | 前端 | 3060（开发） | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
 | `ele-ai-tender-frontend` | 前端 | 5173（开发） | [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) |
 | `ele-ai-tender-common` | 公共库 | — | — |
-| `ele-ai-tender-common-interaction` | 协议库 | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
+| `ele-ai-tender-interaction` | Starter（含4个子模块） | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
 | `ele-ai-tender-support` | 后端服务 | 8080 | [SUPPORT_SYSTEM_SPEC.md](SUPPORT_SYSTEM_SPEC.md) |
 | `ele-ai-tender-file` | 后端服务 | 8081 | [FILE_SERVICE_SPEC.md](FILE_SERVICE_SPEC.md) |
 | `ele-ai-tender-core` | 后端服务 | 8082 | [CORE_MODULE_SPEC.md](CORE_MODULE_SPEC.md) |
 | `ele-ai-tender-ai` | 后端服务 | 8083 | [AI_MODULE_SPEC.md](AI_MODULE_SPEC.md) |
-| `ele-ai-tender-interaction` | Starter | — | [INTERACTION_INTEGRATION_SPEC.md](INTERACTION_INTEGRATION_SPEC.md) |
 
 ## 3. 技术基线
 

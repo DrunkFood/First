@@ -355,8 +355,8 @@ public void validate() {
 ```yaml
 jwt:
   secret: ${APP_JWT_SECRET:}           # 必须通过环境变量注入，禁止硬编码
-  expiration: ${APP_JWT_EXPIRATION:7200}
-  external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}
+  expiration: ${APP_JWT_EXPIRATION:43200}        # 默认 43200 秒（12小时）
+  external-expiration: ${APP_JWT_EXTERNAL_EXPIRATION:604800}  # 外部系统 7天
 ```
 
 ### 5.4 密码与签名工具
