@@ -1,0 +1,156 @@
+{
+  "summary": {
+    "projectName": "tender-document-tool",
+    "locale": "zh-CN",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 24,
+    "overview": "项目具备完善的 Agent 导航文档和模块化规范体系，但变更验证链路存在断点：27 个测试文件从未在 CI 中执行，且缺少本地快速反馈门禁。",
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Rules",
+        "Commands"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Rules",
+          "scopes": [
+            "Project"
+          ],
+          "count": 4,
+          "paths": [
+            "CLAUDE.md",
+            ".qoder/rules/code_rules.md",
+            ".qoder/rules/user_rules.md",
+            ".qoder/rules/superpowers_rules.md"
+          ]
+        },
+        {
+          "surface": "Commands",
+          "scopes": [
+            "Project"
+          ],
+          "count": 2,
+          "paths": [
+            ".qoder/commands/compact-context.md",
+            ".qoder/commands/session-learning.md"
+          ]
+        }
+      ]
+    },
+    "suggestions": [
+      {
+        "id": "enable-ci-tests",
+        "kind": "try-existing",
+        "title": "在 Jenkins 流水线中启用已有的 27 个单元测试",
+        "reason": "项目已具备覆盖核心模块的测试文件，但 CI 构建使用 -DskipTests 跳过全部测试，移除该标志即可获得快速反馈。",
+        "confidence": "High",
+        "owner": "CI/构建维护者",
+        "nextStep": "将 Jenkinsfile 中的 -DskipTests 移除或改为 -Dmaven.test.failure.ignore=false，观察测试通过率。",
+        "validation": "确认 Jenkins 构建执行测试并输出 surefire 报告，失败时阻断部署。"
+      },
+      {
+        "id": "add-frontend-lint-gate",
+        "kind": "horizon",
+        "title": "为前端项目添加 ESLint 门禁",
+        "reason": "两个前端项目仅有 vue-tsc 类型检查，缺少代码风格和潜在错误的静态分析层。",
+        "confidence": "Medium",
+        "owner": "前端开发者",
+        "nextStep": "引入 eslint + @vue/eslint-config-typescript，配置 lint 脚本并集成到 build 流程。",
+        "validation": "npm run lint 可执行且输出可定位到文件和规则。",
+        "prerequisites": [
+          "需确认团队对 lint 规则集的偏好（Airbnb/Standard/自定义）"
+        ]
+      }
+    ],
+    "assignmentSummaries": [],
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "任务理解",
+        "score": 72,
+        "summary": "CLAUDE.md 提供渐进式规范索引和模块职责表，Agent 可快速定位任务上下文和边界。",
+        "findingRefs": []
+      },
+      {
+        "id": "controlled-execution",
+        "label": "可控执行",
+        "score": 62,
+        "summary": "启动命令和注意事项已文档化，但缺少环境版本锁定和自诊断路径。",
+        "findingRefs": []
+      },
+      {
+        "id": "change-validation",
+        "label": "改动验证",
+        "score": 45,
+        "summary": "27 个单元测试存在但 CI 跳过全部测试，前端有类型检查但无 lint 门禁，变更后缺乏可执行的快速反馈路由。",
+        "findingRefs": [
+          "ci-skips-all-tests",
+          "no-local-validation-gate"
+        ]
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "可靠交付",
+        "score": 48,
+        "summary": "Jenkins 流水线支持构建部署和健康检查，但测试被跳过且无文档化的回滚路径。",
+        "findingRefs": [
+          "no-rollback-recovery-route"
+        ]
+      },
+      {
+        "id": "learning-capture",
+        "label": "经验沉淀",
+        "score": 35,
+        "summary": "知识库和自定义命令已配置，但无可观察的循环检测或纵向验证机制。",
+        "findingRefs": []
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "ci-skips-all-tests",
+      "title": "CI 流水线跳过全部测试，变更验证链路断裂",
+      "severity": "High",
+      "reason": "Jenkinsfile 使用 -DskipTests 构建，27 个测试文件（覆盖 AI、Core、File、Support 模块）从未在交付路径中执行。Agent 或开发者提交的变更无法获得自动化回归反馈。",
+      "expectedOutput": [
+        "Jenkins 构建阶段执行 mvn clean package（不含 -DskipTests）",
+        "测试失败时部署阶段不执行"
+      ],
+      "expectedArtifact": "Jenkinsfile 修改",
+      "aiFixPrompt": "/better-loop fix this issue\n\n在 Jenkins 构建阶段移除 -DskipTests 标志，使已有的 27 个单元测试在 CI 中执行。确保测试失败时阻断部署。\n\n## 验证\n\n- Jenkins 构建日志中出现 surefire 测试报告\n- 测试失败时流水线状态为 FAILED",
+      "dimensionRefs": [
+        "change-validation"
+      ]
+    },
+    {
+      "id": "no-local-validation-gate",
+      "title": "缺少本地快速验证门禁（lint/pre-commit）",
+      "severity": "Medium",
+      "reason": "前端无 ESLint 配置，后端无 checkstyle 或 spotbugs，无 git hooks（husky/pre-commit）。Agent 编辑后唯一可用的本地验证是完整构建（mvn compile 或 vue-tsc），反馈周期长且无法定位具体规则违反。",
+      "expectedOutput": [
+        "前端 lint 命令可执行并输出可定位的违规信息",
+        "pre-commit hook 在提交时自动执行快速检查"
+      ],
+      "expectedArtifact": "Lint 配置 + pre-commit hook",
+      "aiFixPrompt": "/better-loop fix this issue\n\n为项目添加最小化的本地验证门禁：前端添加 ESLint 基础配置，后端考虑添加 checkstyle 或编译期注解检查。配置 pre-commit hook 在提交前执行快速检查。\n\n## 验证\n\n- 前端 npm run lint 可在 30 秒内返回结果\n- 违反规则时输出包含文件、行号、规则名",
+      "dimensionRefs": [
+        "change-validation"
+      ]
+    },
+    {
+      "id": "no-rollback-recovery-route",
+      "title": "部署无文档化的回滚或恢复路径",
+      "severity": "Medium",
+      "reason": "Jenkins 部署到测试服务器后仅有健康检查，无回滚脚本、备份恢复命令或失败后的自动恢复机制。部署失败时操作者缺少明确的恢复入口。",
+      "expectedOutput": [
+        "部署失败后有可执行的恢复命令",
+        "回滚后健康检查通过"
+      ],
+      "expectedArtifact": "回滚脚本或 Jenkins post-failure 阶段",
+      "aiFixPrompt": "/better-loop fix this issue\n\n为 Jenkins 部署流程添加最小化的回滚路径：利用已有的 BAK_REPO 备份目录，编写回滚脚本并在部署失败时提供恢复命令。\n\n## 验证\n\n- 回滚脚本可将服务恢复到上一个备份版本\n- 部署失败时 Jenkins 日志输出回滚命令提示",
+      "dimensionRefs": [
+        "reliable-delivery"
+      ]
+    }
+  ]
+}
