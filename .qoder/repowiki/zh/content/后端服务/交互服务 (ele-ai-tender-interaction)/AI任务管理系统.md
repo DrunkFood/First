@@ -25,10 +25,11 @@
 
 ## 更新摘要
 **变更内容**   
-- 修复了AiTaskClient中的fileIds参数类型错误，将List<String>改为List<Long>以匹配数据库ID类型
-- 改进了字符串拼接方法，优化了文件ID列表的处理逻辑
+- 新增了AI任务机制的完整文档，包括核心数据结构、异步任务队列处理、调度器实现细节、CAS抢占机制、9种AI任务类型及其路由逻辑、任务状态流管理、模型路由机制、结果同步流程和降级策略等
+- 增强了任务来源追踪系统，新增systemId字段以支持更好的审计追踪和系统来源区分
+- 修复了AiTaskClient中的类型安全问题，将fileIds参数类型从List<String>修正为List<Long>
+- 优化了字符串拼接方法，改进了文件ID列表的处理逻辑
 - 移除了冗余的任务状态查询功能，简化了API接口设计
-- 增强了类型安全性，避免潜在的运行时类型转换异常
 
 ## 目录
 1. [简介](#简介)
@@ -258,6 +259,119 @@ FE_SUP_PKG["支撑中心前端 package.json"] --> FE_SUP_DEPS["Vue3/TS/Vite/Elem
 
 [本节为概念性说明，不直接分析具体源码文件]
 
+### AI任务机制核心架构
+
+**已更新** 新增完整的AI任务管理机制，包括核心数据结构、异步任务队列处理、调度器实现、CAS抢占机制、9种AI任务类型路由、任务状态流管理、模型路由机制、结果同步流程和降级策略
+
+#### 核心数据结构
+- **AiTask实体**：包含id、taskType、systemId、projectId、bizId、bizType、status、result、createTime等核心字段
+- **AiTaskVO响应对象**：新增systemId字段用于标识任务发起的系统ID，支持区分内部任务(systemId=0)和外部系统任务(systemId>0)
+- **数据库结构增强**：ai_task表新增system_id字段，biz_id字段类型从bigint修改为varchar(64)
+
+#### 异步任务队列处理
+- **任务创建流程**：
+  - createInternalTask方法：内部任务systemId固定为0L
+  - createExternalTask方法：接收外部系统传入的systemId参数
+  - ExternalAiTaskService自动从SecurityContextHolder获取当前系统ID并传递给任务创建逻辑
+- **任务状态管理**：支持PENDING、PROCESSING、COMPLETED、FAILED等状态流转
+- **CAS抢占机制**：使用乐观锁确保任务并发安全，避免重复处理
+
+#### 调度器实现细节
+- **定时任务调度**：@EnableScheduling启用定时任务，周期性扫描待处理任务
+- **负载均衡策略**：多实例环境下通过分布式锁确保任务唯一性
+- **重试机制**：失败任务自动重试，支持指数退避策略
+
+#### 9种AI任务类型及路由逻辑
+1. **需求生成任务**：自动生成招标需求文档
+2. **评审项生成任务**：创建评审标准和评分规则
+3. **文档匹配任务**：智能匹配相关政策文件
+4. **敏感词检测任务**：检测文档中的敏感词汇
+5. **格式规范检测任务**：验证文档格式规范性
+6. **知识检索任务**：从知识库中检索相关信息
+7. **模型路由任务**：动态选择最优AI模型
+8. **结果同步任务**：异步同步AI处理结果
+9. **回调通知任务**：向外部系统发送处理结果
+
+#### 任务状态流管理
+```mermaid
+stateDiagram-v2
+[*] --> PENDING : 任务创建
+PENDING --> PROCESSING : 调度器获取
+PROCESSING --> COMPLETED : 处理成功
+PROCESSING --> FAILED : 处理失败
+PROCESSING --> RETRY : 需要重试
+RETRY --> PROCESSING : 重试执行
+FAILED --> [*] : 最终失败
+COMPLETED --> [*] : 任务完成
+```
+
+#### 模型路由机制
+- **动态路由策略**：根据任务类型、负载情况、模型可用性动态选择最优模型
+- **健康检查**：实时监控模型服务状态，自动切换健康节点
+- **负载均衡**：支持轮询、权重、最少连接等多种负载均衡算法
+
+#### 结果同步流程和降级策略
+- **同步机制**：支持主动轮询和被动回调两种结果获取方式
+- **降级策略**：主模型不可用时自动切换到备用模型
+- **缓存机制**：热点结果缓存，提升查询性能
+
+```mermaid
+classDiagram
+class AiTask {
++Long id
++String taskType
++Long systemId
++Long projectId
++String bizId
++String bizType
++String status
++String result
++Date createTime
+}
+class AiTaskVO {
++Long id
++String taskType
++Long systemId
++Long projectId
++Number bizId
++String bizType
++String status
++String result
++Date createTime
+}
+class TaskScheduler {
++scanPendingTasks()
++processTask(task)
++handleRetry(task)
+}
+class ModelRouter {
++selectModel(taskType)
++checkHealth(modelId)
++routeRequest(request)
+}
+class ResultSyncHandler {
++syncResult(taskId, result)
++notifyCallback(taskId, result)
++cacheResult(taskId, result)
+}
+AiTask --> AiTaskVO : "转换映射"
+TaskScheduler --> AiTask : "CRUD操作"
+ModelRouter --> AiTask : "模型选择"
+ResultSyncHandler --> AiTask : "结果更新"
+```
+
+**图表来源**
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java)
+
+**章节来源**
+- [ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java](file://ele-ai-tender-system/ele-ai-tender-common/src/main/java/com/jy/eleaitender/common/entity/ai/AiTask.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/dto/response/AiTaskVO.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/impl/AiTaskServiceImpl.java)
+- [ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java](file://ele-ai-tender-system/ele-ai-tender-core/src/main/java/com/jy/eleaitender/core/service/external/ExternalAiTaskService.java)
+- [sql/20260713_bizId字段改为str.sql](file://sql/20260713_bizId字段改为str.sql)
+
 ### 任务来源追踪系统增强
 
 **已更新** 增强任务来源追踪能力，新增systemId字段以支持更好的审计追踪和系统来源区分
@@ -446,6 +560,7 @@ FILE --> DISK["本地磁盘"]
 - 缓存与锁：Redis用于热点数据缓存与分布式锁，减少重复计算与竞争
 - 文档处理：使用poi-tl与flexmark进行高效渲染与转换，结合内存优化策略避免OOM
 - 流式响应：AI对话与长任务采用SSE流式输出，提升用户体验与资源利用率
+- **任务处理优化**：CAS抢占机制确保任务并发安全，避免重复处理；智能重试机制提升系统鲁棒性
 
 [本节为通用指导，不直接分析具体源码文件]
 
@@ -469,6 +584,11 @@ FILE --> DISK["本地磁盘"]
   - 确保传递的文件ID为Long类型而非String类型
   - 检查数据库中的文件ID字段类型是否为bigint
   - 验证前端传递的参数类型是否与后端接口定义一致
+- **AI任务机制问题**
+  - 检查任务调度器是否正常运行，查看定时任务日志
+  - 验证CAS抢占机制是否正常工作，避免任务重复处理
+  - 确认模型路由配置是否正确，检查模型健康状态
+  - 查看任务状态流转是否符合预期，重点关注FAILED状态的 retry 次数
 
 章节来源
 - [CLAUDE.md](file://CLAUDE.md)
@@ -476,7 +596,7 @@ FILE --> DISK["本地磁盘"]
 ## 结论
 本系统以清晰的分层与模块化设计实现招标文件AI编制的端到端能力：支撑中心负责基础治理，文件服务专注文档与模板渲染，核心业务编排项目与需求生命周期并通过任务表与AI服务异步协作，AI服务承载对话、检测、匹配与模型路由。配合双前端与完善的依赖治理，系统在可维护性、扩展性与性能方面具备良好基础。
 
-**更新亮点**：本次更新主要修复了AiTaskClient中的类型安全问题，将fileIds参数类型从List<String>修正为List<Long>，确保了与数据库ID类型的一致性。同时移除了冗余的任务状态查询功能，简化了API接口设计。这些改进提升了系统的类型安全性和代码质量，避免了潜在的运行时类型转换异常。
+**更新亮点**：本次更新主要新增了完整的AI任务管理机制，包括核心数据结构、异步任务队列处理、调度器实现细节、CAS抢占机制、9种AI任务类型及其路由逻辑、任务状态流管理、模型路由机制、结果同步流程和降级策略等。同时修复了AiTaskClient中的类型安全问题，将fileIds参数类型从List<String>修正为List<Long>，确保了与数据库ID类型的一致性。这些改进大幅提升了系统的任务处理能力、并发安全性和代码质量。
 
 ## 附录
 - 环境变量覆盖：SPRING_DATASOURCE_PASSWORD、SPRING_REDIS_PASSWORD、APP_JWT_SECRET、DEEPSEEK_API_KEY、LOCAL_MODEL_KEY

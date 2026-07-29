@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/4a03d7c5-7486-40c1-8b27-f1c3b18ccb11
-title: 招标文件 AI 编制工具根仓库
+title: Ele AI 招标文件编制系统根仓库（多模块聚合工程）
 scope:
     - CLAUDE.md
     - .claudeignore

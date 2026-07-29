@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: 0f023c90-f612-43e8-a53c-ef0324a58a2f
-title: 招标文件AI编制平台（全仓库编排层）
+title: EleAiTender 招标文件 AI 编制平台（根编排层）
 scope: []
 source_files: []
 depends_on: []
