@@ -51,7 +51,7 @@ public class AiTaskResultSyncScheduler {
                     log.debug("AI任务结果已被其他实例抢占，跳过同步: id={}, type={}", task.getId(), task.getTaskType());
                     continue;
                 }
-                if (task.getSystemId() == 0L) {
+                if (task.getSystemId() == null || task.getSystemId() == 0L) {
                     syncHandler.sync(task);
                 } else {
                     callbackService.callback(task);
