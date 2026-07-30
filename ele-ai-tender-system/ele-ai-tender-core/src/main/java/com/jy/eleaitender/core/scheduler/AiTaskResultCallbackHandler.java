@@ -78,6 +78,8 @@ public class AiTaskResultCallbackHandler {
             headers.set("X-Timestamp", String.valueOf(timestamp));
             headers.set("X-Signature", signature);
 
+            log.info("回调推送请求: taskId={}, url={}", task.getId(), callbackUrl);
+
             // 发送POST请求
             post(callbackUrl, headers, request);
 
