@@ -79,18 +79,47 @@
             </el-button>
           </el-form-item>
         </el-form>
+        <p class="agreement-tip">
+          登录即表示同意
+          <button type="button" class="agreement-link" @click="openAgreement('user', 'view')">
+            《用户服务协议》
+          </button>
+          和
+          <button type="button" class="agreement-link" @click="openAgreement('privacy', 'view')">
+            《隐私政策》
+          </button>
+        </p>
       </section>
     </div>
+
+    <el-dialog
+      v-model="agreementDialogVisible"
+      :title="activeAgreementTitle"
+      width="1000px"
+      :show-close="agreementDialogMode === 'view'"
+      :close-on-click-modal="agreementDialogMode === 'view'"
+      :close-on-press-escape="agreementDialogMode === 'view'"
+      class="agreement-dialog"
+    >
+      <div class="agreement-content">{{ activeAgreementText }}</div>
+      <template v-if="agreementDialogMode === 'required'" #footer>
+        <el-button type="primary" class="agreement-confirm-btn" :loading="loading" @click="handleAgreementConfirm">
+          同意并继续
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Iphone, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { authApi } from '@/api/auth'
+import userAgreementText from '@/assets/agreement/user-service-agreement.txt?raw'
+import privacyPolicyText from '@/assets/agreement/privacy-policy.txt?raw'
 
 const router = useRouter()
 const route = useRoute()
@@ -99,6 +128,10 @@ const userStore = useUserStore()
 const loading = ref(false)
 const sendingCode = ref(false)
 const countdown = ref(0)
+const agreementDialogVisible = ref(false)
+const agreementDialogMode = ref<'view' | 'required'>('view')
+const activeAgreement = ref<'user' | 'privacy'>('user')
+const agreementVersion = '2026-07-31'
 
 // 手机验证码登录
 const phoneFormRef = ref<FormInstance>()
@@ -124,6 +157,53 @@ const phoneRules: FormRules = {
       trigger: 'blur',
     },
   ],
+}
+
+const activeAgreementTitle = computed(() =>
+  activeAgreement.value === 'user' ? '用户服务协议' : '隐私政策'
+)
+
+const activeAgreementText = computed(() =>
+  activeAgreement.value === 'user' ? userAgreementText : privacyPolicyText
+)
+
+const openAgreement = (agreement: 'user' | 'privacy', mode: 'view' | 'required') => {
+  activeAgreement.value = agreement
+  agreementDialogMode.value = mode
+  agreementDialogVisible.value = true
+}
+
+const startRequiredAgreementFlow = () => {
+  openAgreement('user', 'required')
+}
+
+const finishPhoneLogin = async () => {
+  await userStore.phoneLogin(phoneForm.phone, phoneForm.code, {
+    agreementAccepted: true,
+    acceptedAgreementTypes: ['USER_SERVICE_AGREEMENT', 'PRIVACY_POLICY'],
+    agreementVersion,
+  })
+  agreementDialogVisible.value = false
+  ElMessage.success('登录成功')
+  router.push((route.query.redirect as string) || '/')
+}
+
+const handleAgreementConfirm = async () => {
+  if (loading.value) return
+
+  if (activeAgreement.value === 'user') {
+    openAgreement('privacy', 'required')
+    return
+  }
+
+  loading.value = true
+  try {
+    await finishPhoneLogin()
+  } catch (error) {
+    console.error('协议同意后登录失败:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleSendCode = async () => {
@@ -170,6 +250,10 @@ const handlePhoneLogin = async () => {
       ElMessage.success('登录成功')
       router.push((route.query.redirect as string) || '/')
     } catch (error) {
+      if ((error as { code?: number })?.code === 1014) {
+        startRequiredAgreementFlow()
+        return
+      }
       console.error('登录失败:', error)
     } finally {
       loading.value = false
@@ -313,6 +397,90 @@ const handlePhoneLogin = async () => {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(51, 108, 255, 0.4);
   }
+}
+
+.agreement-tip {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--app-text-tertiary);
+}
+
+.agreement-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--app-brand-color);
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.agreement-link:hover {
+  text-decoration: underline;
+}
+
+.agreement-content {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 24px 34px 8px;
+  color: #333;
+  font-size: 16px;
+  line-height: 1.55;
+  font-weight: 600;
+  white-space: pre-wrap;
+}
+
+:deep(.agreement-dialog) {
+  border: 2px solid #2f83ff;
+  border-radius: 0;
+  padding: 0;
+  background: #fff;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+:deep(.agreement-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 8px 48px;
+  background: #2f83ff;
+  text-align: center;
+}
+
+:deep(.agreement-dialog .el-dialog__title) {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+:deep(.agreement-dialog .el-dialog__headerbtn) {
+  top: 0;
+  right: 16px;
+  width: 48px;
+  height: 40px;
+}
+
+:deep(.agreement-dialog .el-dialog__headerbtn .el-dialog__close) {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+:deep(.agreement-dialog .el-dialog__body) {
+  padding: 0;
+  background: #fff;
+}
+
+:deep(.agreement-dialog .el-dialog__footer) {
+  padding: 10px 20px 20px;
+  background: #fff;
+  text-align: center;
+}
+
+.agreement-confirm-btn {
+  width: 160px;
+  height: 46px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 @media (max-width: 960px) {

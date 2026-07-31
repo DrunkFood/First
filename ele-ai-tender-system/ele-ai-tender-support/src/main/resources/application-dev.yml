@@ -1,12 +1,12 @@
 # 支撑中心 - dev环境配置
 spring:
   datasource:
-    url: jdbc:mysql://10.11.20.42:15005/ele_ai_tender?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://10.11.20.50:15005/ele_ai_tender?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: Jyjs!@#123
   data:
     redis:
-      host: 10.11.20.42
+      host: 10.11.20.50
       port: 16879
       password: test123
       database: 6
@@ -16,7 +16,7 @@ jwt:
 
 internal:
   file-service:
-    base-url: http://10.11.20.42:8081
+    base-url: http://10.11.20.50:8081
 
 swagger:
   enabled: false

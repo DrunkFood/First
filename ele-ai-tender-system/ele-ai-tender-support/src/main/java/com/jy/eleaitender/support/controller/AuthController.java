@@ -70,9 +70,24 @@ public class AuthController {
 
     @PostMapping("/phone-login")
     @Operation(summary = "手机验证码登录")
-    public Result<UserLoginResponse> phoneLogin(@Valid @RequestBody PhoneLoginRequest request) {
-        UserLoginResponse response = authService.phoneLogin(request);
+    public Result<UserLoginResponse> phoneLogin(@Valid @RequestBody PhoneLoginRequest request,
+                                                HttpServletRequest httpRequest) {
+        UserLoginResponse response = authService.phoneLogin(request, resolveClientIp(httpRequest));
         return Result.success(response);
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (!StringUtils.isNotBlank(ip) || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (!StringUtils.isNotBlank(ip) || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 
     @PostMapping("/reset-password")

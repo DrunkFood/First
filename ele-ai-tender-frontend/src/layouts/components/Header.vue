@@ -1,6 +1,13 @@
 <template>
   <div class="header-container">
     <div class="logo">AI招标文件编制系统</div>
+
+  <!-- 全局警告提示 -->
+    <div class="security-banner">
+      <span class="warning-icon">⚠</span>
+      <span>安全提示： 本系统对接的AI服务经公网传输，请勿在系统中输入、上传或处理任何涉及国家秘密、商业秘密、未公开敏感信息信息及个人信息内容。</span>
+    </div>
+
     <div class="header-actions">
       <ThemeToggle />
       <div class="user-info">
@@ -50,7 +57,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { UserFilled, Lock, SwitchButton } from '@element-plus/icons-vue'
+import {UserFilled, Lock, SwitchButton, } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { authApi } from '@/api/auth'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
@@ -124,19 +131,44 @@ function handleLogout() {
 <style scoped>
 .header-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   height: 60px;
-  padding: 0 20px;
+  padding: 0 20px 0 0;
   background: var(--app-header-bg);
   transition: var(--app-transition-base);
 }
 .logo {
+  width: 240px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding-left: 16px;
   font-size: 18px;
   font-weight: bold;
   color: var(--app-brand-color);
 }
+.security-banner {
+  display: flex;
+  align-items: center;
+  background: #fff3cd;
+  color: #e67e00;            /* 橙色文字 */
+  font-size: 12px;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 12px;
+  border: 1px solid #e67e00; /* 橙色边框 */
+}
+.warning-icon {
+  font-size: 18px;     /* 调大 */
+  color: #e67e00;      /* 橙色 */
+  line-height: 1;
+}
+
+
 .header-actions {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 12px;

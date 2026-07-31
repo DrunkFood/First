@@ -62,8 +62,12 @@ request.interceptors.response.use(
       }
       return Promise.reject(new Error(message || '未授权'))
     }
-    ElMessage.error(message || '请求失败')
-    return Promise.reject(new Error(message))
+    const businessError = new Error(message || '请求失败') as Error & { code?: number }
+    businessError.code = code
+    if (code !== 1014) {
+      ElMessage.error(message || '请求失败')
+    }
+    return Promise.reject(businessError)
   },
   (error) => {
     if (error.response?.status === 401) {

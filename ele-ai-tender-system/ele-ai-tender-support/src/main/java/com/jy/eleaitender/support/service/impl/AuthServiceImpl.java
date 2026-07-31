@@ -17,12 +17,14 @@ import com.jy.eleaitender.common.dto.request.UserLoginRequest;
 import com.jy.eleaitender.common.dto.response.UserLoginResponse;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
 import com.jy.eleaitender.common.entity.support.SysRole;
+import com.jy.eleaitender.common.entity.support.SysOperationLog;
 import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.common.entity.support.SysUserRole;
 import com.jy.eleaitender.support.mapper.SysAccessSystemMapper;
 import com.jy.eleaitender.support.mapper.SysRoleMapper;
 import com.jy.eleaitender.support.mapper.SysUserMapper;
 import com.jy.eleaitender.support.mapper.SysUserRoleMapper;
+import com.jy.eleaitender.support.mapper.SysOperationLogMapper;
 import com.jy.eleaitender.common.security.LoginUser;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.support.service.IAuthService;
@@ -38,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -67,6 +70,9 @@ public class AuthServiceImpl implements IAuthService {
 
     @Autowired
     private SysUserRoleMapper userRoleMapper;
+
+    @Autowired
+    private SysOperationLogMapper operationLogMapper;
 
     private static final String DEFAULT_ROLE_CODE = "BID_USER";
 
@@ -124,6 +130,17 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public UserLoginResponse phoneLogin(PhoneLoginRequest request) {
+        return phoneLogin(request, "unknown");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public UserLoginResponse phoneLogin(PhoneLoginRequest request, String ipAddress) {
+        SysUser user = findActiveUserByPhoneOrUsername(request.getPhone());
+        if (user == null && !hasAcceptedRequiredAgreements(request)) {
+            throw new BusinessException(ResponseCode.USER_AGREEMENT_REQUIRED);
+        }
+
         // 验证短信验证码
         boolean valid = smsService.verifyCode(request.getPhone(), request.getCode(), "LOGIN");
         if (!valid) {
@@ -131,9 +148,9 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         // 查询用户（通过手机号），未注册则自动注册
-        SysUser user = userMapper.selectByPhone(request.getPhone());
         if (user == null) {
             user = autoRegisterByPhone(request.getPhone());
+            recordAgreementLogs(user, request, ipAddress);
         }
 
         // 检查用户状态
@@ -149,6 +166,54 @@ public class AuthServiceImpl implements IAuthService {
         UserLoginResponse response = buildLoginResponse(user);
         log.info("用户[{}]通过手机验证码登录成功", user.getUsername());
         return response;
+    }
+
+    private SysUser findActiveUserByPhoneOrUsername(String phone) {
+        SysUser user = userMapper.selectByPhone(phone);
+        if (user != null) {
+            return user;
+        }
+
+        user = userMapper.selectByUsername(phone);
+        if (user == null) {
+            return null;
+        }
+
+        if (StringUtils.isBlank(user.getPhone())) {
+            user.setPhone(phone);
+            userMapper.updateById(user);
+        }
+        return user;
+    }
+
+    private boolean hasAcceptedRequiredAgreements(PhoneLoginRequest request) {
+        List<String> acceptedTypes = request.getAcceptedAgreementTypes();
+        return Boolean.TRUE.equals(request.getAgreementAccepted())
+                && StringUtils.isNotBlank(request.getAgreementVersion())
+                && acceptedTypes != null
+                && acceptedTypes.contains("USER_SERVICE_AGREEMENT")
+                && acceptedTypes.contains("PRIVACY_POLICY");
+    }
+
+    private void recordAgreementLogs(SysUser user, PhoneLoginRequest request, String ipAddress) {
+        Date now = new Date();
+        saveAgreementLog(user, request, "USER_SERVICE_AGREEMENT", "同意用户服务协议", ipAddress, now);
+        saveAgreementLog(user, request, "PRIVACY_POLICY", "同意隐私政策", ipAddress, now);
+    }
+
+    private void saveAgreementLog(SysUser user, PhoneLoginRequest request, String agreementType,
+                                  String operation, String ipAddress, Date createTime) {
+        SysOperationLog operationLog = new SysOperationLog();
+        operationLog.setUserId(user.getId());
+        operationLog.setUserName(request.getPhone());
+        operationLog.setOperation(operation);
+        operationLog.setMethod("AuthServiceImpl.phoneLogin");
+        operationLog.setParams("{\"agreementType\":\"" + agreementType
+                + "\",\"agreementVersion\":\"" + request.getAgreementVersion() + "\"}");
+        operationLog.setIp(ipAddress);
+        operationLog.setExecuteTime(0L);
+        operationLog.setCreateTime(createTime);
+        operationLogMapper.insert(operationLog);
     }
 
     @Override
@@ -193,8 +258,20 @@ public class AuthServiceImpl implements IAuthService {
      */
     private SysUser autoRegisterByPhone(String phone) {
         // 检查用户名是否已存在（以手机号作为用户名）
-        SysUser existing = userMapper.selectByUsername(phone);
+        SysUser existing = userMapper.selectAnyByUsername(phone);
         if (existing != null) {
+            if (Integer.valueOf(1).equals(existing.getIsDelete())) {
+                userMapper.reactivateByUsername(phone);
+                SysUser reactivatedUser = userMapper.selectByUsername(phone);
+                assignDefaultRole(reactivatedUser);
+                log.info("手机号[{}]对应的逻辑删除账号已重新启用", phone);
+                return reactivatedUser;
+            }
+            if (StringUtils.isBlank(existing.getPhone())) {
+                existing.setPhone(phone);
+                userMapper.updateById(existing);
+                return existing;
+            }
             throw new BusinessException("该手机号对应的用户名已存在");
         }
 
@@ -207,22 +284,35 @@ public class AuthServiceImpl implements IAuthService {
         user.setStatus(1);
         userMapper.insert(user);
 
-        // 查找默认角色 BID_USER 并分配
+        assignDefaultRole(user);
+
+        log.info("手机号[{}]自动注册成功，分配角色: {}", phone, DEFAULT_ROLE_CODE);
+        return user;
+    }
+
+    private void assignDefaultRole(SysUser user) {
+        if (user == null || user.getId() == null) {
+            return;
+        }
+
         LambdaQueryWrapper<SysRole> roleQuery = new LambdaQueryWrapper<>();
         roleQuery.eq(SysRole::getRoleCode, DEFAULT_ROLE_CODE)
                  .eq(SysRole::getStatus, 1);
         SysRole defaultRole = roleMapper.selectOne(roleQuery);
         if (defaultRole != null) {
+            Long existingRoleCount = userRoleMapper.countAnyByUserIdAndRoleId(user.getId(), defaultRole.getId());
+            if (existingRoleCount != null && existingRoleCount > 0) {
+                userRoleMapper.reactivateByUserIdAndRoleId(user.getId(), defaultRole.getId());
+                return;
+            }
+
             SysUserRole userRole = new SysUserRole();
             userRole.setUserId(user.getId());
             userRole.setRoleId(defaultRole.getId());
             userRoleMapper.insert(userRole);
         } else {
-            log.warn("默认角色[BID_USER]不存在，自动注册用户[{}]未分配角色", phone);
+            log.warn("默认角色[BID_USER]不存在，自动注册用户[{}]未分配角色", user.getUsername());
         }
-
-        log.info("手机号[{}]自动注册成功，分配角色: {}", phone, DEFAULT_ROLE_CODE);
-        return user;
     }
 
     /**

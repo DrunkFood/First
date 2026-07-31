@@ -3,12 +3,15 @@ package com.jy.eleaitender.support.service.impl;
 import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
 import com.jy.eleaitender.common.dto.request.ResetPasswordRequest;
 import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.support.mapper.SysUserMapper;
 import com.jy.eleaitender.support.service.ISmsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
@@ -23,6 +26,9 @@ class AuthServiceImplSmsSceneTest {
     @Mock
     private ISmsService smsService;
 
+    @Mock
+    private SysUserMapper userMapper;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -31,6 +37,9 @@ class AuthServiceImplSmsSceneTest {
         PhoneLoginRequest request = new PhoneLoginRequest();
         request.setPhone(PHONE);
         request.setCode(CODE);
+        request.setAgreementAccepted(true);
+        request.setAcceptedAgreementTypes(List.of("USER_SERVICE_AGREEMENT", "PRIVACY_POLICY"));
+        request.setAgreementVersion("2026-07-31");
         when(smsService.verifyCode(PHONE, CODE, "LOGIN")).thenReturn(false);
 
         assertThrows(BusinessException.class, () -> authService.phoneLogin(request));

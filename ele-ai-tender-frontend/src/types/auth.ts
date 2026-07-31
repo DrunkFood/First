@@ -7,6 +7,9 @@ export interface LoginRequest {
 export interface PhoneLoginRequest {
   phone: string
   code: string
+  agreementAccepted?: boolean
+  acceptedAgreementTypes?: string[]
+  agreementVersion?: string
 }
 
 export interface SendSmsCodeRequest {

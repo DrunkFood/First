@@ -30,6 +30,15 @@ public interface IAuthService {
     UserLoginResponse phoneLogin(PhoneLoginRequest request);
 
     /**
+     * 手机验证码登录，并传入客户端IP地址
+     *
+     * @param request   手机验证码登录请求
+     * @param ipAddress 客户端IP地址
+     * @return 登录响应
+     */
+    UserLoginResponse phoneLogin(PhoneLoginRequest request, String ipAddress);
+
+    /**
      * 短信验证码重置密码
      *
      * @param request 重置密码请求

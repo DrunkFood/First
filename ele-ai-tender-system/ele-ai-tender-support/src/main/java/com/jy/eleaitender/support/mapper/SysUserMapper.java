@@ -6,6 +6,7 @@ import com.jy.eleaitender.common.entity.support.SysRole;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -22,10 +23,22 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     SysUser selectByUsername(@Param("username") String username);
 
     /**
+     * 根据用户名查询用户（包含逻辑删除数据，用于处理手机号自动注册唯一索引冲突）
+     */
+    @Select("SELECT * FROM sup_user WHERE username = #{username} LIMIT 1")
+    SysUser selectAnyByUsername(@Param("username") String username);
+
+    /**
      * 根据手机号查询用户
      */
     @Select("SELECT * FROM sup_user WHERE phone = #{phone} AND is_delete = 0")
     SysUser selectByPhone(@Param("phone") String phone);
+
+    /**
+     * 重新启用已逻辑删除的手机号账号
+     */
+    @Update("UPDATE sup_user SET phone = #{phone}, status = 1, is_delete = 0, modify_time = NOW(), modify_id = 0, modify_name = 'system' WHERE username = #{phone}")
+    int reactivateByUsername(@Param("phone") String phone);
 
     /**
      * 根据用户ID查询角色编码列表

@@ -664,8 +664,9 @@ INSERT INTO `sup_menu` (`parent_id`, `menu_name`, `menu_code`, `menu_type`, `men
 -- =====================================================
 
 -- 管理员角色: 分配所有菜单权限
-INSERT INTO `sup_role_menu` (`role_id`, `menu_id`, `create_time`, `modify_time`)
-SELECT 1, id, NOW(), NOW() FROM `sup_menu`;
+ INSERT INTO `sup_role_menu` (`role_id`, `menu_id`, `create_time`, `modify_time`)
+ SELECT 1, id, NOW(), NOW() FROM `sup_menu`
+ WHERE menu_code NOT LIKE 'ai-%' AND menu_code != 'ai-tender-biz';
 
 -- 业务用户角色: 仅分配AI编制相关菜单权限
 INSERT INTO `sup_role_menu` (`role_id`, `menu_id`, `create_time`, `create_id`, `create_name`, `modify_time`, `modify_id`, `modify_name`)

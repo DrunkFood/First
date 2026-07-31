@@ -160,6 +160,7 @@
             :limit="1"
             accept=".docx"
             :on-change="handleFileChange"
+            :on-exceed="handleFileExceed"
             :file-list="fileList"
             :on-remove="handleFileRemove"
           >
@@ -590,10 +591,21 @@ const handleManualDialogConfirm = () => {
   manualDialogVisible.value = false
 }
 
-const handleFileChange = (uploadFile: any) => {
-  uploadingFile.value = uploadFile.raw
-  fileList.value = [uploadFile]
+const setPendingTemplateFile = (file: File) => {
+  uploadingFile.value = file
+  fileList.value = [{ name: file.name, raw: file, status: 'ready' }]
   formData.fileId = undefined
+}
+
+const handleFileChange = (uploadFile: any) => {
+  if (!uploadFile.raw) return
+  setPendingTemplateFile(uploadFile.raw)
+}
+
+const handleFileExceed = (files: File[]) => {
+  const file = files[0]
+  if (!file) return
+  setPendingTemplateFile(file)
 }
 
 const handleFileRemove = () => {

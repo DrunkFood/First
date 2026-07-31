@@ -25,8 +25,16 @@ export const useUserStore = defineStore('user', () => {
     return res
   }
 
-  async function phoneLogin(phone: string, code: string) {
-    const res = await authApi.phoneLogin({ phone, code })
+  async function phoneLogin(
+    phone: string,
+    code: string,
+    agreementPayload?: {
+      agreementAccepted?: boolean
+      acceptedAgreementTypes?: string[]
+      agreementVersion?: string
+    }
+  ) {
+    const res = await authApi.phoneLogin({ phone, code, ...agreementPayload })
     // request 拦截器已返回 data，res 就是 LoginResult
     token.value = res.token
     userInfo.value = res.userInfo
