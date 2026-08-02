@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.eleaitender.common.dto.ai.AiTaskParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
@@ -20,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-public class AiTaskServiceImpl implements IAiTaskService {
+public class AiTaskServiceImpl extends ServiceImpl<AiTaskMapper, AiTask> implements IAiTaskService {
 
     @Autowired
     private AiTaskMapper aiTaskMapper;
@@ -28,10 +29,22 @@ public class AiTaskServiceImpl implements IAiTaskService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
-    public AiTask createTask(AiTaskType type, Long projectId, Long bizId, String bizType,
-                             AiTaskParams requestParams, String fileIds) {
+    @Override
+    public AiTask createInternalTask(AiTaskType type, Long projectId, Long bizId, String bizType,
+                                     AiTaskParams requestParams, String fileIds) {
+        return createTask(type, 0L, projectId, String.valueOf(bizId), bizType, requestParams, fileIds);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public AiTask createExternalTask(AiTaskType type, Long systemId, Long projectId, String bizId, String bizType,
+                                     AiTaskParams requestParams, String fileIds) {
+        return createTask(type, systemId, projectId, bizId, bizType, requestParams, fileIds);
+    }
+
+    private AiTask createTask(AiTaskType type, Long systemId, Long projectId, String bizId, String bizType,
+                              AiTaskParams requestParams, String fileIds) {
         // 防重复提交：同一业务同一类型不能有活跃任务
         AiTask activeTask = aiTaskMapper.selectActiveTask(type.getCode(), bizId, bizType);
         if (activeTask != null) {
@@ -40,6 +53,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
 
         AiTask task = new AiTask();
         task.setTaskType(type.getCode());
+        task.setSystemId(systemId);
         task.setProjectId(projectId);
         task.setBizId(bizId);
         task.setBizType(bizType);
@@ -62,7 +76,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
     }
 
     @Override
-    public AiTaskVO getTaskStatus(Long taskId) {
+    public AiTaskVO getTask(Long taskId) {
         AiTask task = aiTaskMapper.selectById(taskId);
         if (task == null) {
             throw new BusinessException(ResponseCode.TASK_NOT_FOUND);
@@ -100,7 +114,7 @@ public class AiTaskServiceImpl implements IAiTaskService {
 
     @Override
     public AiTaskVO getLatestTask(String taskType, Long bizId, String bizType) {
-        AiTask task = aiTaskMapper.selectLatestTask(taskType, bizId, bizType);
+        AiTask task = aiTaskMapper.selectLatestTask(taskType, String.valueOf(bizId), bizType);
         return task != null ? toVO(task) : null;
     }
 
@@ -113,8 +127,9 @@ public class AiTaskServiceImpl implements IAiTaskService {
         AiTaskVO vo = new AiTaskVO();
         vo.setId(task.getId());
         vo.setTaskType(task.getTaskType());
+        vo.setSystemId(task.getSystemId());
         vo.setProjectId(task.getProjectId());
-        vo.setBizId(task.getBizId());
+        vo.setBizId(Long.valueOf(task.getBizId()));
         vo.setBizType(task.getBizType());
         vo.setStatus(task.getStatus());
         vo.setResult(task.getResult());

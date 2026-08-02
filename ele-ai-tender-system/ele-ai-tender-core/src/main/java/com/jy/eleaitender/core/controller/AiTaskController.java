@@ -28,7 +28,7 @@ public class AiTaskController {
     @RequireLogin
     @Operation(summary = "查询任务状态")
     public Result<AiTaskVO> getTaskStatus(@PathVariable Long id) {
-        return Result.success(aiTaskService.getTaskStatus(id));
+        return Result.success(aiTaskService.getTask(id));
     }
 
     @PostMapping("/{id:\\d+}/skip")

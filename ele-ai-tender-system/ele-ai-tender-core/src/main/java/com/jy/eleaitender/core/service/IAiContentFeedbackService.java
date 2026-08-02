@@ -1,12 +1,14 @@
 package com.jy.eleaitender.core.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.jy.eleaitender.common.entity.ai.AiContentFeedback;
 import com.jy.eleaitender.core.dto.request.FeedbackSubmitRequest;
 import com.jy.eleaitender.core.dto.response.FeedbackVO;
 
 /**
  * AI内容反馈 Service 接口
  */
-public interface IAiContentFeedbackService {
+public interface IAiContentFeedbackService extends IService<AiContentFeedback> {
 
     /**
      * 提交或更新反馈

@@ -1,12 +1,13 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 
 /**
  * 政策文件服务接口
  */
-public interface IPolicyFileService {
+public interface IPolicyFileService extends IService<SupPolicyFile> {
 
     /**
      * 分页查询政策文件

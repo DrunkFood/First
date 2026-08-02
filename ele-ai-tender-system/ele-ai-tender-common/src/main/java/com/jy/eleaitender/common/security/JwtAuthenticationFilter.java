@@ -83,16 +83,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (CommonConstant.TOKEN_TYPE_EXTERNAL.equals(tokenType)) {
             String appKey = claims.get("appKey", String.class);
-            String userId = claims.get("userId", String.class);
+            String externalUserId = claims.get("externalUserId", String.class);
             String jti = claims.getId();
             if (StringUtils.isNotBlank(jti)) {
-                String sessionRedisKey = RedisKeyConstant.EXTERNAL_TOKEN_PREFIX + appKey + ":" + userId + ":" + jti;
+                String sessionRedisKey = RedisKeyConstant.EXTERNAL_TOKEN_PREFIX + appKey + ":" + externalUserId + ":" + jti;
                 String sessionToken = redisTemplate.opsForValue().get(sessionRedisKey);
                 if (token.equals(sessionToken)) {
                     return true;
                 }
             }
-            String legacyRedisKey = RedisKeyConstant.EXTERNAL_TOKEN_PREFIX + appKey + ":" + userId;
+            String legacyRedisKey = RedisKeyConstant.EXTERNAL_TOKEN_PREFIX + appKey + ":" + externalUserId;
             String legacyToken = redisTemplate.opsForValue().get(legacyRedisKey);
             return token.equals(legacyToken);
         }
@@ -123,15 +123,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return loginUser;
         }
 
-        loginUser.setAppKey(claims.get("appKey", String.class));
-        loginUser.setExternalUserId(claims.get("userId", String.class));
-        loginUser.setExternalUserName(claims.get("userName", String.class));
+        if (CommonConstant.TOKEN_TYPE_EXTERNAL.equals(tokenType)) {
+            loginUser.setUserId(getInternalUserId(claims));
+            loginUser.setUsername(claims.get("username", String.class));
+            // JWT中未单独存储realName，使用username作为回退
+            loginUser.setRealName(loginUser.getUsername());
+            // 从 Redis 加载角色缓存（数据隔离需要判断管理员）
+            loadRolesFromRedis(loginUser);
+        }
+
         loginUser.setExternalJti(claims.getId());
+        loginUser.setSystemId(claims.get("systemId", Long.class));
+        loginUser.setAppKey(claims.get("appKey", String.class));
+        loginUser.setExternalUserId(claims.get("externalUserId", String.class));
+        loginUser.setExternalUserName(claims.get("externalUserName", String.class));
         loginUser.setEnterpriseId(claims.get("enterpriseId", String.class));
         loginUser.setEnterpriseName(claims.get("enterpriseName", String.class));
         loginUser.setEnterpriseCode(claims.get("enterpriseCode", String.class));
-        // 外部Token用户：将外部用户名映射为realName，避免MetaObjectHandler兜底为"system"
-        loginUser.setRealName(loginUser.getExternalUserName());
         return loginUser;
     }
 

@@ -7,7 +7,6 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 /**
  * AES 加密解密工具

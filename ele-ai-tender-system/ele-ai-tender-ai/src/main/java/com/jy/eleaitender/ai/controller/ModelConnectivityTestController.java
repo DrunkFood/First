@@ -3,7 +3,6 @@ package com.jy.eleaitender.ai.controller;
 import com.jy.eleaitender.ai.dto.response.ModelConnectivityTestResponse;
 import com.jy.eleaitender.ai.service.IModelConnectivityTestService;
 import com.jy.eleaitender.common.response.Result;
-import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;

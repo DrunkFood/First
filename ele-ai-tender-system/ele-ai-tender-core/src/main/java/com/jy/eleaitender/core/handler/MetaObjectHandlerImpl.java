@@ -15,7 +15,7 @@ public class MetaObjectHandlerImpl implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         Date now = new Date();
         Long userId = SecurityContextHolder.getUserId();
-        String userName = SecurityContextHolder.getRealName();
+        String userName = SecurityContextHolder.getUsername();
         if (userId == null) { userId = 0L; }
         if (userName == null) { userName = "system"; }
 
@@ -32,7 +32,7 @@ public class MetaObjectHandlerImpl implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         Long userId = SecurityContextHolder.getUserId();
-        String userName = SecurityContextHolder.getRealName();
+        String userName = SecurityContextHolder.getUsername();
         if (userId == null) { userId = 0L; }
         if (userName == null) { userName = "system"; }
 

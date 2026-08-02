@@ -3,7 +3,6 @@ package com.jy.eleaitender.core.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -21,6 +20,9 @@ public class AiTaskVO {
 
     @Schema(description = "任务类型名称")
     private String taskTypeName;
+
+    @Schema(description = "任务来源")
+    private Long systemId;
 
     @Schema(description = "关联项目ID")
     private Long projectId;
@@ -50,10 +52,10 @@ public class AiTaskVO {
     private Integer maxRetry;
 
     @Schema(description = "AI开始处理时间")
-    private LocalDateTime startedAt;
+    private Date startedAt;
 
     @Schema(description = "完成时间")
-    private LocalDateTime completedAt;
+    private Date completedAt;
 
     @Schema(description = "创建时间")
     private Date createTime;

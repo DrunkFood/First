@@ -81,10 +81,15 @@ Step3 reviewAndRefine       → AI 审查 + applyRevisions() 精确替换修订
 
 #### 3.2.2 ReviewItemGenerator 生成规则
 
-- **按 ReviewConfig 差异化**：若 `params.getReviewConfig()` 有值，仅生成 `config.getEnabledTypes()` 启用的评审类型；`generateStandard=false` 的启用类型由 core 同步处理器（`AiTaskResultSyncHandler`）保留一级节点、二级以下替换为占位节点（`itemName='详见评审文件'`）；未启用类型不生成；为 null 时回退全类型生成。
+- **按 ReviewConfig 差异化**：若 `params.getReviewConfig()` 有值，仅生成 `config.getEnabledTypes()` 启用的评审类型；`generateStandard=false` 的启用类型由 core 同步处理器（`AiTaskResultSyncHandler`）优先使用 `manualItems`（模板级手动评审项树），无手动项则保留一级节点、二级以下替换为占位节点（`itemName='详见评审文件'`）；未启用类型不生成；为 null 时回退全类型生成。
+- **计分模式感知**：根据 `ReviewConfig.scoreMode`（`ScoreMode.SCORE`/`WEIGHT`）调整 Prompt 中的计分硬规则：
+  - **SCORE 模式**：符合性审查 score 为 0；非符合性叶子节点合计必须精确等于 100
+  - **WEIGHT 模式**：每个评分类型满分 100 分，类型间权重%合计 = 100%（权重存在一级根节点 `weight` 字段）
+  - `scoreMode` 为 null 时回退 SCORE（`ScoreMode.fromString()` 容错）
+- **客观/主观区分**：`distinguishSubjectivity=true` 的评审类型在 Prompt 中要求 AI 为叶子节点标注 `subjectivity`（OBJECTIVE/SUBJECTIVE）；为 null 时回退到 TECHNICAL/CREDIT=true 旧硬编码逻辑
 - **JSON 归一化** `normalizeReviewItemJson()`：递归搜索 AI 返回 JSON 中的评审项数组（兼容 `reviewItems`/`items`/`评审项` 等多种字段名和 `data`/`result` 等包装），并将"分类作顶层 key"的结构转换为 `{name, level, children}` 数组。
 - **AI 修复** `repairReviewItemJson()`：首次结果 JSON 异常时，用 `REVIEW_ITEM_JSON_REPAIR` Prompt 再次调用 AI 仅修格式不重生内容。
-- **计分硬规则**（Prompt 层）：符合性审查 score 为 0；叶子节点合计必须精确等于 100；只启用符合性审查时所有 score 为 0。
+- **计分硬规则**（Prompt 层）：符合性审查 score 为 0；SCORE 模式下叶子节点合计必须精确等于 100；只启用符合性审查时所有 score 为 0。
 
 ### 3.3 检测器（Detector）
 
@@ -140,6 +145,10 @@ Step3 reviewAndRefine       → AI 审查 + applyRevisions() 精确替换修订
 
 **默认模型**：`application.yml` 通过 OpenAI 兼容接口接入 DeepSeek（`base-url=https://api.deepseek.com`，`model=deepseek-chat`，`api-key=${DEEPSEEK_API_KEY}`）。模型本身不硬编码，完全由 `sup_model_config` + `sup_model_route_rule` 数据库配置驱动。
 
+**AiUsageScenario 枚举值**：`GENERATION`（内容生成）、`OPTIMIZATION`（文本优化）、`DETECTION`（智能检测）、`CHAT`（AI对话）。
+
+**AiTaskSource 枚举值**：`INTERNAL`（内部任务，由 core 模块写入 `ai_task` 表）、`EXTERNAL`（外部任务，由外部系统通过 `/api/external/ai-tasks` 创建）。
+
 ## 6. 线程池架构
 
 ### 6.1 DynamicThreadPoolManager
@@ -171,11 +180,12 @@ DB轮询+Hash检测模式的动态线程池：
 | 字段 | 说明 |
 |------|------|
 | `task_type` | 任务类型（AiTaskType 枚举） |
+| `system_id` | 任务来源系统ID（`sup_access_system.id`，内部任务为 null） |
 | `project_id` | 关联项目ID |
 | `biz_id` | 业务实体ID |
 | `biz_type` | 业务实体类型 |
 | `request_params` | 请求参数(JSON) |
-| `file_ids` | 关联文件ID列表(JSON) |
+| `file_ids` | 关联文件ID列表(逗号分隔) |
 | `status` | 任务状态（PENDING/PROCESSING/COMPLETED/FAILED/AI_UNAVAILABLE/SKIPPED） |
 | `result` | 执行结果(JSON) |
 | `error_msg` | 错误信息 |
@@ -184,7 +194,8 @@ DB轮询+Hash检测模式的动态线程池：
 | `started_at` | 开始时间 |
 | `completed_at` | 完成时间 |
 | `timeout_minutes` | 超时时间 |
-| `result_synced` | 结果同步状态（0-未同步 1-已同步 2-同步失败） |
+| `result_synced` | 结果同步状态（0-未同步 1-已同步 2-同步失败 3-同步中） |
+| `synced_at` | 同步时间 |
 
 ## 9. 排障原则
 

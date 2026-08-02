@@ -1,16 +1,8 @@
 package com.jy.eleaitender.support.service.impl;
 
-import com.jy.eleaitender.common.constant.RedisKeyConstant;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jy.eleaitender.common.constant.CommonConstant;
-import com.jy.eleaitender.common.dto.response.ExternalTokenResponse;
-import com.jy.eleaitender.common.dto.response.ExternalUserInfoResponse;
-import com.jy.eleaitender.common.enums.ResponseCode;
-import com.jy.eleaitender.common.exception.AuthException;
-import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.util.JwtUtil;
-import com.jy.eleaitender.common.util.PasswordUtil;
-import com.jy.eleaitender.common.util.RsaKeyUtil;
-import com.jy.eleaitender.common.util.SignatureUtil;
+import com.jy.eleaitender.common.constant.RedisKeyConstant;
 import com.jy.eleaitender.common.dto.request.PhoneLoginRequest;
 import com.jy.eleaitender.common.dto.request.ResetPasswordRequest;
 import com.jy.eleaitender.common.dto.request.UserLoginRequest;
@@ -20,21 +12,30 @@ import com.jy.eleaitender.common.entity.support.SysRole;
 import com.jy.eleaitender.common.entity.support.SysOperationLog;
 import com.jy.eleaitender.common.entity.support.SysUser;
 import com.jy.eleaitender.common.entity.support.SysUserRole;
+import com.jy.eleaitender.common.enums.ResponseCode;
+import com.jy.eleaitender.common.exception.AuthException;
+import com.jy.eleaitender.common.exception.BusinessException;
+import com.jy.eleaitender.common.security.LoginUser;
+import com.jy.eleaitender.common.security.SecurityContextHolder;
+import com.jy.eleaitender.common.util.JwtUtil;
+import com.jy.eleaitender.common.util.PasswordUtil;
+import com.jy.eleaitender.common.util.RsaKeyUtil;
+import com.jy.eleaitender.common.util.SignatureUtil;
 import com.jy.eleaitender.support.mapper.SysAccessSystemMapper;
 import com.jy.eleaitender.support.mapper.SysRoleMapper;
 import com.jy.eleaitender.support.mapper.SysUserMapper;
 import com.jy.eleaitender.support.mapper.SysUserRoleMapper;
+
 import com.jy.eleaitender.support.mapper.SysOperationLogMapper;
-import com.jy.eleaitender.common.security.LoginUser;
-import com.jy.eleaitender.common.security.SecurityContextHolder;
-import com.jy.eleaitender.support.service.IAuthService;
-import com.jy.eleaitender.support.service.ISmsService;
+
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueCommand;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueResult;
 import com.jy.eleaitender.support.model.external.ExternalUserInfoView;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.extern.slf4j.Slf4j;
+import com.jy.eleaitender.support.service.IAuthService;
+import com.jy.eleaitender.support.service.ISmsService;
+import com.jy.eleaitender.support.service.IUserService;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +54,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AuthServiceImpl implements IAuthService {
 
+    private static final String DEFAULT_ROLE_CODE = "BID_USER";
+
     @Autowired
     private SysUserMapper userMapper;
 
@@ -66,15 +69,18 @@ public class AuthServiceImpl implements IAuthService {
     private ISmsService smsService;
 
     @Autowired
+    private IUserService userService;
+
+    @Autowired
     private SysRoleMapper roleMapper;
 
     @Autowired
     private SysUserRoleMapper userRoleMapper;
 
+
     @Autowired
     private SysOperationLogMapper operationLogMapper;
 
-    private static final String DEFAULT_ROLE_CODE = "BID_USER";
 
     @Value("${jwt.expiration:43200}")
     private long tokenExpireSeconds;
@@ -239,8 +245,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         // 5. 更新密码
-        user.setPassword(PasswordUtil.encode(rawPassword));
-        userMapper.updateById(user);
+        userService.resetPassword(user.getId(), rawPassword);
 
         // 6. 清除该用户的登录缓存，强制重新登录
         String tokenKey = RedisKeyConstant.TOKEN_PREFIX + user.getId();
@@ -275,11 +280,21 @@ public class AuthServiceImpl implements IAuthService {
             throw new BusinessException("该手机号对应的用户名已存在");
         }
 
+        String password = PasswordUtil.generateRandomPassword();
+        String realName = "用户" + phone.substring(phone.length() - 4);
+        SysUser user = registerSysUser(phone, password, realName, phone);
+
+        log.info("手机号[{}]自动注册成功，分配角色: {}", phone, DEFAULT_ROLE_CODE);
+        return user;
+    }
+
+    @Override
+    public SysUser registerSysUser(String username, String password, String realName, String phone) {
         // 创建用户
         SysUser user = new SysUser();
-        user.setUsername(phone);
-        user.setPassword(PasswordUtil.encode(PasswordUtil.generateRandomPassword()));
-        user.setRealName("用户" + phone.substring(phone.length() - 4));
+        user.setUsername(username);
+        user.setPassword(PasswordUtil.encode(password));
+        user.setRealName(realName);
         user.setPhone(phone);
         user.setStatus(1);
         userMapper.insert(user);
@@ -296,8 +311,8 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         LambdaQueryWrapper<SysRole> roleQuery = new LambdaQueryWrapper<>();
-        roleQuery.eq(SysRole::getRoleCode, DEFAULT_ROLE_CODE)
-                 .eq(SysRole::getStatus, 1);
+        roleQuery.eq(SysRole::getRoleCode, DEFAULT_ROLE_CODE);
+        roleQuery.eq(SysRole::getStatus, 1);
         SysRole defaultRole = roleMapper.selectOne(roleQuery);
         if (defaultRole != null) {
             Long existingRoleCount = userRoleMapper.countAnyByUserIdAndRoleId(user.getId(), defaultRole.getId());
@@ -311,8 +326,10 @@ public class AuthServiceImpl implements IAuthService {
             userRole.setRoleId(defaultRole.getId());
             userRoleMapper.insert(userRole);
         } else {
+
             log.warn("默认角色[BID_USER]不存在，自动注册用户[{}]未分配角色", user.getUsername());
         }
+
     }
 
     /**
@@ -414,21 +431,34 @@ public class AuthServiceImpl implements IAuthService {
         if (system == null) {
             throw new BusinessException(ResponseCode.APP_KEY_NOT_FOUND);
         }
-
         // 检查系统状态
         if (system.getStatus() != 1) {
             throw new BusinessException(ResponseCode.SYSTEM_DISABLED);
         }
-
         // 检查有效期
         if (system.getExpireTime() != null && system.getExpireTime().before(new Date())) {
             throw new BusinessException(ResponseCode.SYSTEM_EXPIRED);
         }
 
-        // 生成外部Token
+        // 查询接入系统用户
+        SysUser sysUser = userMapper.selectByUsername(command.getEnterpriseCode());
+        if (sysUser == null) {
+            String password = PasswordUtil.generateRandomPassword();
+            sysUser = this.registerSysUser(command.getEnterpriseCode(), password, command.getEnterpriseName(), null);
+        }
+        // 更新最后登录时间
+        sysUser.setLastLoginTime(new Date());
+        userMapper.updateById(sysUser);
+
+        // 解析有效期
         long tokenExpireSeconds = resolveExternalTokenExpireSeconds();
+
+        // 生成外部Token
         String token = JwtUtil.generateExternalToken(
-                appKey,
+                system.getId(),
+                system.getAppKey(),
+                sysUser.getId(),
+                sysUser.getUsername(),
                 command.getUserId(),
                 command.getUserName(),
                 command.getEnterpriseId(),
@@ -444,8 +474,16 @@ public class AuthServiceImpl implements IAuthService {
         if (StringUtils.isNotBlank(jti)) {
             redisKey = redisKey + ":" + jti;
         }
-        redisTemplate.opsForValue().set(redisKey, token, 
-                tokenExpireSeconds, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(redisKey, token, tokenExpireSeconds, TimeUnit.SECONDS);
+
+        // 缓存角色（与 buildLoginResponse 保持一致）
+        List<String> roles = userMapper.selectRoleCodesByUserId(sysUser.getId());
+        String roleKey = RedisKeyConstant.USER_ROLES_PREFIX + sysUser.getId();
+        redisTemplate.delete(roleKey);
+        if (roles != null && !roles.isEmpty()) {
+            redisTemplate.opsForSet().add(roleKey, roles.toArray(new String[]{}));
+            redisTemplate.expire(roleKey, tokenExpireSeconds, TimeUnit.SECONDS);
+        }
 
         log.info("外部系统[{}]用户[{}]获取Token成功", appKey, command.getUserId());
         return new ExternalTokenIssueResult(token, tokenExpireSeconds);
@@ -463,8 +501,8 @@ public class AuthServiceImpl implements IAuthService {
         view.setUserId(loginUser.getExternalUserId());
         view.setUserName(loginUser.getExternalUserName());
         view.setEnterpriseId(loginUser.getEnterpriseId());
-        view.setEnterpriseName(loginUser.getEnterpriseName());
         view.setEnterpriseCode(loginUser.getEnterpriseCode());
+        view.setEnterpriseName(loginUser.getEnterpriseName());
         return view;
     }
 

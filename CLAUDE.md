@@ -6,23 +6,26 @@
 
 招标文件AI编制工具平台，独立部署的AI招标文件编制系统，支持嵌入第三方平台和一体机模式。
 
-**技术基线**: JDK 21 · Spring Boot 3.2.2 · MyBatis-Plus 3.5.5 · MySQL 8.4.0
+**技术基线**: JDK 21 · Spring Boot 3.2.2 · MyBatis-Plus 3.5.5 · MySQL 8.4.0 · JJWT 0.12.5 · Hutool 5.8.25
 
-**AI技术栈**: Spring AI 1.1.0 · Milvus 2.3.3 · Apache Tika 2.9.0 · poi-tl 1.12.0 · flexmark-java 0.64.0
+**AI技术栈**: Spring AI 1.1.0 · Milvus 2.3.3 · Apache Tika 2.9.0 · poi-tl 1.12.2 · flexmark-java 0.64.0
 
 **前端**: 双前端项目架构
 - `ele-ai-tender-support-frontend/` — 支撑中心管理后台 (端口 3060) — Vue 3 + TypeScript + Vite + Element Plus + Pinia
-- `ele-ai-tender-frontend/` — AI编制业务前端 (端口 5173) — Vue 3 + TypeScript + Vite + Element Plus + Pinia + md-editor-v3 + docx-preview + diff2html
+- `ele-ai-tender-frontend/` — AI编制业务前端 (端口 5173) — Vue 3 + TypeScript + Vite + Element Plus + Pinia + TipTap(WysiwygEditor) + md-editor-v3 + docx-preview + diff2html
 
-**后端**: `ele-ai-tender-system/` — Maven 多模块，7个模块
+**后端**: `ele-ai-tender-system/` — Maven 多模块，6个顶级模块（interaction 含4个子模块）
 
-| 模块 | 端口 | 职责 | 说明   |
+| 模块 | 端口 | 职责 | 说明 |
 |------|------|------|------|
 | `ele-ai-tender-common` | — | 公共实体、工具类、异常、统一响应 | JDK17+，依赖Spring Boot 3 |
-| `ele-ai-tender-common-interaction` | — | 交互协议 DTO/SPI/路径常量 | JDK8兼容，供第三方系统接入 |
-| `ele-ai-tender-interaction` | — | 业务系统接入 Starter | 3个子模块(core/autoconfigure/starter)，JDK8兼容，Spring Boot 2.7.18编译 |
+| `ele-ai-tender-interaction` | — | 业务系统接入 Starter（含4个子模块） | JDK8兼容，Spring Boot 2.7.18编译 |
+| ├ `common-interaction` | — | 交互协议 DTO/SPI/路径常量 | 对外公开 API 的唯一来源 |
+| ├ `interaction-core` | — | 出站客户端 + RestTemplate + 签名器 | |
+| ├ `interaction-autoconfigure` | — | 自动装配 + 拦截器 + 回调Controller | |
+| └ `interaction-spring-boot-starter` | — | Starter 聚合 POM | |
 | `ele-ai-tender-support` | 8080 | 认证(含外部系统对接)、用户、角色、菜单、模板配置、知识库配置、模型配置与路由、系统参数、政策文件、消息通知、统计分析、访问/操作日志、版本管理 | 支撑中心 |
-| `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除、文档生成(Markdown→Word引擎) | 含MarkdownTemplateEngine/WordTemplateEngine/WordDocumentGenerator |
+| `ele-ai-tender-file` | 8081 | 文件上传/下载/查询/删除、文档生成(Markdown→Word引擎) | 含WordTemplateEngine/WordDocumentFixEngine/WordTextExtractor |
 | `ele-ai-tender-core` | 8082 | 项目管理、业务需求编制、AI编制任务、AI内容反馈、检测管理、评审项管理、文档集成、用户消息、政策文件(用户级)、项目模板快照 | 核心业务模块 |
 | `ele-ai-tender-ai` | 8083 | AI对话、知识库管理、文档匹配、智能检测、模型路由、模型连通性测试 | 检测引擎(DetectionEngine)和模型路由(ModelRouter)在Service层 |
 
@@ -65,6 +68,10 @@
 
 **评审类型**: COMPLIANCE(符合性审查) / TECHNICAL(技术标评审) / CREDIT(资信标评审) / COMMERCIAL(商务评审)
 
+**计分模式**: SCORE(分值模式，叶子分值合计=100) / WEIGHT(权重模式，每类型满分100，类型间权重%合计=100%)，详见 [CORE_MODULE_SPEC.md](docs/rules/CORE_MODULE_SPEC.md) 4.6
+
+**客观/主观**: OBJECTIVE(客观) / SUBJECTIVE(主观)，由 `ReviewTypeConfig.distinguishSubjectivity` 控制是否区分（null 回退到 TECHNICAL/CREDIT=true）
+
 ## 启动命令
 
 **前置条件**: JDK 21（项目基于 Spring Boot 3.2.2，不兼容 JDK 8/11）
@@ -103,7 +110,7 @@ mvn -pl ele-ai-tender-support -am package               # 打包单模块
 ```
 浏览器 → 支撑中心前端 (3060)
   /support-api/*   → rewrite(/api/*)    → 支撑中心 :8080  → MySQL(db=6) + Redis(db=6)
-  /file-api/*      → 直接转发            → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
+  /file-api/*      → rewrite(/api/*)    → 文件服务 :8081  → MySQL(db=6) + 本地磁盘
 
 浏览器 → AI编制前端 (5173)
   /core-api/*      → rewrite(/api/*)    → 核心业务 :8082  → MySQL(db=6) + Redis(db=6)

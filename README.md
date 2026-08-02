@@ -156,11 +156,3 @@ mvn -pl ele-ai-tender-support -am package
 # 构建交互 starter
 mvn -pl ele-ai-tender-common-interaction,ele-ai-tender-interaction/ele-ai-tender-interaction-core,ele-ai-tender-interaction/ele-ai-tender-interaction-autoconfigure,ele-ai-tender-interaction/ele-ai-tender-interaction-spring-boot-starter -am package -DskipTests
 ```
-
-## 关键规范入口
-
-详细架构设计见 [系统架构设计文档](docs/guides/系统架构设计文档.md)
-
-## 接入与开发文档
-
-- 业务系统接入 starter：`docs/guides/业务系统接入手册.md`

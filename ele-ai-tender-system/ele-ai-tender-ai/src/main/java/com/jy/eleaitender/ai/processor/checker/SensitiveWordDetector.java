@@ -5,8 +5,6 @@ import com.jy.eleaitender.ai.processor.prompt.SystemPromptTemplates;
 import com.jy.eleaitender.common.enums.DetectionType;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 /**
  * 敏感词检测器
  * 检测歧视性、限制性、排他性、倾向性表述

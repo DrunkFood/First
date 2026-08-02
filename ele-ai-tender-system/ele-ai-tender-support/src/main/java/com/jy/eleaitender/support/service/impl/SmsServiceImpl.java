@@ -1,11 +1,12 @@
 package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SupSmsCode;
 import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.support.mapper.SmsCodeMapper;
-import com.jy.eleaitender.support.service.SmsGatewayClient;
 import com.jy.eleaitender.support.service.ISmsService;
+import com.jy.eleaitender.support.service.SmsGatewayClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Service
-public class SmsServiceImpl implements ISmsService {
+public class SmsServiceImpl extends ServiceImpl<SmsCodeMapper, SupSmsCode> implements ISmsService {
 
     @Autowired
     private StringRedisTemplate redisTemplate;

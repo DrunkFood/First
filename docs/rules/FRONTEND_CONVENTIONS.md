@@ -40,14 +40,17 @@
 | 前端路径前缀 | 目标服务 | 路径重写 |
 |-------------|----------|----------|
 | `/support-api/*` | support :8080 | `/support-api/` → `/api/` |
-| `/file-api/*` | file :8081 | 直接转发 |
+| `/file-api/*` | file :8081 | `/file-api/` → `/api/` |
 
 ## 6. 常用组合式函数与工具
 
 | 函数 / 模块 | 用途 |
 |------|------|
-| `useLatestTask(taskType, bizId, bizType)` | 轮询最新AI任务状态，自动处理进度映射和终态判断；需求/评审项生成用它轮询 `ai_task.result` 渲染渐进式进度 |
-| `useProjectPhase(projectId)` | 获取项目阶段信息和推进 |
+| `useLatestTask(taskType, bizId, bizType, onTaskSucceeded?)` | 查询最新AI任务状态，非终态自动轮询；需求/评审项生成用它轮询 `ai_task.result` 渲染渐进式进度 |
+| `useTaskPolling(taskId, interval?)` | 按任务ID轮询状态，终态自动停止，支持 skip 操作 |
+| `useAutoSave(id, contentFn)` | 定时自动保存草稿（120秒间隔） |
+| `useDetectionHighlight(editorRef)` | 检测问题高亮定位（编辑器内标记问题位置） |
+| `useFeedback(targetId, targetType, scene)` | AI内容反馈（赞/踩） |
 | `src/types/ai-task.ts` | AI任务类型定义与工具函数：`AiTaskVO`/`RequirementGenerationProgressResult`、`isTaskSucceeded`/`isTaskTerminal`/`getTaskProgress`/`parseRequirementGenerationProgress`/`buildRequirementGenerationProgressMarkdown` |
 | `src/utils/aiReplacement.ts` | AI助手替换工具：`extractReplaceableContents` 解析 `【可替换正文开始/结束】`多方案、`applyAiReplacement` 执行选中原文替换（去重前缀/空壳行清理） |
 

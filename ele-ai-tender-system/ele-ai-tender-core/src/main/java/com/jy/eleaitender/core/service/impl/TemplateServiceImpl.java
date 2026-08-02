@@ -2,9 +2,10 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jy.eleaitender.common.entity.support.SupTemplate;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.entity.support.SupTemplate;
 import com.jy.eleaitender.core.mapper.SupTemplateMapper;
 import com.jy.eleaitender.core.service.ITemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ import java.util.List;
  * 模板服务实现
  */
 @Service
-public class TemplateServiceImpl implements ITemplateService {
+public class TemplateServiceImpl extends ServiceImpl<SupTemplateMapper, SupTemplate> implements ITemplateService {
 
     @Autowired
     private SupTemplateMapper templateMapper;

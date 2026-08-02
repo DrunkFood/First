@@ -14,7 +14,6 @@
 
     <modules>
         <module>ele-ai-tender-common</module>
-        <module>ele-ai-tender-common-interaction</module>
         <module>ele-ai-tender-interaction</module>
         <module>ele-ai-tender-support</module>
         <module>ele-ai-tender-file</module>

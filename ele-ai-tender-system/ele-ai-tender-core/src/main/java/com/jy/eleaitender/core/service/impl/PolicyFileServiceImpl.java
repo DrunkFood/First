@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.entity.core.TbPolicyFile;
 import com.jy.eleaitender.common.entity.support.SupPolicyFile;
@@ -10,8 +11,8 @@ import com.jy.eleaitender.common.exception.BusinessException;
 import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.common.util.CommaSeparatedFieldSql;
 import com.jy.eleaitender.core.dto.response.PolicyFileVO;
-import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
 import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
+import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
 import com.jy.eleaitender.core.service.IPolicyFileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
  * 政策文件服务实现
  */
 @Service
-public class PolicyFileServiceImpl implements IPolicyFileService {
+public class PolicyFileServiceImpl extends ServiceImpl<TbPolicyFileMapper, TbPolicyFile> implements IPolicyFileService {
 
     @Autowired
     private TbPolicyFileMapper aiPolicyFileMapper;

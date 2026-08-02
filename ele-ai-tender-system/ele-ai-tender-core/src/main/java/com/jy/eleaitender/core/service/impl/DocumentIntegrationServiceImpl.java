@@ -1,14 +1,15 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.jy.eleaitender.common.dto.FillData;
+import com.jy.eleaitender.common.dto.ai.DocumentIntegrationParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.AiTaskStatus;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.BizType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.dto.ai.DocumentIntegrationParams;
 import com.jy.eleaitender.core.dto.response.AiTaskVO;
 import com.jy.eleaitender.core.dto.response.DocumentPreviewVO;
 import com.jy.eleaitender.core.engine.DocumentDataAssembler;
@@ -22,9 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 文档集成服务实现
@@ -73,8 +72,8 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
         params.setProjectName(project.getProjectName());
         params.setFillDataList(fillDataList);
 
-        return aiTaskService.createTask(AiTaskType.DOCUMENT_INTEGRATION,
-                project.getId(), project.getId(), "PROJECT", params, null);
+        return aiTaskService.createInternalTask(AiTaskType.DOCUMENT_INTEGRATION,
+                project.getId(), project.getId(), BizType.DOCUMENT.getCode(), params, null);
     }
 
     private boolean isActive(AiTaskVO task) {

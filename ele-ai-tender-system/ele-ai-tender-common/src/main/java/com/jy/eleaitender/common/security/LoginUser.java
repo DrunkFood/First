@@ -10,6 +10,8 @@ public class LoginUser implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private Long systemId;
+
     private Long userId;
 
     private String username;

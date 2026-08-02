@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SupModelConfig;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import com.jy.eleaitender.common.enums.ResponseCode;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * 模型路由规则服务实现
  */
 @Service
-public class ModelRouteRuleServiceImpl implements IModelRouteRuleService {
+public class ModelRouteRuleServiceImpl extends ServiceImpl<ModelRouteRuleMapper, SupModelRouteRule> implements IModelRouteRuleService {
 
     @Autowired
     private ModelRouteRuleMapper routeRuleMapper;

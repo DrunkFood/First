@@ -1,12 +1,13 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SysAccessSystem;
 
 /**
  * 接入系统服务接口
  */
-public interface IExternalSystemService {
+public interface IExternalSystemService extends IService<SysAccessSystem> {
     
     Page<SysAccessSystem> getSystemPage(Integer pageNum, Integer pageSize, String systemName, String appKey, Integer status);
     

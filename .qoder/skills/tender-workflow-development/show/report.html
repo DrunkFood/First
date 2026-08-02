@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>招标文件AI编制 — 业务全景报告</title>
+<style>
+:root{--bg:#faf9f7;--card:#fff;--border:#e8e6e3;--text:#1a1a1a;--text2:#6b6b6b;--primary:#d97706;--primary-bg:#fef3c7;--green:#059669;--green-bg:#d1fae5;--blue:#2563eb;--blue-bg:#dbeafe;--red:#dc2626;--red-bg:#fee2e2;--purple:#7c3aed;--purple-bg:#ede9fe}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:20px;max-width:1100px;margin:0 auto}
+h1{font-size:1.6rem;margin-bottom:8px}
+h2{font-size:1.25rem;margin:20px 0 10px;border-bottom:2px solid var(--primary);padding-bottom:6px}
+h3{font-size:1.05rem;margin:14px 0 6px;color:var(--text)}
+.subtitle{color:var(--text2);font-size:0.9rem;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.section{margin-bottom:20px}
+.section-header{cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-weight:600;font-size:1.05rem;transition:background .15s}
+.section-header:hover{background:#f5f4f2}
+.section-header .arrow{transition:transform .2s;font-size:.8rem;color:var(--text2)}
+.section-header.open .arrow{transform:rotate(90deg)}
+.section-body{display:none;padding:14px 0}
+.section-body.open{display:block}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:.88rem}
+th,td{padding:6px 10px;border:1px solid var(--border);text-align:left}
+th{background:#f5f4f2;font-weight:600}
+code{background:#f0ede8;padding:2px 6px;border-radius:4px;font-size:.85rem;font-family:"SF Mono",Consolas,monospace}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.78rem;margin:2px}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-red{background:var(--red-bg);color:var(--red)}
+.tag-purple{background:var(--purple-bg);color:var(--purple)}
+.tag-amber{background:var(--primary-bg);color:var(--primary)}
+.flow-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:10px 0}
+.flow-node{padding:8px 14px;border-radius:6px;font-size:.85rem;font-weight:500;white-space:nowrap}
+.flow-arrow{color:var(--text2);font-size:1rem}
+.fn-blue{background:var(--blue-bg);color:var(--blue);border:1px solid #bfdbfe}
+.fn-green{background:var(--green-bg);color:var(--green);border:1px solid #a7f3d0}
+.fn-amber{background:var(--primary-bg);color:var(--primary);border:1px solid #fde68a}
+.fn-purple{background:var(--purple-bg);color:var(--purple);border:1px solid #ddd6fe}
+.fn-red{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.fn-gray{background:#f3f4f6;color:#4b5563;border:1px solid #e5e7eb}
+.phase-bar{display:flex;align-items:center;gap:2px;margin:12px 0}
+.phase-step{flex:1;text-align:center;padding:10px 6px;border-radius:6px;font-size:.82rem}
+.phase-arrow{color:var(--text2);font-size:.9rem}
+ul{padding-left:20px;margin:6px 0}
+li{margin:3px 0;font-size:.9rem}
+.note{padding:10px 14px;border-radius:6px;margin:8px 0;font-size:.88rem}
+.note-warn{background:#fffbeb;border-left:3px solid var(--primary)}
+.note-info{background:#eff6ff;border-left:3px solid var(--blue)}
+.note-danger{background:#fef2f2;border-left:3px solid var(--red)}
+.hint{font-size:.8rem;color:var(--text2);margin-top:16px;text-align:center}
+</style>
+</head>
+<body>
+
+<h1>招标文件AI编制 — 业务全景报告</h1>
+<p class="subtitle">基于实际代码实现 | 生成日期: 2026-07-27 | Ctrl+E 一键展开/折叠</p>
+
+<!-- ========== 全局流程 ========== -->
+<div class="card">
+<h2 style="margin-top:0">全局业务流程</h2>
+<div class="phase-bar">
+<div class="phase-step fn-amber"><b>阶段1</b><br>基础信息<br>20%</div>
+<span class="phase-arrow">→</span>
+<div class="phase-step fn-blue"><b>阶段2</b><br>招标需求<br>40%</div>
+<span class="phase-arrow">→</span>
+<div class="phase-step fn-blue"><b>阶段3</b><br>评审项<br>60%</div>
+<span class="phase-arrow">→</span>
+<div class="phase-step fn-blue"><b>阶段4</b><br>文档集成<br>80%</div>
+<span class="phase-arrow">→</span>
+<div class="phase-step fn-purple"><b>阶段5</b><br>智能检测<br>100%</div>
+</div>
+<div class="flow-wrap" style="margin-top:10px">
+<div class="flow-node fn-green">需求编制</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-amber">创建项目(DRAFT)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">五阶段编制</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">检测通过/跳过</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">发布(PUBLISHED)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-gray">归档(ARCHIVED)</div>
+</div>
+</div>
+
+<!-- ========== 业务需求编制 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">业务需求编制 (Requirement) <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<h3>核心流程</h3>
+<div class="flow-wrap">
+<div class="flow-node fn-amber">创建需求</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">AI生成(三步式)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">人工编辑+自动保存</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">需求检测(2项)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">需求完成</div>
+</div>
+<h3>三种匹配模式</h3>
+<table>
+<tr><th>模式</th><th>说明</th><th>API</th></tr>
+<tr><td><code>AUTO_MATCH</code></td><td>自动匹配Top5历史需求</td><td><code>POST /ai/match/auto</code></td></tr>
+<tr><td><code>MANUAL_SELECT</code></td><td>手动选择匹配文件</td><td><code>POST /requirements/{id}/match</code></td></tr>
+<tr><td><code>UPLOAD</code></td><td>上传文件(doc/docx/pdf,≤50MB)</td><td><code>POST /file/upload</code></td></tr>
+</table>
+<h3>AI生成 — 三步式Agent编排</h3>
+<ul>
+<li><b>Step 1</b>: 生成大纲 → AI输出JSON大纲结构</li>
+<li><b>Step 2</b>: 分章并行生成 → 3个虚拟线程并发，每章独立生成</li>
+<li><b>Step 3</b>: 审查修订 → AI输出修订列表，代码层执行精确替换</li>
+<li><b>硬约束</b>: 全文 ≤ 5000 字</li>
+</ul>
+<h3>自动保存机制</h3>
+<ul>
+<li>间隔: 2分钟 | 存储: <code>auto_save_content</code> | 清除: 正式保存时</li>
+</ul>
+<div class="note note-warn">
+<b>已知陷阱</b>: 后端<code>TbRequirement.status</code>仅有<code>IN_PROGRESS</code>/<code>COMPLETED</code>两种值，前端定义的5种状态(DRAFT/GENERATING等)后端不识别。需求侧<b>无状态机校验</b>。
+</div>
+<h3>需求→项目衔接</h3>
+<ul>
+<li>项目通过 <code>requirementId</code> <b>单向引用</b>需求</li>
+<li>有关联需求 → 复制 content 到 <code>project.requirementContent</code></li>
+<li>无关联需求 → 触发 <code>PROJECT_REQUIREMENT_GENERATE</code> AI任务</li>
+<li>之后项目和需求<b>再无关联</b>，后续从 <code>requirementContent</code> 读取</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ========== 项目编制五阶段 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">项目编制五阶段 (Project Lifecycle) <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<h3>阶段推进机制 (PhaseFlowController)</h3>
+<div class="flow-wrap">
+<div class="flow-node fn-gray">校验转换规则</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-red">检查活跃任务</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-amber">onExit(当前阶段)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">更新阶段+进度</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">onEnter(目标阶段)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">联动Status</div>
+</div>
+<table>
+<tr><th>阶段</th><th>枚举</th><th>进度</th><th>触发器</th><th>canComplete条件</th></tr>
+<tr><td>基础信息</td><td><code>BASIC_INFO(1)</code></td><td>20%</td><td>BasicInfoTrigger</td><td>名称+类别+类型+评审方式</td></tr>
+<tr><td>招标需求</td><td><code>REQUIREMENT(2)</code></td><td>40%</td><td>RequirementTrigger</td><td>requirementId或requirementContent非空</td></tr>
+<tr><td>评审项</td><td><code>REVIEW_ITEM(3)</code></td><td>60%</td><td>ReviewItemTrigger</td><td>项目下有评审项记录</td></tr>
+<tr><td>文档集成</td><td><code>DOCUMENT(4)</code></td><td>80%</td><td>DocumentTrigger</td><td>generatedFileId非空</td></tr>
+<tr><td>智能检测</td><td><code>DETECTION(5)</code></td><td>100%</td><td>DetectionPhaseTrigger</td><td>DETECTION_PASSED或SKIPPED</td></tr>
+</table>
+<div class="note note-danger">
+<b>关键约束</b>: 只能顺序推进(<code>target.code == current.code + 1</code>)，不可跳跃不可倒退。有活跃AI任务时禁止推进。
+</div>
+<h3>评审项三级结构</h3>
+<div class="flow-wrap">
+<div class="flow-node fn-blue">根项(level=1)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">子项(level=2)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">孙项(level=3)</div>
+</div>
+<p style="font-size:.88rem;margin-top:4px">评审类型: <span class="tag tag-green">COMPLIANCE 符合性</span> <span class="tag tag-blue">TECHNICAL 技术</span> <span class="tag tag-blue">CREDIT 资信</span> <span class="tag tag-blue">COMMERCIAL 商务</span></p>
+<p style="font-size:.88rem">计分模式: <code>SCORE</code>(分值模式) / <code>WEIGHT</code>(权重模式) | 客观/主观: <code>OBJECTIVE</code> / <code>SUBJECTIVE</code></p>
+</div>
+</div>
+</div>
+
+<!-- ========== 智能检测 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">智能检测 (Detection) <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<h3>需求检测 vs 项目检测</h3>
+<table>
+<tr><th>维度</th><th>需求检测</th><th>项目检测</th></tr>
+<tr><td>检测项数</td><td>2项</td><td>4项(无政策文件时3项)</td></tr>
+<tr><td>敏感词</td><td>✅</td><td>✅</td></tr>
+<tr><td>错别字</td><td>✅</td><td>✅</td></tr>
+<tr><td>政策审查</td><td>❌</td><td>✅ (需选政策文件)</td></tr>
+<tr><td>格式检测</td><td>❌</td><td>✅</td></tr>
+<tr><td>状态管理</td><td>无状态机</td><td>ProjectStateMachine</td></tr>
+<tr><td>重试/跳过</td><td>无</td><td>有</td></tr>
+</table>
+<h3>建议处理机制</h3>
+<div class="flow-wrap">
+<div class="flow-node fn-purple">检测完成</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">accept(修复Word)</div>
+<span class="flow-arrow">|</span>
+<div class="flow-node fn-gray">reject(保持原样)</div>
+<span class="flow-arrow">|</span>
+<div class="flow-node fn-blue">acceptAll(批量)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">全部处理→DETECTION_PASSED</div>
+</div>
+<div class="note note-info">
+<b>handleStatus</b>: 0=未处理 | 1=已接受 | 2=已拒绝 | 3=未找到原文(修复失败)
+</div>
+<div class="note note-warn">
+<b>注意</b>: <code>content_file_id</code>始终为null，检测内容存<code>content_snapshot</code>。<code>retry()</code>会重置<b>所有</b>检测记录(不仅是失败的)。
+</div>
+</div>
+</div>
+</div>
+
+<!-- ========== AI任务机制 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">AI任务机制 (AI Task) <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<h3>异步任务队列流程</h3>
+<div class="flow-wrap">
+<div class="flow-node fn-blue">Core写入ai_task<br>(PENDING)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">AI模块5s轮询<br>CAS抢占</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">调用大模型</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">COMPLETED<br>resultSynced=0</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">Core 10s同步<br>resultSynced=1</div>
+</div>
+<h3>9种AI任务类型</h3>
+<table>
+<tr><th>类型</th><th>说明</th><th>路由场景</th><th>超时</th></tr>
+<tr><td><code>REQUIREMENT_GENERATE</code></td><td>需求生成</td><td><span class="tag tag-purple">GENERATION</span></td><td>20分</td></tr>
+<tr><td><code>PROJECT_REQUIREMENT_GENERATE</code></td><td>项目需求生成</td><td><span class="tag tag-purple">GENERATION</span></td><td>20分</td></tr>
+<tr><td><code>REVIEW_ITEM_GENERATE</code></td><td>评审项生成</td><td><span class="tag tag-purple">GENERATION</span></td><td>10分</td></tr>
+<tr><td><code>DOCUMENT_INTEGRATION</code></td><td>文档集成</td><td>—</td><td>10分</td></tr>
+<tr><td><code>DETECTION_SENSITIVE_WORD</code></td><td>敏感词检测</td><td><span class="tag tag-amber">DETECTION</span></td><td>15分</td></tr>
+<tr><td><code>DETECTION_TYPO</code></td><td>错别字检测</td><td><span class="tag tag-amber">DETECTION</span></td><td>15分</td></tr>
+<tr><td><code>DETECTION_POLICY_REVIEW</code></td><td>政策文件审查</td><td><span class="tag tag-amber">DETECTION</span></td><td>15分</td></tr>
+<tr><td><code>DETECTION_FORMAT_CHECK</code></td><td>格式规范检测</td><td><span class="tag tag-amber">DETECTION</span></td><td>15分</td></tr>
+<tr><td><code>TEXT_OPTIMIZE</code></td><td>文本优化</td><td><span class="tag tag-blue">OPTIMIZATION</span></td><td>10分</td></tr>
+</table>
+<h3>模型路由机制</h3>
+<div class="flow-wrap">
+<div class="flow-node fn-gray">AiTaskType</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">AiUsageScenario</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">查询route_rule</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">primary模型</div>
+<span class="flow-arrow">|</span>
+<div class="flow-node fn-amber">fallback模型</div>
+</div>
+<h3>降级策略</h3>
+<ul>
+<li>AI模块60s未拉取 → 标记 <code>AI_UNAVAILABLE</code></li>
+<li>用户可重试或跳过(<code>SKIPPED</code>)</li>
+<li><code>resultSynced</code>: 0未同步 → 1已同步 → 2失败(下次重试)</li>
+</ul>
+<div class="note note-danger">
+<b>CAS抢占顺序</b>: 必须先<code>tryAcquire</code>获取并发许可，再CAS更新状态。CAS失败后必须<code>release</code>归还许可，否则许可泄漏。
+</div>
+</div>
+</div>
+</div>
+
+<!-- ========== 状态机与阶段流程 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">状态机与阶段流程 (State Machine) <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<h3>项目状态转换规则</h3>
+<table>
+<tr><th>当前状态</th><th>允许转换到</th></tr>
+<tr><td><code>DRAFT</code></td><td>IN_PROGRESS, CANCELLED</td></tr>
+<tr><td><code>IN_PROGRESS</code></td><td>PENDING_DETECTION, CANCELLED</td></tr>
+<tr><td><code>PENDING_DETECTION</code></td><td>DETECTING, IN_PROGRESS, CANCELLED</td></tr>
+<tr><td><code>DETECTING</code></td><td>DETECTION_PASSED, DETECTION_FAILED, DETECTION_SKIPPED</td></tr>
+<tr><td><code>DETECTION_PASSED</code></td><td>PUBLISHED, IN_PROGRESS</td></tr>
+<tr><td><code>DETECTION_FAILED</code></td><td>IN_PROGRESS, DETECTION_PASSED</td></tr>
+<tr><td><code>DETECTION_SKIPPED</code></td><td>PUBLISHED, IN_PROGRESS</td></tr>
+<tr><td><code>PUBLISHED</code></td><td>ARCHIVED</td></tr>
+<tr><td><code>ARCHIVED</code></td><td><b>终态(空)</b></td></tr>
+<tr><td><code>CANCELLED</code></td><td><b>终态(空)</b></td></tr>
+</table>
+<h3>PhaseTrigger 接口</h3>
+<ul>
+<li><code>onEnter(project, context)</code> — 进入阶段时自动发起AI任务</li>
+<li><code>onExit(project)</code> — 离开阶段时执行</li>
+<li><code>canComplete(project)</code> — 校验是否可推进</li>
+<li><code>getIncompleteMessage()</code> — 不能完成时的提示</li>
+</ul>
+<h3>Phase-Status 联动</h3>
+<table>
+<tr><th>阶段</th><th>预期状态</th><th>联动逻辑</th></tr>
+<tr><td>BASIC_INFO</td><td>IN_PROGRESS</td><td>DRAFT → IN_PROGRESS</td></tr>
+<tr><td>REQUIREMENT~DOCUMENT</td><td>IN_PROGRESS</td><td>—</td></tr>
+<tr><td>DETECTION</td><td>DETECTING</td><td>IN_PROGRESS → PENDING_DETECTION → DETECTING</td></tr>
+</table>
+</div>
+</div>
+</div>
+
+<!-- ========== 文档集成与导出 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">文档集成与导出 (Document) <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<h3>文档生成管线</h3>
+<div class="flow-wrap">
+<div class="flow-node fn-amber">项目模板<br>(Word文件)</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-blue">DocumentDataAssembler<br>组装FillData</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-purple">AI任务<br>DOCUMENT_INTEGRATION</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">File服务<br>poi-tl填充</div>
+<span class="flow-arrow">→</span>
+<div class="flow-node fn-green">generatedFileId<br>回写project</div>
+</div>
+<div class="note note-info">
+<b>重要</b>: 文档集成是<b>poi-tl模板引擎填充Word</b>，不是Markdown转Word。需要项目模板有Word文件(<code>TbProjectTemplate.fileId</code>不为空)。
+</div>
+<h3>文档修复机制</h3>
+<p style="font-size:.88rem">检测建议accept时: <code>fileServiceClient.fixDocument(generatedFileId, replacements)</code> → 返回新文件ID → 更新 <code>project.generatedFileId</code></p>
+<h3>FillData 结构</h3>
+<table>
+<tr><th>字段</th><th>说明</th></tr>
+<tr><td><code>key</code></td><td>占位符名称(与Word模板{{key}}对应)</td></tr>
+<tr><td><code>value</code></td><td>填充值(按type转换)</td></tr>
+<tr><td><code>type</code></td><td>text / table / image / list</td></tr>
+</table>
+<div class="note note-warn">
+<b>注意</b>: <code>editContent()</code>直接抛<code>OPERATION_NOT_SUPPORTED</code>，在线编辑不支持，需修改模板后重新生成。
+</div>
+</div>
+</div>
+</div>
+
+<!-- ========== 跨模块调用 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">跨模块调用关系 <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<table>
+<tr><th>调用方</th><th>被调用方</th><th>方式</th><th>说明</th></tr>
+<tr><td>core</td><td>ai</td><td><span class="tag tag-purple">ai_task表</span></td><td>异步解耦，不直接HTTP</td></tr>
+<tr><td>core</td><td>file</td><td><span class="tag tag-blue">HTTP</span></td><td>文件上传/下载/文档生成/修复</td></tr>
+<tr><td>core</td><td>support</td><td><span class="tag tag-blue">HTTP</span></td><td>认证/权限校验</td></tr>
+<tr><td>ai</td><td>file</td><td><span class="tag tag-blue">HTTP</span></td><td>知识库文件管理</td></tr>
+<tr><td>ai</td><td>support</td><td><span class="tag tag-blue">HTTP</span></td><td>模型配置和路由规则</td></tr>
+<tr><td>前端</td><td>ai</td><td><span class="tag tag-green">SSE直连</span></td><td>AI对话/文本优化</td></tr>
+</table>
+<h3>后端模块清单</h3>
+<table>
+<tr><th>模块</th><th>端口</th><th>职责</th></tr>
+<tr><td><code>ele-ai-tender-common</code></td><td>—</td><td>公共实体、枚举、工具类</td></tr>
+<tr><td><code>ele-ai-tender-support</code></td><td>8080</td><td>认证、用户、模板、模型配置</td></tr>
+<tr><td><code>ele-ai-tender-file</code></td><td>8081</td><td>文件上传下载、Word文档引擎</td></tr>
+<tr><td><code>ele-ai-tender-core</code></td><td>8082</td><td>项目、需求、评审项、文档集成、检测、状态机</td></tr>
+<tr><td><code>ele-ai-tender-ai</code></td><td>8083</td><td>AI对话、知识库、检测引擎、模型路由</td></tr>
+</table>
+</div>
+</div>
+</div>
+
+<!-- ========== 常见陷阱 ========== -->
+<div class="section">
+<div class="section-header" onclick="toggleSection(this)">常见陷阱 (Top 10) <span class="arrow">▶</span></div>
+<div class="section-body">
+<div class="card">
+<ol>
+<li><b>common变更后必须install</b>: <code>mvn install -pl ele-ai-tender-common -AM</code>，否则编译报"找不到符号"</li>
+<li><b>后端启动必须在子模块目录</b>: 不能在父POM目录用 <code>-pl</code> 启动</li>
+<li><b>需求侧无状态机</b>: 后端仅IN_PROGRESS/COMPLETED，前端5种状态后端不识别</li>
+<li><b>阶段只能顺序推进</b>: <code>target.code == current.code + 1</code>，不可跳跃不可倒退</li>
+<li><b>检测内容不存文件ID</b>: <code>content_file_id</code>始终为null，内容存<code>content_snapshot</code></li>
+<li><b>文档集成不是Markdown转Word</b>: 是poi-tl模板引擎填充Word模板</li>
+<li><b>retry重置所有检测记录</b>: 不是只重试失败的，而是全部重新检测</li>
+<li><b>CAS抢占顺序</b>: 先<code>tryAcquire</code>再CAS，CAS失败必须<code>release</code></li>
+<li><b>mybatis-plus表前缀</b>: core模块默认<code>ai_</code>，但实体通过<code>@TableName</code>显式指定<code>tb_</code></li>
+<li><b>Interaction模块JDK8兼容</b>: 公开API保持JDK8兼容，DTO只放common-interaction</li>
+</ol>
+</div>
+</div>
+</div>
+
+<p class="hint">招标文件AI编制工具 — 业务上下文Skill | Ctrl+E 一键展开/折叠所有板块</p>
+
+<script>
+function toggleSection(header){
+header.classList.toggle('open');
+header.nextElementSibling.classList.toggle('open');
+}
+document.addEventListener('keydown',function(e){
+if((e.ctrlKey||e.metaKey)&&e.key==='e'){
+e.preventDefault();
+var headers=document.querySelectorAll('.section-header');
+var bodies=document.querySelectorAll('.section-body');
+var allOpen=Array.from(headers).every(h=>h.classList.contains('open'));
+headers.forEach(function(h){allOpen?h.classList.remove('open'):h.classList.add('open')});
+bodies.forEach(function(b){allOpen?b.classList.remove('open'):b.classList.add('open')});
+}
+});
+</script>
+</body>
+</html>

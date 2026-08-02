@@ -1,5 +1,6 @@
 package com.jy.eleaitender.support.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SysParameter;
 
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.Map;
 /**
  * 系统参数服务接口
  */
-public interface ISysParameterService {
+public interface ISysParameterService extends IService<SysParameter> {
 
     /**
      * 按分组查询参数列表

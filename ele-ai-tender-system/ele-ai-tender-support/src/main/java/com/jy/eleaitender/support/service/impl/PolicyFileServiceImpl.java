@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SupPolicyFile;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
@@ -17,7 +18,7 @@ import org.springframework.util.StringUtils;
  * 政策文件服务实现
  */
 @Service
-public class PolicyFileServiceImpl implements IPolicyFileService {
+public class PolicyFileServiceImpl extends ServiceImpl<PolicyFileMapper, SupPolicyFile> implements IPolicyFileService {
 
     @Autowired
     private PolicyFileMapper policyFileMapper;

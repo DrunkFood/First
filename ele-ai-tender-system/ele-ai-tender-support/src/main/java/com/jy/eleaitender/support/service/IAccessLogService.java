@@ -1,6 +1,7 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SysAccessLog;
 
 import java.util.Date;
@@ -8,7 +9,7 @@ import java.util.Date;
 /**
  * 访问日志服务
  */
-public interface IAccessLogService {
+public interface IAccessLogService extends IService<SysAccessLog> {
 
     Page<SysAccessLog> getAccessLogPage(Integer pageNum,
                                         Integer pageSize,

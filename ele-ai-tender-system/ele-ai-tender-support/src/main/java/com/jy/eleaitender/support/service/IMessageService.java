@@ -1,12 +1,13 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SupMessage;
 
 /**
  * 消息中心服务接口
  */
-public interface IMessageService {
+public interface IMessageService extends IService<SupMessage> {
 
     /**
      * 分页查询当前用户消息

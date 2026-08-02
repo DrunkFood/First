@@ -1,5 +1,6 @@
 package com.jy.eleaitender.core.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.ai.AiContentFeedback;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.enums.FeedbackScene;
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-public class AiContentFeedbackServiceImpl implements IAiContentFeedbackService {
+public class AiContentFeedbackServiceImpl extends ServiceImpl<AiContentFeedbackMapper, AiContentFeedback> implements IAiContentFeedbackService {
 
     @Autowired
     private AiContentFeedbackMapper feedbackMapper;

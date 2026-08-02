@@ -25,11 +25,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jy.eleaitender.common.util.JsonUtil.*;
 
@@ -106,7 +102,9 @@ public class AiTaskResultSyncHandler {
     // ========== 需求生成同步 ==========
 
     private void syncRequirement(AiTask task) {
-        Long requirementId = task.getBizId();
+        Long requirementId = parseLongBizId(task);
+        if (requirementId == null) return;
+
         TbRequirement requirement = requirementMapper.selectById(requirementId);
         if (requirement == null) {
             log.warn("需求不存在，跳过同步: requirementId={}", requirementId);
@@ -132,7 +130,9 @@ public class AiTaskResultSyncHandler {
     }
 
     private void syncProjectRequirement(AiTask task) {
-        Long projectId = task.getBizId();
+        Long projectId = parseLongBizId(task);
+        if (projectId == null) return;
+
         TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             log.warn("项目不存在，跳过同步: projectId={}", projectId);
@@ -178,7 +178,8 @@ public class AiTaskResultSyncHandler {
     private final IdentityHashMap<TbProjectReviewItem, TbProjectReviewItem> parentMap = new IdentityHashMap<>();
 
     private void syncReviewItems(AiTask task) {
-        Long projectId = task.getBizId();
+        Long projectId = parseLongBizId(task);
+        if (projectId == null) return;
 
         if (!AiTaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
             log.info("评审项生成任务非成功状态: projectId={}, taskStatus={}", projectId, task.getStatus());
@@ -532,7 +533,9 @@ public class AiTaskResultSyncHandler {
     // ========== 文档集成同步 ==========
 
     private void syncDocumentIntegration(AiTask task) {
-        Long projectId = task.getBizId();
+        Long projectId = parseLongBizId(task);
+        if (projectId == null) return;
+
         TbProject project = projectMapper.selectById(projectId);
         if (project == null) {
             log.warn("项目不存在，跳过同步: projectId={}", projectId);
@@ -585,7 +588,9 @@ public class AiTaskResultSyncHandler {
     // ========== 检测任务同步 ==========
 
     private void syncDetection(AiTask task) {
-        Long recordId = task.getBizId();
+        Long recordId = parseLongBizId(task);
+        if (recordId == null) return;
+
         TbDetectionRecord record = detectionRecordMapper.selectById(recordId);
         if (record == null) {
             log.warn("检测记录不存在，跳过同步: recordId={}", recordId);
@@ -616,11 +621,11 @@ public class AiTaskResultSyncHandler {
             }
 
             record.setResult(enrichedResult);
-            record.setCompletedAt(LocalDateTime.now());
+            record.setCompletedAt(new Date());
         } else if (AiTaskStatus.FAILED.getCode().equals(task.getStatus())
                 || AiTaskStatus.AI_UNAVAILABLE.getCode().equals(task.getStatus())
                 || AiTaskStatus.SKIPPED.getCode().equals(task.getStatus())) {
-            record.setCompletedAt(LocalDateTime.now());
+            record.setCompletedAt(new Date());
         }
 
         detectionRecordMapper.updateById(record);
@@ -724,6 +729,25 @@ public class AiTaskResultSyncHandler {
             log.info("项目检测状态流转: projectId={}, newStatus={}", projectId, project.getStatus());
         } catch (Exception e) {
             log.error("更新项目检测状态失败: projectId={}", projectId, e);
+        }
+    }
+
+    // ========== 通用工具方法 ==========
+
+    /**
+     * 将任务 bizId 解析为 Long，内部任务的 bizId 始终是数字主键；
+     * 外部任务 bizId 可能含字母，无法转换时记录日志并返回 null，调用方应直接 return。
+     */
+    private Long parseLongBizId(AiTask task) {
+        String bizId = task.getBizId();
+        if (bizId == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(bizId);
+        } catch (NumberFormatException e) {
+            log.warn("AI任务bizId非数字，跳过内部同步: taskId={}, bizId={}", task.getId(), bizId);
+            return null;
         }
     }
 

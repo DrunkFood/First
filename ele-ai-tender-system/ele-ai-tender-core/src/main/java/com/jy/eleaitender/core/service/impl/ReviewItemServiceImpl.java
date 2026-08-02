@@ -1,14 +1,16 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectReviewItem;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.enums.AiTaskType;
+import com.jy.eleaitender.common.enums.BizType;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.BusinessException;
-import com.jy.eleaitender.common.dto.ai.ReviewItemGenerateParams;
 import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IProjectService;
@@ -20,19 +22,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 评审项服务实现
  */
 @Slf4j
 @Service
-public class ReviewItemServiceImpl implements IReviewItemService {
+public class ReviewItemServiceImpl extends ServiceImpl<TbProjectReviewItemMapper, TbProjectReviewItem> implements IReviewItemService {
 
     @Autowired
     private TbProjectReviewItemMapper reviewItemMapper;
@@ -165,8 +162,8 @@ public class ReviewItemServiceImpl implements IReviewItemService {
         }
 
         log.info("提交评审项生成: projectId={}, projectName={}", projectId, project.getProjectName());
-        return aiTaskService.createTask(AiTaskType.REVIEW_ITEM_GENERATE,
-                projectId, projectId, "PROJECT", params, projectTemplateFileId);
+        return aiTaskService.createInternalTask(AiTaskType.REVIEW_ITEM_GENERATE,
+                projectId, projectId, BizType.REVIEW_ITEM.getCode(), params, projectTemplateFileId);
     }
 
     @Override

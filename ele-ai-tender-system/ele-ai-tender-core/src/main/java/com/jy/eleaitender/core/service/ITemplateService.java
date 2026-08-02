@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SupTemplate;
 
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
 /**
  * 模板服务接口
  */
-public interface ITemplateService {
+public interface ITemplateService extends IService<SupTemplate> {
 
     /**
      * 分页查询模板列表

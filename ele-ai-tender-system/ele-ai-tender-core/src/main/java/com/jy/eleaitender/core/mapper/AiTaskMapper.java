@@ -54,7 +54,7 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
             "AND biz_type = #{bizType} AND status IN ('PENDING','PROCESSING') AND is_delete = 0 " +
             "LIMIT 1")
     AiTask selectActiveTask(@Param("taskType") String taskType,
-                            @Param("bizId") Long bizId,
+                            @Param("bizId") String bizId,
                             @Param("bizType") String bizType);
 
     /**
@@ -65,7 +65,7 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
             "AND biz_type = #{bizType} AND is_delete = 0 " +
             "ORDER BY create_time DESC LIMIT 1")
     AiTask selectLatestTask(@Param("taskType") String taskType,
-                            @Param("bizId") Long bizId,
+                            @Param("bizId") String bizId,
                             @Param("bizType") String bizType);
 
     /**
@@ -97,7 +97,16 @@ public interface AiTaskMapper extends BaseMapper<AiTask> {
      * 跳过数据隔离：后台定时任务无用户上下文
      */
     @DataScope(skip = true)
-    @Update("UPDATE ai_task SET result_synced = #{synced} WHERE id = #{id} AND result_synced = 3 AND is_delete = 0")
-    int markSynced(@Param("id") Long id, @Param("synced") int synced);
+    @Update("UPDATE ai_task SET result_synced = 1, synced_at = NOW() WHERE id = #{id} AND result_synced = 3 AND is_delete = 0")
+    int markSuccessSynced(@Param("id") Long id);
+
+    /**
+     * 标记AI任务结果同步状态
+     * 跳过数据隔离：后台定时任务无用户上下文
+     */
+    @DataScope(skip = true)
+    @Update("UPDATE ai_task SET error_msg = #{errorMessage}, result_synced = 2, synced_at = NOW() WHERE id = #{id} AND result_synced = 3 AND is_delete = 0")
+    int markFailedSynced(@Param("id") Long id,
+                         @Param("errorMessage") String errorMessage);
 
 }

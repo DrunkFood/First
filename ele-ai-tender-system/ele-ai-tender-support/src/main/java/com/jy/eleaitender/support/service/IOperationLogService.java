@@ -1,12 +1,13 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SysOperationLog;
 
 /**
  * 操作日志服务接口
  */
-public interface IOperationLogService {
+public interface IOperationLogService extends IService<SysOperationLog> {
 
     /**
      * 分页查询操作日志

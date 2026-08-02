@@ -6,8 +6,7 @@ import lombok.Getter;
 import java.io.Serial;
 
 /**
- * AI服务不可用异常
- * 当所有模型路由均不可用时抛出
+ * AI输出格式异常
  */
 @Getter
 public class AiErrorContentException extends RuntimeException {

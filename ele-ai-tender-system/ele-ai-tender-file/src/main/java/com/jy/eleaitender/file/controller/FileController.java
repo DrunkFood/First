@@ -3,14 +3,14 @@ package com.jy.eleaitender.file.controller;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.FixReplacement;
 import com.jy.eleaitender.common.dto.LocationRefVO;
+import com.jy.eleaitender.common.dto.response.FileUploadResponse;
 import com.jy.eleaitender.common.dto.response.WordFixResultVO;
 import com.jy.eleaitender.common.dto.response.WordStructureVO;
+import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.FileException;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
-import com.jy.eleaitender.common.dto.response.FileUploadResponse;
-import com.jy.eleaitender.common.entity.file.FileInfo;
 import com.jy.eleaitender.file.service.IFileStorageService;
 import com.jy.eleaitender.file.service.IWordDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,9 +50,8 @@ public class FileController {
     @PostMapping("/upload")
     @RequireLogin
     @Operation(summary = "上传文件")
-    public Result<FileUploadResponse> upload(
-            @Parameter(description = "文件", required = true) @RequestParam("file") MultipartFile file,
-            @Parameter(description = "业务类型", required = true) @RequestParam("bizType") String bizType) {
+    public Result<FileUploadResponse> upload(@Parameter(description = "文件", required = true) @RequestParam("file") MultipartFile file,
+                                             @Parameter(description = "业务类型", required = true) @RequestParam("bizType") String bizType) {
         FileUploadResponse response = fileStorageService.upload(file, bizType);
         return Result.success(response);
     }
@@ -60,8 +59,7 @@ public class FileController {
     @GetMapping("/download/{fileId}")
     @RequireLogin
     @Operation(summary = "下载文件")
-    public ResponseEntity<Resource> download(
-            @Parameter(description = "文件ID", required = true) @PathVariable("fileId") Long fileId) {
+    public ResponseEntity<Resource> download(@PathVariable @Parameter(description = "文件ID", required = true) Long fileId) {
         FileInfo fileInfo = fileStorageService.getById(fileId);
         if (fileInfo == null) {
             throw new FileException(ResponseCode.FILE_NOT_FOUND);
@@ -88,9 +86,19 @@ public class FileController {
     @GetMapping("/info/{fileId}")
     @RequireLogin
     @Operation(summary = "获取文件信息")
-    public Result<FileInfo> info(
-            @Parameter(description = "文件ID", required = true) @PathVariable("fileId") Long fileId) {
+    public Result<FileInfo> info(@PathVariable @Parameter(description = "文件ID", required = true) Long fileId) {
         FileInfo fileInfo = fileStorageService.getById(fileId);
+        if (fileInfo == null) {
+            return Result.fail(ResponseCode.FILE_NOT_FOUND);
+        }
+        return Result.success(fileInfo);
+    }
+
+    @GetMapping("/info/sha256/{sha256}")
+    @RequireLogin
+    @Operation(summary = "获取文件信息")
+    public Result<FileInfo> sha256(@PathVariable @Parameter(description = "文件sha256", required = true) String sha256) {
+        FileInfo fileInfo = fileStorageService.getBySha256(sha256);
         if (fileInfo == null) {
             return Result.fail(ResponseCode.FILE_NOT_FOUND);
         }
@@ -100,8 +108,7 @@ public class FileController {
     @DeleteMapping("/delete/{fileId}")
     @RequireLogin
     @Operation(summary = "删除文件")
-    public Result<Boolean> delete(
-            @Parameter(description = "文件ID", required = true) @PathVariable("fileId") Long fileId) {
+    public Result<Boolean> delete(@PathVariable @Parameter(description = "文件ID", required = true) Long fileId) {
         FileInfo fileInfo = fileStorageService.getById(fileId);
         if (fileInfo != null) {
             // 校验文件归属
@@ -152,10 +159,14 @@ public class FileController {
             if (locRefObj instanceof Map<?, ?> locRefMap) {
                 LocationRefVO locRef = new LocationRefVO();
                 locRef.setType((String) locRefMap.get("type"));
-                if (locRefMap.get("elementIndex") != null) locRef.setElementIndex(((Number) locRefMap.get("elementIndex")).intValue());
-                if (locRefMap.get("tableIndex") != null) locRef.setTableIndex(((Number) locRefMap.get("tableIndex")).intValue());
-                if (locRefMap.get("rowIndex") != null) locRef.setRowIndex(((Number) locRefMap.get("rowIndex")).intValue());
-                if (locRefMap.get("cellIndex") != null) locRef.setCellIndex(((Number) locRefMap.get("cellIndex")).intValue());
+                if (locRefMap.get("elementIndex") != null)
+                    locRef.setElementIndex(((Number) locRefMap.get("elementIndex")).intValue());
+                if (locRefMap.get("tableIndex") != null)
+                    locRef.setTableIndex(((Number) locRefMap.get("tableIndex")).intValue());
+                if (locRefMap.get("rowIndex") != null)
+                    locRef.setRowIndex(((Number) locRefMap.get("rowIndex")).intValue());
+                if (locRefMap.get("cellIndex") != null)
+                    locRef.setCellIndex(((Number) locRefMap.get("cellIndex")).intValue());
                 r.setLocationRef(locRef);
             }
             return r;

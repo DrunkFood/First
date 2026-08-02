@@ -2,6 +2,7 @@ package com.jy.eleaitender.ai.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.ai.dto.request.KnowledgeDocumentRequest;
 import com.jy.eleaitender.ai.mapper.AiKnowledgeDocumentMapper;
 import com.jy.eleaitender.ai.service.IKnowledgeDocumentService;
@@ -12,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
-public class KnowledgeDocumentServiceImpl implements IKnowledgeDocumentService {
+public class KnowledgeDocumentServiceImpl extends ServiceImpl<AiKnowledgeDocumentMapper, AiKnowledgeDocument> implements IKnowledgeDocumentService {
 
     @Autowired
     private AiKnowledgeDocumentMapper knowledgeDocumentMapper;

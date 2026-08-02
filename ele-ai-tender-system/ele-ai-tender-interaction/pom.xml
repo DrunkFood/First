@@ -41,6 +41,7 @@
     </dependencyManagement>
 
     <modules>
+        <module>ele-ai-tender-common-interaction</module>
         <module>ele-ai-tender-interaction-core</module>
         <module>ele-ai-tender-interaction-autoconfigure</module>
         <module>ele-ai-tender-interaction-spring-boot-starter</module>
@@ -52,11 +53,97 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
                     <configuration>
-                        <release>${interaction.java.version}</release>
+                        <source>${interaction.java.version}</source>
+                        <target>${interaction.java.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <parameters>false</parameters>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <!-- Maven Compiler Plugin: 确保Java版本兼容性 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${interaction.java.version}</source>
+                    <target>${interaction.java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <parameters>false</parameters>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <!-- 配置maven-source-plugin以生成并附加源码jar包 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <!-- 推荐使用 jar-no-fork 避免多余的编译 -->
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- 配置maven-javadoc-plugin以生成并附加文档jar包 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- 指定Java源版本，确保Javadoc兼容性 -->
+                    <source>${interaction.java.version}</source>
+                    <!-- 避免在某些情况下出现警告导致构建失败 -->
+                    <doclint>none</doclint>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
+
+    <!-- 分发构件至远程仓库 -->
+    <distributionManagement>
+        <!--正式版本-->
+        <repository>
+            <!-- maven settings.xml中<server>的id-->
+            <id>zbd-purchase-releases</id>
+            <name>zbd-purchase-releases</name>
+            <url>http://10.11.20.50:15051/repository/zbd-purchase-releases/</url>
+        </repository>
+        <!--快照-->
+        <snapshotRepository>
+            <id>zbd-purchase-snapshots</id>
+            <name>zbd-purchase-snapshots</name>
+            <url>http://10.11.20.50:15051/repository/zbd-purchase-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>

@@ -2,6 +2,7 @@ package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.datascope.DataScopeHelper;
 import com.jy.eleaitender.common.dto.ai.RequirementGenerateParams;
 import com.jy.eleaitender.common.entity.ai.AiTask;
@@ -36,7 +37,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 @Slf4j
 @Service
-public class ProjectServiceImpl implements IProjectService {
+public class ProjectServiceImpl extends ServiceImpl<TbProjectMapper, TbProject> implements IProjectService {
 
     private static final String PROJECT_CODE_UNIQUE_KEY = "uk_project_code";
 
@@ -264,8 +265,8 @@ public class ProjectServiceImpl implements IProjectService {
                 }
                 break;
         }
-        return aiTaskService.createTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
-                project.getId(), project.getId(), "REQUIREMENT", params, paramJoiner.toString());
+        return aiTaskService.createInternalTask(AiTaskType.PROJECT_REQUIREMENT_GENERATE,
+                project.getId(), project.getId(), BizType.PROJECT.getCode(), params, paramJoiner.toString());
     }
 
     @Override

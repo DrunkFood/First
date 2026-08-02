@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/bb6e6519-bc9b-4403-94f8-fe4f70e905b3
+title: 招标文件 AI 编制平台（多前端 + Maven 聚合工程 + CI）
+scope: []
+source_files: []
+depends_on: []
+related_to:
+    - path: 4b3b5b03-4e49-4195-a3fa-2926dcb89c01/5069bfec-b1e0-4f5d-98c4-1ee8b7083e5c

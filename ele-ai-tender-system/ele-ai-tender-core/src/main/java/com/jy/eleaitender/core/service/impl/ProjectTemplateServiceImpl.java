@@ -1,6 +1,7 @@
 package com.jy.eleaitender.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.core.TbProject;
 import com.jy.eleaitender.common.entity.core.TbProjectTemplate;
 import com.jy.eleaitender.common.entity.support.SupTemplate;
@@ -20,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-public class ProjectTemplateServiceImpl implements IProjectTemplateService {
+public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMapper, TbProjectTemplate> implements IProjectTemplateService {
 
     @Autowired
     private ProjectTemplateMapper projectTemplateMapper;

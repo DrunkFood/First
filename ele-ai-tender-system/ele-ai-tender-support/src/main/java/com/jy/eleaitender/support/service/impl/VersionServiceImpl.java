@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SysMainVersion;
 import com.jy.eleaitender.common.entity.support.SysPluginVersion;
 import com.jy.eleaitender.support.mapper.SysMainVersionMapper;
@@ -11,14 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
 import java.util.List;
 
 /**
  * 版本服务实现
  */
 @Service
-public class VersionServiceImpl implements IVersionService {
+public class VersionServiceImpl extends ServiceImpl<SysMainVersionMapper, SysMainVersion> implements IVersionService {
 
     @Autowired
     private SysMainVersionMapper mainVersionMapper;

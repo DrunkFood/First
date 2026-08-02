@@ -6,11 +6,11 @@ import com.jy.eleaitender.common.enums.ResponseCode;
 import com.jy.eleaitender.common.exception.AuthException;
 import com.jy.eleaitender.common.interaction.dto.ExternalTokenRequest;
 import com.jy.eleaitender.common.response.Result;
+import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.support.converter.ExternalTokenRequestMapper;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueCommand;
 import com.jy.eleaitender.support.model.external.ExternalTokenIssueResult;
 import com.jy.eleaitender.support.model.external.ExternalUserInfoView;
-import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.support.service.IAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,11 +36,11 @@ public class ExternalAuthController {
     @Autowired
     private ExternalTokenRequestMapper tokenRequestMapper;
 
-    @PostMapping("/token")
-    @Operation(summary = "外部系统用户换取Token")
     /**
      * 供业务系统通过 appKey/appSecret 签名换取电子标外部 token。
      */
+    @PostMapping("/token")
+    @Operation(summary = "外部系统用户换取Token")
     public Result<ExternalTokenResponse> getToken(
             @Parameter(description = "应用Key", required = true) @RequestHeader("X-App-Key") String appKey,
             @Parameter(description = "时间戳", required = true) @RequestHeader("X-Timestamp") Long timestamp,
@@ -64,8 +64,7 @@ public class ExternalAuthController {
             // 获取Token
             ExternalTokenIssueResult result = authService.getExternalToken(appKey, command);
             ExternalTokenResponse response = new ExternalTokenResponse(result.getToken(), result.getExpireIn());
-            log.info("外部系统获取Token成功: appKey={}, userId={}, enterpriseId={}",
-                    appKey, command.getUserId(), command.getEnterpriseId());
+            log.info("外部系统获取Token成功: appKey={}, userId={}, enterpriseId={}", appKey, command.getUserId(), command.getEnterpriseId());
             return Result.success(response);
         } catch (RuntimeException e) {
             log.warn("外部系统获取Token失败: appKey={}, request={}, reason={}", appKey, request, e.getMessage(), e);
@@ -73,11 +72,11 @@ public class ExternalAuthController {
         }
     }
 
-    @GetMapping("/verify")
-    @Operation(summary = "验证外部系统签名")
     /**
      * 提供简单验签能力，便于联调时排查 appKey/appSecret 配置问题。
      */
+    @GetMapping("/verify")
+    @Operation(summary = "验证外部系统签名")
     public Result<Boolean> verify(
             @Parameter(description = "应用Key", required = true) @RequestHeader("X-App-Key") String appKey,
             @Parameter(description = "时间戳", required = true) @RequestHeader("X-Timestamp") Long timestamp,
@@ -87,12 +86,12 @@ public class ExternalAuthController {
         return Result.success(valid);
     }
 
-    @GetMapping("/userinfo")
-    @RequireLogin
-    @Operation(summary = "获取当前外部用户信息")
     /**
      * 当前外部 token 已通过登录校验后，返回与之对应的外部用户上下文。
      */
+    @GetMapping("/userinfo")
+    @RequireLogin
+    @Operation(summary = "获取当前外部用户信息")
     public Result<ExternalUserInfoResponse> getExternalUserInfo() {
         ExternalUserInfoView view = authService.getExternalUserInfo();
         ExternalUserInfoResponse response = new ExternalUserInfoResponse();

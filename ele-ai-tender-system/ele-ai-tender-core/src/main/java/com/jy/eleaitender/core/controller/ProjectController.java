@@ -2,13 +2,13 @@ package com.jy.eleaitender.core.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jy.eleaitender.common.entity.ai.AiTask;
+import com.jy.eleaitender.common.entity.core.TbProject;
+import com.jy.eleaitender.common.entity.core.TbProjectVersion;
 import com.jy.eleaitender.common.response.Result;
 import com.jy.eleaitender.common.security.annotation.RequireLogin;
 import com.jy.eleaitender.core.dto.request.AdvancePhaseRequest;
 import com.jy.eleaitender.core.dto.request.BatchDeleteRequest;
 import com.jy.eleaitender.core.dto.response.ProjectPhaseVO;
-import com.jy.eleaitender.common.entity.core.TbProject;
-import com.jy.eleaitender.common.entity.core.TbProjectVersion;
 import com.jy.eleaitender.core.service.IProjectService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
 import io.swagger.v3.oas.annotations.Operation;

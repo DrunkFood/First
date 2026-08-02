@@ -20,7 +20,7 @@ public final class ContentDispositionUtil {
     public static String resolveFileName(HttpHeaders headers) {
         try {
             ContentDisposition disposition = headers.getContentDisposition();
-            if (disposition != null && disposition.getFilename() != null) {
+            if (disposition.getFilename() != null) {
                 return disposition.getFilename();
             }
         } catch (RuntimeException e) {

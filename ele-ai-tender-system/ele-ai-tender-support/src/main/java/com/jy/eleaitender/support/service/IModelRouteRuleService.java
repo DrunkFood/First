@@ -1,6 +1,7 @@
 package com.jy.eleaitender.support.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.jy.eleaitender.common.entity.support.SupModelRouteRule;
 import com.jy.eleaitender.support.vo.ModelRouteRuleVO;
 
@@ -9,7 +10,7 @@ import java.util.List;
 /**
  * 模型路由规则服务接口
  */
-public interface IModelRouteRuleService {
+public interface IModelRouteRuleService extends IService<SupModelRouteRule> {
 
     /**
      * 分页查询路由规则

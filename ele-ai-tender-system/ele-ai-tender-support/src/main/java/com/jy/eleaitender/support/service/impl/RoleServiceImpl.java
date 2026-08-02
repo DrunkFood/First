@@ -2,6 +2,7 @@ package com.jy.eleaitender.support.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jy.eleaitender.common.entity.support.SysRole;
 import com.jy.eleaitender.common.entity.support.SysRoleMenu;
 import com.jy.eleaitender.common.exception.BusinessException;
@@ -13,15 +14,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * 角色服务实现
  */
 @Service
-public class RoleServiceImpl implements IRoleService {
+public class RoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements IRoleService {
 
     @Autowired
     private SysRoleMapper roleMapper;

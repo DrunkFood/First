@@ -17,11 +17,7 @@ import com.jy.eleaitender.common.security.SecurityContextHolder;
 import com.jy.eleaitender.core.dto.request.DetectionSubmitRequest;
 import com.jy.eleaitender.core.dto.response.*;
 import com.jy.eleaitender.core.helper.MessageHelper;
-import com.jy.eleaitender.core.mapper.SupPolicyFileMapper;
-import com.jy.eleaitender.core.mapper.TbDetectionRecordMapper;
-import com.jy.eleaitender.core.mapper.TbPolicyFileMapper;
-import com.jy.eleaitender.core.mapper.TbProjectMapper;
-import com.jy.eleaitender.core.mapper.TbProjectReviewItemMapper;
+import com.jy.eleaitender.core.mapper.*;
 import com.jy.eleaitender.core.service.IAiTaskService;
 import com.jy.eleaitender.core.service.IDetectionService;
 import com.jy.eleaitender.core.service.IProjectVersionService;
@@ -34,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -117,7 +112,7 @@ public class DetectionServiceImpl implements IDetectionService {
             record.setContentSnapshot(detectionContent);
             record.setStatus(AiTaskStatus.PENDING.getCode());
             record.setPolicyFileIds(policyFileIdStr);
-            record.setStartedAt(LocalDateTime.now());
+            record.setStartedAt(new Date());
             detectionRecordMapper.insert(record);
 
             // 构建AI任务参数
@@ -125,8 +120,8 @@ public class DetectionServiceImpl implements IDetectionService {
             params.setContent(detectionContent);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(type);
-            AiTask task = aiTaskService.createTask(taskType, projectId,
-                    record.getId(), "DETECTION", params, policyFileIdStr);
+            AiTask task = aiTaskService.createInternalTask(taskType, projectId,
+                    record.getId(), BizType.DETECTION.getCode(), params, policyFileIdStr);
 
             record.setTaskId(task.getId());
             detectionRecordMapper.updateById(record);
@@ -442,7 +437,7 @@ public class DetectionServiceImpl implements IDetectionService {
             record.setResult(null);
             record.setContentFileId(null);
             record.setContentSnapshot(detectionContent);
-            record.setStartedAt(LocalDateTime.now());
+            record.setStartedAt(new Date());
             record.setCompletedAt(null);
             detectionRecordMapper.updateById(record);
 
@@ -450,8 +445,8 @@ public class DetectionServiceImpl implements IDetectionService {
             params.setContent(detectionContent);
 
             AiTaskType taskType = AiTaskType.mapToTaskType(DetectionType.fromCode(record.getDetectionType()));
-            AiTask task = aiTaskService.createTask(taskType, projectId,
-                    record.getId(), "DETECTION", params, record.getPolicyFileIds());
+            AiTask task = aiTaskService.createInternalTask(taskType, projectId,
+                    record.getId(), BizType.DETECTION.getCode(), params, record.getPolicyFileIds());
             record.setTaskId(task.getId());
             detectionRecordMapper.updateById(record);
 
@@ -481,8 +476,8 @@ public class DetectionServiceImpl implements IDetectionService {
         record.setResult(EMPTY_PASS_RESULT);
         record.setContentFileId(null);
         record.setContentSnapshot(detectionContent);
-        record.setStartedAt(LocalDateTime.now());
-        record.setCompletedAt(LocalDateTime.now());
+        record.setStartedAt(new Date());
+        record.setCompletedAt(new Date());
         detectionRecordMapper.updateById(record);
     }
 
@@ -568,7 +563,7 @@ public class DetectionServiceImpl implements IDetectionService {
         List<TbDetectionRecord> records = detectionRecordMapper.selectList(new QueryWrapper<TbDetectionRecord>().lambda()
                 .eq(TbDetectionRecord::getStatus, AiTaskStatus.PENDING.getCode()));
         for (TbDetectionRecord record : records) {
-            AiTaskVO task = aiTaskService.getTaskStatus(record.getTaskId());
+            AiTaskVO task = aiTaskService.getTask(record.getTaskId());
             record.setStatus(task.getStatus());
             detectionRecordMapper.updateById(record);
         }
