@@ -12,7 +12,8 @@ import com.jy.eleaitender.file.engine.*;
 import com.jy.eleaitender.file.service.IFileStorageService;
 import com.jy.eleaitender.file.service.IWordDocumentService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.*;
+import org.apache.xmlbeans.XmlCursor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,10 @@ import java.util.*;
 @Slf4j
 @Service
 public class WordDocumentServiceImpl implements IWordDocumentService {
+
+    private static final String AI_DISCLAIMER_TITLE = "【AI辅助生成·仅供参考】";
+    private static final String AI_DISCLAIMER_CONTENT = "本文档由AI工具辅助生成，仅供使用者参考、编辑与格式借鉴，不构成我们提供的任何形式的专业法律、技术或商业建议，不构成可直接提交的最终招标文件，亦不代表我们对招标项目内容、数据的任何承诺、审查或保证。使用者必须结合具体项目需求、法律法规及招标文件要求，对本文档的全部内容进行独立审查、修正和核实，并自行承担使用本文档产生的全部风险与责任。因未履行上述审核义务而直接使用本文档所造成的任何损失，我们均不承担任何责任。";
+    private static final String DISCLAIMER_BACKGROUND_COLOR = "FFFF00";
 
     @Autowired
     private IFileStorageService fileStorageService;
@@ -101,15 +106,14 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
 
             // ====== 阶段二：POI 编程生成表格 ======
 
-            if (!tableDataMap.isEmpty()) {
-                try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(rendered))) {
+            try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(rendered))) {
+                addAiDisclaimerToTop(doc);
+                if (!tableDataMap.isEmpty()) {
                     tableGenerator.replaceTablePlaceholders(doc, tableDataMap);
-                    byte[] finalBytes = writeDocument(doc);
-                    return uploadGeneratedFile(finalBytes, fileName);
                 }
+                byte[] finalBytes = writeDocument(doc);
+                return uploadGeneratedFile(finalBytes, fileName);
             }
-
-            return uploadGeneratedFile(rendered, fileName);
         } catch (Exception e) {
             throw new RuntimeException("基于模板生成文档失败: " + e.getMessage(), e);
         }
@@ -158,6 +162,67 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
         doc.write(out);
         return out.toByteArray();
+    }
+
+    private void addAiDisclaimerToTop(XWPFDocument doc) {
+        XWPFParagraph contentParagraph = insertParagraphAtDocumentStart(doc);
+        applyDisclaimerParagraphStyle(contentParagraph, 200);
+        XWPFRun contentRun = contentParagraph.createRun();
+        contentRun.setText(AI_DISCLAIMER_CONTENT);
+        contentRun.setFontSize(12);
+        contentRun.setFontFamily("宋体");
+
+        XWPFParagraph titleParagraph = insertParagraphAtDocumentStart(doc);
+        applyDisclaimerParagraphStyle(titleParagraph, 0);
+        XWPFRun titleRun = titleParagraph.createRun();
+        titleRun.setText(AI_DISCLAIMER_TITLE);
+        titleRun.setBold(true);
+        titleRun.setFontSize(14);
+        titleRun.setFontFamily("宋体");
+    }
+
+    private XWPFParagraph insertParagraphAtDocumentStart(XWPFDocument doc) {
+        List<IBodyElement> bodyElements = doc.getBodyElements();
+        if (bodyElements.isEmpty()) {
+            return doc.createParagraph();
+        }
+
+        IBodyElement firstElement = bodyElements.get(0);
+        XmlCursor cursor = null;
+        if (firstElement instanceof XWPFParagraph paragraph) {
+            cursor = paragraph.getCTP().newCursor();
+        } else if (firstElement instanceof XWPFTable table) {
+            cursor = table.getCTTbl().newCursor();
+        }
+
+        if (cursor == null) {
+            return doc.createParagraph();
+        }
+
+        try {
+            return doc.insertNewParagraph(cursor);
+        } finally {
+            cursor.dispose();
+        }
+    }
+
+    private void applyDisclaimerParagraphStyle(XWPFParagraph paragraph, int spacingAfter) {
+        paragraph.setSpacingBefore(0);
+        paragraph.setSpacingAfter(spacingAfter);
+        paragraph.setIndentationLeft(0);
+        setParagraphShading(paragraph, DISCLAIMER_BACKGROUND_COLOR);
+    }
+
+    private void setParagraphShading(XWPFParagraph paragraph, String colorHex) {
+        try {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr paragraphProperties =
+                    paragraph.getCTP().isSetPPr() ? paragraph.getCTP().getPPr() : paragraph.getCTP().addNewPPr();
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd shading =
+                    paragraphProperties.isSetShd() ? paragraphProperties.getShd() : paragraphProperties.addNewShd();
+            shading.setFill(colorHex);
+        } catch (Exception e) {
+            log.debug("设置免责声明背景色失败（可忽略）", e);
+        }
     }
 
     private Long uploadGeneratedFile(byte[] docBytes, String fileName) {

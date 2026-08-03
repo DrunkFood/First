@@ -20,6 +20,10 @@ import java.util.Map;
 @Component
 public class WordDocumentGenerator {
 
+    private static final String AI_DISCLAIMER_TITLE = "【AI辅助生成·仅供参考】";
+    private static final String AI_DISCLAIMER_CONTENT = "本文档由AI工具辅助生成，仅供使用者参考、编辑与格式借鉴，不构成我们提供的任何形式的专业法律、技术或商业建议，不构成可直接提交的最终招标文件，亦不代表我们对招标项目内容、数据的任何承诺、审查或保证。使用者必须结合具体项目需求、法律法规及招标文件要求，对本文档的全部内容进行独立审查、修正和核实，并自行承担使用本文档产生的全部风险与责任。因未履行上述审核义务而直接使用本文档所造成的任何损失，我们均不承担任何责任。";
+    private static final String DISCLAIMER_BACKGROUND_COLOR = "FFFF00";
+
     /**
      * 根据数据模型和HTML内容生成Word文档字节数组
      * HTML内容通过jsoup解析后渲染为格式化的Word段落
@@ -32,6 +36,8 @@ public class WordDocumentGenerator {
         log.info("开始生成Word文档，数据字段数: {}", documentData.size());
 
         try (XWPFDocument doc = new XWPFDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            addAiDisclaimer(doc);
+
             // 文档标题
             String projectName = String.valueOf(documentData.getOrDefault("projectName", "招标文件"));
             addTitle(doc, projectName);
@@ -47,6 +53,41 @@ public class WordDocumentGenerator {
         } catch (IOException e) {
             log.error("Word文档生成失败", e);
             throw new RuntimeException("Word文档生成失败: " + e.getMessage(), e);
+        }
+    }
+
+    private void addAiDisclaimer(XWPFDocument doc) {
+        XWPFParagraph titleParagraph = doc.createParagraph();
+        titleParagraph.setSpacingBefore(0);
+        titleParagraph.setSpacingAfter(0);
+        titleParagraph.setIndentationLeft(0);
+        setParagraphShading(titleParagraph, DISCLAIMER_BACKGROUND_COLOR);
+        XWPFRun titleRun = titleParagraph.createRun();
+        titleRun.setText(AI_DISCLAIMER_TITLE);
+        titleRun.setBold(true);
+        titleRun.setFontSize(14);
+        titleRun.setFontFamily("宋体");
+
+        XWPFParagraph contentParagraph = doc.createParagraph();
+        contentParagraph.setSpacingBefore(0);
+        contentParagraph.setSpacingAfter(200);
+        contentParagraph.setIndentationLeft(0);
+        setParagraphShading(contentParagraph, DISCLAIMER_BACKGROUND_COLOR);
+        XWPFRun contentRun = contentParagraph.createRun();
+        contentRun.setText(AI_DISCLAIMER_CONTENT);
+        contentRun.setFontSize(12);
+        contentRun.setFontFamily("宋体");
+    }
+
+    private void setParagraphShading(XWPFParagraph paragraph, String colorHex) {
+        try {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr paragraphProperties =
+                    paragraph.getCTP().isSetPPr() ? paragraph.getCTP().getPPr() : paragraph.getCTP().addNewPPr();
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd shading =
+                    paragraphProperties.isSetShd() ? paragraphProperties.getShd() : paragraphProperties.addNewShd();
+            shading.setFill(colorHex);
+        } catch (Exception e) {
+            log.debug("设置免责声明背景色失败（可忽略）", e);
         }
     }
 
