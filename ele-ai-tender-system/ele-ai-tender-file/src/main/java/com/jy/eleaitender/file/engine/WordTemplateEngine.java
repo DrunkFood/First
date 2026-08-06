@@ -40,7 +40,25 @@ public class WordTemplateEngine {
      * @return 生成文档的字节数组
      */
     public byte[] render(InputStream templateStream, Map<String, Object> data, Set<String> markdownKeys) {
+        return render(templateStream, data, markdownKeys, null);
+    }
+
+    /**
+     * 渲染Word模板
+     *
+     * @param templateStream 模板文件输入流
+     * @param data           填充数据
+     * @param markdownKeys   需要按Markdown渲染的占位符key集合
+     * @param textKeys       需要保留模板格式并标黄的文本占位符key集合
+     * @return 生成文档的字节数组
+     */
+    public byte[] render(InputStream templateStream, Map<String, Object> data, Set<String> markdownKeys, Set<String> textKeys) {
         ConfigureBuilder builder = Configure.builder();
+        if (textKeys != null) {
+            for (String key : textKeys) {
+                builder.bind(key, new HighlightTextRenderPolicy());
+            }
+        }
         if (markdownKeys != null) {
             for (String key : markdownKeys) {
                 builder.bind(key, new DocumentRenderPolicy());

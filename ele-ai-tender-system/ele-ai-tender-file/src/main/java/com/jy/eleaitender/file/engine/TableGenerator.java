@@ -23,6 +23,7 @@ import java.util.Map;
 public class TableGenerator {
 
     public static final String TABLE_PLACEHOLDER_PREFIX = "__TABLE_PLACEHOLDER__";
+    private static final String FILL_BACKGROUND_COLOR = "FFFF00";
 
     /**
      * 扫描文档中的表格占位符段落并替换为生成的表格
@@ -237,6 +238,7 @@ public class TableGenerator {
         for (XWPFTableRow row : table.getRows()) {
             for (XWPFTableCell cell : row.getTableCells()) {
                 cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+                setCellShading(cell, FILL_BACKGROUND_COLOR);
 
                 for (XWPFParagraph para : cell.getParagraphs()) {
                     para.setAlignment(ParagraphAlignment.LEFT);
@@ -274,6 +276,13 @@ public class TableGenerator {
         setBorder(borders.isSetRight() ? borders.getRight() : borders.addNewRight());
         setBorder(borders.isSetInsideH() ? borders.getInsideH() : borders.addNewInsideH());
         setBorder(borders.isSetInsideV() ? borders.getInsideV() : borders.addNewInsideV());
+    }
+
+    private void setCellShading(XWPFTableCell cell, String colorHex) {
+        CTTcPr tcPr = cell.getCTTc().getTcPr();
+        if (tcPr == null) tcPr = cell.getCTTc().addNewTcPr();
+        CTShd shd = tcPr.isSetShd() ? tcPr.getShd() : tcPr.addNewShd();
+        shd.setFill(colorHex);
     }
 
     private void setBorder(CTBorder border) {

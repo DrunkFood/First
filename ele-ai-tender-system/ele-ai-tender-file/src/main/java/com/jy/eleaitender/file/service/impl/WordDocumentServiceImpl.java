@@ -1,5 +1,8 @@
 package com.jy.eleaitender.file.service.impl;
 
+import com.deepoove.poi.data.DocumentRenderData;
+import com.deepoove.poi.data.Documents;
+import com.deepoove.poi.data.Paragraphs;
 import com.deepoove.poi.data.Pictures;
 import com.jy.eleaitender.common.dto.FillData;
 import com.jy.eleaitender.common.dto.FixReplacement;
@@ -35,6 +38,11 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
     private static final String AI_DISCLAIMER_TITLE = "【AI辅助生成·仅供参考】";
     private static final String AI_DISCLAIMER_CONTENT = "本文档由AI工具辅助生成，仅供使用者参考、编辑与格式借鉴，不构成我们提供的任何形式的专业法律、技术或商业建议，不构成可直接提交的最终招标文件，亦不代表我们对招标项目内容、数据的任何承诺、审查或保证。使用者必须结合具体项目需求、法律法规及招标文件要求，对本文档的全部内容进行独立审查、修正和核实，并自行承担使用本文档产生的全部风险与责任。因未履行上述审核义务而直接使用本文档所造成的任何损失，我们均不承担任何责任。";
     private static final String DISCLAIMER_BACKGROUND_COLOR = "FFFF00";
+    private static final String FILL_BACKGROUND_COLOR = "FFFF00";
+    private static final String MARKDOWN_MARKER_PREFIX = "__AI_TENDER_MARKDOWN_";
+
+    private record MarkdownRangeMarker(String start, String end) {
+    }
 
     @Autowired
     private IFileStorageService fileStorageService;
@@ -84,14 +92,22 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
 
             Map<String, Object> poiData = new LinkedHashMap<>();
             Map<String, TableData> tableDataMap = new LinkedHashMap<>();
+            Set<String> textKeys = new HashSet<>();
             Set<String> markdownKeys = new HashSet<>();
+            List<MarkdownRangeMarker> markdownMarkers = new ArrayList<>();
 
             for (FillData fd : fillDataList) {
                 switch (fd.getType()) {
-                    case TEXT -> poiData.put(fd.getKey(), fd.getValue());
+                    case TEXT -> {
+                        poiData.put(fd.getKey(), fd.getValue());
+                        textKeys.add(fd.getKey());
+                    }
                     case IMAGE -> poiData.put(fd.getKey(), toPictureRenderData((ImageData) fd.getValue()));
                     case MARKDOWN -> {
-                        poiData.put(fd.getKey(), markdownConverter.convert((String) fd.getValue()));
+                        MarkdownRangeMarker marker = createMarkdownMarker(fd.getKey());
+                        DocumentRenderData markdownData = markdownConverter.convert((String) fd.getValue());
+                        poiData.put(fd.getKey(), wrapMarkdownWithMarkers(markdownData, marker));
+                        markdownMarkers.add(marker);
                         markdownKeys.add(fd.getKey());
                     }
                     case TABLE -> {
@@ -102,11 +118,12 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
             }
 
             // poi-tl 渲染（文本+图片+TABLE标记文本）
-            byte[] rendered = templateEngine.render(templateStream, poiData, markdownKeys);
+            byte[] rendered = templateEngine.render(templateStream, poiData, markdownKeys, textKeys);
 
             // ====== 阶段二：POI 编程生成表格 ======
 
             try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(rendered))) {
+                highlightMarkdownRanges(doc, markdownMarkers);
                 addAiDisclaimerToTop(doc);
                 if (!tableDataMap.isEmpty()) {
                     tableGenerator.replaceTablePlaceholders(doc, tableDataMap);
@@ -132,6 +149,94 @@ public class WordDocumentServiceImpl implements IWordDocumentService {
         // URL 模式暂不支持，返回占位文本
         log.warn("图片URL模式暂不支持: {}", imageData.getUrl());
         return "[图片]";
+    }
+
+    private MarkdownRangeMarker createMarkdownMarker(String key) {
+        String id = key + "_" + UUID.randomUUID().toString().replace("-", "");
+        return new MarkdownRangeMarker(
+                MARKDOWN_MARKER_PREFIX + "START_" + id,
+                MARKDOWN_MARKER_PREFIX + "END_" + id
+        );
+    }
+
+    private DocumentRenderData wrapMarkdownWithMarkers(DocumentRenderData markdownData, MarkdownRangeMarker marker) {
+        Documents.DocumentBuilder builder = Documents.of()
+                .addParagraph(Paragraphs.of(marker.start()).create());
+        if (markdownData != null) {
+            builder.addDocument(markdownData);
+        }
+        return builder.addParagraph(Paragraphs.of(marker.end()).create()).create();
+    }
+
+    private void highlightMarkdownRanges(XWPFDocument doc, List<MarkdownRangeMarker> markers) {
+        if (markers == null || markers.isEmpty()) {
+            return;
+        }
+        for (MarkdownRangeMarker marker : markers) {
+            highlightMarkdownRange(doc, marker);
+        }
+    }
+
+    private void highlightMarkdownRange(XWPFDocument doc, MarkdownRangeMarker marker) {
+        List<IBodyElement> bodyElements = doc.getBodyElements();
+        int startIndex = findMarkerIndex(bodyElements, marker.start());
+        int endIndex = findMarkerIndex(bodyElements, marker.end());
+        if (startIndex < 0 || endIndex < 0 || endIndex <= startIndex) {
+            log.warn("Markdown标黄范围定位失败: start={}, end={}", marker.start(), marker.end());
+            return;
+        }
+
+        for (int i = startIndex + 1; i < endIndex; i++) {
+            highlightBodyElement(bodyElements.get(i));
+        }
+        doc.removeBodyElement(endIndex);
+        doc.removeBodyElement(startIndex);
+    }
+
+    private int findMarkerIndex(List<IBodyElement> bodyElements, String markerText) {
+        for (int i = 0; i < bodyElements.size(); i++) {
+            IBodyElement element = bodyElements.get(i);
+            if (element instanceof XWPFParagraph paragraph && markerText.equals(paragraph.getText())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void highlightBodyElement(IBodyElement element) {
+        if (element instanceof XWPFParagraph paragraph) {
+            highlightParagraph(paragraph);
+        } else if (element instanceof XWPFTable table) {
+            highlightTable(table);
+        }
+    }
+
+    private void highlightParagraph(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            run.setTextHighlightColor("yellow");
+        }
+    }
+
+    private void highlightTable(XWPFTable table) {
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+                setCellShading(cell, FILL_BACKGROUND_COLOR);
+                for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                    highlightParagraph(paragraph);
+                }
+                for (XWPFTable nestedTable : cell.getTables()) {
+                    highlightTable(nestedTable);
+                }
+            }
+        }
+    }
+
+    private void setCellShading(XWPFTableCell cell, String colorHex) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr cellProperties =
+                cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd shading =
+                cellProperties.isSetShd() ? cellProperties.getShd() : cellProperties.addNewShd();
+        shading.setFill(colorHex);
     }
 
     private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =
