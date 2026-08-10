@@ -101,7 +101,18 @@
       :close-on-press-escape="agreementDialogMode === 'view'"
       class="agreement-dialog"
     >
-      <div class="agreement-content">{{ activeAgreementText }}</div>
+      <div class="agreement-content">
+        <p
+          v-for="paragraph in activeAgreementParagraphs"
+          :key="paragraph.id"
+          :class="['agreement-paragraph', `agreement-paragraph--${paragraph.type}`]"
+        >
+          <template v-for="(part, index) in paragraph.parts" :key="index">
+            <strong v-if="part.bold" class="agreement-strong">{{ part.text }}</strong>
+            <span v-else>{{ part.text }}</span>
+          </template>
+        </p>
+      </div>
       <template v-if="agreementDialogMode === 'required'" #footer>
         <el-button type="primary" class="agreement-confirm-btn" :loading="loading" @click="handleAgreementConfirm">
           同意并继续
@@ -166,6 +177,61 @@ const activeAgreementTitle = computed(() =>
 const activeAgreementText = computed(() =>
   activeAgreement.value === 'user' ? userAgreementText : privacyPolicyText
 )
+
+type AgreementParagraphType = 'title' | 'section' | 'paragraph'
+
+interface AgreementTextPart {
+  text: string
+  bold: boolean
+}
+
+interface AgreementParagraph {
+  id: number
+  type: AgreementParagraphType
+  parts: AgreementTextPart[]
+}
+
+const sectionTitlePattern = /^[一二三四五六七八九十]+、/
+const boldMarkerPattern = /\*\*(.+?)\*\*/g
+
+const parseBoldParts = (line: string): AgreementTextPart[] => {
+  const parts: AgreementTextPart[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  boldMarkerPattern.lastIndex = 0
+  while ((match = boldMarkerPattern.exec(line)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ text: line.slice(lastIndex, match.index), bold: false })
+    }
+    parts.push({ text: match[1] ?? '', bold: true })
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < line.length) {
+    parts.push({ text: line.slice(lastIndex), bold: false })
+  }
+
+  return parts.length ? parts : [{ text: line, bold: false }]
+}
+
+const parseAgreementText = (text: string): AgreementParagraph[] => {
+  const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+  return lines.map((line, index) => {
+    const type: AgreementParagraphType = index === 0
+      ? 'title'
+      : sectionTitlePattern.test(line)
+        ? 'section'
+        : 'paragraph'
+    return {
+      id: index,
+      type,
+      parts: parseBoldParts(line),
+    }
+  })
+}
+
+const activeAgreementParagraphs = computed(() => parseAgreementText(activeAgreementText.value))
 
 const openAgreement = (agreement: 'user' | 'privacy', mode: 'view' | 'required') => {
   activeAgreement.value = agreement
@@ -423,11 +489,31 @@ const handlePhoneLogin = async () => {
   max-height: 380px;
   overflow-y: auto;
   padding: 24px 34px 8px;
-  color: #333;
+  color: #1f1f1f;
   font-size: 16px;
   line-height: 1.55;
-  font-weight: 600;
+  font-weight: 400;
+}
+
+.agreement-paragraph {
+  margin: 0 0 14px;
   white-space: pre-wrap;
+}
+
+.agreement-paragraph--title,
+.agreement-paragraph--section {
+  color: #000;
+  font-weight: 700;
+}
+
+.agreement-paragraph--title {
+  text-align: center;
+  font-size: 18px;
+}
+
+.agreement-strong {
+  color: #000;
+  font-weight: 700;
 }
 
 :deep(.agreement-dialog) {
