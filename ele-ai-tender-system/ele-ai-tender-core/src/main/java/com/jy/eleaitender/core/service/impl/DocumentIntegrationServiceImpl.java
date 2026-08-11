@@ -52,7 +52,7 @@ public class DocumentIntegrationServiceImpl implements IDocumentIntegrationServi
 
         // 检查是否已有活跃的文档集成任务
         AiTaskVO latestTask = aiTaskService.getLatestTask(
-                AiTaskType.DOCUMENT_INTEGRATION.getCode(), projectId, "PROJECT");
+                AiTaskType.DOCUMENT_INTEGRATION.getCode(), projectId, BizType.DOCUMENT.getCode());
         if (latestTask != null && isActive(latestTask)) {
             throw new BusinessException(ResponseCode.DOCUMENT_INTEGRATE_DUPLICATE);
         }

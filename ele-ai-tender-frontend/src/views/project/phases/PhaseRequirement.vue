@@ -184,7 +184,7 @@ const projectIdRef = toRef(props, 'projectId')
 const { latestTask, canCreateNew, refresh, setActive } = useLatestTask(
   'PROJECT_REQUIREMENT_GENERATE',
   projectIdRef,
-  'REQUIREMENT',
+  'PROJECT',
   async (_task) => {
     // resultSynced=1 时业务数据已同步，直接从项目接口读取
     try {

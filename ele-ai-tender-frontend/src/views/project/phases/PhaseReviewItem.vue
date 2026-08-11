@@ -456,7 +456,7 @@ const projectIdRef = computed(() => props.projectId)
 const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'REVIEW_ITEM_GENERATE',
   projectIdRef,
-  'PROJECT',
+  'REVIEW_ITEM',
   () => {
     // resultSynced=1 时业务数据已同步，直接加载
     loadReviewItems()

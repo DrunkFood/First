@@ -256,7 +256,7 @@ const projectIdRef = computed(() => props.projectId)
 const { latestTask, canCreateNew, setActive, refresh } = useLatestTask(
   'DOCUMENT_INTEGRATION',
   projectIdRef,
-  'PROJECT',
+  'DOCUMENT',
   () => {
     // resultSynced=1 时业务数据已同步，刷新预览
     loadPreview()
