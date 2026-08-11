@@ -5,7 +5,7 @@
   <!-- 全局警告提示 -->
     <div class="security-banner">
       <span class="warning-icon">⚠</span>
-      <span>安全提示： 本系统对接的AI服务经公网传输，请勿在系统中输入、上传或处理任何涉及国家秘密、商业秘密、未公开敏感信息信息及个人信息内容。</span>
+      <span>安全提示： 本系统对接的AI服务经公网传输，请勿在系统中输入、上传或处理任何涉及国家秘密、商业秘密、未公开敏感信息及个人信息内容。</span>
     </div>
 
     <div class="header-actions">
