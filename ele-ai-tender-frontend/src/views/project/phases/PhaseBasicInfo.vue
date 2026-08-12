@@ -63,15 +63,6 @@
         <div class="tpl-card-body">
           <!-- 用途说明 -->
           <div v-if="tpl.content" class="tpl-desc">{{ tpl.content }}</div>
-<!-- 占位符标签 -->
-          <div v-if="parseStructure(tpl.structureDefinition)?.placeholders?.length" class="tpl-placeholders">
-            <span class="placeholder-tag" v-for="p in parseStructure(tpl.structureDefinition)!.placeholders.slice(0, 5)" :key="p">
-              {{ p }}
-            </span>
-            <span v-if="parseStructure(tpl.structureDefinition)!.placeholders.length > 5" class="placeholder-more">
-              +{{ parseStructure(tpl.structureDefinition)!.placeholders.length - 5 }}
-            </span>
-          </div>
         </div>
         <div class="tpl-meta">
           <span class="tpl-meta-item">
@@ -103,24 +94,6 @@
         <!-- Word文档预览 -->
         <DocxPreview v-if="previewTemplate?.fileId" :file-id="previewTemplate.fileId" />
         <el-empty v-else-if="!previewTemplate?.content" description="该模板暂无预览内容" />
-        <!-- 占位符标签 -->
-        <div v-if="parseStructure(previewTemplate?.structureDefinition)?.placeholders?.length" class="preview-placeholders">
-          <div class="structure-title">填充字段</div>
-          <div class="placeholder-tags">
-            <span class="placeholder-tag" v-for="p in parseStructure(previewTemplate!.structureDefinition)!.placeholders" :key="p">
-              {{ p }}
-            </span>
-          </div>
-        </div>
-        <!-- 书签 -->
-        <div v-if="parseStructure(previewTemplate?.structureDefinition)?.bookmarks?.length" class="preview-bookmarks">
-          <div class="structure-title">书签</div>
-          <div class="bookmark-tags">
-            <span class="bookmark-tag" v-for="b in parseStructure(previewTemplate!.structureDefinition)!.bookmarks" :key="b">
-              {{ b }}
-            </span>
-          </div>
-        </div>
       </div>
       <template #footer>
         <el-button @click="previewDialogVisible = false">关闭</el-button>
@@ -169,7 +142,7 @@ import { PROJECT_CATEGORY_MAP, PROJECT_TYPE_MAP } from '@/constants/status-maps'
 import DocxPreview from '@/components/document/DocxPreview.vue'
 import { aiApi } from '@/api/ai'
 import MatchModePanel from '@/components/requirement/MatchModePanel.vue'
-import type { TemplateInfo, WordStructure } from '@/types/template'
+import type { TemplateInfo } from '@/types/template'
 import type { MatchFile } from '@/types/requirement'
 import type { AiMatchResult } from '@/types/ai'
 
@@ -271,18 +244,6 @@ const loadProjectTemplate = async () => {
   }
 }
 
-/** 解析 structureDefinition（可能是JSON字符串或已解析对象） */
-const parseStructure = (sd: WordStructure | string | undefined): WordStructure | null => {
-  if (!sd) return null
-  if (typeof sd === 'string') {
-    try {
-      return JSON.parse(sd)
-    } catch {
-      return null
-    }
-  }
-  return sd
-}
 
 const loadTemplates = async (): Promise<boolean> => {
   if (!form.value.projectCategory) {
